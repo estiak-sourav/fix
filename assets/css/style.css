@@ -1770,6 +1770,28 @@ button, input, select, textarea {
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
+/* Custom styled dropdown arrow with right padding */
+select.form-control,
+select.select-custom,
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1.25rem center;
+  background-size: 1rem 1rem;
+  padding-right: 2.85rem !important;
+  cursor: pointer;
+}
+
+select.form-control:disabled,
+select.select-custom:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background-color: #f1f5f9;
+}
+
 textarea.form-control {
   resize: vertical;
   min-height: 120px;
