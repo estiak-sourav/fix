@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book a Service | FIX - Building and Facility Maintenance Services</title>
+  <meta name="description" content="Request building maintenance, electrical, plumbing, HVAC, or specialized cleaning in Dhaka and across Bangladesh.">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/png" href="assets/images/logo-dark-crop.png">
+</head>
+<body>
+
+  <!-- Top Emergency / Info Bar -->
+  <div class="top-bar">
+    <div class="container top-bar-inner">
+      <div class="top-bar-left">
+        <div class="top-bar-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          <span>Need Urgent Emergency Service? Call: <a href="tel:+8801711223344"><strong>+880 1711-223344</strong></a></span>
+        </div>
+      </div>
+      <div class="top-bar-right">
+        <div class="top-bar-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+          <span>Average Dispatch Response: 30-45 Minutes</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Primary Sticky Navigation -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="nav-brand">
+        <img src="assets/images/logo-dark-crop.png" alt="FIX Logo" class="nav-logo-img">
+        <div class="nav-brand-text">
+          <span class="brand-title">FIX</span>
+          <span class="brand-slogan">CLEAN • SAFE • SUSTAINABLE</span>
+        </div>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="index.html#services" class="nav-link">Services</a></li>
+          <li><a href="index.html#howItWorks" class="nav-link">How It Works</a></li>
+          <li><a href="index.html#amc" class="nav-link">AMC Plans</a></li>
+          <li><a href="vendor.html" class="nav-link">Become a Vendor</a></li>
+          <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="vendor.html" class="btn btn-outline btn-sm">Become a Vendor</a>
+        <a href="booking.html" class="btn btn-accent btn-sm active">Book a Service</a>
+        <button class="menu-toggle" aria-label="Open Navigation Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer Menu -->
+  <div class="drawer-overlay"></div>
+  <div class="mobile-drawer">
+    <div class="drawer-header">
+      <div class="nav-brand">
+        <img src="assets/images/logo-dark-crop.png" alt="FIX Logo" style="height:38px;">
+        <div class="nav-brand-text">
+          <span class="brand-title" style="font-size:1.2rem;">FIX</span>
+          <span class="brand-slogan">CLEAN • SAFE • SUSTAINABLE</span>
+        </div>
+      </div>
+      <button class="drawer-close" aria-label="Close Menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <ul class="drawer-links">
+      <li><a href="index.html" class="drawer-link">Home</a></li>
+      <li><a href="index.html#services" class="drawer-link">Services</a></li>
+      <li><a href="index.html#howItWorks" class="drawer-link">How It Works</a></li>
+      <li><a href="index.html#amc" class="drawer-link">AMC Packages</a></li>
+      <li><a href="booking.html" class="drawer-link active">Book a Service</a></li>
+      <li><a href="vendor.html" class="drawer-link">Become a Vendor</a></li>
+      <li><a href="index.html#contact" class="drawer-link">Contact</a></li>
+    </ul>
+    <div class="drawer-footer">
+      <div style="text-align:center; font-size:0.85rem; color:var(--text-muted);">
+        24/7 Hotline: <a href="tel:+8801711223344" style="font-weight:700; color:var(--primary);">+880 1711-223344</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page Header -->
+  <section class="page-hero">
+    <div class="container">
+      <span class="badge badge-white">Easy 4-Step Booking</span>
+      <h1>Book a Building & Facility Service</h1>
+      <p>Submit your maintenance or inspection request. Our certified technical teams are ready to resolve any issue across your property.</p>
+    </div>
+  </section>
+
+  <!-- Main Booking Form Layout -->
+  <section class="section" style="padding-top:0;">
+    <div class="container">
+      <div class="booking-layout-grid">
+        <!-- Booking Form Container -->
+        <div class="form-card">
+          <form id="serviceBookingForm">
+            <!-- Step 1: Personal Contact Information -->
+            <div class="form-step-section">
+              <div class="step-header-title">
+                <span class="step-num-pill">1</span>
+                <h3>Personal & Contact Information</h3>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="bookFullName">Full Name <span class="required">*</span></label>
+                  <input type="text" id="bookFullName" class="form-control" placeholder="e.g. Tanvir Mahmud" required>
+                </div>
+                <div class="form-group">
+                  <label for="bookPhone">Mobile Number (Bangladesh) <span class="required">*</span></label>
+                  <input type="tel" id="bookPhone" class="form-control" placeholder="017xxxxxxxx" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="bookEmail">Email Address (Optional for Quotation / Invoice)</label>
+                <input type="email" id="bookEmail" class="form-control" placeholder="tanvir@company.com">
+              </div>
+            </div>
+
+            <!-- Step 2: Service & Property Details -->
+            <div class="form-step-section">
+              <div class="step-header-title">
+                <span class="step-num-pill">2</span>
+                <h3>Service Requirements</h3>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="bookCategory">Service Category <span class="required">*</span></label>
+                  <select id="bookCategory" class="form-control" required>
+                    <!-- Populated dynamically via JS -->
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="bookSpecificService">Specific Service</label>
+                  <select id="bookSpecificService" class="form-control" disabled>
+                    <option value="">First choose a Category above</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="bookProperty">Property Type <span class="required">*</span></label>
+                  <select id="bookProperty" class="form-control" required>
+                    <option value="Residential Apartment / Flat">Residential Apartment / Flat</option>
+                    <option value="Residential Building (Full Complex)">Residential Building (Full Complex)</option>
+                    <option value="Corporate Office">Corporate Office</option>
+                    <option value="Commercial Tower / Plaza">Commercial Tower / Plaza</option>
+                    <option value="Industrial Factory / EPZ Facility">Industrial Factory / EPZ Facility</option>
+                    <option value="Hospital / Healthcare Clinic">Hospital / Healthcare Clinic</option>
+                    <option value="Educational Institution (School/College/Uni)">Educational Institution</option>
+                    <option value="Hotel / Resort / Restaurant">Hotel / Resort / Restaurant</option>
+                    <option value="Other Commercial Facility">Other Commercial Facility</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="bookDate">Preferred Service Date <span class="required">*</span></label>
+                  <input type="date" id="bookDate" class="form-control" required>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="bookTimeSlot">Preferred Time Slot <span class="required">*</span></label>
+                  <select id="bookTimeSlot" class="form-control" required>
+                    <option value="Morning (9:00 AM - 12:00 PM)">Morning (9:00 AM - 12:00 PM)</option>
+                    <option value="Afternoon (12:00 PM - 4:00 PM)">Afternoon (12:00 PM - 4:00 PM)</option>
+                    <option value="Evening (4:00 PM - 8:00 PM)">Evening (4:00 PM - 8:00 PM)</option>
+                    <option value="Emergency (Immediate Dispatch ASAP)">🚨 Emergency (Immediate Dispatch ASAP)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Engagement Model</label>
+                  <div style="display:flex; gap:1.5rem; margin-top:0.6rem;">
+                    <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.875rem; cursor:pointer;">
+                      <input type="radio" name="bookFrequency" value="One-Time Service" checked accent-color="var(--accent)">
+                      One-Time Request
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.875rem; cursor:pointer;">
+                      <input type="radio" name="bookFrequency" value="Monthly / Recurring" accent-color="var(--accent)">
+                      Monthly Care
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.875rem; cursor:pointer;">
+                      <input type="radio" name="bookFrequency" value="Annual AMC Contract" accent-color="var(--accent)">
+                      Annual AMC
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3: Location Details (Bangladesh) -->
+            <div class="form-step-section">
+              <div class="step-header-title">
+                <span class="step-num-pill">3</span>
+                <h3>Location Details (Bangladesh)</h3>
+              </div>
+
+              <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div class="form-group">
+                  <label for="bookDivision">Division <span class="required">*</span></label>
+                  <select id="bookDivision" class="form-control" required>
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="bookDistrict">District <span class="required">*</span></label>
+                  <select id="bookDistrict" class="form-control" disabled required>
+                    <option value="">Select Division First...</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="bookArea">Thana / Area <span class="required">*</span></label>
+                  <select id="bookArea" class="form-control" disabled required>
+                    <option value="">Select District First...</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="bookAddress">Full Address (Road, House, Flat/Floor) <span class="required">*</span></label>
+                <input type="text" id="bookAddress" class="form-control" placeholder="e.g. House #14, Road #05, Block B, Floor 4th" required>
+              </div>
+            </div>
+
+            <!-- Step 4: Problem Description & Photo Upload -->
+            <div class="form-step-section">
+              <div class="step-header-title">
+                <span class="step-num-pill">4</span>
+                <h3>Problem Description & Photos</h3>
+              </div>
+
+              <div class="form-group">
+                <label for="bookProblemDesc">Describe the Issue or Service Scope</label>
+                <textarea id="bookProblemDesc" class="form-control" rows="3" placeholder="Please describe the issue (e.g., 'Water leaking behind wall in master bathroom' or 'Central chiller AC making vibration noise in 3rd floor server room')."></textarea>
+              </div>
+
+              <div class="form-group">
+                <label>Upload Problem Photo (Optional)</label>
+                <label class="file-upload-zone" for="problemPhotoInput">
+                  <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                  <div style="font-weight:600; color:var(--primary);">Click or Drag & Drop photo here</div>
+                  <div style="font-size:0.775rem; color:var(--text-muted); margin-top:0.25rem;">Supports PNG, JPG up to 5MB</div>
+                  <input type="file" id="problemPhotoInput" accept="image/*" style="display:none;">
+                </label>
+                <div id="photoPreviewBox" class="image-preview-bar" style="display:none;"></div>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-accent btn-lg btn-block" style="padding:1.1rem;">
+              Submit Service Request
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+            <p style="text-align:center; font-size:0.8rem; color:var(--text-muted); margin-top:0.85rem;">
+              🔒 Your contact information is protected. A FIX Operations Coordinator will call to confirm schedule.
+            </p>
+          </form>
+        </div>
+
+        <!-- Booking Summary Sidebar -->
+        <aside>
+          <div class="booking-sidebar-card">
+            <h3 style="font-size:1.25rem; margin-bottom:1rem;">Booking Summary</h3>
+
+            <div class="sidebar-service-preview">
+              <div class="sidebar-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              </div>
+              <div>
+                <span id="sidebarCategoryName" style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--accent);">Select Category</span>
+                <h4 id="sidebarServiceName" style="font-size:1.05rem; margin:0.15rem 0;">General Service</h4>
+                <span id="sidebarPropertyType" style="font-size:0.8rem; color:var(--text-muted);">Residential Apartment</span>
+              </div>
+            </div>
+
+            <div style="font-size:0.875rem; color:var(--text-main); margin-bottom:1.5rem;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                <span style="color:var(--text-muted);">Consultation & Dispatch:</span>
+                <strong style="color:var(--success);">Free Confirmation Call</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                <span style="color:var(--text-muted);">Pricing Model:</span>
+                <strong>Transparent Inspection Quote</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-muted);">Quality Guarantee:</span>
+                <strong>100% Certified Techs</strong>
+              </div>
+            </div>
+
+            <hr style="border:none; border-top:1px solid var(--border); margin-bottom:1.5rem;">
+
+            <h4 style="font-size:0.95rem; margin-bottom:0.75rem;">FIX Customer Assurance:</h4>
+            <ul class="sidebar-guarantee-list">
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Verified national ID & trade credentials
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Standard safety gear & diagnostic tools
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                No hidden costs — upfront quotation
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Post-service clean up & quality sign-off
+              </li>
+            </ul>
+
+            <div class="hotline-box">
+              <h5>Emergency Coordination Desk</h5>
+              <a href="tel:+8801711223344">+880 1711-223344</a>
+              <p style="font-size:0.75rem; color:#cbd5e1; margin:0.35rem 0 0;">Dedicated 24/7 facility emergency unit</p>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>
+          &copy; 2026 FIX Facility Management Services. Clean • Safe • Sustainable.
+        </div>
+        <div class="footer-bottom-links">
+          <a href="index.html">Home</a>
+          <a href="index.html#services">Services</a>
+          <a href="vendor.html">Become a Vendor</a>
+          <a href="index.html#contact">Contact</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Booking Confirmation Success Modal -->
+  <div id="bookingConfirmationModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="color:var(--success); display:flex; align-items:center; gap:0.5rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Request Submitted Successfully
+        </h3>
+        <button type="button" class="modal-close-btn" aria-label="Close">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body success-card-content">
+        <div class="success-icon-large">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        
+        <h3 style="font-size:1.6rem; color:var(--primary); margin-bottom:0.5rem;">Thank You, <span class="modal-client-name">Valued Client</span>!</h3>
+        <p style="color:var(--text-muted); max-width:480px; margin:0 auto 1.25rem;">
+          Your building service request has been registered in our centralized operations queue.
+        </p>
+
+        <div class="req-id-box">
+          <span style="font-size:0.85rem; color:var(--text-muted); display:block; text-transform:uppercase; letter-spacing:0.05em;">Generated Request Tracking ID:</span>
+          <strong class="modal-req-id">SR-1024</strong>
+        </div>
+
+        <div style="background:var(--bg-page); border:1px solid var(--border); border-radius:var(--radius-md); padding:1rem 1.25rem; text-align:left; margin:1rem 0; font-size:0.9rem;">
+          <div style="margin-bottom:0.35rem;"><strong>Service:</strong> <span class="modal-client-service">Mechanical & Electrical</span></div>
+          <div style="margin-bottom:0.35rem;"><strong>Schedule:</strong> <span class="modal-client-date">Today (Morning)</span></div>
+          <div><strong>Location:</strong> <span class="modal-client-location">Gulshan, Dhaka</span></div>
+        </div>
+
+        <p style="font-size:0.875rem; color:var(--text-main); margin-bottom:1.5rem;">
+          📞 Our support coordinator will contact you via phone within <strong>15–30 minutes</strong> to confirm technician arrival, exact diagnostic scope, and transparent pricing.
+        </p>
+
+        <div style="display:flex; justify-content:center; gap:1rem;">
+          <a href="index.html" class="btn btn-outline">Back to Home</a>
+          <button type="button" class="btn btn-accent modal-close-btn">Book Another Service</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/booking.js"></script>
+  <script>
+    // Set default date to today
+    document.getElementById("bookDate").valueAsDate = new Date();
+  </script>
+</body>
+</html>
