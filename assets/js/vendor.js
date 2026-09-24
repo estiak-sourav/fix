@@ -137,8 +137,12 @@ function showVendorSuccessModal(record) {
 
   modal.classList.add("active");
 
-  const closeBtn = modal.querySelector(".modal-close-btn");
-  closeBtn?.addEventListener("click", () => {
-    modal.classList.remove("active");
+  const closeBtns = modal.querySelectorAll(".modal-close-btn");
+  closeBtns.forEach(btn => {
+    btn.onclick = () => modal.classList.remove("active");
   });
+
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.classList.remove("active");
+  };
 }

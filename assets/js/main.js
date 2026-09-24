@@ -369,18 +369,44 @@ function renderServices(category) {
    ========================================================================== */
 function initServiceModal() {
   const modalOverlay = document.getElementById("serviceDetailsModal");
-  const modalClose = modalOverlay?.querySelector(".modal-close-btn");
+  if (!modalOverlay) return;
 
-  modalClose?.addEventListener("click", () => {
-    modalOverlay.classList.remove("active");
+  const closeButtons = modalOverlay.querySelectorAll(".modal-close-btn");
+  closeButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      modalOverlay.classList.remove("active");
+    });
   });
 
-  modalOverlay?.addEventListener("click", (e) => {
+  modalOverlay.addEventListener("click", (e) => {
     if (e.target === modalOverlay) {
       modalOverlay.classList.remove("active");
     }
   });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modalOverlay.classList.contains("active")) {
+      modalOverlay.classList.remove("active");
+    }
+  });
 }
+
+// Universal modal close handler (backdrop click, escape key, and all .modal-close-btn buttons)
+document.addEventListener("click", (e) => {
+  const closeBtn = e.target.closest(".modal-close-btn");
+  if (closeBtn) {
+    const modal = closeBtn.closest(".modal-overlay");
+    if (modal) {
+      modal.classList.remove("active");
+    }
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    document.querySelectorAll(".modal-overlay.active").forEach(m => m.classList.remove("active"));
+  }
+});
 
 function openServiceModal(serviceId) {
   const service = FIX_SERVICES.find(s => s.id === serviceId);
