@@ -181,7 +181,7 @@ const FIX_SERVICES = [
     title: "Landscaping & Greenery Care",
     category: "maintenance",
     tag: "Facility Maintenance",
-    image: "https://images.unsplash.com/photo-1558904541-efa8c4a08931?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=800&q=80",
     desc: "Commercial turf management, vertical gardens, automated drip irrigation, seasonal trimming, and indoor air-purifying plant care.",
     features: [
       "Lawn Turfing & Periodic Mowing",
