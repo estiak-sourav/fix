@@ -195,7 +195,7 @@ function initBookingForm() {
     const propertyType = propertySelect.value;
     const date = document.getElementById("bookDate").value;
     const timeSlot = document.getElementById("bookTimeSlot").value;
-    const frequency = document.querySelector('input[name="bookFrequency"]:checked')?.value || "One-Time Service";
+    const frequency = document.getElementById("bookEngagementModel")?.value || document.querySelector('input[name="bookFrequency"]:checked')?.value || "One-Time";
     const division = document.getElementById("bookDivision").value;
     const district = document.getElementById("bookDistrict").value;
     const area = document.getElementById("bookArea").value;

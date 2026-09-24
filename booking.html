@@ -184,21 +184,14 @@
                 </div>
 
                 <div class="form-group">
-                  <label>Engagement Model</label>
-                  <div style="display:flex; gap:1.5rem; margin-top:0.6rem;">
-                    <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.875rem; cursor:pointer;">
-                      <input type="radio" name="bookFrequency" value="One-Time Service" checked accent-color="var(--accent)">
-                      One-Time Request
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.875rem; cursor:pointer;">
-                      <input type="radio" name="bookFrequency" value="Monthly / Recurring" accent-color="var(--accent)">
-                      Monthly Care
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.875rem; cursor:pointer;">
-                      <input type="radio" name="bookFrequency" value="Annual AMC Contract" accent-color="var(--accent)">
-                      Annual AMC
-                    </label>
-                  </div>
+                  <label for="bookEngagementModel">Engagement Model <span class="required">*</span></label>
+                  <select id="bookEngagementModel" name="bookEngagementModel" class="form-control" required>
+                    <option value="One-Time" selected>One-Time</option>
+                    <option value="Daily">Daily</option>
+                    <option value="Weekly">Weekly</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Yearly">Yearly</option>
+                  </select>
                 </div>
               </div>
             </div>
