@@ -2270,45 +2270,6 @@ textarea.form-control {
   font-weight: 800;
 }
 
-/* LocalStorage Demo Drawer */
-.demo-requests-badge {
-  position: fixed;
-  bottom: 2rem;
-  left: 2rem;
-  z-index: 10000;
-}
-
-.demo-btn-trigger {
-  background: var(--primary);
-  color: #fff;
-  border: 2px solid var(--accent);
-  padding: 0.65rem 1.25rem;
-  border-radius: var(--radius-full);
-  font-size: 0.85rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  box-shadow: var(--shadow-xl);
-  transition: var(--transition);
-}
-
-.demo-btn-trigger:hover {
-  transform: translateY(-2px);
-  background: var(--primary-light);
-}
-
-.request-item-row {
-  background: var(--bg-page);
-  border-radius: var(--radius-md);
-  padding: 1rem 1.25rem;
-  border: 1px solid var(--border);
-  margin-bottom: 0.75rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 
 /* ==========================================================================
    Responsive Styles
