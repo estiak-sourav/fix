@@ -394,10 +394,14 @@ button, input, select, textarea {
   font-size: 0.54rem;
   font-weight: 700;
   letter-spacing: 0.18em;
-  color: var(--accent);
+  color: #000000;
   text-transform: uppercase;
   line-height: 1;
   white-space: nowrap;
+}
+
+.footer .nav-brand-tagline {
+  color: #cbd5e1;
 }
 
 .btn-vendor-nav {
