@@ -368,35 +368,62 @@ button, input, select, textarea {
 }
 
 .nav-brand {
-  display: flex;
+  display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.85rem;
+  justify-content: center;
   text-decoration: none;
+  line-height: 1;
+  padding: 0.25rem 0;
 }
 
 .nav-logo-img {
-  height: 52px;
+  height: 42px;
   width: auto;
   object-fit: contain;
+  transition: transform 0.2s ease;
+  margin-bottom: 3px;
 }
 
-.nav-brand-text {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+.nav-brand:hover .nav-logo-img {
+  transform: scale(1.04);
 }
 
-.brand-title {
+.nav-brand-tagline {
   font-family: var(--font-heading);
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--primary);
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-transform: uppercase;
   line-height: 1;
-  letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
-.brand-slogan {
-  display: none;
+.btn-vendor-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.55rem 1.35rem;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  background-color: var(--accent-light);
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-vendor-nav:hover, .btn-vendor-nav.active {
+  background-color: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px var(--accent-glow);
 }
 
 .nav-links {
@@ -2341,7 +2368,7 @@ textarea.form-control {
     display: none;
   }
   
-  .nav-links, .nav-actions .btn-sm {
+  .nav-links, .nav-actions .btn-vendor-nav, .nav-actions .btn-sm {
     display: none;
   }
   
