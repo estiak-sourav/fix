@@ -2114,6 +2114,376 @@ textarea.form-control {
   margin: 0 auto;
 }
 
+/* ==========================================================================
+   Vendor Page Specific Styling
+   ========================================================================== */
+.vendor-hero {
+  position: relative;
+  background: linear-gradient(135deg, #0a1b30 0%, #0f2744 60%, #173863 100%);
+  color: #fff;
+  padding: 4.5rem 0 5.5rem;
+  overflow: hidden;
+}
+
+.vendor-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 50%;
+  height: 100%;
+  background: radial-gradient(circle at 80% 20%, rgba(0, 168, 150, 0.22), transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.vendor-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2000&q=80');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.14;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.vendor-hero-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 3.5rem;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.vendor-hero h1 {
+  font-size: 3.15rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.18;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.025em;
+}
+
+.vendor-hero h1 span {
+  color: #38bdf8;
+}
+
+.vendor-hero p {
+  color: #cbd5e1;
+  font-size: 1.15rem;
+  line-height: 1.65;
+  margin-bottom: 2rem;
+  max-width: 600px;
+}
+
+.vendor-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+}
+
+.vendor-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.vendor-stat-num {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1.1;
+}
+
+.vendor-stat-label {
+  font-size: 0.825rem;
+  color: #94a3b8;
+  margin-top: 0.35rem;
+  font-weight: 500;
+}
+
+.vendor-hero-visual {
+  position: relative;
+}
+
+.vendor-hero-card {
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+.vendor-hero-card img {
+  width: 100%;
+  height: 420px;
+  object-fit: cover;
+  display: block;
+}
+
+.vendor-floating-badge {
+  position: absolute;
+  background: rgba(15, 39, 68, 0.94);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 0.85rem 1.15rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: var(--shadow-lg);
+  font-size: 0.85rem;
+  z-index: 3;
+}
+
+.vendor-badge-top {
+  top: 1.5rem;
+  left: -1.5rem;
+}
+
+.vendor-badge-bottom {
+  bottom: 1.5rem;
+  right: -1rem;
+}
+
+.vendor-perks-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.vendor-perk-card {
+  background: var(--bg-white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.85rem 1.5rem;
+  transition: var(--transition);
+}
+
+.vendor-perk-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+}
+
+.vendor-perk-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 168, 150, 0.1);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.15rem;
+}
+
+.vendor-perk-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.vendor-perk-card h4 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.vendor-perk-card p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Process steps */
+.vendor-process-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  position: relative;
+}
+
+.vendor-step-item {
+  background: var(--bg-white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem 1.5rem 1.75rem;
+  position: relative;
+  text-align: center;
+  transition: var(--transition);
+}
+
+.vendor-step-item:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-5px);
+}
+
+.vendor-step-pill {
+  width: 44px;
+  height: 44px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  margin: 0 auto 1.25rem;
+  box-shadow: 0 4px 10px rgba(15, 39, 68, 0.25);
+}
+
+.vendor-step-item:nth-child(even) .vendor-step-pill {
+  background: var(--accent);
+}
+
+.vendor-step-item h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.6rem;
+}
+
+.vendor-step-item p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* 2-Column Vendor Form Layout */
+.vendor-layout-grid {
+  display: grid;
+  grid-template-columns: 1.65fr 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.vendor-sidebar {
+  position: sticky;
+  top: 90px;
+}
+
+.vendor-sidebar-card {
+  background: var(--bg-white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 1.5rem;
+}
+
+.vendor-sidebar-card h4 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.vendor-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+}
+
+.vendor-checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.875rem;
+  color: var(--text-main);
+  margin-bottom: 0.85rem;
+  line-height: 1.45;
+}
+
+.vendor-checklist li svg {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.vendor-support-box {
+  background: linear-gradient(135deg, #0a1b30, #0f2744);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+.vendor-support-box h5 {
+  font-size: 1rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.vendor-support-box p {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.vendor-hotline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #38bdf8;
+  text-decoration: none;
+}
+
+/* FAQ Grid */
+.vendor-faq-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.vendor-faq-card {
+  background: var(--bg-white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  transition: var(--transition);
+}
+
+.vendor-faq-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.vendor-faq-card h4 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.6rem;
+}
+
+.vendor-faq-card p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
 .booking-layout-grid {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
@@ -2124,7 +2494,7 @@ textarea.form-control {
 .form-card {
   background: var(--bg-white);
   border-radius: var(--radius-xl);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   box-shadow: var(--shadow-lg);
   padding: 2.5rem;
 }
@@ -2354,6 +2724,49 @@ textarea.form-control {
   }
   
   .booking-layout-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vendor-hero-grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  
+  .vendor-hero p {
+    margin: 0 auto 2rem;
+  }
+  
+  .vendor-hero-actions {
+    justify-content: center;
+  }
+  
+  .vendor-stats-strip {
+    max-width: 550px;
+    margin: 0 auto;
+  }
+  
+  .vendor-hero-visual {
+    max-width: 550px;
+    margin: 0 auto;
+  }
+  
+  .vendor-perks-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .vendor-process-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .vendor-layout-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .vendor-sidebar {
+    position: static;
+  }
+  
+  .vendor-faq-grid {
     grid-template-columns: 1fr;
   }
   
