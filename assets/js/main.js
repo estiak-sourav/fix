@@ -329,7 +329,6 @@ function renderServices(category) {
       </div>
       <div class="service-card-body">
         <h3 class="service-card-title">${service.title}</h3>
-        <p class="service-card-desc">${service.desc}</p>
         <ul class="service-features-list">
           ${service.features.map(f => `
             <li>

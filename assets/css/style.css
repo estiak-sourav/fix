@@ -1002,15 +1002,12 @@ button, input, select, textarea {
 
 .service-card-title {
   font-size: 1.35rem;
-  margin-bottom: 0.65rem;
+  margin-bottom: 1.15rem;
   color: var(--primary);
 }
 
 .service-card-desc {
-  font-size: 0.925rem;
-  color: var(--text-muted);
-  margin-bottom: 1.25rem;
-  line-height: 1.55;
+  display: none;
 }
 
 .service-features-list {
