@@ -323,9 +323,6 @@ function renderServices(category) {
       <div class="service-card-image">
         <img src="${service.image}" alt="${service.title}" loading="lazy">
         <span class="service-category-tag">${service.tag}</span>
-        <div class="service-icon-bubble">
-          ${getServiceIcon(service.id)}
-        </div>
       </div>
       <div class="service-card-body">
         <h3 class="service-card-title">${service.title}</h3>
