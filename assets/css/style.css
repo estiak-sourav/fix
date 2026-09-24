@@ -371,7 +371,7 @@ button, input, select, textarea {
 }
 
 .nav-logo-img {
-  height: 48px;
+  height: 52px;
   width: auto;
   object-fit: contain;
 }
@@ -379,23 +379,20 @@ button, input, select, textarea {
 .nav-brand-text {
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .brand-title {
   font-family: var(--font-heading);
-  font-size: 1.45rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--primary);
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .brand-slogan {
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  display: none;
 }
 
 .nav-links {
