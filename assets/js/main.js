@@ -244,6 +244,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initFaqAccordion();
   initContactForm();
   initDemoStorageBadge();
+  initVideoPortfolio();
+  initClientsHorizontalScroll();
 });
 
 /* ==========================================================================
@@ -476,11 +478,62 @@ function initQuickBookingWidget() {
 }
 
 /* ==========================================================================
-   FAQ Accordion
+   Compact Multi-Category FAQ Accordion
    ========================================================================== */
 function initFaqAccordion() {
-  const faqItems = document.querySelectorAll(".faq-item");
+  const faqGrid = document.querySelector(".faq-compact-grid");
+  if (!faqGrid) return;
 
+  const faqItems = faqGrid.querySelectorAll(".faq-item");
+  const catButtons = document.querySelectorAll(".faq-cat-btn");
+  const showMoreBtn = document.getElementById("faqShowMoreBtn");
+  const showMoreText = document.getElementById("faqShowMoreText");
+
+  let isExpanded = false;
+  let currentCategory = "all";
+
+  // Initially hide overflow items in 'all' view to keep homepage ultra compact
+  function applyCompactVisibility() {
+    faqItems.forEach(item => {
+      const isOverflow = item.classList.contains("faq-overflow");
+      const itemCat = item.dataset.category;
+
+      if (currentCategory === "all") {
+        item.classList.remove("faq-cat-hidden");
+        if (isOverflow && !isExpanded) {
+          item.classList.add("faq-overflow-hidden");
+        } else {
+          item.classList.remove("faq-overflow-hidden");
+        }
+      } else {
+        item.classList.remove("faq-overflow-hidden");
+        if (itemCat === currentCategory) {
+          item.classList.remove("faq-cat-hidden");
+        } else {
+          item.classList.add("faq-cat-hidden");
+        }
+      }
+    });
+
+    if (showMoreBtn) {
+      if (currentCategory === "all") {
+        showMoreBtn.style.display = "inline-flex";
+        if (isExpanded) {
+          if (showMoreText) showMoreText.textContent = "Show Less Questions";
+          showMoreBtn.classList.add("expanded");
+        } else {
+          const overflowCount = faqGrid.querySelectorAll(".faq-overflow").length;
+          if (showMoreText) showMoreText.textContent = `Show More Questions (${overflowCount} More)`;
+          showMoreBtn.classList.remove("expanded");
+        }
+      } else {
+        // In specific category view, everything in that category is already visible & compact
+        showMoreBtn.style.display = "none";
+      }
+    }
+  }
+
+  // Question Accordion toggle
   faqItems.forEach(item => {
     const questionBtn = item.querySelector(".faq-question");
     questionBtn?.addEventListener("click", () => {
@@ -495,6 +548,35 @@ function initFaqAccordion() {
       }
     });
   });
+
+  // Category Filtering
+  catButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      catButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentCategory = btn.dataset.cat || "all";
+
+      // Close any open item that might now be hidden
+      faqItems.forEach(item => {
+        if (currentCategory !== "all" && item.dataset.category !== currentCategory) {
+          item.classList.remove("active");
+        }
+      });
+
+      applyCompactVisibility();
+    });
+  });
+
+  // Show More / Show Less Toggle
+  if (showMoreBtn) {
+    showMoreBtn.addEventListener("click", () => {
+      isExpanded = !isExpanded;
+      applyCompactVisibility();
+    });
+  }
+
+  // Initial call
+  applyCompactVisibility();
 }
 
 /* ==========================================================================
@@ -645,3 +727,113 @@ function getServiceIcon(id) {
       return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`;
   }
 }
+
+/* ==========================================================================
+   YouTube Video Portfolio Switcher
+   ========================================================================== */
+function initVideoPortfolio() {
+  const cards = document.querySelectorAll(".video-playlist-card");
+  const iframe = document.getElementById("portfolioVideoPlayer");
+  const currentTitle = document.getElementById("currentVideoTitle");
+  const currentMeta = document.getElementById("currentVideoMeta");
+
+  if (!iframe || cards.length === 0) return;
+
+  cards.forEach(card => {
+    card.addEventListener("click", () => {
+      cards.forEach(c => c.classList.remove("active"));
+      card.classList.add("active");
+
+      const videoId = card.getAttribute("data-video-id");
+      const title = card.getAttribute("data-title");
+      const meta = card.getAttribute("data-meta");
+
+      if (videoId) {
+        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+      }
+      if (currentTitle && title) {
+        currentTitle.textContent = title;
+      }
+      if (currentMeta && meta) {
+        currentMeta.textContent = meta;
+      }
+    });
+  });
+}
+
+/* ==========================================================================
+   Horizontal Scrolling Clients Carousel Track
+   ========================================================================== */
+function initClientsHorizontalScroll() {
+  const track = document.getElementById("clientsTrack");
+  const prevBtn = document.getElementById("clientsPrevBtn");
+  const nextBtn = document.getElementById("clientsNextBtn");
+
+  if (!track) return;
+
+  const scrollStep = 320;
+
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      track.scrollBy({ left: -scrollStep, behavior: "smooth" });
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      track.scrollBy({ left: scrollStep, behavior: "smooth" });
+    });
+  }
+
+  // Mouse Drag / Grab-to-Scroll Support
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+
+  track.addEventListener("mousedown", (e) => {
+    isDown = true;
+    startX = e.pageX - track.offsetLeft;
+    scrollLeft = track.scrollLeft;
+  });
+
+  track.addEventListener("mouseleave", () => {
+    isDown = false;
+  });
+
+  track.addEventListener("mouseup", () => {
+    isDown = false;
+  });
+
+  track.addEventListener("mousemove", (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - track.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    track.scrollLeft = scrollLeft - walk;
+  });
+
+  // Auto-advance loop (pauses when hovered or touched)
+  let autoScrollTimer = null;
+  function startAutoScroll() {
+    stopAutoScroll();
+    autoScrollTimer = setInterval(() => {
+      if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 15) {
+        track.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        track.scrollBy({ left: scrollStep, behavior: "smooth" });
+      }
+    }, 4500);
+  }
+
+  function stopAutoScroll() {
+    if (autoScrollTimer) clearInterval(autoScrollTimer);
+  }
+
+  track.addEventListener("mouseenter", stopAutoScroll);
+  track.addEventListener("mouseleave", startAutoScroll);
+  track.addEventListener("touchstart", stopAutoScroll, { passive: true });
+  track.addEventListener("touchend", startAutoScroll, { passive: true });
+
+  startAutoScroll();
+}
+

@@ -22,6 +22,17 @@ function initServiceCheckboxesCounter() {
         counterBadge.className = "badge badge-primary";
       }
     }
+
+    checkboxes.forEach(cb => {
+      const parentLabel = cb.closest(".checkbox-label");
+      if (parentLabel) {
+        if (cb.checked) {
+          parentLabel.classList.add("is-checked");
+        } else {
+          parentLabel.classList.remove("is-checked");
+        }
+      }
+    });
   }
 
   checkboxes.forEach(cb => {
