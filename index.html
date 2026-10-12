@@ -56,13 +56,19 @@
       <nav>
         <ul class="nav-links">
           <li><a href="index.html" class="nav-link active">Home</a></li>
-          <li><a href="#clients" class="nav-link">Clients</a></li>
           <li><a href="#services" class="nav-link">Services</a></li>
-          <li><a href="#amc" class="nav-link">AMC Packages</a></li>
-          <li><a href="#howItWorks" class="nav-link">How It Works</a></li>
-          <li><a href="#portfolioVideo" class="nav-link">Video Portfolio</a></li>
-          <li><a href="#whyFix" class="nav-link">Why FIX</a></li>
-          <li><a href="#whoWeServe" class="nav-link">Who We Serve</a></li>
+          <li><a href="#amc" class="nav-link">Packages</a></li>
+          <li class="nav-dropdown-item">
+            <a href="#howItWorks" class="nav-link nav-dropdown-toggle">
+              How FIX Works
+              <svg class="dropdown-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </a>
+            <ul class="nav-dropdown-menu">
+              <li><a href="#howItWorks" class="dropdown-item">How It Works</a></li>
+              <li><a href="#whyFix" class="dropdown-item">Why FIX</a></li>
+              <li><a href="#whoWeServe" class="dropdown-item">Who We Serve</a></li>
+            </ul>
+          </li>
           <li><a href="#about" class="nav-link">About Us</a></li>
           <li><a href="#faq" class="nav-link">FAQ</a></li>
           <li><a href="#contact" class="nav-link">Contact</a></li>
@@ -99,13 +105,19 @@
     </div>
     <ul class="drawer-links">
       <li><a href="index.html" class="drawer-link active">Home</a></li>
-      <li><a href="#clients" class="drawer-link">Clients & Partners</a></li>
       <li><a href="#services" class="drawer-link">Services Portfolio</a></li>
-      <li><a href="#amc" class="drawer-link">AMC Packages</a></li>
-      <li><a href="#howItWorks" class="drawer-link">How It Works</a></li>
-      <li><a href="#portfolioVideo" class="drawer-link">Video Portfolio</a></li>
-      <li><a href="#whyFix" class="drawer-link">Why Choose FIX</a></li>
-      <li><a href="#whoWeServe" class="drawer-link">Who We Serve</a></li>
+      <li><a href="#amc" class="drawer-link">Packages</a></li>
+      <li class="drawer-dropdown-item">
+        <button class="drawer-dropdown-toggle" type="button">
+          <span>How FIX Works</span>
+          <svg class="drawer-dropdown-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <ul class="drawer-submenu">
+          <li><a href="#howItWorks" class="drawer-sublink">How It Works</a></li>
+          <li><a href="#whyFix" class="drawer-sublink">Why Choose FIX</a></li>
+          <li><a href="#whoWeServe" class="drawer-sublink">Who We Serve</a></li>
+        </ul>
+      </li>
       <li><a href="#about" class="drawer-link">About Company</a></li>
       <li><a href="#faq" class="drawer-link">FAQ</a></li>
       <li><a href="#contact" class="drawer-link">Contact Support</a></li>
@@ -209,7 +221,6 @@
           </svg>
           Instant Service Finder & Booking
         </h3>
-        <span class="badge badge-accent">Direct Dispatch in Dhaka Metro</span>
       </div>
 
       <form id="quickBookForm" class="quick-book-form">
@@ -260,7 +271,6 @@
     <div class="container">
       <div class="clients-header">
         <div class="clients-header-text">
-          <span class="badge badge-accent">Trusted Corporate Clients</span>
           <h2 class="clients-title">Trusted by Leading Enterprises & Facilities</h2>
         </div>
         <div class="clients-nav-controls">
@@ -293,8 +303,6 @@
               </div>
             </div>
             <h3 class="client-name">Square Pharmaceuticals</h3>
-            <span class="client-tag">Healthcare & Pharma Hub</span>
-            <p class="client-service-scope">Cleanroom HVAC engineering, bio-waste handling protocols & facility AMC.</p>
           </div>
 
           <!-- Client 2: Beximco -->
@@ -309,8 +317,6 @@
               </div>
             </div>
             <h3 class="client-name">Beximco Industrial Park</h3>
-            <span class="client-tag">EPZ & Industrial Zone</span>
-            <p class="client-service-scope">Substation maintenance, 3-phase power balancing & high-pressure booster plumbing.</p>
           </div>
 
           <!-- Client 3: BRAC -->
@@ -325,8 +331,6 @@
               </div>
             </div>
             <h3 class="client-name">BRAC Centre & Campus</h3>
-            <span class="client-tag">Corporate & Institutional</span>
-            <p class="client-service-scope">Daily corporate janitorial staffing, fire hydrant audit & safety compliance.</p>
           </div>
 
           <!-- Client 4: Standard Chartered -->
@@ -341,8 +345,6 @@
               </div>
             </div>
             <h3 class="client-name">Standard Chartered Tower</h3>
-            <span class="client-tag">Banking & Financial HQ</span>
-            <p class="client-service-scope">Central water chillers, VRF air conditioning & corporate battery bank AMC.</p>
           </div>
 
           <!-- Client 5: Grameenphone -->
@@ -358,8 +360,6 @@
               </div>
             </div>
             <h3 class="client-name">Grameenphone GPHouse</h3>
-            <span class="client-tag">Telecom & Tech Center</span>
-            <p class="client-service-scope">Server room cooling, earthing security inspection & AI IP surveillance.</p>
           </div>
 
           <!-- Client 6: Shanta Holdings -->
@@ -375,8 +375,6 @@
               </div>
             </div>
             <h3 class="client-name">Shanta Holdings Towers</h3>
-            <span class="client-tag">Commercial Towers</span>
-            <p class="client-service-scope">Exterior glass facade rope wash, infinity pool servicing & premium fit-outs.</p>
           </div>
 
           <!-- Client 7: Apex Footwear -->
@@ -391,8 +389,6 @@
               </div>
             </div>
             <h3 class="client-name">Apex Footwear Complex</h3>
-            <span class="client-tag">Export Manufacturing</span>
-            <p class="client-service-scope">Industrial diesel generator overhaul, ATS diagnostics & drainage engineering.</p>
           </div>
 
           <!-- Client 8: United Hospital -->
@@ -407,31 +403,10 @@
               </div>
             </div>
             <h3 class="client-name">United Hospital Complex</h3>
-            <span class="client-tag">Critical Healthcare</span>
-            <p class="client-service-scope">ICU terminal sanitation, sterile air duct deep cleaning & pathogen barriers.</p>
           </div>
         </div>
       </div>
 
-      <!-- Enterprise Assurance Ribbon -->
-      <div class="clients-ticker-bar">
-        <div class="clients-ticker-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-          <span>99.8% Annual Contract Renewal Rate</span>
-        </div>
-        <div class="clients-ticker-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          <span>BNBC & NFPA Certified Safety Standards</span>
-        </div>
-        <div class="clients-ticker-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
-          <span>45-60 Min Emergency Dispatch in Metro Dhaka</span>
-        </div>
-        <div class="clients-ticker-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-          <span>Verified & Background-Checked Specialists</span>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -439,12 +414,7 @@
   <section id="services" class="section section-alt">
     <div class="container">
       <div class="section-header">
-        <span class="badge badge-accent">Our Service Portfolio</span>
         <h2 class="section-title">Comprehensive Building & Facility Services</h2>
-        <p class="section-subtitle">
-          From routine maintenance to mission-critical engineering, FIX combines skilled professionals, trusted vendors,
-          and structured quality control for every building type.
-        </p>
       </div>
 
       <!-- Filter Tabs -->
@@ -463,19 +433,11 @@
     </div>
   </section>
 
-  <!-- Highlighted & Animated AMC (Annual Maintenance Contracts) Section -->
+  <!-- Annual Maintenance Contracts (AMC) Section -->
   <section id="amc" class="amc-highlighted-section">
-    <div class="amc-top-glow-bar"></div>
     <div class="container">
       <div class="section-header">
-        <span class="badge badge-accent">
-          <span class="amc-pulse-dot"></span>
-          PREVENTIVE MAINTENANCE • ZERO DOWNTIME CONTRACTS
-        </span>
         <h2 class="amc-section-title">Annual Maintenance Contracts <span>(AMC)</span></h2>
-        <p class="amc-section-subtitle">
-          Eliminate breakdown anxieties, preserve real estate value, and cut commercial operating costs by up to 35% with FIX preventive engineering contracts.
-        </p>
       </div>
 
       <!-- Interactive AMC Value Highlights Banner -->
@@ -655,38 +617,6 @@
           <a href="booking.html?plan=industrial-amc" class="btn btn-outline btn-block">Inquire Plan</a>
         </div>
       </div>
-
-      <!-- AMC Value Reassurance Bar -->
-      <div class="amc-reassurance-strip">
-        <div class="amc-reassurance-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
-          <div>
-            <strong>45-60 Min SLA</strong>
-            <span>Rapid callout for critical faults</span>
-          </div>
-        </div>
-        <div class="amc-reassurance-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-          <div>
-            <strong>Monthly Audits</strong>
-            <span>Digital inspection logs & certificates</span>
-          </div>
-        </div>
-        <div class="amc-reassurance-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-          <div>
-            <strong>Zero Overruns</strong>
-            <span>Transparent, fixed monthly budgeting</span>
-          </div>
-        </div>
-        <div class="amc-reassurance-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-          <div>
-            <strong>Critical Spares</strong>
-            <span>Pre-stocked backup components</span>
-          </div>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -694,7 +624,6 @@
   <section id="howItWorks" class="section">
     <div class="container">
       <div class="section-header">
-        <span class="badge badge-primary">Structured Process</span>
         <h2 class="section-title">How It Works</h2>
         <p class="section-subtitle">
           Getting professional maintenance for your facility is straightforward, transparent, and hassle-free in just 4
@@ -768,11 +697,7 @@
   <section id="portfolioVideo" class="video-portfolio-section">
     <div class="container">
       <div class="video-portfolio-header">
-        <span class="badge badge-accent">Field Execution & Proof of Work</span>
         <h2 class="video-portfolio-title">Watch FIX in Action: <span>Real Project Operations</span></h2>
-        <p class="video-portfolio-subtitle">
-          See how our certified engineering teams, high-altitude facade technicians, and emergency response crews maintain mission-critical infrastructure across Bangladesh.
-        </p>
       </div>
 
       <div class="video-portfolio-grid">
@@ -863,37 +788,7 @@
         </div>
       </div>
 
-      <!-- Feature Assurance Badges -->
-      <div class="video-features-ribbon">
-        <div class="video-feature-pill">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
-          <div>
-            <strong>4K Video Documentation</strong>
-            <span>Transparent reporting for managers</span>
-          </div>
-        </div>
-        <div class="video-feature-pill">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          <div>
-            <strong>BNBC & NFPA Safety</strong>
-            <span>Certified safety harnesses & gear</span>
-          </div>
-        </div>
-        <div class="video-feature-pill">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-          <div>
-            <strong>Zero Downtime Workflow</strong>
-            <span>Night & weekend shift scheduling</span>
-          </div>
-        </div>
-        <div class="video-feature-pill">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-          <div>
-            <strong>Quality Sign-Off</strong>
-            <span>Formal inspection reports after work</span>
-          </div>
-        </div>
-      </div>
+
     </div>
   </section>
 
@@ -901,7 +796,6 @@
   <section id="whyFix" class="section section-alt">
     <div class="container">
       <div class="section-header">
-        <span class="badge badge-accent">Value Proposition</span>
         <h2 class="section-title">Why Choose FIX?</h2>
         <p class="section-subtitle">
           We combine skilled engineering, vetted vendor networks, and institutional-grade accountability to protect
@@ -993,120 +887,111 @@
   <section id="whoWeServe" class="section">
     <div class="container">
       <div class="section-header">
-        <span class="badge badge-primary">Client Segments</span>
         <h2 class="section-title">Who We Serve</h2>
-        <p class="section-subtitle">
-          Tailored facility engineering and maintenance packages designed specifically for properties across Bangladesh.
-        </p>
       </div>
 
       <div class="sectors-grid">
         <div class="sector-card">
-          <div class="sector-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-          </div>
-          <div class="sector-info">
+          <div class="sector-header">
+            <div class="sector-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+            </div>
             <h4>Residential Complexes & Apartments</h4>
-            <p>Society management, shared elevator/generator maintenance, water reservoir care, and residential repairs.
-            </p>
           </div>
+          <p>Society management, shared elevator/generator maintenance, water reservoir care, and residential repairs.</p>
         </div>
 
         <div class="sector-card">
-          <div class="sector-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
-              <line x1="9" y1="22" x2="9" y2="22.01"></line>
-              <line x1="15" y1="22" x2="15" y2="22.01"></line>
-              <line x1="9" y1="6" x2="9" y2="6.01"></line>
-              <line x1="15" y1="6" x2="15" y2="6.01"></line>
-              <line x1="9" y1="10" x2="9" y2="10.01"></line>
-              <line x1="15" y1="10" x2="15" y2="10.01"></line>
-              <line x1="9" y1="14" x2="9" y2="14.01"></line>
-              <line x1="15" y1="14" x2="15" y2="14.01"></line>
-              <line x1="9" y1="18" x2="9" y2="18.01"></line>
-              <line x1="15" y1="18" x2="15" y2="18.01"></line>
-            </svg>
-          </div>
-          <div class="sector-info">
+          <div class="sector-header">
+            <div class="sector-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                <line x1="9" y1="22" x2="9" y2="22.01"></line>
+                <line x1="15" y1="22" x2="15" y2="22.01"></line>
+                <line x1="9" y1="6" x2="9" y2="6.01"></line>
+                <line x1="15" y1="6" x2="15" y2="6.01"></line>
+                <line x1="9" y1="10" x2="9" y2="10.01"></line>
+                <line x1="15" y1="10" x2="15" y2="10.01"></line>
+                <line x1="9" y1="14" x2="9" y2="14.01"></line>
+                <line x1="15" y1="14" x2="15" y2="14.01"></line>
+                <line x1="9" y1="18" x2="9" y2="18.01"></line>
+                <line x1="15" y1="18" x2="15" y2="18.01"></line>
+              </svg>
+            </div>
             <h4>Corporate Offices</h4>
-            <p>Daily janitorial staffing, HVAC climate comfort, structured electrical distribution, and modern access
-              control.</p>
           </div>
+          <p>Daily janitorial staffing, HVAC climate comfort, structured electrical distribution, and modern access control.</p>
         </div>
 
         <div class="sector-card">
-          <div class="sector-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-            </svg>
-          </div>
-          <div class="sector-info">
+          <div class="sector-header">
+            <div class="sector-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+              </svg>
+            </div>
             <h4>Hospitals & Clinics</h4>
-            <p>Clinical-grade infection sanitization, medical gas line audits, uninterrupted power failover, and
-              bio-waste safety.</p>
           </div>
+          <p>Clinical-grade infection sanitization, medical gas line audits, uninterrupted power failover, and bio-waste safety.</p>
         </div>
 
         <div class="sector-card">
-          <div class="sector-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
-              <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
-            </svg>
-          </div>
-          <div class="sector-info">
+          <div class="sector-header">
+            <div class="sector-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+              </svg>
+            </div>
             <h4>Educational Institutions</h4>
-            <p>School and university campus facility management, fire drill protocols, hygiene facilities, and
-              electrical safety.</p>
           </div>
+          <p>School and university campus facility management, fire drill protocols, hygiene facilities, and electrical safety.</p>
         </div>
 
         <div class="sector-card">
-          <div class="sector-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-              <polyline points="2 17 12 22 22 17"></polyline>
-              <polyline points="2 12 12 17 22 12"></polyline>
-            </svg>
-          </div>
-          <div class="sector-info">
+          <div class="sector-header">
+            <div class="sector-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+            </div>
             <h4>Government Buildings</h4>
-            <p>Structured facility contracts adhering to safety and environmental governance guidelines.</p>
           </div>
+          <p>Structured facility contracts adhering to safety and environmental governance guidelines.</p>
         </div>
 
         <div class="sector-card">
-          <div class="sector-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M3 21h18"></path>
-              <path d="M19 21v-8"></path>
-              <path d="M15 21v-4"></path>
-              <path d="M11 21v-6"></path>
-              <path d="M7 21v-2"></path>
-              <path d="M19 13a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4"></path>
-            </svg>
-          </div>
-          <div class="sector-info">
+          <div class="sector-header">
+            <div class="sector-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M3 21h18"></path>
+                <path d="M19 21v-8"></path>
+                <path d="M15 21v-4"></path>
+                <path d="M11 21v-6"></path>
+                <path d="M7 21v-2"></path>
+                <path d="M19 13a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4"></path>
+              </svg>
+            </div>
             <h4>Industrial Zones & EPZ Facilities</h4>
-            <p>High-voltage switchgear, fire hydrant infrastructure, factory floor scrubbing, and wastewater plant care.
-            </p>
           </div>
+          <p>High-voltage switchgear, fire hydrant infrastructure, factory floor scrubbing, and wastewater plant care.</p>
         </div>
 
         <div class="sector-card">
-          <div class="sector-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-            </svg>
-          </div>
-          <div class="sector-info">
+          <div class="sector-header">
+            <div class="sector-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+              </svg>
+            </div>
             <h4>Hotels, Resorts & Malls</h4>
-            <p>Swimming pool maintenance, landscape beauty, facade glass washing, and central chilling plants.</p>
           </div>
+          <p>Swimming pool maintenance, landscape beauty, facade glass washing, and central chilling plants.</p>
         </div>
       </div>
     </div>
@@ -1119,7 +1004,6 @@
     <div class="container">
       <div class="vendor-cta-box">
         <div class="vendor-cta-content">
-          <span class="badge badge-white" style="margin-bottom:1rem;">Partner With FIX</span>
           <h2>Are You a Skilled Service Contractor or Technician?</h2>
           <p>
             Expand your building service business. Join Bangladesh’s leading facility management network. Get verified
@@ -1144,7 +1028,6 @@
     <div class="container">
       <div class="about-grid">
         <div class="about-content">
-          <span class="badge badge-accent">About Our Company</span>
           <h2>About FIX Facility Management</h2>
           <p>
             <strong>FIX</strong> is your trusted partner for complete building maintenance and facility management
@@ -1209,11 +1092,7 @@
   <section class="section">
     <div class="container">
       <div class="section-header">
-        <span class="badge badge-primary">Client Feedback</span>
         <h2 class="section-title">Trusted by Facility Owners & Managers</h2>
-        <p class="section-subtitle">
-          See how FIX simplifies day-to-day operations for residential committees and corporate enterprises.
-        </p>
       </div>
 
       <div class="testimonials-grid">
@@ -1273,11 +1152,7 @@
   <section id="faq" class="section section-alt">
     <div class="container">
       <div class="section-header">
-        <span class="badge badge-accent">Help Center</span>
         <h2 class="section-title">Frequently Asked Questions</h2>
-        <p class="section-subtitle">
-          Everything you need to know about booking, technician credentials, pricing, and service coverage.
-        </p>
       </div>
 
       <!-- FAQ Category Tabs -->
@@ -1289,10 +1164,10 @@
         <button type="button" class="faq-cat-btn" data-cat="billing">Billing & Partners</button>
       </div>
 
-      <!-- 2-Column Compact FAQ Grid -->
+      <!-- Single Column FAQ Accordion -->
       <div class="faq-compact-grid">
         <!-- Item 1 (Services) -->
-        <div class="faq-item active" data-category="services">
+        <div class="faq-item" data-category="services">
           <button type="button" class="faq-question">
             <span>What areas does FIX currently cover in Bangladesh?</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -1343,8 +1218,8 @@
           </div>
         </div>
 
-        <!-- Item 5 (Billing - Initially Hidden in 'All' to stay compact) -->
-        <div class="faq-item faq-overflow" data-category="billing">
+        <!-- Item 5 (Billing) -->
+        <div class="faq-item" data-category="billing">
           <button type="button" class="faq-question">
             <span>How does billing and pricing work? Are there hidden charges?</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -1356,8 +1231,8 @@
           </div>
         </div>
 
-        <!-- Item 6 (Billing - Initially Hidden in 'All' to stay compact) -->
-        <div class="faq-item faq-overflow" data-category="billing">
+        <!-- Item 6 (Billing) -->
+        <div class="faq-item" data-category="billing">
           <button type="button" class="faq-question">
             <span>Can I apply to become an enlisted service provider or partner?</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -1369,8 +1244,8 @@
           </div>
         </div>
 
-        <!-- Item 7 (AMC - Initially Hidden in 'All' to stay compact) -->
-        <div class="faq-item faq-overflow" data-category="amc">
+        <!-- Item 7 (AMC) -->
+        <div class="faq-item" data-category="amc">
           <button type="button" class="faq-question">
             <span>Do you offer tailored facility maintenance plans for commercial towers?</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -1382,8 +1257,8 @@
           </div>
         </div>
 
-        <!-- Item 8 (Safety - Initially Hidden in 'All' to stay compact) -->
-        <div class="faq-item faq-overflow" data-category="safety">
+        <!-- Item 8 (Safety) -->
+        <div class="faq-item" data-category="safety">
           <button type="button" class="faq-question">
             <span>What safety protocols and PPE do FIX technicians follow on-site?</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -1395,26 +1270,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Compact Footer: Toggle More & Quick Helpline -->
-      <div class="faq-compact-footer">
-        <button type="button" id="faqShowMoreBtn" class="btn btn-outline-primary btn-sm">
-          <span id="faqShowMoreText">Show More Questions (4 More)</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="16" height="16">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </button>
-
-        <div class="faq-quick-contact-pill">
-          <span>Still have questions?</span>
-          <a href="tel:+8801711223344" class="faq-hotline-link">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-            </svg>
-            24/7 Hotline: +880 1711-223344
-          </a>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -1424,7 +1279,6 @@
       <div class="contact-grid">
         <div class="contact-info-card">
           <div>
-            <span class="badge badge-white" style="margin-bottom:1rem;">Get in Touch</span>
             <h3>We Are Ready to Assist Your Property</h3>
             <p>Have an urgent maintenance request or need a custom corporate facility audit? Contact our central
               operations center.</p>

@@ -288,6 +288,23 @@ function initNavbar() {
   drawerLinks.forEach(link => {
     link.addEventListener("click", closeDrawer);
   });
+
+  // Mobile Drawer Dropdown Toggle
+  const drawerDropdownToggles = document.querySelectorAll(".drawer-dropdown-toggle");
+  const drawerSublinks = document.querySelectorAll(".drawer-sublink");
+
+  drawerDropdownToggles.forEach(toggle => {
+    toggle.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const parentItem = toggle.closest(".drawer-dropdown-item");
+      parentItem?.classList.toggle("open");
+    });
+  });
+
+  drawerSublinks.forEach(sublink => {
+    sublink.addEventListener("click", closeDrawer);
+  });
 }
 
 /* ==========================================================================
@@ -486,51 +503,18 @@ function initFaqAccordion() {
 
   const faqItems = faqGrid.querySelectorAll(".faq-item");
   const catButtons = document.querySelectorAll(".faq-cat-btn");
-  const showMoreBtn = document.getElementById("faqShowMoreBtn");
-  const showMoreText = document.getElementById("faqShowMoreText");
 
-  let isExpanded = false;
   let currentCategory = "all";
 
-  // Initially hide overflow items in 'all' view to keep homepage ultra compact
-  function applyCompactVisibility() {
+  function applyCategoryFilter() {
     faqItems.forEach(item => {
-      const isOverflow = item.classList.contains("faq-overflow");
       const itemCat = item.dataset.category;
-
-      if (currentCategory === "all") {
+      if (currentCategory === "all" || itemCat === currentCategory) {
         item.classList.remove("faq-cat-hidden");
-        if (isOverflow && !isExpanded) {
-          item.classList.add("faq-overflow-hidden");
-        } else {
-          item.classList.remove("faq-overflow-hidden");
-        }
       } else {
-        item.classList.remove("faq-overflow-hidden");
-        if (itemCat === currentCategory) {
-          item.classList.remove("faq-cat-hidden");
-        } else {
-          item.classList.add("faq-cat-hidden");
-        }
+        item.classList.add("faq-cat-hidden");
       }
     });
-
-    if (showMoreBtn) {
-      if (currentCategory === "all") {
-        showMoreBtn.style.display = "inline-flex";
-        if (isExpanded) {
-          if (showMoreText) showMoreText.textContent = "Show Less Questions";
-          showMoreBtn.classList.add("expanded");
-        } else {
-          const overflowCount = faqGrid.querySelectorAll(".faq-overflow").length;
-          if (showMoreText) showMoreText.textContent = `Show More Questions (${overflowCount} More)`;
-          showMoreBtn.classList.remove("expanded");
-        }
-      } else {
-        // In specific category view, everything in that category is already visible & compact
-        showMoreBtn.style.display = "none";
-      }
-    }
   }
 
   // Question Accordion toggle
@@ -563,20 +547,12 @@ function initFaqAccordion() {
         }
       });
 
-      applyCompactVisibility();
+      applyCategoryFilter();
     });
   });
 
-  // Show More / Show Less Toggle
-  if (showMoreBtn) {
-    showMoreBtn.addEventListener("click", () => {
-      isExpanded = !isExpanded;
-      applyCompactVisibility();
-    });
-  }
-
   // Initial call
-  applyCompactVisibility();
+  applyCategoryFilter();
 }
 
 /* ==========================================================================
