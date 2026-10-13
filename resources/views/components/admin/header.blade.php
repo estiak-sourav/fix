@@ -1,0 +1,52 @@
+<!-- Paces Topbar Header -->
+<header class="app-topbar">
+  <div class="topbar-left">
+    <!-- Mobile / Desktop Sidebar Toggle -->
+    <button type="button" class="btn-topbar-toggle" onclick="toggleAdminSidebar()" aria-label="Toggle Sidebar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
+
+    <!-- Quick Search Pill Input (Paces Pattern) -->
+    <div class="topbar-search-box">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" class="topbar-search-input" placeholder="Quick Search orders, clients, facilities..." onkeyup="if(event.key==='Enter') window.location.href='{{ route('admin.bookings.index') }}?search='+this.value">
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <!-- Live Audio Alert Indicator & Test Button -->
+    <div class="topbar-audio-item">
+      <div class="audio-pulse-indicator" id="audioPulseIndicator" title="Real-Time Dispatch Sound Active">
+        <span class="pulse-dot"></span>
+        <span class="audio-label">Live Chime Active</span>
+      </div>
+      <button type="button" onclick="playChime()" class="btn-topbar-chime" title="Test Emergency Audio Alert">
+        <span>Test 🔔</span>
+      </button>
+    </div>
+
+    <!-- Notification Bell -->
+    <div class="topbar-dropdown-wrapper">
+      <button type="button" class="btn-topbar-icon" id="adminBellBtn" title="Alerts & Work Orders">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span class="topbar-badge" id="topbarAlertBadge">0</span>
+      </button>
+    </div>
+
+    <!-- Public Live Site Link -->
+    <a href="/" target="_blank" class="btn-topbar-site" title="Open Public Website">
+      <span>Live Site ↗</span>
+    </a>
+
+    <!-- User Profile Dropdown -->
+    <div class="topbar-user-profile">
+      <div class="topbar-avatar">
+        <span>{{ substr((auth('admin')->user() ?? auth()->user())?->name ?? 'A', 0, 1) }}</span>
+      </div>
+      <div class="topbar-user-info">
+        <span class="topbar-user-name">{{ (auth('admin')->user() ?? auth()->user())?->name ?? 'Admin User' }}</span>
+        <span class="topbar-user-role">Operations HQ</span>
+      </div>
+    </div>
+  </div>
+</header>
