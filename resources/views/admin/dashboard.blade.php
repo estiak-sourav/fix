@@ -2,7 +2,7 @@
   <!-- Paces Page Header Box -->
   <div class="page-header-box">
     <div>
-      <h1 class="page-header-title">Operations Command Center</h1>
+      <h1 class="page-header-title">Dashboard</h1>
       <p class="page-header-subtitle">Real-time building facility dispatch, SLA compliance & work orders monitoring</p>
     </div>
     <div style="display:flex; align-items:center; gap:10px;">

@@ -30,10 +30,12 @@ class FixEnterpriseWorkflowTest extends TestCase
     {
         $email = 'corporate.client@example.com';
 
-        // 1. Send OTP
+        // 1. Send OTP (Registration flow with BD phone)
         $response = $this->postJson('/auth/send-otp', [
             'email' => $email,
             'name' => 'Tanvir Ahmed',
+            'phone' => '01712345678',
+            'purpose' => 'register',
         ]);
 
         $response->assertStatus(200);

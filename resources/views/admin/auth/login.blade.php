@@ -6,12 +6,15 @@
   <title>Staff Login | FIX Admin Command Center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, body, button, input, select, textarea {
+      font-family: 'Poppins', sans-serif;
+    }
     
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Poppins', sans-serif;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -90,7 +93,7 @@
       font-size: 1.45rem;
       font-weight: 800;
       color: #0f172a;
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Poppins', sans-serif;
       letter-spacing: -0.02em;
     }
 

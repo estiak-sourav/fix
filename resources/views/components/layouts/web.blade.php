@@ -25,7 +25,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="{{ asset('assets/images/logo-dark-crop.png') }}">
+  <link rel="icon" type="image/png" href="{{ asset(\App\Models\SiteSetting::get('favicon', 'assets/images/logo-white-crop.png')) }}">
 
   <!-- Google Fonts Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,7 +70,7 @@
 
   <!-- Top Announcement Bar -->
   <div class="top-bar">
-    <div class="container top-bar-container">
+    <div class="container top-bar-inner">
       <div class="top-bar-left">
         <div class="top-bar-item">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -114,7 +114,7 @@
 
   <!-- Core Javascript (100% Preserved) -->
   <script src="{{ asset('assets/js/main.js') }}"></script>
-  <script src="{{ asset('assets/js/auth.js') }}"></script>
+  <script src="{{ asset('assets/js/auth.js') }}?v={{ filemtime(public_path('assets/js/auth.js')) }}"></script>
 
   {{ $scripts ?? '' }}
 </body>

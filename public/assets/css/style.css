@@ -307,12 +307,14 @@ button, input, select, textarea {
   white-space: nowrap;
 }
 
-.top-bar-inner {
+.top-bar-inner,
+.top-bar-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
   white-space: nowrap;
+  flex-wrap: nowrap;
 }
 
 .top-bar-left, .top-bar-right {

@@ -21,9 +21,12 @@ class OtpAuthController extends Controller
     {
         $result = $action->execute($request->validated(), $request->ip(), $request->userAgent());
 
+        $actionWord = ($result['purpose'] ?? 'login') === 'register' ? 'registration' : 'sign in';
+
         return response()->json([
             'success' => true,
-            'message' => 'Verification code sent to ' . $result['email'],
+            'message' => "Verification code sent to {$result['email']} for {$actionWord}.",
+            'purpose' => $result['purpose'] ?? 'login',
             'debug_code' => app()->isLocal() ? $result['raw_otp'] : null,
         ]);
     }

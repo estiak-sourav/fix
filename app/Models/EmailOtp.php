@@ -10,6 +10,7 @@ class EmailOtp extends Model
         'email',
         'otp_code_hash',
         'purpose',
+        'payload',
         'expires_at',
         'attempts',
         'is_consumed',
@@ -20,6 +21,7 @@ class EmailOtp extends Model
     protected function casts(): array
     {
         return [
+            'payload' => 'array',
             'expires_at' => 'datetime',
             'is_consumed' => 'boolean',
             'attempts' => 'integer',

@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 class VerifyOtpAction
 {
     /**
-     * Verify OTP code and authenticate user via web guard.
+     * Verify OTP code and authenticate user via web guard for Login or Registration.
      *
      * @param  array{email: string, otp_code: string}  $data
      * @throws ValidationException
@@ -43,28 +43,49 @@ class VerifyOtpAction
         if (!Hash::check($inputCode, $otpRecord->otp_code_hash)) {
             $otpRecord->increment('attempts');
             throw ValidationException::withMessages([
-                'otp_code' => ['Invalid OTP code. Please try again.'],
+                'otp_code' => ['Invalid OTP code. Please check and try again.'],
             ]);
         }
 
         $otpRecord->update(['is_consumed' => true]);
 
-        $user = User::firstOrCreate(
-            ['email' => $email],
-            [
-                'name' => explode('@', $email)[0],
+        $payload = $otpRecord->payload ?? [];
+
+        if ($otpRecord->purpose === 'register') {
+            $user = User::create([
+                'name' => $payload['name'] ?? explode('@', $email)[0],
+                'email' => $email,
+                'phone' => $payload['phone'] ?? null,
                 'role' => 'customer',
                 'is_active' => true,
-            ]
-        );
-
-        if (!$user->is_active) {
-            throw ValidationException::withMessages([
-                'email' => ['This account has been deactivated. Please contact support.'],
+                'email_verified_at' => now(),
             ]);
-        }
+        } else {
+            $user = User::where('email', $email)->first();
 
-        $user->update(['email_verified_at' => now()]);
+            if (!$user) {
+                $user = User::create([
+                    'name' => $payload['name'] ?? explode('@', $email)[0],
+                    'email' => $email,
+                    'phone' => $payload['phone'] ?? null,
+                    'role' => 'customer',
+                    'is_active' => true,
+                    'email_verified_at' => now(),
+                ]);
+            } else {
+                if (!$user->is_active) {
+                    throw ValidationException::withMessages([
+                        'email' => ['This account has been deactivated. Please contact support.'],
+                    ]);
+                }
+
+                if (empty($user->phone) && !empty($payload['phone'])) {
+                    $user->update(['phone' => $payload['phone']]);
+                }
+
+                $user->update(['email_verified_at' => now()]);
+            }
+        }
 
         Auth::guard('web')->login($user, true);
         $request->session()->regenerate();

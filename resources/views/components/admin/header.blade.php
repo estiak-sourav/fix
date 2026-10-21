@@ -14,29 +14,16 @@
   </div>
 
   <div class="topbar-right">
-    <!-- Live Audio Alert Indicator & Test Button -->
-    <div class="topbar-audio-item">
-      <div class="audio-pulse-indicator" id="audioPulseIndicator" title="Real-Time Dispatch Sound Active">
-        <span class="pulse-dot"></span>
-        <span class="audio-label">Live Chime Active</span>
-      </div>
-      <button type="button" onclick="playChime()" class="btn-topbar-chime" title="Test Emergency Audio Alert">
-        <span>Test 🔔</span>
-      </button>
-    </div>
-
     <!-- Notification Bell -->
+    @php
+      $topbarUnreadCount = \App\Models\AdminNotification::where('is_read', false)->count();
+    @endphp
     <div class="topbar-dropdown-wrapper">
-      <button type="button" class="btn-topbar-icon" id="adminBellBtn" title="Alerts & Work Orders">
+      <a href="{{ route('admin.notifications.index') }}" class="btn-topbar-icon" id="adminBellBtn" title="Alerts & Work Orders" style="text-decoration:none;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-        <span class="topbar-badge" id="topbarAlertBadge">0</span>
-      </button>
+        <span class="topbar-badge" id="topbarAlertBadge">{{ $topbarUnreadCount }}</span>
+      </a>
     </div>
-
-    <!-- Public Live Site Link -->
-    <a href="/" target="_blank" class="btn-topbar-site" title="Open Public Website">
-      <span>Live Site ↗</span>
-    </a>
 
     <!-- User Profile Dropdown -->
     <div class="topbar-user-profile">

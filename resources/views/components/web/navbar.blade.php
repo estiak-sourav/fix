@@ -29,6 +29,8 @@
     </nav>
 
     <div class="nav-actions">
+      <a href="{{ route('vendor') }}" class="btn btn-vendor-nav">Become a Partner</a>
+
       @auth
         <div class="nav-dropdown-item user-menu" style="position: relative;">
           <a href="{{ route('customer.bookings') }}" class="btn btn-outline-primary" style="display:inline-flex; align-items:center; gap:6px; padding: 0.5rem 0.9rem; font-size: 0.85rem; border-radius: 6px; font-weight:600;">
@@ -58,9 +60,6 @@
           <span>Sign In</span>
         </button>
       @endauth
-
-      <a href="{{ route('booking.create') }}" class="btn btn-accent" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Book Service</a>
-      <a href="{{ route('vendor') }}" class="btn btn-vendor-nav">Become a Partner</a>
 
       <button class="menu-toggle" aria-label="Open Navigation Menu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">

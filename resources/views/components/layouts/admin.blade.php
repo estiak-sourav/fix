@@ -9,7 +9,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
     /* ==========================================================================
@@ -55,8 +55,11 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, body, button, input, select, textarea {
+      font-family: 'Poppins', sans-serif;
+    }
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Poppins', sans-serif;
       background: var(--paces-bg);
       color: var(--paces-text-dark);
       display: flex;
@@ -102,7 +105,7 @@
       font-weight: 800;
       letter-spacing: 0.05em;
       color: #ffffff;
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Poppins', sans-serif;
     }
     .brand-badge {
       font-size: 0.6rem;
@@ -170,6 +173,87 @@
     .nav-badge.bg-warning {
       background: #f59e0b;
       color: #000;
+    }
+
+    /* Collapsible Sub-menu Navigation (Paces Pattern) */
+    .nav-group {
+      margin-bottom: 3px;
+    }
+    .nav-group .nav-toggle {
+      width: 100%;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+    }
+    .nav-arrow {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.25s ease;
+      color: #64748b;
+    }
+    .nav-arrow svg {
+      width: 14px;
+      height: 14px;
+      stroke-width: 2.5;
+    }
+    .nav-group.open > .nav-toggle .nav-arrow {
+      transform: rotate(90deg);
+      color: #ffffff;
+    }
+    .nav-group.open > .nav-toggle {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .nav-group.active > .nav-toggle {
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .nav-submenu {
+      display: none;
+      flex-direction: column;
+      padding: 4px 0 6px 14px;
+      margin-left: 12px;
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      gap: 2px;
+    }
+    .nav-group.open .nav-submenu {
+      display: flex;
+    }
+    .nav-subitem {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.45rem 0.75rem;
+      border-radius: var(--paces-radius-sm);
+      color: var(--paces-sidebar-text);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .nav-subitem:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .nav-subitem.active {
+      color: #ffffff;
+      background: rgba(62, 96, 213, 0.22);
+      font-weight: 600;
+    }
+    .nav-subitem.active .nav-subdot {
+      background: var(--paces-primary);
+      box-shadow: 0 0 8px var(--paces-primary);
+    }
+    .nav-subdot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #475569;
+      transition: all 0.2s;
     }
 
     .sidebar-user-footer {
@@ -446,7 +530,7 @@
       font-size: 1.35rem;
       font-weight: 800;
       color: var(--paces-text-dark);
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Poppins', sans-serif;
     }
     .page-header-subtitle {
       font-size: 0.85rem;
@@ -474,7 +558,7 @@
       font-size: 1.05rem;
       font-weight: 700;
       color: var(--paces-text-dark);
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Poppins', sans-serif;
     }
 
     .metrics-grid-paces {
@@ -528,7 +612,7 @@
       font-size: 2rem;
       font-weight: 800;
       color: var(--paces-text-dark);
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Poppins', sans-serif;
       line-height: 1.1;
       margin-bottom: 8px;
     }
@@ -683,7 +767,7 @@
       font-size: 1.1rem;
       font-weight: 800;
       color: var(--paces-text-dark);
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Poppins', sans-serif;
     }
     .panel-header {
       display: flex;
@@ -865,6 +949,14 @@
     function toggleAdminSidebar() {
       const sidebar = document.getElementById('appSidebar');
       if (sidebar) sidebar.classList.toggle('show');
+    }
+
+    // Toggle collapsible submenu group
+    function toggleNavGroup(btn) {
+      const group = btn.closest('.nav-group');
+      if (group) {
+        group.classList.toggle('open');
+      }
     }
 
     // Poll for real-time inbound booking alerts every 15s

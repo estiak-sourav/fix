@@ -44,7 +44,7 @@
           </div>
           <div style="text-align:right;">
             <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Billing Total</div>
-            <div style="font-size:1.35rem; font-weight:800; color:var(--paces-success); font-family:'Outfit', sans-serif;">
+            <div style="font-size:1.35rem; font-weight:800; color:var(--paces-success); font-family:'Poppins', sans-serif;">
               ৳ {{ number_format($booking->final_cost ?? ($booking->estimated_cost ?? 0), 2) }}
             </div>
           </div>
@@ -72,7 +72,7 @@
         <!-- Problem Description Box -->
         <div style="background:var(--paces-primary-subtle); border-radius:10px; padding:1.25rem; border:1px solid var(--paces-primary-border); margin-bottom:1.5rem;">
           <div style="font-size:0.75rem; font-weight:800; color:var(--paces-primary); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Requested Service</div>
-          <div style="font-size:1.2rem; font-weight:800; color:var(--paces-text-dark); margin-bottom:8px; font-family:'Outfit', sans-serif;">
+          <div style="font-size:1.2rem; font-weight:800; color:var(--paces-text-dark); margin-bottom:8px; font-family:'Poppins', sans-serif;">
             {{ $booking->service?->title ?? ($booking->amcPlan?->name ?? 'Custom Facility Service') }}
           </div>
           <div style="font-size:0.9rem; color:var(--paces-text-dark); line-height:1.6; white-space:pre-line;">

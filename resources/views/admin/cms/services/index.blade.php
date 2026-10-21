@@ -46,7 +46,7 @@
                 <span style="font-weight:600; color:var(--paces-text-dark);">{{ $service->category?->name ?? 'Uncategorized' }}</span>
               </td>
               <td>
-                <strong style="color:var(--paces-success); font-family:'Outfit', sans-serif;">৳ {{ number_format($service->price_starting ?? 0, 2) }}</strong>
+                <strong style="color:var(--paces-success); font-family:'Poppins', sans-serif;">৳ {{ number_format($service->price_starting ?? 0, 2) }}</strong>
                 @if($service->pricing_unit)
                   <span style="font-size:0.75rem; color:var(--paces-text-muted);">/ {{ $service->pricing_unit }}</span>
                 @endif
