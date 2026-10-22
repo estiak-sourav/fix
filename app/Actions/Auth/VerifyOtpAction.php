@@ -60,7 +60,10 @@ class VerifyOtpAction
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]);
+
+            \App\Models\DailyAnalytics::recordRegistration();
         } else {
+            \App\Models\DailyAnalytics::recordLogin();
             $user = User::where('email', $email)->first();
 
             if (!$user) {

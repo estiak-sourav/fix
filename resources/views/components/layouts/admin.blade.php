@@ -11,6 +11,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+  <!-- Chart.js for High-Performance Analytics & Bar Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <style>
     /* ==========================================================================
        Paces Bootstrap/Tailwind Modern SaaS Admin Theme Tokens
@@ -64,12 +67,17 @@
       color: var(--paces-text-dark);
       display: flex;
       min-height: 100vh;
-      overflow-x: hidden;
+      overflow-x: clip;
     }
 
     /* ---------------- Sidebar (Paces Dark Sidebar) ---------------- */
     .app-sidebar {
       width: 260px;
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
       background: var(--paces-sidebar-bg);
       border-right: 1px solid var(--paces-sidebar-border);
       display: flex;
@@ -119,6 +127,14 @@
       padding: 1.25rem 0.85rem;
       flex: 1;
       overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .sidebar-menu-wrapper::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
     }
     .nav-header {
       font-size: 0.68rem;
@@ -321,6 +337,8 @@
       display: flex;
       flex-direction: column;
       min-width: 0;
+      margin-left: 260px;
+      width: calc(100% - 260px);
     }
 
     /* ---------------- Topbar (Paces Style) ---------------- */
@@ -871,6 +889,10 @@
       }
       .app-sidebar.show {
         left: 0;
+      }
+      .app-main {
+        margin-left: 0;
+        width: 100%;
       }
       .topbar-search-box {
         display: none;

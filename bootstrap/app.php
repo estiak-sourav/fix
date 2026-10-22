@@ -28,6 +28,10 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(append: [
+            \App\Http\Middleware\TrackWebsiteVisitor::class,
+        ]);
+
         $middleware->redirectGuestsTo(fn (Request $request) =>
             str_starts_with($request->getHost(), 'admin.') || $request->is('admin*')
                 ? route('admin.login')

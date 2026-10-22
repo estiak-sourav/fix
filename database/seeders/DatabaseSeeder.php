@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             FaqSeeder::class,
             TestimonialSeeder::class,
             SiteCmsSeeder::class,
+            DailyAnalyticsSeeder::class,
         ]);
     }
 }

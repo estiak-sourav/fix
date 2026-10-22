@@ -184,4 +184,65 @@ class AdminNavigationAndManagementTest extends TestCase
         $this->assertEquals('Rahim & Sons Logistics', $client1->company_name);
         $this->assertEquals('industrial', $client1->property_type);
     }
+
+    /**
+     * Test admin dashboard with daily visitor metrics, bar charts, and date range filters.
+     */
+    public function test_dashboard_analytics_bar_charts_and_date_range_filters(): void
+    {
+        $admin = Admin::first();
+
+        // 1. Default view with 10 dedicated metric bars
+        $defaultRes = $this->actingAs($admin, 'admin')->get('/admin');
+        $defaultRes->assertStatus(200);
+        $defaultRes->assertSee('unifiedCleanBarChart');
+        $defaultRes->assertSee('Total visitor');
+        $defaultRes->assertSee('New visitor');
+        $defaultRes->assertSee('Login');
+        $defaultRes->assertSee('Registration');
+        $defaultRes->assertSee('Service visitor');
+        $defaultRes->assertSee('AMC visitor');
+        $defaultRes->assertSee('Service Request');
+        $defaultRes->assertSee('Service Book');
+        $defaultRes->assertSee('AMC Request');
+        $defaultRes->assertSee('AMC Book');
+        $defaultRes->assertSee('Yesterday');
+        $defaultRes->assertSee('Today');
+        $defaultRes->assertSee('Date to Date');
+        $defaultRes->assertDontSee('5 Metric Bars');
+        $defaultRes->assertDontSee('Compare with Previous Day');
+        $defaultRes->assertDontSee('Real-time facility operations, traffic analytics, and dispatch monitoring');
+        $defaultRes->assertSee('dashboard-sticky-bar');
+        $defaultRes->assertSee('Orders');
+        $defaultRes->assertSee('Subscriptions');
+        $defaultRes->assertSee('Urgent');
+        $defaultRes->assertSee('Processing');
+        $defaultRes->assertSee('Pending');
+
+        // 2. Today Preset
+        $todayRes = $this->actingAs($admin, 'admin')->get('/admin?range=today');
+        $todayRes->assertStatus(200);
+        $todayRes->assertSee('Today');
+
+        // 3. Yesterday / Previous Day Preset
+        $yesterdayRes = $this->actingAs($admin, 'admin')->get('/admin?range=yesterday');
+        $yesterdayRes->assertStatus(200);
+        $yesterdayRes->assertSee('Yesterday');
+
+        // 4. Single Date Jump (view any specific day)
+        $singleDateRes = $this->actingAs($admin, 'admin')->get('/admin?date=2026-10-10');
+        $singleDateRes->assertStatus(200);
+        $singleDateRes->assertSee('Date: Oct 10, 2026');
+
+        // 5. Custom Date to Date Range
+        $customRes = $this->actingAs($admin, 'admin')->get('/admin?range=custom&start_date=2026-10-01&end_date=2026-10-15');
+        $customRes->assertStatus(200);
+        $customRes->assertSee('Custom: Oct 01, 2026');
+
+        // 5. Test public visitor tracking increment
+        $initialVisitors = \App\Models\DailyAnalytics::forDate()->total_visitors;
+        $this->get('/');
+        $updatedVisitors = \App\Models\DailyAnalytics::forDate()->fresh()->total_visitors;
+        $this->assertGreaterThanOrEqual($initialVisitors, $updatedVisitors);
+    }
 }
