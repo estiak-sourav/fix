@@ -1,4 +1,4 @@
-<x-layouts.admin title="Dashboard | FIX Command Center">
+<x-layouts.admin title="Dashboard | Fix">
   <style>
     .dashboard-sticky-bar {
       position: sticky;
@@ -23,6 +23,42 @@
         margin-left: -1rem;
         margin-right: -1rem;
         padding: 0.75rem 1rem;
+      }
+    }
+    .earnings-analytics-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .earning-card-body {
+      display: grid;
+      grid-template-columns: 230px 1fr;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    @media (max-width: 992px) {
+      .earnings-analytics-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .earning-card-body {
+        grid-template-columns: 1fr !important;
+      }
+    }
+    .top-tasks-chat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 1200px) {
+      .top-tasks-chat-grid {
+        grid-template-columns: 1fr 1fr !important;
+      }
+    }
+    @media (max-width: 768px) {
+      .top-tasks-chat-grid {
+        grid-template-columns: 1fr !important;
       }
     }
     .analytics-barchart-grid {
@@ -412,6 +448,393 @@
     </div>
   </div>
 
+  <!-- 📈 Earning & Sales Analytics Section (Exact Screenshot Match) -->
+  <div class="earnings-analytics-grid">
+    
+    <!-- Left Card: Earning -->
+    <div class="card-paces" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
+      <!-- Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="font-size:1.1rem; font-weight:700; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Earning</h3>
+        <div style="display:inline-flex; align-items:center; gap:6px;">
+          <div style="position:relative;">
+            <select id="earningMonthSelector" onchange="switchEarningMonth(this.value)" style="appearance:none; -webkit-appearance:none; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:5px 28px 5px 12px; font-size:0.82rem; font-weight:500; color:#475569; cursor:pointer; outline:none; font-family:'Poppins', sans-serif;">
+              <option value="1" selected>Jan</option>
+              <option value="2">Feb</option>
+              <option value="3">Mar</option>
+              <option value="4">Apr</option>
+              <option value="5">May</option>
+              <option value="6">Jun</option>
+              <option value="7">Jul</option>
+              <option value="8">Aug</option>
+              <option value="9">Sep</option>
+              <option value="10">Oct</option>
+              <option value="11">Nov</option>
+              <option value="12">Dec</option>
+            </select>
+            <svg style="position:absolute; right:8px; top:50%; transform:translateY(-50%); pointer-events:none;" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <button type="button" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:5px 12px; font-size:0.82rem; font-weight:500; color:#475569; cursor:pointer; font-family:'Poppins', sans-serif;">
+            Month
+          </button>
+        </div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="earning-card-body">
+        <!-- Metrics Column -->
+        <div>
+          <div style="font-size:0.85rem; color:#64748b; font-weight:500; margin-bottom:2px;">This month</div>
+          <div id="earningThisMonthVal" style="font-size:1.85rem; font-weight:800; color:#1e293b; letter-spacing:-0.02em; line-height:1.2;">$2453.35</div>
+          <div style="display:flex; align-items:center; gap:6px; margin:8px 0 16px 0;">
+            <span id="earningGrowthBadge" style="background:#dcfce7; color:#16a34a; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:6px;">+ 0.2%</span>
+            <span style="font-size:0.78rem; color:#64748b; font-weight:500;">From previous period</span>
+          </div>
+
+          <a href="{{ route('admin.bookings.index') }}" style="display:inline-flex; align-items:center; gap:8px; background:#4361ee; color:#ffffff; font-size:0.82rem; font-weight:600; padding:7px 16px; border-radius:6px; text-decoration:none; box-shadow:0 4px 10px rgba(67, 97, 238, 0.25); transition:all 0.2s ease;">
+            <span>View Details</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </a>
+
+          <div style="margin-top:20px;">
+            <div style="font-size:0.85rem; color:#64748b; font-weight:500; margin-bottom:2px;">Last month</div>
+            <div id="earningLastMonthVal" style="font-size:1.25rem; font-weight:700; color:#1e293b;">$2281.04</div>
+          </div>
+        </div>
+
+        <!-- Spline Line Chart -->
+        <div style="position:relative; width:100%; height:200px;">
+          <canvas id="earningSplineChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Card: Sales Analytics -->
+    <div class="card-paces" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
+      <!-- Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+        <h3 style="font-size:1.1rem; font-weight:700; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Sales Analytics</h3>
+      </div>
+
+      <!-- Donut Chart Canvas with in-slice percentage rendering -->
+      <div style="position:relative; width:100%; height:180px; display:flex; align-items:center; justify-content:center;">
+        <canvas id="salesAnalyticsDonutChart"></canvas>
+      </div>
+
+      <!-- Bottom Legends (3 items side by side matching screenshot) -->
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:1rem; text-align:center; border-top:1px solid #f1f5f9; padding-top:1rem;">
+        <div>
+          <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.78rem; font-weight:600; color:#64748b; margin-bottom:3px;">
+            <span style="width:8px; height:8px; border-radius:50%; background:#4361ee; display:inline-block;"></span>
+            Product A
+          </div>
+          <div style="font-size:0.95rem; font-weight:800; color:#1e293b;">$ 2,132</div>
+        </div>
+
+        <div>
+          <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.78rem; font-weight:600; color:#64748b; margin-bottom:3px;">
+            <span style="width:8px; height:8px; border-radius:50%; background:#2ec4b6; display:inline-block;"></span>
+            Product B
+          </div>
+          <div style="font-size:0.95rem; font-weight:800; color:#1e293b;">$ 1,763</div>
+        </div>
+
+        <div>
+          <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.78rem; font-weight:600; color:#64748b; margin-bottom:3px;">
+            <span style="width:8px; height:8px; border-radius:50%; background:#ff5c5c; display:inline-block;"></span>
+            Product C
+          </div>
+          <div style="font-size:0.95rem; font-weight:800; color:#1e293b;">$ 973</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 🎯 Top Selling, Tasks & Chat Widget Row (Exact Screenshot Match) -->
+  <div class="top-tasks-chat-grid">
+
+    <!-- Card 1: Top Selling Product -->
+    <div class="card-paces" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
+      <div>
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+          <h3 style="font-size:1.05rem; font-weight:700; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Top Selling product</h3>
+          <div style="display:inline-flex; align-items:center; gap:6px;">
+            <div style="position:relative;">
+              <select style="appearance:none; -webkit-appearance:none; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:4px 26px 4px 10px; font-size:0.8rem; font-weight:500; color:#475569; cursor:pointer; outline:none; font-family:'Poppins', sans-serif;">
+                <option selected>Jan</option>
+                <option>Feb</option>
+                <option>Mar</option>
+                <option>Apr</option>
+                <option>May</option>
+                <option>Jun</option>
+                <option>Jul</option>
+                <option>Aug</option>
+                <option>Sep</option>
+                <option>Oct</option>
+                <option>Nov</option>
+                <option>Dec</option>
+              </select>
+              <svg style="position:absolute; right:8px; top:50%; transform:translateY(-50%); pointer-events:none;" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <button type="button" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:4px 12px; font-size:0.8rem; font-weight:500; color:#475569; cursor:pointer; font-family:'Poppins', sans-serif;">Month</button>
+          </div>
+        </div>
+
+        <!-- Top Summary Block (Centered) -->
+        <div style="text-align:center; padding-bottom:1.25rem;">
+          <div style="font-size:0.85rem; color:#64748b; font-weight:500; margin-bottom:2px;">Product A</div>
+          <div style="font-size:1.85rem; font-weight:800; color:#1e293b; letter-spacing:-0.02em;">$ 6385</div>
+          <div style="display:inline-flex; align-items:center; gap:6px; margin-top:6px;">
+            <span style="background:#dcfce7; color:#16a34a; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:3px;">
+              0.6% <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+            </span>
+            <span style="font-size:0.78rem; color:#64748b; font-weight:500;">From previous period</span>
+          </div>
+        </div>
+
+        <!-- Product List Rows -->
+        <div style="display:flex; flex-direction:column;">
+          <!-- Item 1: Product A (37%) -->
+          <div style="border-top:1px solid #f1f5f9; padding:12px 0; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:0.9rem; font-weight:700; color:#1e293b;">Product A</div>
+              <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">Neque quis est</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <svg width="44" height="44" viewBox="0 0 44 44">
+                <circle cx="22" cy="22" r="17" fill="none" stroke="#f1f5f9" stroke-width="4.5" />
+                <circle cx="22" cy="22" r="17" fill="none" stroke="#4361ee" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="67.2" transform="rotate(-90 22 22)" />
+              </svg>
+              <div style="text-align:right; min-width:44px;">
+                <div style="font-size:0.72rem; color:#94a3b8; font-weight:500;">Sales</div>
+                <div style="font-size:0.95rem; font-weight:800; color:#1e293b;">37 %</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 2: Product B (72%) -->
+          <div style="border-top:1px solid #f1f5f9; padding:12px 0; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:0.9rem; font-weight:700; color:#1e293b;">Product B</div>
+              <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">Quis autem iure</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <svg width="44" height="44" viewBox="0 0 44 44">
+                <circle cx="22" cy="22" r="17" fill="none" stroke="#f1f5f9" stroke-width="4.5" />
+                <circle cx="22" cy="22" r="17" fill="none" stroke="#2ec4b6" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="29.9" transform="rotate(-90 22 22)" />
+              </svg>
+              <div style="text-align:right; min-width:44px;">
+                <div style="font-size:0.72rem; color:#94a3b8; font-weight:500;">Sales</div>
+                <div style="font-size:0.95rem; font-weight:800; color:#1e293b;">72 %</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 3: Product C (54%) -->
+          <div style="border-top:1px solid #f1f5f9; padding:12px 0 4px 0; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:0.9rem; font-weight:700; color:#1e293b;">Product C</div>
+              <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">Sed aliquam mauris.</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <svg width="44" height="44" viewBox="0 0 44 44">
+                <circle cx="22" cy="22" r="17" fill="none" stroke="#f1f5f9" stroke-width="4.5" />
+                <circle cx="22" cy="22" r="17" fill="none" stroke="#ff5c5c" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="49.1" transform="rotate(-90 22 22)" />
+              </svg>
+              <div style="text-align:right; min-width:44px;">
+                <div style="font-size:0.72rem; color:#94a3b8; font-weight:500;">Sales</div>
+                <div style="font-size:0.95rem; font-weight:800; color:#1e293b;">54 %</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Tasks -->
+    <div class="card-paces" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
+      <div>
+        <!-- Header with Segmented Switch -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+          <h3 style="font-size:1.05rem; font-weight:700; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Tasks</h3>
+          <div style="display:inline-flex; background:#f1f5f9; border-radius:8px; padding:3px;">
+            <button id="taskTabInProcess" type="button" onclick="switchTaskTab('in_process')" style="background:#4361ee; color:#ffffff; border:none; padding:5px 14px; border-radius:6px; font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.2s ease;">In Process</button>
+            <button id="taskTabUpcoming" type="button" onclick="switchTaskTab('upcoming')" style="background:transparent; color:#64748b; border:none; padding:5px 14px; border-radius:6px; font-size:0.8rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;">Upcoming</button>
+          </div>
+        </div>
+
+        <!-- Task List Items -->
+        <div id="taskListContainer" style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Task Item 1 -->
+          <div class="task-row-item" style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f8fafc;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <input type="checkbox" onchange="toggleTaskDone(this)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
+              <div>
+                <div class="task-title" style="font-size:0.88rem; font-weight:700; color:#1e293b; transition:color 0.2s;">Skote Saas Dashboard</div>
+                <div style="font-size:0.75rem; color:#94a3b8;">Assigned to Mark</div>
+              </div>
+            </div>
+            <div style="display:inline-flex; align-items:center; gap:10px;">
+              <button type="button" onclick="editTask(this)" style="background:none; border:none; color:#10b981; cursor:pointer; padding:4px;" title="Edit Task">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              </button>
+              <button type="button" onclick="deleteTask(this)" style="background:none; border:none; color:#ef4444; cursor:pointer; padding:4px;" title="Delete Task">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Task Item 2 -->
+          <div class="task-row-item" style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f8fafc;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <input type="checkbox" onchange="toggleTaskDone(this)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
+              <div>
+                <div class="task-title" style="font-size:0.88rem; font-weight:700; color:#1e293b; transition:color 0.2s;">New Landing UI</div>
+                <div style="font-size:0.75rem; color:#94a3b8;">Assigned to Team A</div>
+              </div>
+            </div>
+            <div style="display:inline-flex; align-items:center; gap:10px;">
+              <button type="button" onclick="editTask(this)" style="background:none; border:none; color:#10b981; cursor:pointer; padding:4px;" title="Edit Task">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              </button>
+              <button type="button" onclick="deleteTask(this)" style="background:none; border:none; color:#ef4444; cursor:pointer; padding:4px;" title="Delete Task">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Task Item 3 -->
+          <div class="task-row-item" style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f8fafc;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <input type="checkbox" onchange="toggleTaskDone(this)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
+              <div>
+                <div class="task-title" style="font-size:0.88rem; font-weight:700; color:#1e293b; transition:color 0.2s;">Brand logo design</div>
+                <div style="font-size:0.75rem; color:#94a3b8;">Assigned to Janis</div>
+              </div>
+            </div>
+            <div style="display:inline-flex; align-items:center; gap:10px;">
+              <button type="button" onclick="editTask(this)" style="background:none; border:none; color:#10b981; cursor:pointer; padding:4px;" title="Edit Task">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              </button>
+              <button type="button" onclick="deleteTask(this)" style="background:none; border:none; color:#ef4444; cursor:pointer; padding:4px;" title="Delete Task">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Task Item 4 -->
+          <div class="task-row-item" style="display:flex; align-items:center; justify-content:space-between; padding:10px 0;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <input type="checkbox" onchange="toggleTaskDone(this)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
+              <div>
+                <div class="task-title" style="font-size:0.88rem; font-weight:700; color:#1e293b; transition:color 0.2s;">Blog Template UI</div>
+                <div style="font-size:0.75rem; color:#94a3b8;">Assigned to Dianna</div>
+              </div>
+            </div>
+            <div style="display:inline-flex; align-items:center; gap:10px;">
+              <button type="button" onclick="editTask(this)" style="background:none; border:none; color:#10b981; cursor:pointer; padding:4px;" title="Edit Task">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              </button>
+              <button type="button" onclick="deleteTask(this)" style="background:none; border:none; color:#ef4444; cursor:pointer; padding:4px;" title="Delete Task">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add New Task Button -->
+      <div style="text-align:center; padding-top:1.25rem;">
+        <button type="button" onclick="addNewTaskPrompt()" style="background:#4361ee; color:#ffffff; border:none; padding:8px 24px; border-radius:6px; font-size:0.82rem; font-weight:600; cursor:pointer; box-shadow:0 4px 10px rgba(67, 97, 238, 0.25); transition:all 0.2s ease;">Add new Task</button>
+      </div>
+    </div>
+
+    <!-- Card 3: Steven Franklin (Live Chat / Dispatch Widget) -->
+    <div class="card-paces" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
+      <div>
+        <!-- Chat Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <div>
+            <h4 style="font-size:0.98rem; font-weight:700; color:#1e293b; margin:0;">Steven Franklin</h4>
+            <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; color:#16a34a; font-weight:600; margin-top:2px;">
+              <span style="width:7px; height:7px; border-radius:50%; background:#16a34a; display:inline-block;"></span> Active now
+            </div>
+          </div>
+          <div style="display:inline-flex; align-items:center; gap:6px;">
+            <button type="button" style="width:32px; height:32px; border-radius:50%; border:1px solid #e2e8f0; background:#f8fafc; color:#64748b; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;" title="Search messages">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+            <button type="button" style="width:32px; height:32px; border-radius:50%; border:1px solid #e2e8f0; background:#f8fafc; color:#64748b; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;" title="Chat settings">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+            <button type="button" style="width:32px; height:32px; border-radius:50%; border:1px solid #e2e8f0; background:#f8fafc; color:#64748b; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;" title="Options">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat Bubble Stream Area -->
+        <div id="dashboardChatStream" style="height:210px; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:12px; border-top:1px solid #f1f5f9; padding-top:12px;">
+          <!-- Bubble 1: Steven Franklin -->
+          <div style="position:relative; align-self:flex-start; max-width:85%;">
+            <div style="background:#eef2ff; border-radius:10px; padding:10px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span style="font-size:0.78rem; font-weight:700; color:#4361ee;">Steven Franklin</span>
+                <span style="font-size:0.8rem; color:#94a3b8; cursor:pointer;">⋮</span>
+              </div>
+              <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">& Next meeting tomorrow 10.00AM</div>
+              <div style="display:flex; align-items:center; gap:4px; font-size:0.68rem; color:#94a3b8; margin-top:6px;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                10.06
+              </div>
+            </div>
+            <!-- Avatar Icon Badge -->
+            <div style="position:absolute; right:-10px; bottom:-6px; width:22px; height:22px; border-radius:50%; background:#4361ee; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:0.65rem; border:2px solid #ffffff;">
+              👤
+            </div>
+          </div>
+
+          <!-- Bubble 2: Admin Outgoing -->
+          <div style="position:relative; align-self:flex-end; max-width:82%;">
+            <div style="background:#f1f5f9; border-radius:10px; padding:10px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.02); text-align:right;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; flex-direction:row-reverse;">
+                <span style="font-size:0.78rem; font-weight:700; color:#3e60d5;">admin</span>
+                <span style="font-size:0.8rem; color:#94a3b8; cursor:pointer;">⋮</span>
+              </div>
+              <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">Wow that's great</div>
+              <div style="display:flex; align-items:center; justify-content:flex-end; gap:4px; font-size:0.68rem; color:#94a3b8; margin-top:6px;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                10.07
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Footer / Input Row -->
+      <div style="display:flex; gap:8px; align-items:center; margin-top:1rem; border-top:1px solid #f1f5f9; padding-top:10px;">
+        <div style="flex:1; display:flex; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:4px 8px;">
+          <input id="chatInputMessage" type="text" placeholder="Enter Mess..." onkeydown="if(event.key==='Enter') sendChatQuickMessage()" style="flex:1; border:none; background:transparent; font-size:0.82rem; color:#1e293b; outline:none; font-family:'Poppins', sans-serif; padding:4px;">
+          <div style="display:flex; align-items:center; gap:6px; color:#94a3b8; font-size:0.9rem; cursor:pointer;">
+            <span title="Emoji">😊</span>
+            <span title="Attach Image">🖼️</span>
+            <span title="Attach File">📄</span>
+          </div>
+        </div>
+        <button type="button" onclick="sendChatQuickMessage()" style="background:#4361ee; color:#ffffff; border:none; border-radius:6px; padding:7px 14px; font-size:0.82rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 3px 8px rgba(67, 97, 238, 0.25);">
+          Send <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
   <!-- Recent Inbound Work Orders (Table Card) -->
   <div class="card-paces">
     <div class="card-header-paces">
@@ -655,7 +1078,326 @@
       }
     }
 
+    // Earning Spline Chart & Month Switcher Data (Screenshot Match)
+    const earningMonthlyData = {
+      1: { thisMonth: "$2453.35", lastMonth: "$2281.04", growth: "+ 0.2%", values: [31, 40, 36, 51, 49, 72, 69, 56, 68, 82, 68, 76] },
+      2: { thisMonth: "$2610.80", lastMonth: "$2453.35", growth: "+ 6.4%", values: [35, 42, 45, 53, 58, 64, 70, 75, 71, 79, 83, 80] },
+      3: { thisMonth: "$2940.20", lastMonth: "$2610.80", growth: "+ 12.6%", values: [38, 45, 52, 60, 57, 68, 74, 82, 79, 85, 81, 88] },
+      4: { thisMonth: "$2780.00", lastMonth: "$2940.20", growth: "- 5.4%", values: [40, 48, 44, 56, 62, 59, 71, 78, 75, 80, 76, 82] },
+      5: { thisMonth: "$3120.50", lastMonth: "$2780.00", growth: "+ 12.2%", values: [42, 50, 58, 64, 61, 73, 79, 84, 81, 86, 84, 90] },
+      6: { thisMonth: "$3350.00", lastMonth: "$3120.50", growth: "+ 7.3%", values: [45, 53, 61, 67, 72, 78, 83, 87, 84, 89, 86, 91] },
+      7: { thisMonth: "$3210.40", lastMonth: "$3350.00", growth: "- 4.1%", values: [44, 52, 59, 65, 70, 76, 81, 85, 82, 87, 85, 89] },
+      8: { thisMonth: "$3490.80", lastMonth: "$3210.40", growth: "+ 8.7%", values: [46, 54, 62, 68, 73, 80, 85, 89, 86, 91, 88, 93] },
+      9: { thisMonth: "$3680.10", lastMonth: "$3490.80", growth: "+ 5.4%", values: [48, 56, 64, 71, 76, 82, 87, 91, 88, 93, 90, 95] },
+      10: { thisMonth: "$3950.00", lastMonth: "$3680.10", growth: "+ 7.3%", values: [50, 58, 67, 74, 79, 85, 90, 93, 90, 95, 92, 97] },
+      11: { thisMonth: "$4120.60", lastMonth: "$3950.00", growth: "+ 4.3%", values: [52, 60, 69, 76, 81, 87, 92, 95, 92, 97, 94, 98] },
+      12: { thisMonth: "$4380.90", lastMonth: "$4120.60", growth: "+ 6.3%", values: [55, 63, 72, 79, 84, 90, 94, 97, 94, 99, 96, 100] }
+    };
+
+    let earningSplineChart = null;
+
+    function initEarningSplineChart(monthKey = 1) {
+      const canvas = document.getElementById('earningSplineChart');
+      if (!canvas || typeof Chart === 'undefined') return;
+
+      const dataObj = earningMonthlyData[monthKey] || earningMonthlyData[1];
+      const ctx = canvas.getContext('2d');
+
+      if (earningSplineChart) earningSplineChart.destroy();
+
+      const gradient = ctx.createLinearGradient(0, 0, 0, 190);
+      gradient.addColorStop(0, 'rgba(67, 97, 238, 0.18)');
+      gradient.addColorStop(1, 'rgba(67, 97, 238, 0.00)');
+
+      earningSplineChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
+          datasets: [{
+            data: dataObj.values,
+            borderColor: '#4361ee',
+            borderWidth: 3.5,
+            fill: true,
+            backgroundColor: gradient,
+            tension: 0.45,
+            pointRadius: 0,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#4361ee',
+            pointHoverBorderColor: '#ffffff',
+            pointHoverBorderWidth: 2.5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1e293b',
+              titleFont: { family: 'Poppins', size: 12, weight: '600' },
+              bodyFont: { family: 'Poppins', size: 12 },
+              padding: 10,
+              cornerRadius: 8,
+              displayColors: false,
+              callbacks: {
+                title: (items) => 'Period: ' + items[0].label,
+                label: (item) => 'Score: ' + item.raw
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              border: { display: false },
+              ticks: {
+                color: '#94a3b8',
+                font: { family: 'Poppins', size: 11, weight: '500' }
+              }
+            },
+            y: {
+              min: 30,
+              max: 90,
+              ticks: {
+                stepSize: 10,
+                color: '#94a3b8',
+                font: { family: 'Poppins', size: 11, weight: '500' }
+              },
+              grid: {
+                color: '#f1f5f9'
+              },
+              border: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function switchEarningMonth(val) {
+      const data = earningMonthlyData[val] || earningMonthlyData[1];
+      const thisEl = document.getElementById('earningThisMonthVal');
+      const lastEl = document.getElementById('earningLastMonthVal');
+      const badgeEl = document.getElementById('earningGrowthBadge');
+
+      if (thisEl) thisEl.innerText = data.thisMonth;
+      if (lastEl) lastEl.innerText = data.lastMonth;
+      if (badgeEl) {
+        badgeEl.innerText = data.growth;
+        if (data.growth.startsWith('-')) {
+          badgeEl.style.background = '#fee2e2';
+          badgeEl.style.color = '#dc2626';
+        } else {
+          badgeEl.style.background = '#dcfce7';
+          badgeEl.style.color = '#16a34a';
+        }
+      }
+
+      initEarningSplineChart(val);
+    }
+
+    // Sales Analytics Donut Chart
+    let salesAnalyticsDonut = null;
+
+    const donutPercentagePlugin = {
+      id: 'donutPercentagePlugin',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta || !meta.data) return;
+
+        meta.data.forEach((element, i) => {
+          const { startAngle, endAngle, innerRadius, outerRadius } = element;
+          const angle = (startAngle + endAngle) / 2;
+          const r = (innerRadius + outerRadius) / 2;
+          const x = element.x + Math.cos(angle) * r;
+          const y = element.y + Math.sin(angle) * r;
+
+          const val = chart.data.datasets[0].data[i];
+          if (!val) return;
+
+          ctx.save();
+          ctx.font = '700 11.5px Poppins, sans-serif';
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(val + '%', x, y);
+          ctx.restore();
+        });
+      }
+    };
+
+    function initSalesAnalyticsDonut() {
+      const canvas = document.getElementById('salesAnalyticsDonutChart');
+      if (!canvas || typeof Chart === 'undefined') return;
+
+      if (salesAnalyticsDonut) salesAnalyticsDonut.destroy();
+
+      salesAnalyticsDonut = new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+          labels: ['Product A', 'Product B', 'Product C'],
+          datasets: [{
+            data: [46.7, 31.7, 21.7],
+            backgroundColor: ['#4361ee', '#2ec4b6', '#ff5c5c'],
+            borderWidth: 3,
+            borderColor: '#ffffff',
+            hoverOffset: 4
+          }]
+        },
+        plugins: [donutPercentagePlugin],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '66%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1e293b',
+              titleFont: { family: 'Poppins', size: 12, weight: '600' },
+              bodyFont: { family: 'Poppins', size: 12 },
+              padding: 10,
+              cornerRadius: 8,
+              callbacks: {
+                label: (item) => ' ' + item.label + ': ' + item.raw + '%'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Tasks Interactive Handlers (In Process / Upcoming)
+    const taskDatasets = {
+      in_process: [
+        { title: "Skote Saas Dashboard", assigned: "Assigned to Mark", done: false },
+        { title: "New Landing UI", assigned: "Assigned to Team A", done: false },
+        { title: "Brand logo design", assigned: "Assigned to Janis", done: false },
+        { title: "Blog Template UI", assigned: "Assigned to Dianna", done: false }
+      ],
+      upcoming: [
+        { title: "HVAC Chiller Maintenance", assigned: "Assigned to Engr. Farhan", done: false },
+        { title: "Substation Relay Calibration", assigned: "Assigned to Team Alpha", done: false },
+        { title: "Fire Hydrant Pressure Test", assigned: "Assigned to Safety Lead", done: false },
+        { title: "Water Tank Disinfection", assigned: "Assigned to Sanitize Unit", done: false }
+      ]
+    };
+    let currentTaskTab = "in_process";
+
+    function renderTasks() {
+      const container = document.getElementById("taskListContainer");
+      if (!container) return;
+      const list = taskDatasets[currentTaskTab] || [];
+      container.innerHTML = "";
+
+      list.forEach((t, idx) => {
+        const item = document.createElement("div");
+        item.className = "task-row-item";
+        item.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f8fafc;";
+        item.innerHTML = `
+          <div style="display:flex; align-items:center; gap:12px;">
+            <input type="checkbox" ${t.done ? "checked" : ""} onchange="toggleTaskDoneIdx(${idx}, this.checked)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
+            <div>
+              <div class="task-title" style="font-size:0.88rem; font-weight:700; color:${t.done ? "#94a3b8" : "#1e293b"}; text-decoration:${t.done ? "line-through" : "none"}; transition:all 0.2s;">${t.title}</div>
+              <div style="font-size:0.75rem; color:#94a3b8;">${t.assigned}</div>
+            </div>
+          </div>
+          <div style="display:inline-flex; align-items:center; gap:10px;">
+            <button type="button" onclick="editTaskIdx(${idx})" style="background:none; border:none; color:#10b981; cursor:pointer; padding:4px;" title="Edit Task">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            </button>
+            <button type="button" onclick="deleteTaskIdx(${idx})" style="background:none; border:none; color:#ef4444; cursor:pointer; padding:4px;" title="Delete Task">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function switchTaskTab(tab) {
+      currentTaskTab = tab;
+      const inBtn = document.getElementById("taskTabInProcess");
+      const upBtn = document.getElementById("taskTabUpcoming");
+      if (tab === "in_process") {
+        if (inBtn) { inBtn.style.background = "#4361ee"; inBtn.style.color = "#ffffff"; }
+        if (upBtn) { upBtn.style.background = "transparent"; upBtn.style.color = "#64748b"; }
+      } else {
+        if (upBtn) { upBtn.style.background = "#4361ee"; upBtn.style.color = "#ffffff"; }
+        if (inBtn) { inBtn.style.background = "transparent"; inBtn.style.color = "#64748b"; }
+      }
+      renderTasks();
+    }
+
+    function toggleTaskDoneIdx(idx, isChecked) {
+      if (taskDatasets[currentTaskTab] && taskDatasets[currentTaskTab][idx]) {
+        taskDatasets[currentTaskTab][idx].done = isChecked;
+        renderTasks();
+      }
+    }
+
+    function editTaskIdx(idx) {
+      const current = taskDatasets[currentTaskTab][idx];
+      if (!current) return;
+      const newTitle = prompt("Edit Task Title:", current.title);
+      if (newTitle && newTitle.trim()) {
+        current.title = newTitle.trim();
+        renderTasks();
+      }
+    }
+
+    function deleteTaskIdx(idx) {
+      if (confirm("Are you sure you want to delete this task?")) {
+        taskDatasets[currentTaskTab].splice(idx, 1);
+        renderTasks();
+      }
+    }
+
+    function addNewTaskPrompt() {
+      const title = prompt("Enter new task name:");
+      if (!title || !title.trim()) return;
+      const assigned = prompt("Assigned to (e.g. Mark, Team A):", "Assigned to Ops Lead");
+      taskDatasets[currentTaskTab].push({
+        title: title.trim(),
+        assigned: assigned ? assigned.trim() : "Assigned to Ops Lead",
+        done: false
+      });
+      renderTasks();
+    }
+
+    // Chat Interactive Handlers
+    function sendChatQuickMessage() {
+      const input = document.getElementById("chatInputMessage");
+      const stream = document.getElementById("dashboardChatStream");
+      if (!input || !stream) return;
+      const text = input.value.trim();
+      if (!text) return;
+
+      const now = new Date();
+      const timeStr = String(now.getHours()).padStart(2, "0") + "." + String(now.getMinutes()).padStart(2, "0");
+
+      const bubble = document.createElement("div");
+      bubble.style.cssText = "position:relative; align-self:flex-end; max-width:82%;";
+      bubble.innerHTML = `
+        <div style="background:#f1f5f9; border-radius:10px; padding:10px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.02); text-align:right;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; flex-direction:row-reverse;">
+            <span style="font-size:0.78rem; font-weight:700; color:#3e60d5;">admin</span>
+            <span style="font-size:0.8rem; color:#94a3b8; cursor:pointer;">⋮</span>
+          </div>
+          <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">${text}</div>
+          <div style="display:flex; align-items:center; justify-content:flex-end; gap:4px; font-size:0.68rem; color:#94a3b8; margin-top:6px;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            ${timeStr}
+          </div>
+        </div>
+      `;
+      stream.appendChild(bubble);
+      input.value = "";
+      stream.scrollTop = stream.scrollHeight;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+      renderTasks();
+      initEarningSplineChart();
+      initSalesAnalyticsDonut();
       initUnifiedBarChart();
       const modal = document.getElementById('dateToDateModal');
       if (modal) {

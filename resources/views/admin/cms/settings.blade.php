@@ -122,7 +122,7 @@
         <div style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem;">
           <h4 style="font-size:0.95rem; font-weight:700; color:var(--paces-text-dark); margin-bottom:1rem;">🖼️ Logo & Brand Assets</h4>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem;">
             <div>
               <label class="form-label-paces">Header Logo (Dark)</label>
               <div style="background:#ffffff; padding:12px; border-radius:8px; margin-bottom:10px; display:inline-block; border:1px solid var(--paces-border);">
@@ -139,6 +139,15 @@
               </div>
               <input type="file" name="footer_logo" accept="image/*" class="form-control-paces">
               <span class="form-help-paces">Used on dark footer and auth dialogs.</span>
+            </div>
+
+            <div>
+              <label class="form-label-paces">Browser Favicon</label>
+              <div style="background:#1e2229; padding:12px; border-radius:8px; margin-bottom:10px; display:inline-block; border:1px solid #334155;">
+                <img src="{{ asset(\App\Models\SiteSetting::get('favicon', 'assets/images/favicon-white.png')) }}" alt="Current Favicon" style="height:36px; max-width:36px; object-fit:contain;">
+              </div>
+              <input type="file" name="favicon" accept="image/*" class="form-control-paces">
+              <span class="form-help-paces">Browser tab icon (PNG/ICO/SVG).</span>
             </div>
           </div>
         </div>
