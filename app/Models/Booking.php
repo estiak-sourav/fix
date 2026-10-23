@@ -79,19 +79,48 @@ class Booking extends Model
         return $this->hasMany(AdminNotification::class);
     }
 
-    public static function generateBookingNumber(): string
+    public static function divisionCode(?string $division, ?string $district = null): string
     {
-        $datePrefix = date('Ymd');
-        $random = strtoupper(bin2hex(random_bytes(2)));
-        $count = static::whereDate('created_at', today())->count() + 1;
+        $div = strtolower(trim($division ?? ''));
+        $dis = strtolower(trim($district ?? ''));
 
-        return sprintf('FIX-%s-%04d-%s', $datePrefix, $count, $random);
+        if (str_contains($div, 'chatt') || str_contains($div, 'chitt') || str_contains($dis, 'chatt') || str_contains($dis, 'ctg')) {
+            return 'CTG';
+        }
+        if (str_contains($div, 'sylh') || str_contains($dis, 'sylh')) {
+            return 'SYL';
+        }
+        if (str_contains($div, 'raj') || str_contains($dis, 'raj')) {
+            return 'RAJ';
+        }
+        if (str_contains($div, 'khul') || str_contains($dis, 'khul')) {
+            return 'KHL';
+        }
+        if (str_contains($div, 'bari') || str_contains($dis, 'bari')) {
+            return 'BAR';
+        }
+        if (str_contains($div, 'rang') || str_contains($dis, 'rang')) {
+            return 'RNG';
+        }
+        if (str_contains($div, 'mymen') || str_contains($dis, 'mymen')) {
+            return 'MYM';
+        }
+
+        return 'DHK';
+    }
+
+    public static function generateBookingNumber(?string $division = null, ?string $district = null): string
+    {
+        $prefix = static::divisionCode($division, $district);
+        $count = static::where('booking_number', 'like', "{$prefix}-%")->count() + 1;
+
+        return sprintf('%s-%03d', $prefix, $count);
     }
 
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            'pending_review' => 'Pending Review',
+            'pending_review' => 'Pending',
             'accepted' => 'Accepted',
             'assigned' => 'Team Assigned',
             'in_progress' => 'In Progress',

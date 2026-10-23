@@ -7,7 +7,6 @@
         </a>
       </div>
       <h1 class="page-header-title">Operations Hotspots & Area Directory</h1>
-      <p class="page-header-subtitle">Detailed field operations demand, volume distribution, and service readiness across all Bangladesh areas</p>
     </div>
     <div style="display:flex; gap:8px;">
       <a href="{{ route('admin.bookings.index') }}" class="btn-paces btn-paces-outline btn-paces-sm">
@@ -127,14 +126,14 @@
         <table class="table-paces">
           <thead>
             <tr>
-              <th>Area / Locality</th>
-              <th>District & Division</th>
-              <th>Total Orders</th>
-              <th>Urgency Breakdown</th>
-              <th>Primary Requested Service</th>
-              <th>Status Pipeline</th>
-              <th>Total Value</th>
-              <th style="text-align:right;">Actions</th>
+              <th>AREA</th>
+              <th>DISTRICT</th>
+              <th>ORDERS</th>
+              <th>URGENCY</th>
+              <th>REQUESTED SERVICE</th>
+              <th>STATUS</th>
+              <th style="white-space:nowrap;">TOTAL VALUE</th>
+              <th style="text-align:right; white-space:nowrap;">ACTIONS</th>
             </tr>
           </thead>
           <tbody>
@@ -152,9 +151,6 @@
                 </td>
                 <td>
                   <div style="font-weight:500; font-size:0.85rem; color:var(--paces-text-dark);">{{ $item['district'] }}</div>
-                  <span class="badge-pill-paces bg-primary-subtle" style="font-size:0.72rem; font-weight:500; margin-top:2px;">
-                    {{ $item['division'] }}
-                  </span>
                 </td>
                 <td>
                   <div style="display:flex; align-items:center; gap:8px;">
@@ -166,7 +162,7 @@
                   <div style="display:flex; flex-direction:column; gap:4px; font-size:0.78rem;">
                     <div>Standard: <strong style="font-weight:500;">{{ $item['total_count'] - $item['emergency_count'] }}</strong></div>
                     @if($item['emergency_count'] > 0)
-                      <div style="color:#dc2626; font-weight:500;">⚡ Emergency: {{ $item['emergency_count'] }}</div>
+                      <div style="color:#dc2626; font-weight:500;">Emergency: {{ $item['emergency_count'] }}</div>
                     @endif
                   </div>
                 </td>
@@ -194,13 +190,13 @@
                     @endif
                   </div>
                 </td>
-                <td>
+                <td style="white-space:nowrap;">
                   <strong style="font-size:0.9rem; color:var(--paces-text-dark);">
                     ৳{{ number_format($item['total_revenue']) }}
                   </strong>
                 </td>
-                <td style="text-align:right;">
-                  <a href="{{ route('admin.bookings.index', ['search' => $item['area']]) }}" class="btn-paces btn-paces-primary btn-paces-sm">
+                <td style="text-align:right; white-space:nowrap;">
+                  <a href="{{ route('admin.bookings.index', ['area' => $item['area']]) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="white-space:nowrap; display:inline-flex; align-items:center; gap:4px;">
                     View Orders →
                   </a>
                 </td>

@@ -78,6 +78,9 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
     // Bookings Management (Work Orders & Bookings)
     Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index')->middleware('admin.can:bookings.view');
     Route::get('/bookings/{booking}', [AdminBookingController::class, 'show'])->name('bookings.show')->middleware('admin.can:bookings.view');
+    Route::put('/bookings/{booking}', [AdminBookingController::class, 'update'])->name('bookings.update')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/accept', [AdminBookingController::class, 'accept'])->name('bookings.accept')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->name('bookings.cancel')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status')->middleware('admin.can:bookings.edit');
 
     // Support Tickets System

@@ -27,7 +27,7 @@
           </span>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem; font-size:0.9rem;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem; margin-bottom:1.5rem; font-size:0.9rem;">
           <div>
             <strong style="color:var(--text-main); display:block; margin-bottom:4px;">Scheduled Appointment:</strong>
             <p style="margin:0; color:var(--text-muted);">{{ $booking->preferred_date->format('M d, Y') }} ({{ $booking->preferred_time_slot }})</p>
@@ -35,6 +35,18 @@
           <div>
             <strong style="color:var(--text-main); display:block; margin-bottom:4px;">Service Address:</strong>
             <p style="margin:0; color:var(--text-muted);">{{ $booking->street_address }}, {{ $booking->area }}, {{ $booking->district }}</p>
+          </div>
+          <div>
+            <strong style="color:var(--text-main); display:block; margin-bottom:4px;">Billing / Agreed Price:</strong>
+            @if($booking->final_cost > 0)
+              <p style="margin:0; color:#16a34a; font-weight:700; font-size:1.1rem;">৳ {{ number_format($booking->final_cost, 2) }} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">(Invoiced)</span></p>
+            @elseif($booking->estimated_cost > 0)
+              <p style="margin:0; color:var(--primary); font-weight:700; font-size:1.1rem;">৳ {{ number_format($booking->estimated_cost, 2) }} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">(Agreed)</span></p>
+            @elseif(in_array($booking->status, ['accepted', 'assigned', 'in_progress']))
+              <p style="margin:0; color:#d97706; font-weight:600;">To be billed upon completion</p>
+            @else
+              <p style="margin:0; color:var(--text-muted);">Pending phone discussion</p>
+            @endif
           </div>
         </div>
 

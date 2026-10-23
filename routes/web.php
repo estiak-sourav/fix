@@ -20,15 +20,52 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::post('/contact', [HomeController::class, 'contact'])->name('contact.send');
 
+// Services Portfolio & Details Routes
+Route::get('/services', function () {
+    return redirect('/#services');
+})->name('services.index');
+
 Route::get('/services/{slug}', function (string $slug) {
-    $service = Service::with('category')->where('slug', $slug)->firstOrFail();
+    $service = Service::with('category')
+        ->where('slug', $slug)
+        ->orWhere('id', is_numeric($slug) ? (int) $slug : 0)
+        ->orWhere('title', $slug)
+        ->first();
+
+    if (! $service) {
+        $service = Service::with('category')
+            ->whereRaw('LOWER(slug) = ?', [strtolower($slug)])
+            ->orWhereRaw('LOWER(title) = ?', [strtolower($slug)])
+            ->first();
+    }
+
+    if (! $service) {
+        $service = Service::with('category')
+            ->where('title', 'like', "%{$slug}%")
+            ->orWhere('slug', 'like', "%{$slug}%")
+            ->first() ?? Service::where('is_active', true)->firstOrFail();
+    }
+
     $relatedServices = Service::where('id', '!=', $service->id)->where('is_active', true)->take(3)->get();
 
     return view('web.pages.service-details', compact('service', 'relatedServices'));
 })->name('services.show');
 
+Route::get('/service/{slug}', function (string $slug) {
+    return redirect()->route('services.show', ['slug' => $slug]);
+});
+
+// Service Request & Booking (both /booking and /book)
 Route::get('/booking', [BookingController::class, 'create'])->name('booking.create');
+Route::get('/book', [BookingController::class, 'create'])->name('book');
+Route::get('/booking/{service}', function (string $service) {
+    return redirect()->route('booking.create', ['service' => $service]);
+});
+Route::get('/book/{service}', function (string $service) {
+    return redirect()->route('booking.create', ['service' => $service]);
+});
 Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
+Route::post('/book', [BookingController::class, 'store']);
 
 Route::get('/vendor', function () {
     return view('web.pages.vendor');

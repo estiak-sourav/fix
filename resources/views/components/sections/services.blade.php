@@ -23,11 +23,17 @@
       @foreach($services as $service)
         <div class="service-card" data-category="{{ $service->category?->slug ?? 'maintenance' }}">
           <div class="service-image-wrapper">
-            <img src="{{ $service->thumbnail_url }}" alt="{{ $service->title }}" loading="lazy">
+            <a href="{{ route('services.show', $service->slug ?? $service->id) }}">
+              <img src="{{ $service->thumbnail_url }}" alt="{{ $service->title }}" loading="lazy">
+            </a>
             <span class="service-category-tag">{{ $service->category?->name ?? 'Facility Maintenance' }}</span>
           </div>
           <div class="service-card-body">
-            <h3 class="service-card-title">{{ $service->title }}</h3>
+            <h3 class="service-card-title">
+              <a href="{{ route('services.show', $service->slug ?? $service->id) }}" style="color:inherit; text-decoration:none;">
+                {{ $service->title }}
+              </a>
+            </h3>
             <p class="service-card-desc">{{ $service->description }}</p>
             
             <ul class="service-features-list">
@@ -43,9 +49,12 @@
               @endif
             </ul>
 
-            <div class="service-card-footer">
-              <a href="{{ route('booking.create', ['service' => $service->title]) }}" class="btn btn-outline btn-block">
-                Book Service
+            <div class="service-card-footer" style="display:flex; gap:8px;">
+              <a href="{{ route('services.show', $service->slug ?? $service->id) }}" class="btn btn-outline" style="flex:1; text-align:center;">
+                Details
+              </a>
+              <a href="{{ route('booking.create', ['service' => $service->title]) }}" class="btn btn-accent" style="flex:1; text-align:center;">
+                Book Now
               </a>
             </div>
           </div>

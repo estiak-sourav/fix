@@ -33,29 +33,19 @@
         <div class="nav-header">OPERATIONS & DISPATCH</div>
       @endif
 
-      <!-- Work Orders & Bookings -->
+      <!-- Bookings Management -->
       @if($adminUser?->hasPermission('bookings.view'))
         <a href="{{ route('admin.bookings.index') }}" class="nav-item {{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}">
           <span class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
           </span>
-          <span class="nav-text">Work Orders & Bookings</span>
+          <span class="nav-text">Booking</span>
           @php
             $pendingCount = \App\Models\Booking::where('status', 'pending_review')->count();
           @endphp
           @if($pendingCount > 0)
             <span class="nav-badge bg-warning">{{ $pendingCount }}</span>
           @endif
-        </a>
-      @endif
-
-      <!-- Area Analytics & Hotspots -->
-      @if($adminUser?->hasPermission('analytics.view'))
-        <a href="{{ route('admin.area-analytics') }}" class="nav-item {{ request()->routeIs('admin.area-analytics') ? 'active' : '' }}">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-          </span>
-          <span class="nav-text">Area Analytics</span>
         </a>
       @endif
 

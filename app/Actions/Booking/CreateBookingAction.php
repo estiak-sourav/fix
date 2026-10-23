@@ -25,7 +25,7 @@ class CreateBookingAction
         }
 
         return DB::transaction(function () use ($data, $user, $attachedImages) {
-            $bookingNumber = Booking::generateBookingNumber();
+            $bookingNumber = Booking::generateBookingNumber($data['division'] ?? null, $data['district'] ?? null);
 
             $booking = Booking::create([
                 'booking_number' => $bookingNumber,
