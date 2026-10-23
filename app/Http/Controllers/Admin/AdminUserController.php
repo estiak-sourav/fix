@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -79,10 +80,15 @@ class AdminUserController extends Controller
      */
     public function toggleStatus(User $user): RedirectResponse
     {
-        $user->is_active = !$user->is_active;
+        $user->is_active = ! $user->is_active;
         $user->save();
 
         $statusLabel = $user->is_active ? 'Activated' : 'Deactivated';
+
+        ActivityLogService::logUser('user.status_toggle', "Toggled client account '{$user->name}' to '{$statusLabel}'.", $user, [
+            'user_id' => $user->id,
+            'is_active' => $user->is_active,
+        ]);
 
         return redirect()->back()->with('success', "Client account '{$user->name}' is now {$statusLabel}.");
     }
@@ -106,6 +112,12 @@ class AdminUserController extends Controller
         $validated['is_active'] = $request->boolean('is_active');
 
         $user->update($validated);
+
+        ActivityLogService::logUser('user.update', "Updated client profile for '{$user->name}'.", $user, [
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'phone' => $user->phone,
+        ]);
 
         return redirect()->back()->with('success', "Client profile for '{$user->name}' updated successfully.");
     }

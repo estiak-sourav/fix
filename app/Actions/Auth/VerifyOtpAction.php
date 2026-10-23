@@ -2,6 +2,7 @@
 
 namespace App\Actions\Auth;
 
+use App\Models\DailyAnalytics;
 use App\Models\EmailOtp;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ class VerifyOtpAction
      * Verify OTP code and authenticate user via web guard for Login or Registration.
      *
      * @param  array{email: string, otp_code: string}  $data
+     *
      * @throws ValidationException
      */
     public function execute(array $data, Request $request): User
@@ -28,7 +30,7 @@ class VerifyOtpAction
             ->latest()
             ->first();
 
-        if (!$otpRecord) {
+        if (! $otpRecord) {
             throw ValidationException::withMessages([
                 'otp_code' => ['The verification code is invalid or has expired. Please request a new code.'],
             ]);
@@ -40,7 +42,7 @@ class VerifyOtpAction
             ]);
         }
 
-        if (!Hash::check($inputCode, $otpRecord->otp_code_hash)) {
+        if (! Hash::check($inputCode, $otpRecord->otp_code_hash)) {
             $otpRecord->increment('attempts');
             throw ValidationException::withMessages([
                 'otp_code' => ['Invalid OTP code. Please check and try again.'],
@@ -61,12 +63,12 @@ class VerifyOtpAction
                 'email_verified_at' => now(),
             ]);
 
-            \App\Models\DailyAnalytics::recordRegistration();
+            DailyAnalytics::recordRegistration();
         } else {
-            \App\Models\DailyAnalytics::recordLogin();
+            DailyAnalytics::recordLogin();
             $user = User::where('email', $email)->first();
 
-            if (!$user) {
+            if (! $user) {
                 $user = User::create([
                     'name' => $payload['name'] ?? explode('@', $email)[0],
                     'email' => $email,
@@ -76,13 +78,13 @@ class VerifyOtpAction
                     'email_verified_at' => now(),
                 ]);
             } else {
-                if (!$user->is_active) {
+                if (! $user->is_active) {
                     throw ValidationException::withMessages([
                         'email' => ['This account has been deactivated. Please contact support.'],
                     ]);
                 }
 
-                if (empty($user->phone) && !empty($payload['phone'])) {
+                if (empty($user->phone) && ! empty($payload['phone'])) {
                     $user->update(['phone' => $payload['phone']]);
                 }
 

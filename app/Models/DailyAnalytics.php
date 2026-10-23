@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class DailyAnalytics extends Model
@@ -34,9 +35,9 @@ class DailyAnalytics extends Model
      */
     public static function forDate($date = null): self
     {
-        $targetDate = \Carbon\Carbon::parse($date ?? today())->format('Y-m-d');
+        $targetDate = Carbon::parse($date ?? today())->format('Y-m-d');
 
-        $record = static::where('date', 'like', $targetDate . '%')->first();
+        $record = static::where('date', 'like', $targetDate.'%')->first();
 
         if ($record) {
             return $record;
@@ -53,7 +54,7 @@ class DailyAnalytics extends Model
                 'registrations_count' => 0,
             ]);
         } catch (\Throwable $e) {
-            return static::where('date', 'like', $targetDate . '%')->first()
+            return static::where('date', 'like', $targetDate.'%')->first()
                 ?? static::firstOrCreate(['date' => $targetDate]);
         }
     }

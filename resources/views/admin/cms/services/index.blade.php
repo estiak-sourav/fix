@@ -43,7 +43,7 @@
                 <div style="font-size:0.78rem; color:var(--paces-text-muted); margin-top:2px;">{{ Str::limit($service->description, 60) }}</div>
               </td>
               <td>
-                <span style="font-weight:600; color:var(--paces-text-dark);">{{ $service->category?->name ?? 'Uncategorized' }}</span>
+                <span style="font-weight:500; color:var(--paces-text-dark);">{{ $service->category?->name ?? 'Uncategorized' }}</span>
               </td>
               <td>
                 <strong style="color:var(--paces-success); font-family:'Poppins', sans-serif;">৳ {{ number_format($service->price_starting ?? 0, 2) }}</strong>

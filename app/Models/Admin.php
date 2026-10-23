@@ -30,6 +30,8 @@ class Admin extends Authenticatable
         'role',
         'avatar',
         'is_active',
+        'must_change_password',
+        'permissions',
     ];
 
     /**
@@ -52,6 +54,8 @@ class Admin extends Authenticatable
         return [
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
+            'permissions' => 'array',
         ];
     }
 
@@ -69,5 +73,60 @@ class Admin extends Authenticatable
     public function isOperationsManager(): bool
     {
         return in_array($this->role, ['super_admin', 'operations_manager']);
+    }
+
+    /**
+     * Check if admin user has specific permission.
+     * Super Admin always has full access to all features.
+     * If user has .edit permission for a module, .view is automatically granted.
+     */
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        $granted = $this->permissions ?? [];
+        if (! is_array($granted)) {
+            return false;
+        }
+
+        if (in_array($permission, $granted, true)) {
+            return true;
+        }
+
+        // Implicit grant: .edit permission automatically implies .view permission
+        if (str_ends_with($permission, '.view')) {
+            $editPermission = str_replace('.view', '.edit', $permission);
+            if (in_array($editPermission, $granted, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if admin can view a module.
+     */
+    public function canView(string $module): bool
+    {
+        return $this->hasPermission("{$module}.view");
+    }
+
+    /**
+     * Check if admin can edit/manage a module.
+     */
+    public function canEdit(string $module): bool
+    {
+        return $this->hasPermission("{$module}.edit");
+    }
+
+    /**
+     * Get avatar full URL if present.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return $this->avatar ? asset('storage/'.$this->avatar) : null;
     }
 }

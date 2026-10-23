@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\AuthorizeAdminPermission;
+use App\Http\Middleware\EnsureAdminPasswordUpdated;
+use App\Http\Middleware\TrackWebsiteVisitor;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -29,11 +32,15 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
-            \App\Http\Middleware\TrackWebsiteVisitor::class,
+            TrackWebsiteVisitor::class,
         ]);
 
-        $middleware->redirectGuestsTo(fn (Request $request) =>
-            str_starts_with($request->getHost(), 'admin.') || $request->is('admin*')
+        $middleware->alias([
+            'admin.can' => AuthorizeAdminPermission::class,
+            'admin.must_change_password' => EnsureAdminPasswordUpdated::class,
+        ]);
+
+        $middleware->redirectGuestsTo(fn (Request $request) => str_starts_with($request->getHost(), 'admin.') || $request->is('admin*')
                 ? route('admin.login')
                 : route('login')
         );

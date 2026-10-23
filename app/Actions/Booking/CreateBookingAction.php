@@ -15,14 +15,13 @@ class CreateBookingAction
      * Create a new facility service booking and trigger notifications.
      *
      * @param  array<string, mixed>  $data
-     * @param  UploadedFile|null     $problemPhoto
      */
     public function execute(array $data, User $user, ?UploadedFile $problemPhoto = null): Booking
     {
         $attachedImages = [];
         if ($problemPhoto) {
             $path = $problemPhoto->store('bookings', 'public');
-            $attachedImages[] = '/storage/' . $path;
+            $attachedImages[] = '/storage/'.$path;
         }
 
         return DB::transaction(function () use ($data, $user, $attachedImages) {
@@ -48,7 +47,7 @@ class CreateBookingAction
                 'preferred_time_slot' => $data['preferred_time_slot'],
                 'urgency' => $data['urgency'],
                 'problem_description' => $data['problem_description'],
-                'attached_images' => !empty($attachedImages) ? $attachedImages : null,
+                'attached_images' => ! empty($attachedImages) ? $attachedImages : null,
                 'status' => 'pending_review',
             ]);
 

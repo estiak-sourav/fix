@@ -19,14 +19,15 @@ class SendOtpAction
      *
      * @param  array{email: string, name?: string|null, phone?: string|null, purpose?: string|null}  $data
      * @return array{email: string, raw_otp: string, purpose: string}
+     *
      * @throws ValidationException
      */
     public function execute(array $data, ?string $ip = null, ?string $userAgent = null): array
     {
         $email = strtolower(trim($data['email']));
         $purpose = $data['purpose'] ?? 'login';
-        $phone = !empty($data['phone']) ? BangladeshPhone::normalize($data['phone']) : null;
-        $name = !empty($data['name']) ? trim($data['name']) : null;
+        $phone = ! empty($data['phone']) ? BangladeshPhone::normalize($data['phone']) : null;
+        $name = ! empty($data['name']) ? trim($data['name']) : null;
 
         // Validation for Registration
         if ($purpose === 'register') {
@@ -44,13 +45,13 @@ class SendOtpAction
         } else {
             // Validation for Login
             $existingUser = User::where('email', $email)->first();
-            if (!$existingUser) {
+            if (! $existingUser) {
                 throw ValidationException::withMessages([
                     'email' => ['No account found with this email. Please register to create your account.'],
                 ]);
             }
 
-            if (!$existingUser->is_active) {
+            if (! $existingUser->is_active) {
                 throw ValidationException::withMessages([
                     'email' => ['Your account has been deactivated. Please contact support.'],
                 ]);
@@ -89,12 +90,12 @@ class SendOtpAction
         try {
             Mail::to($email)->send(new AuthOtpMail($rawOtp, $email, $name, $purpose));
             $mailSent = true;
-            Log::info("FIX Auth OTP successfully dispatched to {$email} via " . config('mail.default'));
+            Log::info("FIX Auth OTP successfully dispatched to {$email} via ".config('mail.default'));
         } catch (\Throwable $e) {
-            Log::error("Failed to send OTP email via SMTP to {$email}: " . $e->getMessage());
-            
+            Log::error("Failed to send OTP email via SMTP to {$email}: ".$e->getMessage());
+
             // If local or log driver, let local dev continue smoothly
-            if (!app()->isLocal() && config('mail.default') === 'smtp') {
+            if (! app()->isLocal() && config('mail.default') === 'smtp') {
                 throw ValidationException::withMessages([
                     'email' => ['Failed to send OTP email. Please ensure your SMTP gateway is configured in the admin panel.'],
                 ]);

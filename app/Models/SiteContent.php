@@ -37,12 +37,13 @@ class SiteContent extends Model
 
     public function getMediaUrlAttribute(): ?string
     {
-        if (!$this->media_path) {
+        if (! $this->media_path) {
             return null;
         }
         if (str_starts_with($this->media_path, 'http')) {
             return $this->media_path;
         }
+
         return asset($this->media_path);
     }
 

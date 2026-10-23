@@ -35,7 +35,7 @@ class BookingController extends Controller
     public function store(StoreBookingRequest $request, CreateBookingAction $action): RedirectResponse|JsonResponse
     {
         // Enforce customer login requirement
-        if (!Auth::guard('web')->check()) {
+        if (! Auth::guard('web')->check()) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,

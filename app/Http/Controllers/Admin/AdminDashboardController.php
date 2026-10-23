@@ -23,15 +23,19 @@ class AdminDashboardController extends Controller
     public function index(Request $request): View
     {
         $range = $request->query('range', 'today');
-        if ($range === '7days') $range = 'week';
-        if ($range === '30days') $range = 'month';
+        if ($range === '7days') {
+            $range = 'week';
+        }
+        if ($range === '30days') {
+            $range = 'month';
+        }
 
         $singleDateInput = $request->query('date') ?? $request->query('single_date');
         $startDateInput = $request->query('start_date');
         $endDateInput = $request->query('end_date');
 
         // Resolve active date range
-        if ($singleDateInput && !$startDateInput) {
+        if ($singleDateInput && ! $startDateInput) {
             $startDate = Carbon::parse($singleDateInput)->startOfDay();
             $endDate = Carbon::parse($singleDateInput)->endOfDay();
             $range = 'date';
@@ -68,20 +72,20 @@ class AdminDashboardController extends Controller
             $prevEndDate = $startDate->copy()->subDay()->endOfDay();
             $prevDate = $startDate->copy()->subDay()->format('Y-m-d');
             $nextDate = $startDate->copy()->addDay()->format('Y-m-d');
-            $prevPeriodLabel = 'Yesterday (' . $prevStartDate->format('M d, Y') . ')';
+            $prevPeriodLabel = 'Yesterday ('.$prevStartDate->format('M d, Y').')';
         } else {
             $diffInDays = $startDate->diffInDays($endDate) + 1;
             $prevEndDate = $startDate->copy()->subSecond();
             $prevStartDate = $startDate->copy()->subDays($diffInDays)->startOfDay();
             $prevDate = $startDate->copy()->subDays($diffInDays)->format('Y-m-d');
             $nextDate = $endDate->copy()->addDay()->format('Y-m-d');
-            $prevPeriodLabel = 'Prior Period (' . $prevStartDate->format('M d') . ' – ' . $prevEndDate->format('M d, Y') . ')';
+            $prevPeriodLabel = 'Prior Period ('.$prevStartDate->format('M d').' – '.$prevEndDate->format('M d, Y').')';
         }
 
         // Fetch pre-aggregated records for the selected period
         $analyticsRecords = DailyAnalytics::whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
             ->get()
-            ->keyBy(fn($item) => $item->date->format('Y-m-d'));
+            ->keyBy(fn ($item) => $item->date->format('Y-m-d'));
 
         $bookingsInRange = Booking::whereBetween('created_at', [$startDate, $endDate])
             ->with(['service.category', 'amcPlan', 'user'])
@@ -103,14 +107,14 @@ class AdminDashboardController extends Controller
         $currentAmcVisitors = (int) $analyticsRecords->sum('amc_visitors');
 
         // Service Requests vs Service Book
-        $serviceBookings = $bookingsInRange->filter(fn($b) => empty($b->amc_plan_id) && $b->service_type !== 'amc_contract');
+        $serviceBookings = $bookingsInRange->filter(fn ($b) => empty($b->amc_plan_id) && $b->service_type !== 'amc_contract');
         $currentServiceRequests = $serviceBookings->count();
-        $currentServiceBook = $serviceBookings->filter(fn($b) => in_array($b->status, ['accepted', 'assigned', 'in_progress', 'completed']))->count();
+        $currentServiceBook = $serviceBookings->filter(fn ($b) => in_array($b->status, ['accepted', 'assigned', 'in_progress', 'completed']))->count();
 
         // AMC Requests vs AMC Book
-        $amcBookings = $bookingsInRange->filter(fn($b) => !empty($b->amc_plan_id) || $b->service_type === 'amc_contract');
+        $amcBookings = $bookingsInRange->filter(fn ($b) => ! empty($b->amc_plan_id) || $b->service_type === 'amc_contract');
         $currentAmcRequests = $amcBookings->count();
-        $currentAmcBook = $amcBookings->filter(fn($b) => in_array($b->status, ['accepted', 'assigned', 'in_progress', 'completed']))->count();
+        $currentAmcBook = $amcBookings->filter(fn ($b) => in_array($b->status, ['accepted', 'assigned', 'in_progress', 'completed']))->count();
 
         // 2. Previous Period Metrics
         $prevAnalytics = DailyAnalytics::whereBetween('date', [$prevStartDate->toDateString(), $prevEndDate->toDateString()])->get();
@@ -129,13 +133,13 @@ class AdminDashboardController extends Controller
         $prevServiceVisitors = (int) $prevAnalytics->sum('service_visitors');
         $prevAmcVisitors = (int) $prevAnalytics->sum('amc_visitors');
 
-        $prevServiceBookings = $prevBookings->filter(fn($b) => empty($b->amc_plan_id) && $b->service_type !== 'amc_contract');
+        $prevServiceBookings = $prevBookings->filter(fn ($b) => empty($b->amc_plan_id) && $b->service_type !== 'amc_contract');
         $prevServiceRequests = $prevServiceBookings->count();
-        $prevServiceBook = $prevServiceBookings->filter(fn($b) => in_array($b->status, ['accepted', 'assigned', 'in_progress', 'completed']))->count();
+        $prevServiceBook = $prevServiceBookings->filter(fn ($b) => in_array($b->status, ['accepted', 'assigned', 'in_progress', 'completed']))->count();
 
-        $prevAmcBookings = $prevBookings->filter(fn($b) => !empty($b->amc_plan_id) || $b->service_type === 'amc_contract');
+        $prevAmcBookings = $prevBookings->filter(fn ($b) => ! empty($b->amc_plan_id) || $b->service_type === 'amc_contract');
         $prevAmcRequests = $prevAmcBookings->count();
-        $prevAmcBook = $prevAmcBookings->filter(fn($b) => in_array($b->status, ['accepted', 'assigned', 'in_progress', 'completed']))->count();
+        $prevAmcBook = $prevAmcBookings->filter(fn ($b) => in_array($b->status, ['accepted', 'assigned', 'in_progress', 'completed']))->count();
 
         // Dedicated 10 Metric Bars Payload
         $metricChart = [
@@ -201,13 +205,13 @@ class AdminDashboardController extends Controller
             'prev_date' => $prevDate,
             'next_date' => $nextDate,
             'range_label' => match ($range) {
-                'yesterday' => 'Yesterday (' . Carbon::yesterday()->format('M d, Y') . ')',
-                'today' => 'Today (' . Carbon::today()->format('M d, Y') . ')',
-                'date' => 'Date: ' . $startDate->format('M d, Y'),
-                'week' => 'Week (' . $startDate->format('M d') . ' – ' . $endDate->format('M d, Y') . ')',
-                'month' => 'Month (' . $startDate->format('M d') . ' – ' . $endDate->format('M d, Y') . ')',
-                'year' => 'Year (' . Carbon::today()->year . ')',
-                default => 'Custom: ' . $startDate->format('M d, Y') . ' – ' . $endDate->format('M d, Y'),
+                'yesterday' => 'Yesterday ('.Carbon::yesterday()->format('M d, Y').')',
+                'today' => 'Today ('.Carbon::today()->format('M d, Y').')',
+                'date' => 'Date: '.$startDate->format('M d, Y'),
+                'week' => 'Week ('.$startDate->format('M d').' – '.$endDate->format('M d, Y').')',
+                'month' => 'Month ('.$startDate->format('M d').' – '.$endDate->format('M d, Y').')',
+                'year' => 'Year ('.Carbon::today()->year.')',
+                default => 'Custom: '.$startDate->format('M d, Y').' – '.$endDate->format('M d, Y'),
             },
 
             // Traffic & Visitors
@@ -228,7 +232,7 @@ class AdminDashboardController extends Controller
             'amc_requests' => $currentAmcRequests,
             'amc_orders' => $currentAmcBook,
             'period_bookings' => $bookingsInRange->count(),
-            'period_revenue' => (float) $bookingsInRange->sum(fn($b) => $b->final_cost ?? $b->estimated_cost ?? 0),
+            'period_revenue' => (float) $bookingsInRange->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0),
 
             // Operations State
             'pending_review' => Booking::where('status', 'pending_review')->count(),
@@ -243,16 +247,40 @@ class AdminDashboardController extends Controller
 
         // Service category share
         $categoryBreakdown = $bookingsInRange
-            ->groupBy(fn($b) => $b->service?->category?->name ?? ($b->amcPlan ? 'AMC Packages' : 'General Facility'))
-            ->map(fn($group) => $group->count())
+            ->groupBy(fn ($b) => $b->service?->category?->name ?? ($b->amcPlan ? 'AMC Packages' : 'General Facility'))
+            ->map(fn ($group) => $group->count())
             ->sortDesc();
 
-        // Area hotspot distribution in Dhaka
-        $areaHotspots = $bookingsInRange
+        // Regional Operations Hotspots (Countrywide / Filterable by Division)
+        $selectedHotspotDivision = $request->query('hotspot_division', 'all');
+
+        $hotspotsBase = $bookingsInRange->filter(fn ($b) => ! empty($b->area));
+
+        if ($selectedHotspotDivision && $selectedHotspotDivision !== 'all') {
+            $hotspotsBase = $hotspotsBase->filter(fn ($b) => strcasecmp((string) $b->division, (string) $selectedHotspotDivision) === 0);
+        }
+
+        $areaHotspots = $hotspotsBase
             ->groupBy('area')
-            ->map(fn($group) => $group->count())
-            ->sortDesc()
-            ->take(6);
+            ->map(function ($group, $areaName) {
+                $first = $group->first();
+
+                return [
+                    'area' => $areaName,
+                    'district' => $first->district ?? '',
+                    'division' => $first->division ?? '',
+                    'count' => $group->count(),
+                ];
+            })
+            ->sortByDesc('count')
+            ->take(8);
+
+        // Division breakdown across Bangladesh in the active period
+        $divisionCounts = $bookingsInRange
+            ->filter(fn ($b) => ! empty($b->division))
+            ->groupBy('division')
+            ->map(fn ($group) => $group->count())
+            ->sortDesc();
 
         // Recent work orders in period
         $recentBookings = $bookingsInRange->isNotEmpty()
@@ -261,13 +289,155 @@ class AdminDashboardController extends Controller
 
         $unreadNotifications = AdminNotification::latest()->take(6)->get();
 
+        // 3. Earning analytics per month (Real database bookings & revenue)
+        $currentYear = Carbon::today()->year;
+        $currentMonth = Carbon::today()->month;
+
+        $currentYearBookings = Booking::with(['service.category', 'amcPlan'])
+            ->whereYear('created_at', $currentYear)
+            ->get();
+
+        $prevYearDecRevenue = (float) Booking::whereYear('created_at', $currentYear - 1)
+            ->whereMonth('created_at', 12)
+            ->get()
+            ->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0);
+
+        $bookingsByMonth = $currentYearBookings->groupBy(fn ($b) => (int) $b->created_at->format('n'));
+
+        $earningMonthlyData = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $monthBookings = $bookingsByMonth->get($m, collect());
+            $thisMonthRev = (float) $monthBookings->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0);
+
+            if ($m === 1) {
+                $prevMonthRev = $prevYearDecRevenue;
+            } else {
+                $prevMonthBookings = $bookingsByMonth->get($m - 1, collect());
+                $prevMonthRev = (float) $prevMonthBookings->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0);
+            }
+
+            if ($prevMonthRev > 0) {
+                $diff = $thisMonthRev - $prevMonthRev;
+                $growthPct = ($diff / $prevMonthRev) * 100;
+                $growthStr = ($growthPct >= 0 ? '+ ' : '- ').number_format(abs($growthPct), 1).'%';
+            } elseif ($thisMonthRev > 0) {
+                $growthStr = '+ 100.0%';
+            } else {
+                $growthStr = '0.0%';
+            }
+
+            $daysInMonth = Carbon::createFromDate($currentYear, $m, 1)->daysInMonth;
+            $bucketValues = array_fill(0, 12, 0);
+            foreach ($monthBookings as $b) {
+                $day = (int) $b->created_at->format('j');
+                $bucketIndex = min(11, (int) floor((($day - 1) / $daysInMonth) * 12));
+                $bucketValues[$bucketIndex] += (float) ($b->final_cost ?? $b->estimated_cost ?? 0);
+            }
+
+            $earningMonthlyData[$m] = [
+                'thisMonth' => '৳ '.number_format($thisMonthRev, 2),
+                'thisMonthRaw' => $thisMonthRev,
+                'lastMonth' => '৳ '.number_format($prevMonthRev, 2),
+                'lastMonthRaw' => $prevMonthRev,
+                'growth' => $growthStr,
+                'values' => $bucketValues,
+            ];
+        }
+
+        // 4. Sales analytics (Category revenue share & distribution)
+        $salesPool = $bookingsInRange->filter(fn ($b) => ($b->final_cost ?? $b->estimated_cost ?? 0) > 0);
+        if ($salesPool->isEmpty()) {
+            $salesPool = $currentYearBookings->filter(fn ($b) => ($b->final_cost ?? $b->estimated_cost ?? 0) > 0);
+        }
+        if ($salesPool->isEmpty()) {
+            $salesPool = Booking::with(['service.category', 'amcPlan'])
+                ->get()
+                ->filter(fn ($b) => ($b->final_cost ?? $b->estimated_cost ?? 0) > 0);
+        }
+
+        $categorySales = $salesPool
+            ->groupBy(fn ($b) => $b->service?->category?->name ?? ($b->amcPlan ? 'AMC Contracts' : 'General Maintenance'))
+            ->map(fn ($group) => (float) $group->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0))
+            ->filter(fn ($rev) => $rev > 0)
+            ->sortDesc();
+
+        $totalSales = (float) $categorySales->sum();
+        $palette = ['#4361ee', '#2ec4b6', '#ff5c5c', '#f59e0b', '#8b5cf6'];
+        $salesCategories = [];
+
+        if ($totalSales > 0) {
+            if ($categorySales->count() <= 3) {
+                $idx = 0;
+                foreach ($categorySales as $name => $amount) {
+                    $pct = round(($amount / $totalSales) * 100, 1);
+                    $salesCategories[] = [
+                        'name' => $name,
+                        'amount' => $amount,
+                        'amount_formatted' => '৳ '.number_format($amount, 0),
+                        'percentage' => $pct,
+                        'color' => $palette[$idx % count($palette)],
+                    ];
+                    $idx++;
+                }
+            } else {
+                $top2 = $categorySales->take(2);
+                $othersSum = (float) $categorySales->skip(2)->sum();
+
+                $idx = 0;
+                foreach ($top2 as $name => $amount) {
+                    $pct = round(($amount / $totalSales) * 100, 1);
+                    $salesCategories[] = [
+                        'name' => $name,
+                        'amount' => $amount,
+                        'amount_formatted' => '৳ '.number_format($amount, 0),
+                        'percentage' => $pct,
+                        'color' => $palette[$idx],
+                    ];
+                    $idx++;
+                }
+
+                $otherPct = round(($othersSum / $totalSales) * 100, 1);
+                $salesCategories[] = [
+                    'name' => 'Other Services',
+                    'amount' => $othersSum,
+                    'amount_formatted' => '৳ '.number_format($othersSum, 0),
+                    'percentage' => $otherPct,
+                    'color' => $palette[2],
+                ];
+            }
+        } else {
+            $salesCategories = [
+                [
+                    'name' => 'No Sales Yet',
+                    'amount' => 0.0,
+                    'amount_formatted' => '৳ 0',
+                    'percentage' => 0.0,
+                    'color' => '#cbd5e1',
+                ],
+            ];
+        }
+
+        $salesAnalytics = [
+            'total' => $totalSales,
+            'total_formatted' => '৳ '.number_format($totalSales, 0),
+            'categories' => $salesCategories,
+            'labels' => array_column($salesCategories, 'name'),
+            'data' => array_column($salesCategories, 'percentage'),
+            'colors' => array_column($salesCategories, 'color'),
+        ];
+
         return view('admin.dashboard', compact(
             'stats',
             'metricChart',
             'categoryBreakdown',
             'areaHotspots',
+            'selectedHotspotDivision',
+            'divisionCounts',
             'recentBookings',
-            'unreadNotifications'
+            'unreadNotifications',
+            'earningMonthlyData',
+            'salesAnalytics',
+            'currentMonth'
         ));
     }
 
@@ -290,7 +460,7 @@ class AdminDashboardController extends Controller
             'has_sound' => $unplayed->isNotEmpty(),
             'new_count' => $unplayed->count(),
             'unread_total' => $unreadCount,
-            'alerts' => $unplayed->map(fn($n) => [
+            'alerts' => $unplayed->map(fn ($n) => [
                 'id' => $n->id,
                 'title' => $n->title,
                 'message' => $n->message,
@@ -316,5 +486,109 @@ class AdminDashboardController extends Controller
     public function updateBookingStatus(Booking $booking, UpdateBookingStatusRequest $request, UpdateBookingStatusAction $action): RedirectResponse
     {
         return app(AdminBookingController::class)->updateStatus($booking, $request, $action);
+    }
+
+    /**
+     * Display comprehensive area-level operations and hotspot analytics directory.
+     */
+    public function areaAnalytics(Request $request): View
+    {
+        $selectedDivision = $request->query('division', 'all');
+        $search = trim((string) $request->query('search', ''));
+        $range = $request->query('range', 'all_time');
+
+        $query = Booking::with(['service.category', 'amcPlan', 'user'])
+            ->whereNotNull('area')
+            ->where('area', '!=', '');
+
+        // Date range filter
+        if ($range === 'today') {
+            $query->whereBetween('created_at', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()]);
+        } elseif ($range === 'week') {
+            $query->whereBetween('created_at', [Carbon::today()->subDays(6)->startOfDay(), Carbon::today()->endOfDay()]);
+        } elseif ($range === 'month') {
+            $query->whereBetween('created_at', [Carbon::today()->subDays(29)->startOfDay(), Carbon::today()->endOfDay()]);
+        }
+
+        // Division filter
+        if ($selectedDivision && $selectedDivision !== 'all') {
+            $query->where('division', $selectedDivision);
+        }
+
+        // Search filter
+        if (! empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('area', 'like', "%{$search}%")
+                    ->orWhere('district', 'like', "%{$search}%")
+                    ->orWhere('division', 'like', "%{$search}%");
+            });
+        }
+
+        $allBookings = $query->latest()->get();
+
+        // Aggregate statistics per area
+        $areasCollection = $allBookings
+            ->groupBy('area')
+            ->map(function ($group, $areaName) {
+                $first = $group->first();
+                $totalCount = $group->count();
+                $pendingCount = $group->where('status', 'pending_review')->count();
+                $activeCount = $group->whereIn('status', ['accepted', 'assigned', 'in_progress'])->count();
+                $completedCount = $group->where('status', 'completed')->count();
+                $emergencyCount = $group->whereIn('urgency', ['emergency_1h', 'urgent_4h', 'same_day_4h'])->count();
+                $totalRevenue = (float) $group->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0);
+
+                // Most popular service in area
+                $topService = $group->groupBy(fn ($b) => $b->service?->title ?? ($b->amcPlan?->name ?? 'Custom Service'))
+                    ->sortByDesc(fn ($sGroup) => $sGroup->count())
+                    ->keys()
+                    ->first() ?? 'General Facility Maintenance';
+
+                // Recent 3 bookings in this area
+                $recentOrders = $group->sortByDesc('created_at')->take(3);
+
+                return [
+                    'area' => $areaName,
+                    'district' => $first->district ?? 'Not specified',
+                    'division' => $first->division ?? 'Not specified',
+                    'total_count' => $totalCount,
+                    'pending_count' => $pendingCount,
+                    'active_count' => $activeCount,
+                    'completed_count' => $completedCount,
+                    'emergency_count' => $emergencyCount,
+                    'total_revenue' => $totalRevenue,
+                    'top_service' => $topService,
+                    'latest_booking_at' => $group->max('created_at'),
+                    'recent_orders' => $recentOrders,
+                ];
+            })
+            ->sortByDesc('total_count');
+
+        // High-level KPI metrics
+        $kpis = [
+            'total_areas' => $areasCollection->count(),
+            'total_bookings' => $allBookings->count(),
+            'top_hotspot' => $areasCollection->first()['area'] ?? 'None',
+            'top_hotspot_count' => $areasCollection->first()['total_count'] ?? 0,
+            'emergency_total' => $allBookings->whereIn('urgency', ['emergency_1h', 'urgent_4h', 'same_day_4h'])->count(),
+            'total_revenue' => (float) $allBookings->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0),
+        ];
+
+        // Divisions count for filter tabs
+        $divisionList = Booking::whereNotNull('division')
+            ->where('division', '!=', '')
+            ->groupBy('division')
+            ->selectRaw('division, count(*) as count')
+            ->pluck('count', 'division')
+            ->toArray();
+
+        return view('admin.analytics.area-details', compact(
+            'areasCollection',
+            'kpis',
+            'divisionList',
+            'selectedDivision',
+            'search',
+            'range'
+        ));
     }
 }

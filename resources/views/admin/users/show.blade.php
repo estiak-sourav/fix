@@ -2,12 +2,15 @@
   <div class="page-header-box">
     <div>
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-        <a href="{{ route('admin.users.index') }}" style="color:var(--paces-primary); text-decoration:none; font-size:0.85rem; font-weight:600;">← Back to Client Directory</a>
+        <a href="{{ route('admin.users.index') }}" style="color:var(--paces-primary); text-decoration:none; font-size:0.85rem; font-weight:500;">← Back to Client Directory</a>
       </div>
       <h1 class="page-header-title">{{ $user->name }}</h1>
       <p class="page-header-subtitle">Client account management, profile settings, and facility service history</p>
     </div>
     <div style="display:flex; gap:10px; align-items:center;">
+      <a href="{{ route('admin.tickets.create', ['user_id' => $user->id]) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="display:inline-flex; align-items:center; gap:6px;">
+        <span>+ Open Support Ticket</span>
+      </a>
       <form action="{{ route('admin.users.toggle-status', $user) }}" method="POST" onsubmit="return confirm('Toggle status for this client?');" style="margin:0;">
         @csrf
         @if($user->is_active)
@@ -24,7 +27,7 @@
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:600; font-size:0.875rem;">
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem;">
       {{ session('success') }}
     </div>
   @endif
@@ -33,10 +36,10 @@
     <!-- Left Column: User Profile Card & Edit Form -->
     <div class="card-paces">
       <div style="text-align:center; padding-bottom:1.25rem; border-bottom:1px solid var(--paces-border); margin-bottom:1.25rem;">
-        <div style="width:72px; height:72px; border-radius:50%; background:var(--paces-primary); color:#ffffff; font-size:1.75rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">
+        <div style="width:72px; height:72px; border-radius:50%; background:var(--paces-primary); color:#ffffff; font-size:1.75rem; font-weight:500; display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">
           {{ strtoupper(substr($user->name, 0, 1)) }}
         </div>
-        <h3 style="font-size:1.15rem; font-weight:700; color:var(--paces-text-dark); margin-bottom:4px;">{{ $user->name }}</h3>
+        <h3 style="font-size:1.15rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:4px;">{{ $user->name }}</h3>
         <div style="font-size:0.85rem; color:var(--paces-text-muted);">{{ $user->email }}</div>
 
         <div style="margin-top:10px;">
@@ -59,24 +62,28 @@
         @csrf
         @method('PUT')
 
+        @php
+          $canEditUser = auth('admin')->user()?->hasPermission('users.edit');
+        @endphp
+
         <div style="margin-bottom:12px;">
           <label class="form-label-paces">Full Name</label>
-          <input type="text" name="name" value="{{ old('name', $user->name) }}" class="form-control-paces" required>
+          <input type="text" name="name" value="{{ old('name', $user->name) }}" class="form-control-paces" required {{ $canEditUser ? '' : 'disabled' }}>
         </div>
 
         <div style="margin-bottom:12px;">
           <label class="form-label-paces">Contact Phone (Bangladesh)</label>
-          <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" class="form-control-paces" placeholder="+8801XXXXXXXXX">
+          <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" class="form-control-paces" placeholder="+8801XXXXXXXXX" {{ $canEditUser ? '' : 'disabled' }}>
         </div>
 
         <div style="margin-bottom:12px;">
           <label class="form-label-paces">Company / Organization</label>
-          <input type="text" name="company_name" value="{{ old('company_name', $user->company_name) }}" class="form-control-paces" placeholder="Optional enterprise name">
+          <input type="text" name="company_name" value="{{ old('company_name', $user->company_name) }}" class="form-control-paces" placeholder="Optional enterprise name" {{ $canEditUser ? '' : 'disabled' }}>
         </div>
 
         <div style="margin-bottom:12px;">
           <label class="form-label-paces">Property / Facility Type</label>
-          <select name="property_type" class="form-control-paces">
+          <select name="property_type" class="form-control-paces" {{ $canEditUser ? '' : 'disabled' }}>
             <option value="residential" {{ $user->property_type === 'residential' ? 'selected' : '' }}>Residential Apartment / House</option>
             <option value="commercial" {{ $user->property_type === 'commercial' ? 'selected' : '' }}>Commercial Office / Building</option>
             <option value="industrial" {{ $user->property_type === 'industrial' ? 'selected' : '' }}>Industrial / Factory / Warehouse</option>
@@ -87,29 +94,35 @@
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
           <div>
             <label class="form-label-paces">Area / Thana</label>
-            <input type="text" name="area" value="{{ old('area', $user->area) }}" class="form-control-paces" placeholder="e.g. Gulshan">
+            <input type="text" name="area" value="{{ old('area', $user->area) }}" class="form-control-paces" placeholder="e.g. Gulshan" {{ $canEditUser ? '' : 'disabled' }}>
           </div>
           <div>
             <label class="form-label-paces">District</label>
-            <input type="text" name="district" value="{{ old('district', $user->district) }}" class="form-control-paces" placeholder="e.g. Dhaka">
+            <input type="text" name="district" value="{{ old('district', $user->district) }}" class="form-control-paces" placeholder="e.g. Dhaka" {{ $canEditUser ? '' : 'disabled' }}>
           </div>
         </div>
 
         <div style="margin-bottom:16px;">
           <label class="form-label-paces">Default Service Address</label>
-          <textarea name="default_address" rows="3" class="form-control-paces" placeholder="House/Road/Block details...">{{ old('default_address', $user->default_address) }}</textarea>
+          <textarea name="default_address" rows="3" class="form-control-paces" placeholder="House/Road/Block details..." {{ $canEditUser ? '' : 'disabled' }}>{{ old('default_address', $user->default_address) }}</textarea>
         </div>
 
         <div style="margin-bottom:16px;">
-          <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">
-            <input type="checkbox" name="is_active" value="1" {{ $user->is_active ? 'checked' : '' }} style="width:16px; height:16px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; font-weight:500; cursor:pointer;">
+            <input type="checkbox" name="is_active" value="1" {{ $user->is_active ? 'checked' : '' }} style="width:16px; height:16px;" {{ $canEditUser ? '' : 'disabled' }}>
             <span>Allow Client Login & Booking Dispatch</span>
           </label>
         </div>
 
-        <button type="submit" class="btn-paces btn-paces-primary" style="width:100%; justify-content:center;">
-          Save Client Changes
-        </button>
+        @if($canEditUser)
+          <button type="submit" class="btn-paces btn-paces-primary" style="width:100%; justify-content:center;">
+            Save Client Changes
+          </button>
+        @else
+          <div style="font-size:0.8rem; color:#64748b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:8px 12px; text-align:center;">
+            👁️ Read-Only Mode: Client details cannot be modified without Edit permissions.
+          </div>
+        @endif
       </form>
     </div>
 
@@ -122,7 +135,7 @@
       @if($bookings->isEmpty())
         <div style="text-align:center; padding:3rem 1rem; color:var(--paces-text-muted);">
           <div style="font-size:2rem; margin-bottom:8px;">📦</div>
-          <h4 style="font-size:1rem; font-weight:700; color:var(--paces-text-dark); margin-bottom:4px;">No Bookings Placed Yet</h4>
+          <h4 style="font-size:1rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:4px;">No Bookings Placed Yet</h4>
           <p style="font-size:0.85rem;">This client has registered but hasn't submitted any service requests yet.</p>
         </div>
       @else
@@ -142,11 +155,11 @@
               @foreach($bookings as $b)
                 <tr>
                   <td>
-                    <strong style="color:var(--paces-primary); font-family:monospace;">#{{ $b->booking_number }}</strong>
+                    <strong style="color:var(--paces-primary); font-family:monospace; font-weight:500;">#{{ $b->booking_number }}</strong>
                     <div style="font-size:0.75rem; color:var(--paces-text-muted);">{{ $b->created_at->format('M d, Y') }}</div>
                   </td>
                   <td>
-                    <div style="font-weight:600;">{{ $b->service?->title ?? ($b->amcPlan?->name ?? 'Custom Service') }}</div>
+                    <div style="font-weight:500;">{{ $b->service?->title ?? ($b->amcPlan?->name ?? 'Custom Service') }}</div>
                     <div style="font-size:0.75rem; color:var(--paces-text-muted);">Area: {{ $b->area }}</div>
                   </td>
                   <td>
@@ -154,7 +167,7 @@
                     <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:capitalize;">Slot: {{ $b->preferred_time_slot }}</div>
                   </td>
                   <td>
-                    <div style="font-weight:700;">৳{{ number_format($b->total_estimated_cost, 2) }}</div>
+                    <div style="font-weight:500;">৳{{ number_format($b->total_estimated_cost, 2) }}</div>
                   </td>
                   <td>
                     @php

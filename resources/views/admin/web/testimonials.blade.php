@@ -12,7 +12,7 @@
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:600; display:flex; align-items:center; gap:8px;">
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:center; gap:8px;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
       {{ session('success') }}
     </div>
@@ -57,11 +57,11 @@
         </div>
 
         <div style="background:#f8fafc; border-radius:8px; padding:10px 12px; margin-bottom:1.25rem; border:1px solid var(--paces-border); display:flex; gap:16px;">
-          <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:600; cursor:pointer;">
+          <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:500; cursor:pointer;">
             <input type="checkbox" name="is_featured" value="1" checked>
             Featured on Home
           </label>
-          <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:600; cursor:pointer;">
+          <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:500; cursor:pointer;">
             <input type="checkbox" name="is_active" value="1" checked>
             Active
           </label>
@@ -87,7 +87,7 @@
               @method('PUT')
 
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <div style="font-size:0.95rem; font-weight:700; color:var(--paces-text-dark);">
+                <div style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark);">
                   {{ $t->client_name }}
                   <span style="font-size:0.8rem; font-weight:500; color:var(--paces-text-muted);">
                     — {{ $t->client_title ?? 'Client' }} ({{ $t->company_name ?? 'Corporate Partner' }})
@@ -120,11 +120,11 @@
 
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
                 <div style="display:flex; gap:14px;">
-                  <label style="display:inline-flex; align-items:center; gap:4px; font-size:0.8rem; font-weight:600; cursor:pointer;">
+                  <label style="display:inline-flex; align-items:center; gap:4px; font-size:0.8rem; font-weight:500; cursor:pointer;">
                     <input type="checkbox" name="is_featured" value="1" {{ $t->is_featured ? 'checked' : '' }}>
                     Featured
                   </label>
-                  <label style="display:inline-flex; align-items:center; gap:4px; font-size:0.8rem; font-weight:600; cursor:pointer;">
+                  <label style="display:inline-flex; align-items:center; gap:4px; font-size:0.8rem; font-weight:500; cursor:pointer;">
                     <input type="checkbox" name="is_active" value="1" {{ $t->is_active ? 'checked' : '' }}>
                     Active
                   </label>
@@ -139,7 +139,7 @@
               <form action="{{ route('admin.web.testimonials.destroy', $t) }}" method="POST" onsubmit="return confirm('Delete this testimonial?');" style="margin:0;">
                 @csrf
                 @method('DELETE')
-                <button type="submit" style="background:none; border:none; color:#ef4444; font-size:0.78rem; font-weight:600; cursor:pointer;">
+                <button type="submit" style="background:none; border:none; color:#ef4444; font-size:0.78rem; font-weight:500; cursor:pointer;">
                   🗑️ Delete Review
                 </button>
               </form>

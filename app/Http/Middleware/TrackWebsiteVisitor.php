@@ -28,27 +28,27 @@ class TrackWebsiteVisitor
                 $isService = str_contains($path, 'service') || $request->routeIs('services.*');
                 $isAmc = str_contains($path, 'amc') || $request->has('plan') || $request->has('amc_plan');
 
-                $isNew = !$request->hasCookie('fix_returning_user');
+                $isNew = ! $request->hasCookie('fix_returning_user');
                 if ($isNew) {
                     cookie()->queue(cookie()->forever('fix_returning_user', '1'));
                 }
 
                 $todayStr = today()->toDateString();
-                $sessionKey = 'visited_' . $todayStr;
+                $sessionKey = 'visited_'.$todayStr;
 
-                if (!$request->session()->has($sessionKey)) {
+                if (! $request->session()->has($sessionKey)) {
                     $request->session()->put($sessionKey, true);
                     DailyAnalytics::recordVisitor($isService, $isAmc, $isNew);
                 } else {
                     // Track specific section engagement even if visitor was already counted today
                     if ($isService || $isAmc) {
                         $record = DailyAnalytics::forDate($todayStr);
-                        if ($isService && !$request->session()->has('visited_srv_' . $todayStr)) {
-                            $request->session()->put('visited_srv_' . $todayStr, true);
+                        if ($isService && ! $request->session()->has('visited_srv_'.$todayStr)) {
+                            $request->session()->put('visited_srv_'.$todayStr, true);
                             $record->increment('service_visitors');
                         }
-                        if ($isAmc && !$request->session()->has('visited_amc_' . $todayStr)) {
-                            $request->session()->put('visited_amc_' . $todayStr, true);
+                        if ($isAmc && ! $request->session()->has('visited_amc_'.$todayStr)) {
+                            $request->session()->put('visited_amc_'.$todayStr, true);
                             $record->increment('amc_visitors');
                         }
                     }

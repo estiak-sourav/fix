@@ -6,6 +6,7 @@ use App\Actions\Booking\UpdateBookingStatusAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateBookingStatusRequest;
 use App\Models\Booking;
+use App\Services\ActivityLogService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -58,6 +59,13 @@ class AdminBookingController extends Controller
 
         $action->execute($booking, $request->validated(), $admin);
 
-        return redirect()->back()->with('success', "Booking #{$booking->booking_number} updated to " . ucfirst(str_replace('_', ' ', $request->validated('status'))));
+        ActivityLogService::logBooking('booking.status_update', "Updated Work Order #{$booking->booking_number} status to '".ucfirst(str_replace('_', ' ', $request->validated('status')))."'.", $booking, [
+            'booking_number' => $booking->booking_number,
+            'status' => $booking->status,
+            'assigned_team' => $booking->assigned_team,
+            'final_cost' => $booking->final_cost,
+        ]);
+
+        return redirect()->back()->with('success', "Booking #{$booking->booking_number} updated to ".ucfirst(str_replace('_', ' ', $request->validated('status'))));
     }
 }

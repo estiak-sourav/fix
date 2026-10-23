@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Mail\AuthOtpMail;
+use App\Mail\TestSmtpMail;
 use App\Models\Admin;
 use App\Models\EmailOtp;
 use App\Models\SiteSetting;
@@ -68,7 +70,7 @@ class AuthAndSmtpWorkflowTest extends TestCase
         $responseValid->assertJson(['success' => true]);
 
         // Verify OTP dispatched
-        Mail::assertSent(\App\Mail\AuthOtpMail::class);
+        Mail::assertSent(AuthOtpMail::class);
     }
 
     /**
@@ -181,7 +183,7 @@ class AuthAndSmtpWorkflowTest extends TestCase
 
         $testResponse->assertRedirect();
         $testResponse->assertSessionHas('success');
-        Mail::assertSent(\App\Mail\TestSmtpMail::class);
+        Mail::assertSent(TestSmtpMail::class);
     }
 
     /**

@@ -9,24 +9,103 @@ const BD_LOCATIONS = {
       "Gulshan 1 & 2", "Banani", "Baridhara & DOHS", "Bashundhara R/A",
       "Uttara (All Sectors)", "Dhanmondi", "Mohakhali", "Tejgaon Industrial Area",
       "Mirpur (1-14)", "Mohammadpur", "Motijheel Commercial", "Badda / Rampura",
-      "Khilgaon / Malibagh", "Old Dhaka / Lalbagh", "Niketan", "Khilkhet"
+      "Khilgaon / Malibagh", "Old Dhaka / Lalbagh", "Niketan", "Khilkhet",
+      "Cantonment", "Shahbagh", "Farmgate", "Pallabi", "Jatrabari"
     ],
-    "Gazipur": ["Tongi", "Gazipur Sadar", "Konabari Industrial", "Chowrasta", "Kaliakair"],
-    "Narayanganj": ["Narayanganj City", "Fatullah", "Siddhirganj EPZ", "Kanchpur Industrial"],
-    "Savar": ["Savar Bazar", "Ashulia EPZ", "Hemayetpur", "DEPZ Area"]
+    "Gazipur": ["Tongi", "Gazipur Sadar", "Konabari Industrial", "Chowrasta", "Kaliakair", "Sreepur"],
+    "Narayanganj": ["Narayanganj City", "Fatullah", "Siddhirganj EPZ", "Kanchpur Industrial", "Sonargaon"],
+    "Savar & Ashulia": ["Savar Bazar", "Ashulia EPZ", "Hemayetpur", "DEPZ Area", "Dhamrai"],
+    "Narsingdi": ["Narsingdi Sadar", "Madhabdi", "Palash", "Shibpur"],
+    "Tangail": ["Tangail Sadar", "Mirzapur", "Kalihati", "Madhupur"],
+    "Faridpur": ["Faridpur Sadar", "Bhanga", "Boalmari"],
+    "Manikganj": ["Manikganj Sadar", "Singair"],
+    "Munshiganj": ["Munshiganj Sadar", "Sreenagar", "Gajaria"],
+    "Gopalganj": ["Gopalganj Sadar", "Tungipara"],
+    "Madaripur": ["Madaripur Sadar", "Shibchar"],
+    "Rajbari": ["Rajbari Sadar", "Goalanda"],
+    "Shariatpur": ["Shariatpur Sadar", "Naria"],
+    "Kishoreganj": ["Kishoreganj Sadar", "Bhairab"]
   },
   "Chattogram": {
-    "Chattogram City": ["Agrabad Commercial", "Nasirabad", "GEC Circle", "Khulshi R/A", "Halishahar", "Panchlaish", "CEPZ Area"],
-    "Cox's Bazar": ["Hotel Motel Zone", "Sadar", "Kolatoli"]
-  },
-  "Sylhet": {
-    "Sylhet City": ["Zindabazar", "Amberkhana", "Shahjalal Uposhohor", "Subidbazar", "Kumarpara"]
+    "Chattogram City": [
+      "Agrabad Commercial", "Nasirabad", "GEC Circle", "Khulshi R/A", "Halishahar",
+      "Panchlaish", "CEPZ Area", "Kotwali", "Chawkbazar", "Muradpur", "Pahartali", "Patenga"
+    ],
+    "Cox's Bazar": ["Hotel Motel Zone", "Cox's Bazar Sadar", "Kolatoli", "Teknaf", "Ramu"],
+    "Cumilla": ["Kandirpar", "Cumilla Sadar", "Cumilla EPZ Area", "Daudkandi", "Laksham"],
+    "Feni": ["Feni Sadar", "Daganbhuiyan", "Chhagalnaiya"],
+    "Brahmanbaria": ["Brahmanbaria Sadar", "Ashuganj", "Kasba"],
+    "Noakhali": ["Maijdee Town", "Begumganj / Chowmuhani", "Chatkhil"],
+    "Chandpur": ["Chandpur Sadar", "Hajiganj", "Faridganj"],
+    "Lakshmipur": ["Lakshmipur Sadar", "Raipur", "Ramganj"],
+    "Rangamati": ["Rangamati Sadar", "Kaptai"],
+    "Khagrachhari": ["Khagrachhari Sadar", "Ramgarh"],
+    "Bandarban": ["Bandarban Sadar", "Ruma"]
   },
   "Rajshahi": {
-    "Rajshahi City": ["Shaheb Bazar", "Kazla", "Boalia", "Motihar"]
+    "Rajshahi City": [
+      "Shaheb Bazar", "Boalia", "Kazla", "Motihar", "Rajpara", "Upashahar", "Shiroil"
+    ],
+    "Bogura": ["Bogura Sadar", "Sherpur", "Santahar", "Shibganj"],
+    "Pabna": ["Pabna Sadar", "Ishwardi EPZ", "Santhia"],
+    "Sirajganj": ["Sirajganj Sadar", "Ullapara", "Shahjadpur"],
+    "Naogaon": ["Naogaon Sadar", "Mohadevpur", "Patnitala"],
+    "Natore": ["Natore Sadar", "Singra", "Baraigram"],
+    "Chapainawabganj": ["Chapainawabganj Sadar", "Shibganj"],
+    "Joypurhat": ["Joypurhat Sadar", "Panchbibi"]
   },
   "Khulna": {
-    "Khulna City": ["Shibbari", "Boyra", "Khalishpur Industrial", "Daulatpur"]
+    "Khulna City": [
+      "Shibbari", "Boyra", "Khalishpur Industrial", "Daulatpur", "Sonadanga", "Rupsha", "Khan Jahan Ali"
+    ],
+    "Jashore": ["Jashore Sadar", "Benapole Port Area", "Abhaynagar"],
+    "Kushtia": ["Kushtia Sadar", "Bheramara", "Poradah"],
+    "Satkhira": ["Satkhira Sadar", "Kalaroa", "Shyamnagar"],
+    "Jhenaidah": ["Jhenaidah Sadar", "Kaliganj"],
+    "Chuadanga": ["Chuadanga Sadar", "Alamdanga"],
+    "Meherpur": ["Meherpur Sadar", "Mujibnagar"],
+    "Bagerhat": ["Bagerhat Sadar", "Mongla Port Area"],
+    "Magura": ["Magura Sadar", "Sreepur"],
+    "Narail": ["Narail Sadar", "Lohagara"]
+  },
+  "Sylhet": {
+    "Sylhet City": [
+      "Zindabazar", "Amberkhana", "Shahjalal Uposhohor", "Subidbazar", "Kumarpara",
+      "Shibganj", "Tilagarh", "South Surma", "Lamabazar", "Pathantula"
+    ],
+    "Moulvibazar": ["Sreemangal Tourism Area", "Moulvibazar Sadar", "Kulaura"],
+    "Habiganj": ["Habiganj Sadar", "Madhabpur Industrial", "Nabiganj"],
+    "Sunamganj": ["Sunamganj Sadar", "Jagannathpur", "Chhatak"]
+  },
+  "Barishal": {
+    "Barishal City": [
+      "Barishal Sadar", "Natullabad", "Rupatali", "C&B Road", "Brown Compound", "Launch Ghat Area", "Band Road"
+    ],
+    "Patuakhali": ["Patuakhali Sadar", "Kuakata Tourism Area", "Galachipa"],
+    "Bhola": ["Bhola Sadar", "Borhanuddin", "Char Fasson"],
+    "Pirojpur": ["Pirojpur Sadar", "Mathbaria", "Swarupkathi"],
+    "Jhalokati": ["Jhalokati Sadar", "Nalchity"],
+    "Barguna": ["Barguna Sadar", "Amtali"]
+  },
+  "Rangpur": {
+    "Rangpur City": [
+      "Rangpur Sadar", "Jahaj Company Mor", "Carmichael College Area", "Modern Mor", "Medical Mor", "Dhap"
+    ],
+    "Dinajpur": ["Dinajpur Sadar", "Fulbari", "Parbatipur"],
+    "Nilphamari": ["Saidpur Commercial Hub", "Nilphamari Sadar", "Uttara EPZ"],
+    "Kurigram": ["Kurigram Sadar", "Ulipur"],
+    "Gaibandha": ["Gaibandha Sadar", "Gobindaganj"],
+    "Lalmonirhat": ["Lalmonirhat Sadar", "Burimari"],
+    "Thakurgaon": ["Thakurgaon Sadar", "Pirganj"],
+    "Panchagarh": ["Panchagarh Sadar", "Tetulia"]
+  },
+  "Mymensingh": {
+    "Mymensingh City": [
+      "Mymensingh Sadar", "Ganginarpar", "Town Hall Area", "Charpara", "Notun Bazar", "BAU Campus Area", "Trishal", "Bhaluka Industrial"
+    ],
+    "Jamalpur": ["Jamalpur Sadar", "Sarishabari"],
+    "Netrokona": ["Netrokona Sadar", "Mohanganj"],
+    "Sherpur": ["Sherpur Sadar", "Nalitabari"]
   }
 };
 
@@ -318,37 +397,59 @@ function initLocationCascading() {
   divisionSelect.innerHTML = `<option value="">Select Division...</option>` +
     Object.keys(BD_LOCATIONS).map(div => `<option value="${div}">${div}</option>`).join('');
 
-  divisionSelect.addEventListener("change", () => {
-    const div = divisionSelect.value;
-    districtSelect.disabled = !div;
-    areaSelect.disabled = true;
-    areaSelect.innerHTML = `<option value="">Select District First...</option>`;
-
+  function populateDistricts(div, selectedDistrict = "") {
     if (!div || !BD_LOCATIONS[div]) {
+      districtSelect.disabled = true;
       districtSelect.innerHTML = `<option value="">Select Division First...</option>`;
+      areaSelect.disabled = true;
+      areaSelect.innerHTML = `<option value="">Select District First...</option>`;
       return;
     }
 
     const districts = Object.keys(BD_LOCATIONS[div]);
+    districtSelect.disabled = false;
     districtSelect.innerHTML = `<option value="">Select District...</option>` +
-      districts.map(d => `<option value="${d}">${d}</option>`).join('');
-  });
+      districts.map(d => `<option value="${d}" ${d === selectedDistrict ? 'selected' : ''}>${d}</option>`).join('');
+  }
 
-  districtSelect.addEventListener("change", () => {
-    const div = divisionSelect.value;
-    const dist = districtSelect.value;
-    areaSelect.disabled = !dist;
-
-    if (!div || !dist || !BD_LOCATIONS[div][dist]) {
+  function populateAreas(div, dist, selectedArea = "") {
+    if (!div || !dist || !BD_LOCATIONS[div] || !BD_LOCATIONS[div][dist]) {
+      areaSelect.disabled = true;
       areaSelect.innerHTML = `<option value="">Select District First...</option>`;
       return;
     }
 
     const areas = BD_LOCATIONS[div][dist];
+    areaSelect.disabled = false;
     areaSelect.innerHTML = `<option value="">Select Thana / Area...</option>` +
-      areas.map(a => `<option value="${a}">${a}</option>`).join('') +
-      `<option value="Other Area">Other Area / Specific Locality</option>`;
+      areas.map(a => `<option value="${a}" ${a === selectedArea ? 'selected' : ''}>${a}</option>`).join('') +
+      `<option value="Other Area" ${selectedArea === 'Other Area' ? 'selected' : ''}>Other Area / Specific Locality</option>`;
+  }
+
+  divisionSelect.addEventListener("change", () => {
+    const div = divisionSelect.value;
+    populateDistricts(div);
   });
+
+  districtSelect.addEventListener("change", () => {
+    const div = divisionSelect.value;
+    const dist = districtSelect.value;
+    populateAreas(div, dist);
+  });
+
+  // Smart Auto-Selection for logged-in user profile
+  const user = window.FIX_AUTH_USER || {};
+  const userDiv = user.division || "";
+  const userDist = user.district || "";
+  const userArea = user.area || "";
+
+  if (userDiv && BD_LOCATIONS[userDiv]) {
+    divisionSelect.value = userDiv;
+    populateDistricts(userDiv, userDist);
+    if (userDist && BD_LOCATIONS[userDiv][userDist]) {
+      populateAreas(userDiv, userDist, userArea);
+    }
+  }
 }
 
 function initPhotoUpload() {

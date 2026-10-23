@@ -42,19 +42,19 @@ class UpdateBookingStatusAction
                 $updateData['final_cost'] = $data['final_cost'];
             }
 
-            if ($newStatus === 'accepted' && !$booking->accepted_at) {
+            if ($newStatus === 'accepted' && ! $booking->accepted_at) {
                 $updateData['accepted_at'] = now();
             }
-            if ($newStatus === 'completed' && !$booking->completed_at) {
+            if ($newStatus === 'completed' && ! $booking->completed_at) {
                 $updateData['completed_at'] = now();
             }
-            if ($newStatus === 'cancelled' && !$booking->cancelled_at) {
+            if ($newStatus === 'cancelled' && ! $booking->cancelled_at) {
                 $updateData['cancelled_at'] = now();
             }
 
             $booking->update($updateData);
 
-            $comment = $data['comment'] ?? ($data['note'] ?? 'Status updated to ' . ucfirst(str_replace('_', ' ', $newStatus)));
+            $comment = $data['comment'] ?? ($data['note'] ?? 'Status updated to '.ucfirst(str_replace('_', ' ', $newStatus)));
 
             BookingStatusLog::create([
                 'booking_id' => $booking->id,

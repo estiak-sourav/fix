@@ -132,7 +132,7 @@
     }
     .top-kpi-label {
       font-size: 0.72rem;
-      font-weight: 700;
+      font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: var(--paces-text-muted, #64748b);
@@ -140,7 +140,7 @@
     }
     .top-kpi-value {
       font-size: 1.65rem;
-      font-weight: 800;
+      font-weight: 500;
       color: var(--paces-text-dark, #1e293b);
       font-family: 'Poppins', sans-serif;
       line-height: 1.1;
@@ -151,8 +151,8 @@
   <!-- Sticky Dashboard Header: Dashboard Title on Left, Global Date Range Filter on Right (Remains pinned on scroll) -->
   <div class="dashboard-sticky-bar">
     <div style="display:flex; align-items:center; gap:12px;">
-      <h1 class="page-header-title" style="margin:0; font-size:1.35rem; font-weight:800; color:#1e293b;">Dashboard</h1>
-      <span style="background:#3e60d5; color:#ffffff; font-size:0.78rem; font-weight:600; padding:5px 14px; border-radius:20px; white-space:nowrap; box-shadow:0 2px 6px rgba(62,96,213,0.25);">
+      <h1 class="page-header-title" style="margin:0; font-size:1.35rem; font-weight:500; color:#1e293b;">Dashboard</h1>
+      <span style="background:#3e60d5; color:#ffffff; font-size:0.78rem; font-weight:500; padding:5px 14px; border-radius:20px; white-space:nowrap; box-shadow:0 2px 6px rgba(62,96,213,0.25);">
         {{ $stats['range_label'] }}
       </span>
     </div>
@@ -162,37 +162,37 @@
       <div style="display:flex; align-items:center; background:#ffffff; border:1px solid #eaedf1; border-radius:8px; padding:3px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
         <!-- Yesterday -->
         <a href="{{ route('admin.dashboard', ['range' => 'yesterday']) }}" 
-          style="text-decoration:none; font-size:0.825rem; font-weight:600; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'yesterday' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
+          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'yesterday' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
           Yesterday
         </a>
 
         <!-- Today -->
         <a href="{{ route('admin.dashboard', ['range' => 'today']) }}" 
-          style="text-decoration:none; font-size:0.825rem; font-weight:600; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'today' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
+          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'today' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
           Today
         </a>
 
         <!-- Week -->
         <a href="{{ route('admin.dashboard', ['range' => 'week']) }}" 
-          style="text-decoration:none; font-size:0.825rem; font-weight:600; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'week' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
+          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'week' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
           Week
         </a>
 
         <!-- Month -->
         <a href="{{ route('admin.dashboard', ['range' => 'month']) }}" 
-          style="text-decoration:none; font-size:0.825rem; font-weight:600; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'month' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
+          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'month' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
           Month
         </a>
 
         <!-- Year -->
         <a href="{{ route('admin.dashboard', ['range' => 'year']) }}" 
-          style="text-decoration:none; font-size:0.825rem; font-weight:600; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'year' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
+          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'year' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
           Year
         </a>
 
         <!-- Date to Date (Clean popup trigger, no icon) -->
         <button type="button" onclick="openDateModal()" 
-          style="border:none; cursor:pointer; font-size:0.825rem; font-weight:600; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ in_array($stats['range'], ['custom', 'date']) ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'background:transparent; color:#64748b;' }}">
+          style="border:none; cursor:pointer; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ in_array($stats['range'], ['custom', 'date']) ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'background:transparent; color:#64748b;' }}">
           Date to Date
         </button>
       </div>
@@ -263,7 +263,7 @@
   <div class="card-paces" style="padding: 24px 28px; margin-bottom: 1.75rem; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
     <!-- Header with Title -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 22px;">
-      <h2 style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0; font-family: 'Poppins', sans-serif;">
+      <h2 style="font-size: 1.25rem; font-weight: 500; color: #1e293b; margin: 0; font-family: 'Poppins', sans-serif;">
         Operations & Traffic Analytics
       </h2>
     </div>
@@ -279,62 +279,62 @@
     <div class="analytics-counters-panel">
         <!-- 1. Total visitor -->
         <div class="analytics-counter-item" style="border-top:3px solid #4e73df;">
-          <div style="font-size:0.68rem; font-weight:600; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Total visitor</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['total_visitors']) }}</div>
+          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Total visitor</div>
+          <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['total_visitors']) }}</div>
         </div>
 
         <!-- 2. New visitor -->
         <div class="analytics-counter-item" style="border-top:3px solid #60a5fa;">
-          <div style="font-size:0.68rem; font-weight:600; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">New visitor</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['new_visitors']) }}</div>
+          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">New visitor</div>
+          <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['new_visitors']) }}</div>
         </div>
 
         <!-- 3. Login -->
         <div class="analytics-counter-item" style="border-top:3px solid #8b5cf6;">
-          <div style="font-size:0.68rem; font-weight:600; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Login</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['logins']) }}</div>
+          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Login</div>
+          <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['logins']) }}</div>
         </div>
 
         <!-- 4. Registration -->
         <div class="analytics-counter-item" style="border-top:3px solid #a855f7;">
-          <div style="font-size:0.68rem; font-weight:600; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Registration</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['registrations']) }}</div>
+          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Registration</div>
+          <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['registrations']) }}</div>
         </div>
 
         <!-- 5. Service visitor -->
         <div class="analytics-counter-item" style="border-top:3px solid #f6b749;">
-          <div style="font-size:0.68rem; font-weight:600; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Service visitor</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['service_visitors']) }}</div>
+          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Service visitor</div>
+          <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['service_visitors']) }}</div>
         </div>
 
         <!-- 6. AMC visitor -->
         <div class="analytics-counter-item" style="border-top:3px solid #f59e0b;">
-          <div style="font-size:0.68rem; font-weight:600; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">AMC visitor</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['amc_visitors']) }}</div>
+          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">AMC visitor</div>
+          <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['amc_visitors']) }}</div>
         </div>
 
         <!-- 7. Service Request (Under Service visitor) -->
         <div class="analytics-counter-item" style="border-top:3px solid #06b6d4;">
-          <div style="font-size:0.68rem; font-weight:600; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Service Request</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['service_requests']) }}</div>
+          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Service Request</div>
+          <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['service_requests']) }}</div>
         </div>
 
         <!-- 8. AMC Request (Under AMC visitor) -->
         <div class="analytics-counter-item" style="border-top:3px solid #ec4899;">
-          <div style="font-size:0.68rem; font-weight:600; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">AMC Request</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['amc_requests']) }}</div>
+          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">AMC Request</div>
+          <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['amc_requests']) }}</div>
         </div>
 
         <!-- 9. Service Book (Under Service Request) -->
         <div class="analytics-counter-item" style="border-top:3px solid #20c997;">
-          <div style="font-size:0.68rem; font-weight:600; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Service Book</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['service_book']) }}</div>
+          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Service Book</div>
+          <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['service_book']) }}</div>
         </div>
 
         <!-- 10. AMC Book (Under AMC Request) -->
         <div class="analytics-counter-item" style="border-top:3px solid #10b981;">
-          <div style="font-size:0.68rem; font-weight:600; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">AMC Book</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['amc_book']) }}</div>
+          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">AMC Book</div>
+          <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['amc_book']) }}</div>
         </div>
       </div>
     </div>
@@ -345,7 +345,7 @@
     <div style="background:#ffffff; border-radius:14px; box-shadow:0 20px 45px rgba(0,0,0,0.18); width:92%; max-width:400px; padding:22px 24px; position:relative;" onclick="event.stopPropagation()">
       <!-- Modal Header -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:#1e293b; font-family:'Poppins', sans-serif;">Select Date Range</h3>
+        <h3 style="margin:0; font-size:1.05rem; font-weight:500; color:#1e293b; font-family:'Poppins', sans-serif;">Select Date Range</h3>
         <button type="button" onclick="closeDateModal()" style="background:none; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; line-height:1; padding:0 4px;">&times;</button>
       </div>
 
@@ -355,21 +355,21 @@
 
         <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
           <div>
-            <label style="display:block; font-size:0.8rem; font-weight:600; color:#475569; margin-bottom:4px;">From</label>
+            <label style="display:block; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:4px;">From</label>
             <input type="date" name="start_date" id="modalStartDate" value="{{ $stats['start_date'] }}" class="form-control-paces" style="width:100%; height:38px; font-size:0.875rem; padding:6px 10px; border-radius:8px;" required>
           </div>
           <div>
-            <label style="display:block; font-size:0.8rem; font-weight:600; color:#475569; margin-bottom:4px;">To</label>
+            <label style="display:block; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:4px;">To</label>
             <input type="date" name="end_date" id="modalEndDate" value="{{ $stats['end_date'] }}" class="form-control-paces" style="width:100%; height:38px; font-size:0.875rem; padding:6px 10px; border-radius:8px;" required>
           </div>
         </div>
 
         <!-- Quick preset shortcuts -->
         <div style="display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap;">
-          <button type="button" onclick="setModalQuickDates('today')" style="background:#f1f5f9; border:none; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:600; color:#475569; cursor:pointer;">Today</button>
-          <button type="button" onclick="setModalQuickDates('yesterday')" style="background:#f1f5f9; border:none; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:600; color:#475569; cursor:pointer;">Yesterday</button>
-          <button type="button" onclick="setModalQuickDates('last7')" style="background:#f1f5f9; border:none; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:600; color:#475569; cursor:pointer;">Last 7 Days</button>
-          <button type="button" onclick="setModalQuickDates('last30')" style="background:#f1f5f9; border:none; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:600; color:#475569; cursor:pointer;">Last 30 Days</button>
+          <button type="button" onclick="setModalQuickDates('today')" style="background:#f1f5f9; border:none; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:500; color:#475569; cursor:pointer;">Today</button>
+          <button type="button" onclick="setModalQuickDates('yesterday')" style="background:#f1f5f9; border:none; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:500; color:#475569; cursor:pointer;">Yesterday</button>
+          <button type="button" onclick="setModalQuickDates('last7')" style="background:#f1f5f9; border:none; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:500; color:#475569; cursor:pointer;">Last 7 Days</button>
+          <button type="button" onclick="setModalQuickDates('last30')" style="background:#f1f5f9; border:none; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:500; color:#475569; cursor:pointer;">Last 30 Days</button>
         </div>
 
         <div style="display:flex; justify-content:flex-end; gap:8px;">
@@ -404,7 +404,7 @@
               $color = $colors[$loop->index % count($colors)];
             @endphp
             <div>
-              <div style="display:flex; justify-content:space-between; font-size:0.825rem; font-weight:600; margin-bottom:4px;">
+              <div style="display:flex; justify-content:space-between; font-size:0.825rem; font-weight:500; margin-bottom:4px;">
                 <span>{{ $categoryName }}</span>
                 <span><strong>{{ $count }}</strong> orders</span>
               </div>
@@ -417,28 +417,59 @@
       @endif
     </div>
 
-    <!-- Dhaka Area Regional Hotspots -->
+    <!-- Countrywide Regional Operations Hotspots -->
     <div class="card-paces" style="margin-bottom:0;">
-      <div class="card-header-paces">
-        <h3 class="card-title-paces" style="margin:0;">Dhaka Operations Hotspots</h3>
-        <a href="{{ route('admin.bookings.index') }}" class="btn-paces btn-paces-outline btn-paces-sm">
-          Dispatch Map →
-        </a>
+      <div class="card-header-paces" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h3 class="card-title-paces" style="margin:0;">Operations Hotspots</h3>
+          @if(($selectedHotspotDivision ?? 'all') !== 'all')
+            <span class="badge-pill-paces bg-primary-subtle" style="font-size:0.75rem; font-weight:500;">
+              {{ $selectedHotspotDivision }}
+            </span>
+          @endif
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <form method="GET" action="{{ route('admin.dashboard') }}" id="hotspotDivisionFilterForm" style="margin:0; display:inline-block;">
+            @foreach(request()->except(['hotspot_division', 'page']) as $k => $v)
+              @if(is_string($v) || is_numeric($v))
+                <input type="hidden" name="{{ $k }}" value="{{ $v }}">
+              @endif
+            @endforeach
+            <select name="hotspot_division" onchange="this.form.submit()" style="padding:4px 8px; font-size:0.8rem; border-radius:6px; border:1px solid var(--paces-border); background:#ffffff; color:var(--paces-text-dark); cursor:pointer; font-weight:500;">
+              <option value="all" {{ ($selectedHotspotDivision ?? 'all') === 'all' ? 'selected' : '' }}>All Divisions</option>
+              @foreach(['Dhaka', 'Chattogram', 'Rajshahi', 'Khulna', 'Barishal', 'Sylhet', 'Rangpur', 'Mymensingh'] as $divName)
+                <option value="{{ $divName }}" {{ ($selectedHotspotDivision ?? 'all') === $divName ? 'selected' : '' }}>
+                  {{ $divName }} {{ isset($divisionCounts[$divName]) ? '('.$divisionCounts[$divName].')' : '' }}
+                </option>
+              @endforeach
+            </select>
+          </form>
+          <a href="{{ route('admin.area-analytics') }}" class="btn-paces btn-paces-outline btn-paces-sm">
+            Area Details →
+          </a>
+        </div>
       </div>
 
       @if($areaHotspots->isEmpty())
         <div style="text-align:center; padding:2rem; color:var(--paces-text-muted);">
-          No area records in this date period.
+          No hotspot records for {{ ($selectedHotspotDivision ?? 'all') === 'all' ? 'the selected date period' : $selectedHotspotDivision }}.
         </div>
       @else
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-          @foreach($areaHotspots as $areaName => $count)
+          @foreach($areaHotspots as $hotspot)
+            @php
+              $areaName = is_array($hotspot) ? ($hotspot['area'] ?? $hotspot['name'] ?? '') : (is_object($hotspot) ? ($hotspot->area ?? $hotspot->name ?? '') : (string)$hotspot);
+              $count = is_array($hotspot) ? ($hotspot['count'] ?? 0) : (is_numeric($hotspot) ? $hotspot : 1);
+              $districtName = is_array($hotspot) ? ($hotspot['district'] ?? '') : (is_object($hotspot) ? ($hotspot->district ?? '') : '');
+              $divisionName = is_array($hotspot) ? ($hotspot['division'] ?? '') : (is_object($hotspot) ? ($hotspot->division ?? '') : '');
+              $metaSub = $districtName ? ($districtName . ($divisionName ? ', ' . $divisionName : '')) : ($divisionName ?: 'Active Field Dispatch');
+            @endphp
             <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
               <div>
-                <div style="font-size:0.85rem; font-weight:700; color:var(--paces-text-dark);">📍 {{ $areaName }}</div>
-                <div style="font-size:0.75rem; color:var(--paces-text-muted);">Field dispatch ready</div>
+                <div style="font-size:0.85rem; font-weight:500; color:var(--paces-text-dark);">📍 {{ $areaName }}</div>
+                <div style="font-size:0.75rem; color:var(--paces-text-muted);">{{ $metaSub }}</div>
               </div>
-              <span class="badge-pill-paces bg-primary-subtle" style="font-size:0.8rem; font-weight:800;">
+              <span class="badge-pill-paces bg-primary-subtle" style="font-size:0.8rem; font-weight:500;">
                 {{ $count }}
               </span>
             </div>
@@ -455,22 +486,13 @@
     <div class="card-paces" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
       <!-- Header -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <h3 style="font-size:1.1rem; font-weight:700; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Earning</h3>
+        <h3 style="font-size:1.1rem; font-weight:500; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Earning</h3>
         <div style="display:inline-flex; align-items:center; gap:6px;">
           <div style="position:relative;">
             <select id="earningMonthSelector" onchange="switchEarningMonth(this.value)" style="appearance:none; -webkit-appearance:none; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:5px 28px 5px 12px; font-size:0.82rem; font-weight:500; color:#475569; cursor:pointer; outline:none; font-family:'Poppins', sans-serif;">
-              <option value="1" selected>Jan</option>
-              <option value="2">Feb</option>
-              <option value="3">Mar</option>
-              <option value="4">Apr</option>
-              <option value="5">May</option>
-              <option value="6">Jun</option>
-              <option value="7">Jul</option>
-              <option value="8">Aug</option>
-              <option value="9">Sep</option>
-              <option value="10">Oct</option>
-              <option value="11">Nov</option>
-              <option value="12">Dec</option>
+              @foreach([1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec'] as $mNum => $mName)
+                <option value="{{ $mNum }}" {{ $currentMonth === $mNum ? 'selected' : '' }}>{{ $mName }}</option>
+              @endforeach
             </select>
             <svg style="position:absolute; right:8px; top:50%; transform:translateY(-50%); pointer-events:none;" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 12 15 18 9"></polyline>
@@ -487,13 +509,19 @@
         <!-- Metrics Column -->
         <div>
           <div style="font-size:0.85rem; color:#64748b; font-weight:500; margin-bottom:2px;">This month</div>
-          <div id="earningThisMonthVal" style="font-size:1.85rem; font-weight:800; color:#1e293b; letter-spacing:-0.02em; line-height:1.2;">$2453.35</div>
+          <div id="earningThisMonthVal" style="font-size:1.85rem; font-weight:500; color:#1e293b; letter-spacing:-0.02em; line-height:1.2;">
+            {{ $earningMonthlyData[$currentMonth]['thisMonth'] ?? '৳ 0.00' }}
+          </div>
           <div style="display:flex; align-items:center; gap:6px; margin:8px 0 16px 0;">
-            <span id="earningGrowthBadge" style="background:#dcfce7; color:#16a34a; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:6px;">+ 0.2%</span>
+            @php
+              $currentGrowth = $earningMonthlyData[$currentMonth]['growth'] ?? '0.0%';
+              $isNegativeGrowth = str_starts_with($currentGrowth, '-');
+            @endphp
+            <span id="earningGrowthBadge" style="background:{{ $isNegativeGrowth ? '#fee2e2' : '#dcfce7' }}; color:{{ $isNegativeGrowth ? '#dc2626' : '#16a34a' }}; font-size:0.75rem; font-weight:500; padding:2px 8px; border-radius:6px;">{{ $currentGrowth }}</span>
             <span style="font-size:0.78rem; color:#64748b; font-weight:500;">From previous period</span>
           </div>
 
-          <a href="{{ route('admin.bookings.index') }}" style="display:inline-flex; align-items:center; gap:8px; background:#4361ee; color:#ffffff; font-size:0.82rem; font-weight:600; padding:7px 16px; border-radius:6px; text-decoration:none; box-shadow:0 4px 10px rgba(67, 97, 238, 0.25); transition:all 0.2s ease;">
+          <a href="{{ route('admin.bookings.index') }}" style="display:inline-flex; align-items:center; gap:8px; background:#4361ee; color:#ffffff; font-size:0.82rem; font-weight:500; padding:7px 16px; border-radius:6px; text-decoration:none; box-shadow:0 4px 10px rgba(67, 97, 238, 0.25); transition:all 0.2s ease;">
             <span>View Details</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="9 18 15 12 9 6"></polyline>
@@ -502,7 +530,9 @@
 
           <div style="margin-top:20px;">
             <div style="font-size:0.85rem; color:#64748b; font-weight:500; margin-bottom:2px;">Last month</div>
-            <div id="earningLastMonthVal" style="font-size:1.25rem; font-weight:700; color:#1e293b;">$2281.04</div>
+            <div id="earningLastMonthVal" style="font-size:1.25rem; font-weight:500; color:#1e293b;">
+              {{ $earningMonthlyData[$currentMonth]['lastMonth'] ?? '৳ 0.00' }}
+            </div>
           </div>
         </div>
 
@@ -517,7 +547,8 @@
     <div class="card-paces" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
       <!-- Header -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-        <h3 style="font-size:1.1rem; font-weight:700; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Sales Analytics</h3>
+        <h3 style="font-size:1.1rem; font-weight:500; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Sales Analytics</h3>
+        <span style="font-size:0.82rem; font-weight:500; color:#64748b; font-family:'Poppins', sans-serif;">Total: {{ $salesAnalytics['total_formatted'] }}</span>
       </div>
 
       <!-- Donut Chart Canvas with in-slice percentage rendering -->
@@ -525,31 +556,19 @@
         <canvas id="salesAnalyticsDonutChart"></canvas>
       </div>
 
-      <!-- Bottom Legends (3 items side by side matching screenshot) -->
-      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:1rem; text-align:center; border-top:1px solid #f1f5f9; padding-top:1rem;">
-        <div>
-          <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.78rem; font-weight:600; color:#64748b; margin-bottom:3px;">
-            <span style="width:8px; height:8px; border-radius:50%; background:#4361ee; display:inline-block;"></span>
-            Product A
+      <!-- Bottom Legends (dynamic matching category slices) -->
+      <div style="display:grid; grid-template-columns:repeat({{ max(1, count($salesAnalytics['categories'])) }}, 1fr); gap:8px; margin-top:1rem; text-align:center; border-top:1px solid #f1f5f9; padding-top:1rem;">
+        @forelse($salesAnalytics['categories'] as $cat)
+          <div>
+            <div style="display:inline-flex; align-items:center; justify-content:center; gap:5px; font-size:0.78rem; font-weight:500; color:#64748b; margin-bottom:3px; max-width:100%;" title="{{ $cat['name'] }}">
+              <span style="width:8px; height:8px; border-radius:50%; background:{{ $cat['color'] }}; display:inline-block; flex-shrink:0;"></span>
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:110px;">{{ $cat['name'] }}</span>
+            </div>
+            <div style="font-size:0.95rem; font-weight:500; color:#1e293b;">{{ $cat['amount_formatted'] }}</div>
           </div>
-          <div style="font-size:0.95rem; font-weight:800; color:#1e293b;">$ 2,132</div>
-        </div>
-
-        <div>
-          <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.78rem; font-weight:600; color:#64748b; margin-bottom:3px;">
-            <span style="width:8px; height:8px; border-radius:50%; background:#2ec4b6; display:inline-block;"></span>
-            Product B
-          </div>
-          <div style="font-size:0.95rem; font-weight:800; color:#1e293b;">$ 1,763</div>
-        </div>
-
-        <div>
-          <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.78rem; font-weight:600; color:#64748b; margin-bottom:3px;">
-            <span style="width:8px; height:8px; border-radius:50%; background:#ff5c5c; display:inline-block;"></span>
-            Product C
-          </div>
-          <div style="font-size:0.95rem; font-weight:800; color:#1e293b;">$ 973</div>
-        </div>
+        @empty
+          <div style="grid-column:1 / -1; color:#94a3b8; font-size:0.82rem;">No sales data available</div>
+        @endforelse
       </div>
     </div>
 
@@ -563,7 +582,7 @@
       <div>
         <!-- Header -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
-          <h3 style="font-size:1.05rem; font-weight:700; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Top Selling product</h3>
+          <h3 style="font-size:1.05rem; font-weight:500; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Top Selling product</h3>
           <div style="display:inline-flex; align-items:center; gap:6px;">
             <div style="position:relative;">
               <select style="appearance:none; -webkit-appearance:none; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:4px 26px 4px 10px; font-size:0.8rem; font-weight:500; color:#475569; cursor:pointer; outline:none; font-family:'Poppins', sans-serif;">
@@ -589,9 +608,9 @@
         <!-- Top Summary Block (Centered) -->
         <div style="text-align:center; padding-bottom:1.25rem;">
           <div style="font-size:0.85rem; color:#64748b; font-weight:500; margin-bottom:2px;">Product A</div>
-          <div style="font-size:1.85rem; font-weight:800; color:#1e293b; letter-spacing:-0.02em;">$ 6385</div>
+          <div style="font-size:1.85rem; font-weight:500; color:#1e293b; letter-spacing:-0.02em;">$ 6385</div>
           <div style="display:inline-flex; align-items:center; gap:6px; margin-top:6px;">
-            <span style="background:#dcfce7; color:#16a34a; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:3px;">
+            <span style="background:#dcfce7; color:#16a34a; font-size:0.75rem; font-weight:500; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:3px;">
               0.6% <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
             </span>
             <span style="font-size:0.78rem; color:#64748b; font-weight:500;">From previous period</span>
@@ -603,7 +622,7 @@
           <!-- Item 1: Product A (37%) -->
           <div style="border-top:1px solid #f1f5f9; padding:12px 0; display:flex; justify-content:space-between; align-items:center;">
             <div>
-              <div style="font-size:0.9rem; font-weight:700; color:#1e293b;">Product A</div>
+              <div style="font-size:0.9rem; font-weight:500; color:#1e293b;">Product A</div>
               <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">Neque quis est</div>
             </div>
             <div style="display:flex; align-items:center; gap:12px;">
@@ -613,7 +632,7 @@
               </svg>
               <div style="text-align:right; min-width:44px;">
                 <div style="font-size:0.72rem; color:#94a3b8; font-weight:500;">Sales</div>
-                <div style="font-size:0.95rem; font-weight:800; color:#1e293b;">37 %</div>
+                <div style="font-size:0.95rem; font-weight:500; color:#1e293b;">37 %</div>
               </div>
             </div>
           </div>
@@ -621,7 +640,7 @@
           <!-- Item 2: Product B (72%) -->
           <div style="border-top:1px solid #f1f5f9; padding:12px 0; display:flex; justify-content:space-between; align-items:center;">
             <div>
-              <div style="font-size:0.9rem; font-weight:700; color:#1e293b;">Product B</div>
+              <div style="font-size:0.9rem; font-weight:500; color:#1e293b;">Product B</div>
               <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">Quis autem iure</div>
             </div>
             <div style="display:flex; align-items:center; gap:12px;">
@@ -631,7 +650,7 @@
               </svg>
               <div style="text-align:right; min-width:44px;">
                 <div style="font-size:0.72rem; color:#94a3b8; font-weight:500;">Sales</div>
-                <div style="font-size:0.95rem; font-weight:800; color:#1e293b;">72 %</div>
+                <div style="font-size:0.95rem; font-weight:500; color:#1e293b;">72 %</div>
               </div>
             </div>
           </div>
@@ -639,7 +658,7 @@
           <!-- Item 3: Product C (54%) -->
           <div style="border-top:1px solid #f1f5f9; padding:12px 0 4px 0; display:flex; justify-content:space-between; align-items:center;">
             <div>
-              <div style="font-size:0.9rem; font-weight:700; color:#1e293b;">Product C</div>
+              <div style="font-size:0.9rem; font-weight:500; color:#1e293b;">Product C</div>
               <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">Sed aliquam mauris.</div>
             </div>
             <div style="display:flex; align-items:center; gap:12px;">
@@ -649,7 +668,7 @@
               </svg>
               <div style="text-align:right; min-width:44px;">
                 <div style="font-size:0.72rem; color:#94a3b8; font-weight:500;">Sales</div>
-                <div style="font-size:0.95rem; font-weight:800; color:#1e293b;">54 %</div>
+                <div style="font-size:0.95rem; font-weight:500; color:#1e293b;">54 %</div>
               </div>
             </div>
           </div>
@@ -662,9 +681,9 @@
       <div>
         <!-- Header with Segmented Switch -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
-          <h3 style="font-size:1.05rem; font-weight:700; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Tasks</h3>
+          <h3 style="font-size:1.05rem; font-weight:500; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Tasks</h3>
           <div style="display:inline-flex; background:#f1f5f9; border-radius:8px; padding:3px;">
-            <button id="taskTabInProcess" type="button" onclick="switchTaskTab('in_process')" style="background:#4361ee; color:#ffffff; border:none; padding:5px 14px; border-radius:6px; font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.2s ease;">In Process</button>
+            <button id="taskTabInProcess" type="button" onclick="switchTaskTab('in_process')" style="background:#4361ee; color:#ffffff; border:none; padding:5px 14px; border-radius:6px; font-size:0.8rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;">In Process</button>
             <button id="taskTabUpcoming" type="button" onclick="switchTaskTab('upcoming')" style="background:transparent; color:#64748b; border:none; padding:5px 14px; border-radius:6px; font-size:0.8rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;">Upcoming</button>
           </div>
         </div>
@@ -676,7 +695,7 @@
             <div style="display:flex; align-items:center; gap:12px;">
               <input type="checkbox" onchange="toggleTaskDone(this)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
               <div>
-                <div class="task-title" style="font-size:0.88rem; font-weight:700; color:#1e293b; transition:color 0.2s;">Skote Saas Dashboard</div>
+                <div class="task-title" style="font-size:0.88rem; font-weight:500; color:#1e293b; transition:color 0.2s;">Skote Saas Dashboard</div>
                 <div style="font-size:0.75rem; color:#94a3b8;">Assigned to Mark</div>
               </div>
             </div>
@@ -695,7 +714,7 @@
             <div style="display:flex; align-items:center; gap:12px;">
               <input type="checkbox" onchange="toggleTaskDone(this)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
               <div>
-                <div class="task-title" style="font-size:0.88rem; font-weight:700; color:#1e293b; transition:color 0.2s;">New Landing UI</div>
+                <div class="task-title" style="font-size:0.88rem; font-weight:500; color:#1e293b; transition:color 0.2s;">New Landing UI</div>
                 <div style="font-size:0.75rem; color:#94a3b8;">Assigned to Team A</div>
               </div>
             </div>
@@ -714,7 +733,7 @@
             <div style="display:flex; align-items:center; gap:12px;">
               <input type="checkbox" onchange="toggleTaskDone(this)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
               <div>
-                <div class="task-title" style="font-size:0.88rem; font-weight:700; color:#1e293b; transition:color 0.2s;">Brand logo design</div>
+                <div class="task-title" style="font-size:0.88rem; font-weight:500; color:#1e293b; transition:color 0.2s;">Brand logo design</div>
                 <div style="font-size:0.75rem; color:#94a3b8;">Assigned to Janis</div>
               </div>
             </div>
@@ -733,7 +752,7 @@
             <div style="display:flex; align-items:center; gap:12px;">
               <input type="checkbox" onchange="toggleTaskDone(this)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
               <div>
-                <div class="task-title" style="font-size:0.88rem; font-weight:700; color:#1e293b; transition:color 0.2s;">Blog Template UI</div>
+                <div class="task-title" style="font-size:0.88rem; font-weight:500; color:#1e293b; transition:color 0.2s;">Blog Template UI</div>
                 <div style="font-size:0.75rem; color:#94a3b8;">Assigned to Dianna</div>
               </div>
             </div>
@@ -751,7 +770,7 @@
 
       <!-- Add New Task Button -->
       <div style="text-align:center; padding-top:1.25rem;">
-        <button type="button" onclick="addNewTaskPrompt()" style="background:#4361ee; color:#ffffff; border:none; padding:8px 24px; border-radius:6px; font-size:0.82rem; font-weight:600; cursor:pointer; box-shadow:0 4px 10px rgba(67, 97, 238, 0.25); transition:all 0.2s ease;">Add new Task</button>
+        <button type="button" onclick="addNewTaskPrompt()" style="background:#4361ee; color:#ffffff; border:none; padding:8px 24px; border-radius:6px; font-size:0.82rem; font-weight:500; cursor:pointer; box-shadow:0 4px 10px rgba(67, 97, 238, 0.25); transition:all 0.2s ease;">Add new Task</button>
       </div>
     </div>
 
@@ -761,8 +780,8 @@
         <!-- Chat Header -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
           <div>
-            <h4 style="font-size:0.98rem; font-weight:700; color:#1e293b; margin:0;">Steven Franklin</h4>
-            <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; color:#16a34a; font-weight:600; margin-top:2px;">
+            <h4 style="font-size:0.98rem; font-weight:500; color:#1e293b; margin:0;">Steven Franklin</h4>
+            <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; color:#16a34a; font-weight:500; margin-top:2px;">
               <span style="width:7px; height:7px; border-radius:50%; background:#16a34a; display:inline-block;"></span> Active now
             </div>
           </div>
@@ -785,7 +804,7 @@
           <div style="position:relative; align-self:flex-start; max-width:85%;">
             <div style="background:#eef2ff; border-radius:10px; padding:10px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <span style="font-size:0.78rem; font-weight:700; color:#4361ee;">Steven Franklin</span>
+                <span style="font-size:0.78rem; font-weight:500; color:#4361ee;">Steven Franklin</span>
                 <span style="font-size:0.8rem; color:#94a3b8; cursor:pointer;">⋮</span>
               </div>
               <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">& Next meeting tomorrow 10.00AM</div>
@@ -804,7 +823,7 @@
           <div style="position:relative; align-self:flex-end; max-width:82%;">
             <div style="background:#f1f5f9; border-radius:10px; padding:10px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.02); text-align:right;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; flex-direction:row-reverse;">
-                <span style="font-size:0.78rem; font-weight:700; color:#3e60d5;">admin</span>
+                <span style="font-size:0.78rem; font-weight:500; color:#3e60d5;">admin</span>
                 <span style="font-size:0.8rem; color:#94a3b8; cursor:pointer;">⋮</span>
               </div>
               <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">Wow that's great</div>
@@ -827,7 +846,7 @@
             <span title="Attach File">📄</span>
           </div>
         </div>
-        <button type="button" onclick="sendChatQuickMessage()" style="background:#4361ee; color:#ffffff; border:none; border-radius:6px; padding:7px 14px; font-size:0.82rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 3px 8px rgba(67, 97, 238, 0.25);">
+        <button type="button" onclick="sendChatQuickMessage()" style="background:#4361ee; color:#ffffff; border:none; border-radius:6px; padding:7px 14px; font-size:0.82rem; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 3px 8px rgba(67, 97, 238, 0.25);">
           Send <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </button>
       </div>
@@ -849,7 +868,7 @@
     @if($recentBookings->isEmpty())
       <div style="text-align:center; padding:3.5rem 1rem; color:var(--paces-text-muted);">
         <div style="font-size:2.5rem; margin-bottom:10px;">📋</div>
-        <h4 style="font-size:1rem; font-weight:700; color:var(--paces-text-dark); margin-bottom:4px;">No Service Orders In This Period</h4>
+        <h4 style="font-size:1rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:4px;">No Service Orders In This Period</h4>
         <p style="font-size:0.85rem; max-width:400px; margin:0 auto;">Try selecting another date range or pick "Month" or "Year" to view recorded work orders.</p>
       </div>
     @else
@@ -875,11 +894,11 @@
                   <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-top:2px;">{{ $b->created_at->format('M d, Y • h:i A') }}</div>
                 </td>
                 <td>
-                  <div style="font-weight:700; color:var(--paces-text-dark);">{{ $b->customer_name }}</div>
+                  <div style="font-weight:500; color:var(--paces-text-dark);">{{ $b->customer_name }}</div>
                   <div style="font-size:0.75rem; color:var(--paces-text-muted);">{{ $b->customer_phone }}</div>
                 </td>
                 <td>
-                  <div style="font-weight:600; color:var(--paces-text-dark);">{{ $b->service?->title ?? ($b->amcPlan?->name ?? 'Custom Service') }}</div>
+                  <div style="font-weight:500; color:var(--paces-text-dark);">{{ $b->service?->title ?? ($b->amcPlan?->name ?? 'Custom Service') }}</div>
                   <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:capitalize;">{{ $b->property_type }}</div>
                 </td>
                 <td>
@@ -996,7 +1015,7 @@
             x: {
               grid: { display: false },
               ticks: {
-                font: { family: 'Poppins', size: 10.5, weight: '600' },
+                font: { family: 'Poppins', size: 10.5, weight: '500' },
                 color: '#475569',
                 maxRotation: 30,
                 minRotation: 0
@@ -1026,7 +1045,7 @@
               backgroundColor: '#1e293b',
               padding: 12,
               cornerRadius: 8,
-              titleFont: { family: 'Poppins', size: 12, weight: '700' },
+              titleFont: { family: 'Poppins', size: 12, weight: '500' },
               bodyFont: { family: 'Poppins', size: 12 },
               callbacks: {
                 label: function(context) {
@@ -1078,29 +1097,16 @@
       }
     }
 
-    // Earning Spline Chart & Month Switcher Data (Screenshot Match)
-    const earningMonthlyData = {
-      1: { thisMonth: "$2453.35", lastMonth: "$2281.04", growth: "+ 0.2%", values: [31, 40, 36, 51, 49, 72, 69, 56, 68, 82, 68, 76] },
-      2: { thisMonth: "$2610.80", lastMonth: "$2453.35", growth: "+ 6.4%", values: [35, 42, 45, 53, 58, 64, 70, 75, 71, 79, 83, 80] },
-      3: { thisMonth: "$2940.20", lastMonth: "$2610.80", growth: "+ 12.6%", values: [38, 45, 52, 60, 57, 68, 74, 82, 79, 85, 81, 88] },
-      4: { thisMonth: "$2780.00", lastMonth: "$2940.20", growth: "- 5.4%", values: [40, 48, 44, 56, 62, 59, 71, 78, 75, 80, 76, 82] },
-      5: { thisMonth: "$3120.50", lastMonth: "$2780.00", growth: "+ 12.2%", values: [42, 50, 58, 64, 61, 73, 79, 84, 81, 86, 84, 90] },
-      6: { thisMonth: "$3350.00", lastMonth: "$3120.50", growth: "+ 7.3%", values: [45, 53, 61, 67, 72, 78, 83, 87, 84, 89, 86, 91] },
-      7: { thisMonth: "$3210.40", lastMonth: "$3350.00", growth: "- 4.1%", values: [44, 52, 59, 65, 70, 76, 81, 85, 82, 87, 85, 89] },
-      8: { thisMonth: "$3490.80", lastMonth: "$3210.40", growth: "+ 8.7%", values: [46, 54, 62, 68, 73, 80, 85, 89, 86, 91, 88, 93] },
-      9: { thisMonth: "$3680.10", lastMonth: "$3490.80", growth: "+ 5.4%", values: [48, 56, 64, 71, 76, 82, 87, 91, 88, 93, 90, 95] },
-      10: { thisMonth: "$3950.00", lastMonth: "$3680.10", growth: "+ 7.3%", values: [50, 58, 67, 74, 79, 85, 90, 93, 90, 95, 92, 97] },
-      11: { thisMonth: "$4120.60", lastMonth: "$3950.00", growth: "+ 4.3%", values: [52, 60, 69, 76, 81, 87, 92, 95, 92, 97, 94, 98] },
-      12: { thisMonth: "$4380.90", lastMonth: "$4120.60", growth: "+ 6.3%", values: [55, 63, 72, 79, 84, 90, 94, 97, 94, 99, 96, 100] }
-    };
+    // Earning Spline Chart & Month Switcher Data (Real Database Revenue)
+    const earningMonthlyData = @json($earningMonthlyData);
 
     let earningSplineChart = null;
 
-    function initEarningSplineChart(monthKey = 1) {
+    function initEarningSplineChart(monthKey = {{ $currentMonth }}) {
       const canvas = document.getElementById('earningSplineChart');
       if (!canvas || typeof Chart === 'undefined') return;
 
-      const dataObj = earningMonthlyData[monthKey] || earningMonthlyData[1];
+      const dataObj = earningMonthlyData[monthKey] || earningMonthlyData[{{ $currentMonth }}] || { values: [0,0,0,0,0,0,0,0,0,0,0,0] };
       const ctx = canvas.getContext('2d');
 
       if (earningSplineChart) earningSplineChart.destroy();
@@ -1134,14 +1140,14 @@
             legend: { display: false },
             tooltip: {
               backgroundColor: '#1e293b',
-              titleFont: { family: 'Poppins', size: 12, weight: '600' },
+              titleFont: { family: 'Poppins', size: 12, weight: '500' },
               bodyFont: { family: 'Poppins', size: 12 },
               padding: 10,
               cornerRadius: 8,
               displayColors: false,
               callbacks: {
                 title: (items) => 'Period: ' + items[0].label,
-                label: (item) => 'Score: ' + item.raw
+                label: (item) => 'Revenue: ৳ ' + Number(item.raw).toLocaleString('en-US')
               }
             }
           },
@@ -1155,10 +1161,9 @@
               }
             },
             y: {
-              min: 30,
-              max: 90,
+              beginAtZero: true,
               ticks: {
-                stepSize: 10,
+                callback: (value) => '৳' + (value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value),
                 color: '#94a3b8',
                 font: { family: 'Poppins', size: 11, weight: '500' }
               },
@@ -1173,7 +1178,7 @@
     }
 
     function switchEarningMonth(val) {
-      const data = earningMonthlyData[val] || earningMonthlyData[1];
+      const data = earningMonthlyData[val] || earningMonthlyData[{{ $currentMonth }}] || { thisMonth: "৳ 0.00", lastMonth: "৳ 0.00", growth: "0.0%", values: [0,0,0,0,0,0,0,0,0,0,0,0] };
       const thisEl = document.getElementById('earningThisMonthVal');
       const lastEl = document.getElementById('earningLastMonthVal');
       const badgeEl = document.getElementById('earningGrowthBadge');
@@ -1191,7 +1196,7 @@
         }
       }
 
-      initEarningSplineChart(val);
+      initEarningSplineChart(Number(val));
     }
 
     // Sales Analytics Donut Chart
@@ -1212,10 +1217,10 @@
           const y = element.y + Math.sin(angle) * r;
 
           const val = chart.data.datasets[0].data[i];
-          if (!val) return;
+          if (!val || val <= 0) return;
 
           ctx.save();
-          ctx.font = '700 11.5px Poppins, sans-serif';
+          ctx.font = '500 11.5px Poppins, sans-serif';
           ctx.fillStyle = '#ffffff';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
@@ -1231,13 +1236,17 @@
 
       if (salesAnalyticsDonut) salesAnalyticsDonut.destroy();
 
+      const labels = @json($salesAnalytics['labels'] ?? []);
+      const dataValues = @json($salesAnalytics['data'] ?? []);
+      const bgColors = @json($salesAnalytics['colors'] ?? []);
+
       salesAnalyticsDonut = new Chart(canvas, {
         type: 'doughnut',
         data: {
-          labels: ['Product A', 'Product B', 'Product C'],
+          labels: labels.length ? labels : ['No Sales'],
           datasets: [{
-            data: [46.7, 31.7, 21.7],
-            backgroundColor: ['#4361ee', '#2ec4b6', '#ff5c5c'],
+            data: dataValues.length ? dataValues : [100],
+            backgroundColor: bgColors.length ? bgColors : ['#cbd5e1'],
             borderWidth: 3,
             borderColor: '#ffffff',
             hoverOffset: 4
@@ -1252,7 +1261,7 @@
             legend: { display: false },
             tooltip: {
               backgroundColor: '#1e293b',
-              titleFont: { family: 'Poppins', size: 12, weight: '600' },
+              titleFont: { family: 'Poppins', size: 12, weight: '500' },
               bodyFont: { family: 'Poppins', size: 12 },
               padding: 10,
               cornerRadius: 8,
@@ -1296,7 +1305,7 @@
           <div style="display:flex; align-items:center; gap:12px;">
             <input type="checkbox" ${t.done ? "checked" : ""} onchange="toggleTaskDoneIdx(${idx}, this.checked)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
             <div>
-              <div class="task-title" style="font-size:0.88rem; font-weight:700; color:${t.done ? "#94a3b8" : "#1e293b"}; text-decoration:${t.done ? "line-through" : "none"}; transition:all 0.2s;">${t.title}</div>
+              <div class="task-title" style="font-size:0.88rem; font-weight:500; color:${t.done ? "#94a3b8" : "#1e293b"}; text-decoration:${t.done ? "line-through" : "none"}; transition:all 0.2s;">${t.title}</div>
               <div style="font-size:0.75rem; color:#94a3b8;">${t.assigned}</div>
             </div>
           </div>
@@ -1379,7 +1388,7 @@
       bubble.innerHTML = `
         <div style="background:#f1f5f9; border-radius:10px; padding:10px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.02); text-align:right;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; flex-direction:row-reverse;">
-            <span style="font-size:0.78rem; font-weight:700; color:#3e60d5;">admin</span>
+            <span style="font-size:0.78rem; font-weight:500; color:#3e60d5;">admin</span>
             <span style="font-size:0.8rem; color:#94a3b8; cursor:pointer;">⋮</span>
           </div>
           <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">${text}</div>
@@ -1396,7 +1405,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       renderTasks();
-      initEarningSplineChart();
+      initEarningSplineChart({{ $currentMonth }});
       initSalesAnalyticsDonut();
       initUnifiedBarChart();
       const modal = document.getElementById('dateToDateModal');

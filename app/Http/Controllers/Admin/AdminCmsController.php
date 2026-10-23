@@ -7,14 +7,15 @@ use App\Actions\Cms\UpdateSiteSettingsAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateServiceRequest;
 use App\Http\Requests\Admin\UpdateSiteSettingsRequest;
+use App\Mail\TestSmtpMail;
 use App\Models\AmcPlan;
 use App\Models\Faq;
-use App\Models\Sector;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\SiteContent;
 use App\Models\SiteSetting;
 use App\Models\Testimonial;
+use App\Services\ActivityLogService;
 use App\Services\MailConfigService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -64,6 +65,8 @@ class AdminCmsController extends Controller
     {
         $action->execute($request->except(['_token', '_method']), $request);
 
+        ActivityLogService::logSettings('settings.update', 'Updated site settings & configuration.');
+
         return redirect()->back()->with('success', 'Site & SMTP settings updated successfully.');
     }
 
@@ -85,14 +88,16 @@ class AdminCmsController extends Controller
 
         try {
             Mail::to($recipient)->send(
-                new \App\Mail\TestSmtpMail($recipient, (string) $host, $port)
+                new TestSmtpMail($recipient, (string) $host, $port)
             );
+
+            ActivityLogService::logSettings('settings.test_smtp', "Verified SMTP gateway connection by sending test email to '{$recipient}'.");
 
             return redirect()->back()->with('success', "SMTP Gateway connection verified! Test email successfully delivered to {$recipient}.");
         } catch (\Throwable $e) {
-            Log::error("SMTP Test Failed: " . $e->getMessage());
+            Log::error('SMTP Test Failed: '.$e->getMessage());
 
-            return redirect()->back()->with('error', "SMTP Connection Failed: " . $e->getMessage());
+            return redirect()->back()->with('error', 'SMTP Connection Failed: '.$e->getMessage());
         }
     }
 
@@ -122,6 +127,8 @@ class AdminCmsController extends Controller
     public function updateService(Service $service, UpdateServiceRequest $request, UpdateServiceAction $action): RedirectResponse
     {
         $action->execute($service, $request->validated(), $request->file('thumbnail_file'));
+
+        ActivityLogService::logService('service.update', "Updated service '{$service->title}'.", $service);
 
         return redirect()->route('admin.web.services')->with('success', "Service '{$service->title}' updated successfully.");
     }
@@ -155,6 +162,8 @@ class AdminCmsController extends Controller
         $validated['is_active'] = $request->boolean('is_active');
 
         $plan->update($validated);
+
+        ActivityLogService::logService('amc.update', "Updated AMC Plan '{$plan->name}'.", $plan);
 
         return redirect()->back()->with('success', "AMC Plan '{$plan->name}' updated successfully.");
     }

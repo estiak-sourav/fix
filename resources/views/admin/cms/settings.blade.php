@@ -7,14 +7,14 @@
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:600; display:flex; align-items:center; gap:8px; max-width:900px;">
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:center; gap:8px; max-width:900px;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
       {{ session('success') }}
     </div>
   @endif
 
   @if(session('error'))
-    <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:600; display:flex; align-items:center; gap:8px; max-width:900px;">
+    <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:center; gap:8px; max-width:900px;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
       {{ session('error') }}
     </div>
@@ -22,7 +22,7 @@
 
   @if($errors->any())
     <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; max-width:900px;">
-      <div style="font-weight:700; margin-bottom:4px;">Please correct the following errors:</div>
+      <div style="font-weight:500; margin-bottom:4px;">Please correct the following errors:</div>
       <ul style="margin:0; padding-left:1.25rem;">
         @foreach($errors->all() as $err)
           <li>{{ $err }}</li>
@@ -49,7 +49,7 @@
         <div id="smtpSettings" style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem; scroll-margin-top: 80px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
             <div>
-              <h4 style="font-size:1rem; font-weight:700; color:var(--paces-text-dark); margin:0;">📧 Email Delivery & SMTP Gateway Setup</h4>
+              <h4 style="font-size:1rem; font-weight:500; color:var(--paces-text-dark); margin:0;">📧 Email Delivery & SMTP Gateway Setup</h4>
               <p style="font-size:0.8rem; color:var(--paces-text-muted); margin:2px 0 0;">Configures outgoing email server for customer OTPs, registration, and dispatch notifications</p>
             </div>
             <span class="badge-pill-paces bg-primary-subtle" style="font-size:0.75rem;">
@@ -120,7 +120,7 @@
 
         <!-- 🖼️ Logo & Brand Assets -->
         <div style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem;">
-          <h4 style="font-size:0.95rem; font-weight:700; color:var(--paces-text-dark); margin-bottom:1rem;">🖼️ Logo & Brand Assets</h4>
+          <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:1rem;">🖼️ Logo & Brand Assets</h4>
 
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem;">
             <div>
@@ -154,7 +154,7 @@
 
         <!-- 📞 Contact & Operations Info -->
         <div style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem;">
-          <h4 style="font-size:0.95rem; font-weight:700; color:var(--paces-text-dark); margin-bottom:1rem;">📞 Contact & Operations Info</h4>
+          <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:1rem;">📞 Contact & Operations Info</h4>
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1rem;">
             <div>
@@ -176,7 +176,7 @@
 
         <!-- 🔍 SEO Defaults -->
         <div style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem;">
-          <h4 style="font-size:0.95rem; font-weight:700; color:var(--paces-text-dark); margin-bottom:1rem;">🔍 SEO Defaults</h4>
+          <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:1rem;">🔍 SEO Defaults</h4>
 
           <div style="margin-bottom:1rem;">
             <label class="form-label-paces">Default Meta Title</label>
@@ -189,7 +189,7 @@
           </div>
         </div>
 
-        <button type="submit" class="btn-paces btn-paces-primary" style="padding:0.75rem 1.75rem; font-size:0.95rem; font-weight:600;">
+        <button type="submit" class="btn-paces btn-paces-primary" style="padding:0.75rem 1.75rem; font-size:0.95rem; font-weight:500;">
           Save All Site & SMTP Settings
         </button>
       </form>

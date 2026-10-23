@@ -25,6 +25,7 @@
         <li><a href="{{ route('home') }}#about" class="nav-link">About Us</a></li>
         <li><a href="{{ route('home') }}#faq" class="nav-link">FAQ</a></li>
         <li><a href="{{ route('home') }}#contact" class="nav-link">Contact</a></li>
+        <li><a href="{{ route('support.create') }}" class="nav-link {{ request()->routeIs('support.*') ? 'active' : '' }}">Support</a></li>
       </ul>
     </nav>
 
@@ -33,13 +34,18 @@
 
       @auth
         <div class="nav-dropdown-item user-menu" style="position: relative;">
-          <a href="{{ route('customer.bookings') }}" class="btn btn-outline-primary" style="display:inline-flex; align-items:center; gap:6px; padding: 0.5rem 0.9rem; font-size: 0.85rem; border-radius: 6px; font-weight:600;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <a href="{{ route('customer.bookings') }}" class="btn btn-outline-primary" style="display:inline-flex; align-items:center; gap:8px; padding: 0.4rem 0.85rem; font-size: 0.85rem; border-radius: 6px; font-weight:600;">
+            @if(auth()->user()->avatar_url)
+              <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" style="width:24px; height:24px; border-radius:50%; object-fit:cover; border:1px solid #c7d2fe;">
+            @else
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            @endif
             <span>{{ auth()->user()->name ?: 'My Account' }}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </a>
           <ul class="nav-dropdown-menu" style="right: 0; left: auto; min-width: 170px;">
             <li><a href="{{ route('customer.bookings') }}" class="dropdown-item">My Bookings</a></li>
+            <li><a href="{{ route('customer.tickets.index') }}" class="dropdown-item">Support Tickets</a></li>
             <li><a href="{{ route('customer.profile') }}" class="dropdown-item">Profile Settings</a></li>
             @if(auth()->user()->isAdmin())
               <li><a href="/admin" target="_blank" class="dropdown-item" style="color:var(--accent); font-weight:700;">Admin Panel ↗</a></li>
@@ -105,8 +111,10 @@
     <li><a href="{{ route('home') }}#about" class="drawer-link">About Company</a></li>
     <li><a href="{{ route('home') }}#faq" class="drawer-link">FAQ</a></li>
     <li><a href="{{ route('home') }}#contact" class="drawer-link">Contact Support</a></li>
+    <li><a href="{{ route('support.create') }}" class="drawer-link">Submit Support Ticket</a></li>
     @auth
       <li><a href="{{ route('customer.bookings') }}" class="drawer-link" style="color:var(--accent); font-weight:700;">My Bookings & Status</a></li>
+      <li><a href="{{ route('customer.tickets.index') }}" class="drawer-link">My Support Tickets</a></li>
       <li><a href="{{ route('customer.profile') }}" class="drawer-link">My Profile</a></li>
       <li>
         <form action="{{ route('auth.logout') }}" method="POST" style="margin:0; padding:10px 0;">

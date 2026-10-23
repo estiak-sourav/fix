@@ -12,7 +12,6 @@ class UpdateServiceAction
      * Update service entity and handle thumbnail upload.
      *
      * @param  array<string, mixed>  $validated
-     * @param  UploadedFile|null     $thumbnail
      */
     public function execute(Service $service, array $validated, ?UploadedFile $thumbnail = null): Service
     {
@@ -28,14 +27,14 @@ class UpdateServiceAction
             'is_active' => (bool) ($validated['is_active'] ?? false),
         ];
 
-        if (!empty($validated['scope_included'])) {
+        if (! empty($validated['scope_included'])) {
             $data['scope_included'] = array_values(array_filter(array_map('trim', explode("\n", (string) $validated['scope_included']))));
         }
 
         if ($thumbnail) {
-            $filename = 'service_' . time() . '_' . Str::slug($service->title) . '.' . $thumbnail->getClientOriginalExtension();
+            $filename = 'service_'.time().'_'.Str::slug($service->title).'.'.$thumbnail->getClientOriginalExtension();
             $thumbnail->move(public_path('uploads/services'), $filename);
-            $data['thumbnail_path'] = 'uploads/services/' . $filename;
+            $data['thumbnail_path'] = 'uploads/services/'.$filename;
         }
 
         $service->update($data);

@@ -26,7 +26,7 @@
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:600; font-size:0.875rem; display:flex; align-items:center; gap:8px;">
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:8px;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
       {{ session('success') }}
     </div>
@@ -55,7 +55,7 @@
         </div>
       </div>
       <div class="metric-value" style="color:var(--paces-warning);">{{ $stats['unread_alerts'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-warning); font-weight:700;">
+      <div class="metric-subtext" style="color:var(--paces-warning); font-weight:500;">
         Requires operator review
       </div>
     </div>
@@ -68,7 +68,7 @@
         </div>
       </div>
       <div class="metric-value" style="color:var(--paces-danger);">{{ $stats['emergency_alerts'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-danger); font-weight:700;">
+      <div class="metric-subtext" style="color:var(--paces-danger); font-weight:500;">
         High-priority SLA dispatch
       </div>
     </div>
@@ -126,7 +126,7 @@
     @if($notifications->isEmpty())
       <div style="text-align:center; padding:3.5rem 1rem; color:var(--paces-text-muted);">
         <div style="font-size:2.5rem; margin-bottom:10px;">🔔</div>
-        <h4 style="font-size:1.05rem; font-weight:700; color:var(--paces-text-dark); margin-bottom:4px;">No Notifications Found</h4>
+        <h4 style="font-size:1.05rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:4px;">No Notifications Found</h4>
         <p style="font-size:0.85rem; max-width:420px; margin:0 auto;">All caught up! There are no operational alerts matching your current filter.</p>
       </div>
     @else

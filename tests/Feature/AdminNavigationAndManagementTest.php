@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Admin;
 use App\Models\AdminNotification;
 use App\Models\Booking;
+use App\Models\DailyAnalytics;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -240,9 +241,208 @@ class AdminNavigationAndManagementTest extends TestCase
         $customRes->assertSee('Custom: Oct 01, 2026');
 
         // 5. Test public visitor tracking increment
-        $initialVisitors = \App\Models\DailyAnalytics::forDate()->total_visitors;
+        $initialVisitors = DailyAnalytics::forDate()->total_visitors;
         $this->get('/');
-        $updatedVisitors = \App\Models\DailyAnalytics::forDate()->fresh()->total_visitors;
+        $updatedVisitors = DailyAnalytics::forDate()->fresh()->total_visitors;
         $this->assertGreaterThanOrEqual($initialVisitors, $updatedVisitors);
+    }
+
+    /**
+     * Test nationwide operations hotspots display and division-based filtering.
+     */
+    public function test_nationwide_operations_hotspots_and_division_filter(): void
+    {
+        $admin = Admin::first();
+        $user = User::first() ?? User::factory()->create();
+
+        // Create bookings across different divisions
+        Booking::create([
+            'booking_number' => 'FIX-CTG-001',
+            'user_id' => $user->id,
+            'service_type' => 'on_demand',
+            'customer_name' => 'Chattogram Client',
+            'customer_email' => 'ctg@example.com',
+            'customer_phone' => '01711223344',
+            'property_type' => 'commercial',
+            'division' => 'Chattogram',
+            'district' => 'Chattogram City',
+            'area' => 'Agrabad Commercial',
+            'street_address' => 'Plot 45, Agrabad C/A',
+            'preferred_date' => now()->toDateString(),
+            'preferred_time_slot' => 'Morning',
+            'urgency' => 'standard',
+            'problem_description' => 'Industrial chiller pump vibration issue.',
+            'status' => 'pending_review',
+        ]);
+
+        Booking::create([
+            'booking_number' => 'FIX-SYL-001',
+            'user_id' => $user->id,
+            'service_type' => 'on_demand',
+            'customer_name' => 'Sylhet Client',
+            'customer_email' => 'sylhet@example.com',
+            'customer_phone' => '01811223344',
+            'property_type' => 'commercial',
+            'division' => 'Sylhet',
+            'district' => 'Sylhet City',
+            'area' => 'Zindabazar',
+            'street_address' => 'City Center, Zindabazar',
+            'preferred_date' => now()->toDateString(),
+            'preferred_time_slot' => 'Afternoon',
+            'urgency' => 'standard',
+            'problem_description' => 'Main electrical switchboard servicing.',
+            'status' => 'pending_review',
+        ]);
+
+        Booking::create([
+            'booking_number' => 'FIX-DHK-001',
+            'user_id' => $user->id,
+            'service_type' => 'on_demand',
+            'customer_name' => 'Dhaka Client',
+            'customer_email' => 'dhaka@example.com',
+            'customer_phone' => '01911223344',
+            'property_type' => 'residential',
+            'division' => 'Dhaka',
+            'district' => 'Dhaka City',
+            'area' => 'Gulshan 1 & 2',
+            'street_address' => 'Road 12, Gulshan 1',
+            'preferred_date' => now()->toDateString(),
+            'preferred_time_slot' => 'Morning',
+            'urgency' => 'standard',
+            'problem_description' => 'Plumbing pressure booster line maintenance.',
+            'status' => 'pending_review',
+        ]);
+
+        // 1. All Bangladesh view displays hotspots from multiple divisions
+        $allRes = $this->actingAs($admin, 'admin')->get('/admin');
+        $allRes->assertStatus(200);
+        $allRes->assertSee('Operations Hotspots');
+        $allRes->assertSee('Agrabad Commercial');
+        $allRes->assertSee('Chattogram City, Chattogram');
+
+        $allHotspots = $allRes->viewData('areaHotspots');
+        $this->assertTrue($allHotspots->has('Agrabad Commercial'));
+        $this->assertTrue($allHotspots->has('Zindabazar'));
+        $this->assertTrue($allHotspots->has('Gulshan 1 & 2'));
+
+        // 2. Filter by Chattogram division only
+        $ctgRes = $this->actingAs($admin, 'admin')->get('/admin?hotspot_division=Chattogram');
+        $ctgRes->assertStatus(200);
+        $ctgRes->assertSee('Operations Hotspots');
+        $ctgRes->assertSee('Agrabad Commercial');
+        $ctgRes->assertSee('Chattogram City, Chattogram');
+
+        $ctgHotspots = $ctgRes->viewData('areaHotspots');
+        $this->assertTrue($ctgHotspots->has('Agrabad Commercial'));
+        $this->assertFalse($ctgHotspots->has('Zindabazar'));
+        $this->assertFalse($ctgHotspots->has('Gulshan 1 & 2'));
+
+        // 3. Filter by Barishal division with 0 records
+        $barishalRes = $this->actingAs($admin, 'admin')->get('/admin?hotspot_division=Barishal');
+        $barishalRes->assertStatus(200);
+        $barishalRes->assertSee('No hotspot records for Barishal.');
+        $this->assertTrue($barishalRes->viewData('areaHotspots')->isEmpty());
+
+        // 4. Verify Area Details link exists on dashboard
+        $allRes->assertSee(route('admin.area-analytics'));
+        $allRes->assertSee('Area Details →');
+        $allRes->assertDontSee('Division Distribution:');
+    }
+
+    /**
+     * Test dedicated area analytics directory page with division and search filters.
+     */
+    public function test_admin_can_view_and_filter_area_analytics_page(): void
+    {
+        $admin = Admin::first();
+        $user = User::first() ?? User::factory()->create();
+
+        Booking::create([
+            'booking_number' => 'FIX-CTG-TEST',
+            'user_id' => $user->id,
+            'service_type' => 'on_demand',
+            'customer_name' => 'Ctg Test Client',
+            'customer_email' => 'ctgtest@example.com',
+            'customer_phone' => '01711223344',
+            'property_type' => 'commercial',
+            'division' => 'Chattogram',
+            'district' => 'Chattogram City',
+            'area' => 'Agrabad Commercial',
+            'street_address' => 'Plot 10, Agrabad C/A',
+            'preferred_date' => now()->toDateString(),
+            'preferred_time_slot' => 'Morning',
+            'urgency' => 'emergency_1h',
+            'problem_description' => 'Chiller emergency repair',
+            'status' => 'pending_review',
+            'estimated_cost' => 5000,
+        ]);
+
+        // 1. Visit area analytics directory
+        $res = $this->actingAs($admin, 'admin')->get('/admin/area-analytics');
+        $res->assertStatus(200);
+        $res->assertSee('Operations Hotspots & Area Directory', false);
+        $res->assertSee('Area Performance Directory');
+        $res->assertSee('Covered Areas');
+        $res->assertSee('Agrabad Commercial');
+        $res->assertSee('Chattogram City');
+
+        // 2. Filter by search query
+        $searchRes = $this->actingAs($admin, 'admin')->get('/admin/area-analytics?search=Agrabad');
+        $searchRes->assertStatus(200);
+        $searchRes->assertSee('Agrabad Commercial');
+
+        // 3. Filter by division
+        $divRes = $this->actingAs($admin, 'admin')->get('/admin/area-analytics?division=Chattogram');
+        $divRes->assertStatus(200);
+        $divRes->assertSee('Agrabad Commercial');
+
+        // 4. Filter by non-existent area
+        $emptyRes = $this->actingAs($admin, 'admin')->get('/admin/area-analytics?search=NonExistentLocality123');
+        $emptyRes->assertStatus(200);
+        $emptyRes->assertSee('No Area Records Found');
+    }
+
+    /**
+     * Test admin dashboard Earning and Sales Analytics cards use real database data in BDT (৳).
+     */
+    public function test_dashboard_earning_and_sales_analytics_use_real_database_data(): void
+    {
+        $admin = Admin::first();
+
+        $res = $this->actingAs($admin, 'admin')->get('/admin');
+        $res->assertStatus(200);
+
+        // 1. Verify dummy values in Earning and Sales Analytics are eliminated
+        $res->assertDontSee('$2453.35');
+        $res->assertDontSee('$2281.04');
+        $res->assertDontSee('$ 2,132');
+
+        // 2. Verify real BDT currency symbol and card structures exist
+        $res->assertSee('৳');
+        $res->assertSee('Earning');
+        $res->assertSee('Sales Analytics');
+        $res->assertSee('earningMonthSelector');
+        $res->assertSee('earningSplineChart');
+        $res->assertSee('salesAnalyticsDonutChart');
+
+        // 3. Verify view data has monthly earning mapping and sales analytics
+        $res->assertViewHas('earningMonthlyData');
+        $res->assertViewHas('salesAnalytics');
+        $res->assertViewHas('currentMonth');
+
+        $earningData = $res->viewData('earningMonthlyData');
+        $this->assertIsArray($earningData);
+        $this->assertCount(12, $earningData);
+
+        // Current month (10) check:
+        $this->assertArrayHasKey(10, $earningData);
+        $this->assertStringContainsString('৳', $earningData[10]['thisMonth']);
+
+        $salesAnalytics = $res->viewData('salesAnalytics');
+        $this->assertIsArray($salesAnalytics);
+        $this->assertArrayHasKey('categories', $salesAnalytics);
+        $this->assertArrayHasKey('total', $salesAnalytics);
+        $this->assertGreaterThan(0, $salesAnalytics['total']);
+        $this->assertStringContainsString('৳', $salesAnalytics['total_formatted']);
     }
 }

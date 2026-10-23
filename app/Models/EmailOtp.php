@@ -35,6 +35,6 @@ class EmailOtp extends Model
 
     public function isValid(): bool
     {
-        return !$this->is_consumed && !$this->isExpired() && $this->attempts < 5;
+        return ! $this->is_consumed && ! $this->isExpired() && $this->attempts < 5;
     }
 }

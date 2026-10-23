@@ -10,7 +10,7 @@
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:600; display:flex; align-items:center; gap:8px;">
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:center; gap:8px;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
       {{ session('success') }}
     </div>
@@ -29,7 +29,7 @@
                 <span class="badge-pill-paces bg-primary-subtle" style="margin-left:6px;">⭐ Featured</span>
               @endif
             </div>
-            <span style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:700; text-transform:uppercase;">
+            <span style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:500; text-transform:uppercase;">
               Tier: {{ $plan->tier ?? 'Standard' }}
             </span>
           </div>
@@ -64,12 +64,12 @@
             </div>
 
             <div style="background:#f8fafc; border-radius:8px; padding:10px 12px; margin-bottom:1.25rem; border:1px solid var(--paces-border); display:flex; gap:16px;">
-              <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:600; cursor:pointer;">
+              <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:500; cursor:pointer;">
                 <input type="checkbox" name="is_popular" value="1" {{ $plan->is_popular ? 'checked' : '' }}>
                 Popular Highlight
               </label>
 
-              <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:600; cursor:pointer;">
+              <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:500; cursor:pointer;">
                 <input type="checkbox" name="is_active" value="1" {{ $plan->is_active ? 'checked' : '' }}>
                 Active on Live Site
               </label>
@@ -83,7 +83,7 @@
 
         @if(!empty($plan->features))
           <div style="margin-top:1.25rem; padding-top:1rem; border-top:1px dashed var(--paces-border);">
-            <div style="font-size:0.75rem; font-weight:700; color:var(--paces-text-muted); text-transform:uppercase; margin-bottom:6px;">Included Features</div>
+            <div style="font-size:0.75rem; font-weight:500; color:var(--paces-text-muted); text-transform:uppercase; margin-bottom:6px;">Included Features</div>
             <ul style="font-size:0.8rem; color:var(--paces-text-muted); margin:0; padding-left:1.2rem; line-height:1.6;">
               @foreach($plan->features as $f)
                 <li>{{ $f }}</li>

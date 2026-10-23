@@ -14,17 +14,19 @@ class EnsureUserIsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Unauthenticated.'], 401);
             }
+
             return redirect()->route('admin.login')->with('error', 'Please log in to access the Admin Panel.');
         }
 
-        if (!Auth::user()->isAdmin()) {
+        if (! Auth::user()->isAdmin()) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Unauthorized access.'], 403);
             }
+
             return redirect()->route('home')->with('error', 'Unauthorized access to Admin Command Center.');
         }
 

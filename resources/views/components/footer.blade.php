@@ -44,6 +44,8 @@
           <li><a href="{{ route('home') }}#amc">AMC Packages</a></li>
           <li><a href="{{ route('vendor') }}">Become a Partner</a></li>
           <li><a href="{{ route('booking.create') }}">Book a Service</a></li>
+          <li><a href="{{ route('support.create') }}">Helpdesk & Support</a></li>
+          <li><a href="{{ route('support.track') }}">Track Ticket</a></li>
         </ul>
       </div>
 

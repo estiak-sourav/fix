@@ -12,7 +12,7 @@
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:600; display:flex; align-items:center; gap:8px;">
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:center; gap:8px;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
       {{ session('success') }}
     </div>
@@ -47,7 +47,7 @@
             <input type="number" name="order" value="1" class="form-control-paces">
           </div>
           <div style="display:flex; align-items:flex-end; padding-bottom:6px;">
-            <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:600; cursor:pointer;">
+            <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:500; cursor:pointer;">
               <input type="checkbox" name="is_active" value="1" checked>
               Active / Visible
             </label>
@@ -78,7 +78,7 @@
                   {{ $faq->category }}
                 </span>
                 <div style="display:flex; align-items:center; gap:12px;">
-                  <label style="display:inline-flex; align-items:center; gap:4px; font-size:0.8rem; font-weight:600; cursor:pointer;">
+                  <label style="display:inline-flex; align-items:center; gap:4px; font-size:0.8rem; font-weight:500; cursor:pointer;">
                     <input type="checkbox" name="is_active" value="1" {{ $faq->is_active ? 'checked' : '' }}>
                     Active
                   </label>
@@ -91,7 +91,7 @@
               <div style="margin-bottom:8px;">
                 <input type="hidden" name="category" value="{{ $faq->category }}">
                 <input type="hidden" name="order" value="{{ $faq->order }}">
-                <input type="text" name="question" value="{{ $faq->question }}" class="form-control-paces" style="font-weight:700; background:#ffffff; font-size:0.92rem; margin-bottom:6px;" required>
+                <input type="text" name="question" value="{{ $faq->question }}" class="form-control-paces" style="font-weight:500; background:#ffffff; font-size:0.92rem; margin-bottom:6px;" required>
                 <textarea name="answer" rows="2" class="form-control-paces" style="background:#ffffff; font-size:0.85rem;" required>{{ $faq->answer }}</textarea>
               </div>
             </form>
@@ -100,7 +100,7 @@
               <form action="{{ route('admin.web.faqs.destroy', $faq) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this FAQ?');" style="margin:0;">
                 @csrf
                 @method('DELETE')
-                <button type="submit" style="background:none; border:none; color:#ef4444; font-size:0.78rem; font-weight:600; cursor:pointer;">
+                <button type="submit" style="background:none; border:none; color:#ef4444; font-size:0.78rem; font-weight:500; cursor:pointer;">
                   🗑️ Delete FAQ
                 </button>
               </form>

@@ -7,7 +7,7 @@
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:600; font-size:0.875rem; display:flex; align-items:center; gap:8px;">
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:8px;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
       {{ session('success') }}
     </div>
@@ -36,7 +36,7 @@
         </div>
       </div>
       <div class="metric-value" style="color:var(--paces-success);">{{ $stats['active_clients'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-success); font-weight:700;">
+      <div class="metric-subtext" style="color:var(--paces-success); font-weight:500;">
         Authorized to place work orders
       </div>
     </div>
@@ -106,7 +106,7 @@
     @if($users->isEmpty())
       <div style="text-align:center; padding:3.5rem 1rem; color:var(--paces-text-muted);">
         <div style="font-size:2.5rem; margin-bottom:10px;">👥</div>
-        <h4 style="font-size:1.05rem; font-weight:700; color:var(--paces-text-dark); margin-bottom:4px;">No Clients Found</h4>
+        <h4 style="font-size:1.05rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:4px;">No Clients Found</h4>
         <p style="font-size:0.85rem; max-width:400px; margin:0 auto;">No client user accounts match your search or filter criteria.</p>
       </div>
     @else
@@ -129,11 +129,11 @@
               <tr>
                 <td>
                   <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="width:36px; height:36px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:700; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0;">
+                    <div style="width:36px; height:36px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:500; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0;">
                       {{ strtoupper(substr($u->name, 0, 1)) }}
                     </div>
                     <div>
-                      <div style="font-weight:700; color:var(--paces-text-dark);">{{ $u->name }}</div>
+                      <div style="font-weight:500; color:var(--paces-text-dark);">{{ $u->name }}</div>
                       <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:capitalize;">Role: {{ $u->role }}</div>
                     </div>
                   </div>
@@ -152,7 +152,7 @@
                 </td>
                 <td>
                   @if($u->company_name)
-                    <div style="font-weight:600; color:var(--paces-text-dark);">{{ $u->company_name }}</div>
+                    <div style="font-weight:500; color:var(--paces-text-dark);">{{ $u->company_name }}</div>
                   @endif
                   <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:capitalize;">
                     {{ $u->property_type ?? 'Standard Client' }}
@@ -190,19 +190,28 @@
                       View
                     </a>
 
+                    <!-- Open Support Ticket -->
+                    @if(auth('admin')->user()?->hasPermission('tickets.edit'))
+                      <a href="{{ route('admin.tickets.create', ['user_id' => $u->id]) }}" class="btn-paces btn-paces-outline btn-paces-sm" style="background:#f0fdf4; border-color:#bbf7d0; color:#166534;" title="Open Support Ticket">
+                        + Ticket
+                      </a>
+                    @endif
+
                     <!-- Toggle Active Status Form -->
-                    <form action="{{ route('admin.users.toggle-status', $u) }}" method="POST" onsubmit="return confirm('Are you sure you want to {{ $u->is_active ? 'deactivate' : 'activate' }} client {{ $u->name }}?');" style="margin:0;">
-                      @csrf
-                      @if($u->is_active)
-                        <button type="submit" class="btn-paces btn-paces-sm" style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626;" title="Deactivate Account">
-                          Disable
-                        </button>
-                      @else
-                        <button type="submit" class="btn-paces btn-paces-sm" style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a;" title="Activate Account">
-                          Enable
-                        </button>
-                      @endif
-                    </form>
+                    @if(auth('admin')->user()?->hasPermission('users.edit'))
+                      <form action="{{ route('admin.users.toggle-status', $u) }}" method="POST" onsubmit="return confirm('Are you sure you want to {{ $u->is_active ? 'deactivate' : 'activate' }} client {{ $u->name }}?');" style="margin:0;">
+                        @csrf
+                        @if($u->is_active)
+                          <button type="submit" class="btn-paces btn-paces-sm" style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626;" title="Deactivate Account">
+                            Disable
+                          </button>
+                        @else
+                          <button type="submit" class="btn-paces btn-paces-sm" style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a;" title="Activate Account">
+                            Enable
+                          </button>
+                        @endif
+                      </form>
+                    @endif
                   </div>
                 </td>
               </tr>

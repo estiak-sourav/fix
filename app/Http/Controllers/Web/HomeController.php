@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
 use App\Models\AmcPlan;
 use App\Models\Faq;
 use App\Models\Sector;
@@ -11,6 +12,10 @@ use App\Models\ServiceCategory;
 use App\Models\SiteContent;
 use App\Models\Testimonial;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
@@ -19,7 +24,7 @@ class HomeController extends Controller
      */
     public function index(): View
     {
-        $categories = ServiceCategory::with(['services' => fn($q) => $q->where('is_active', true)->orderBy('order')])
+        $categories = ServiceCategory::with(['services' => fn ($q) => $q->where('is_active', true)->orderBy('order')])
             ->where('is_active', true)
             ->orderBy('order')
             ->get();
@@ -61,7 +66,7 @@ class HomeController extends Controller
     /**
      * Handle incoming contact inquiries and dispatch admin alert.
      */
-    public function contact(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+    public function contact(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:150',
@@ -73,9 +78,9 @@ class HomeController extends Controller
 
         $subject = $validated['subject'] ?? 'General Facility Inquiry';
 
-        \App\Models\AdminNotification::create([
-            'title' => 'New Facility Inquiry: ' . $subject,
-            'message' => $validated['name'] . ' (' . $validated['phone'] . '): ' . \Illuminate\Support\Str::limit($validated['message'], 120),
+        AdminNotification::create([
+            'title' => 'New Facility Inquiry: '.$subject,
+            'message' => $validated['name'].' ('.$validated['phone'].'): '.Str::limit($validated['message'], 120),
             'type' => 'inquiry',
             'sound_played' => false,
             'is_read' => false,

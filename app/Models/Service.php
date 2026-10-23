@@ -62,6 +62,7 @@ class Service extends Model
         if ($this->thumbnail_path && str_starts_with($this->thumbnail_path, 'http')) {
             return $this->thumbnail_path;
         }
+
         return asset('assets/images/placeholder-service.jpg');
     }
 }

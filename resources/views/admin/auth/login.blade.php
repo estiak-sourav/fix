@@ -14,10 +14,16 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     *, body, button, input, select, textarea {
       font-family: 'Poppins', sans-serif;
+      font-weight: 400;
+    }
+    
+    h1, h2, h3, h4, h5, h6, b, strong, .brand-header h2, .status-pill, .form-label, .btn-submit, .credentials-chip code {
+      font-weight: 500;
     }
     
     body {
       font-family: 'Poppins', sans-serif;
+      font-weight: 400;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -94,7 +100,7 @@
 
     .brand-header h2 {
       font-size: 1.45rem;
-      font-weight: 800;
+      font-weight: 500;
       color: #0f172a;
       font-family: 'Poppins', sans-serif;
       letter-spacing: -0.02em;
@@ -110,7 +116,7 @@
       background: #f0fdf4;
       border: 1px solid #bbf7d0;
       font-size: 0.75rem;
-      font-weight: 700;
+      font-weight: 500;
       color: #15803d;
     }
 
@@ -138,7 +144,7 @@
       justify-content: space-between;
       align-items: center;
       font-size: 0.82rem;
-      font-weight: 700;
+      font-weight: 500;
       margin-bottom: 6px;
       color: #1e293b;
     }
@@ -204,7 +210,7 @@
       width: 100%;
       background: linear-gradient(135deg, #3e60d5 0%, #2e4ebd 100%);
       color: #ffffff;
-      font-weight: 700;
+      font-weight: 500;
       font-size: 0.98rem;
       padding: 0.88rem 1.25rem;
       border-radius: 10px;
@@ -264,7 +270,7 @@
 
     .credentials-chip code {
       font-family: monospace;
-      font-weight: 700;
+      font-weight: 500;
       color: #3e60d5;
       background: #eef2ff;
       padding: 1px 6px;
@@ -281,7 +287,7 @@
     .card-footer-info a {
       color: #ffffff;
       text-decoration: underline;
-      font-weight: 600;
+      font-weight: 500;
     }
   </style>
 </head>
@@ -372,7 +378,7 @@
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; font-size:0.85rem; color:#475569;">
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:500;">
             <input 
               type="checkbox" 
               name="remember" 

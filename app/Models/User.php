@@ -47,6 +47,11 @@ class User extends Authenticatable
         return $this->hasMany(Booking::class)->latest();
     }
 
+    public function supportTickets()
+    {
+        return $this->hasMany(SupportTicket::class)->latest();
+    }
+
     public function isAdmin(): bool
     {
         return in_array($this->role, ['super_admin', 'operations_manager', 'support_agent', 'admin']);
@@ -60,5 +65,13 @@ class User extends Authenticatable
     public function isCustomer(): bool
     {
         return $this->role === 'customer';
+    }
+
+    /**
+     * Get avatar full URL if present.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return $this->avatar ? asset('storage/'.$this->avatar) : null;
     }
 }

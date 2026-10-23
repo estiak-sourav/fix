@@ -161,7 +161,7 @@ class FixEnterpriseWorkflowTest extends TestCase
         $customerBookingsResponse->assertSee($booking->booking_number);
 
         // Verify customer can view single booking tracking page
-        $trackResponse = $this->get('/my-bookings/' . $booking->booking_number);
+        $trackResponse = $this->get('/my-bookings/'.$booking->booking_number);
         $trackResponse->assertStatus(200);
         $trackResponse->assertSee('Urgent central chiller leak in tower basement');
     }
@@ -217,7 +217,7 @@ class FixEnterpriseWorkflowTest extends TestCase
         ]);
 
         // Test updating a booking status
-        $statusUpdate = $this->post('/admin/bookings/' . $booking->id . '/status', [
+        $statusUpdate = $this->post('/admin/bookings/'.$booking->id.'/status', [
             'status' => 'in_progress',
             'note' => 'Technician team dispatched to site with equipment.',
         ]);
@@ -316,6 +316,52 @@ class FixEnterpriseWorkflowTest extends TestCase
             'type' => 'inquiry',
             'sound_played' => false,
             'is_read' => false,
+        ]);
+    }
+
+    /**
+     * Test booking service order in nationwide divisions (e.g. Chattogram, Sylhet, Khulna).
+     */
+    public function test_customer_can_create_booking_in_any_bangladesh_division(): void
+    {
+        $service = Service::first();
+        $customer = User::factory()->create([
+            'role' => 'customer',
+            'division' => 'Chattogram',
+            'district' => 'Chattogram City',
+            'area' => 'Agrabad Commercial',
+        ]);
+        $this->actingAs($customer, 'web');
+
+        $bookingData = [
+            'service_type' => 'on_demand',
+            'service_id' => $service->id,
+            'customer_name' => $customer->name,
+            'customer_phone' => '01811223344',
+            'property_type' => 'commercial',
+            'division' => 'Chattogram',
+            'district' => 'Chattogram City',
+            'area' => 'Agrabad Commercial',
+            'street_address' => 'Agrabad C/A, Tower 3, Floor 5',
+            'urgency' => 'standard',
+            'preferred_date' => now()->addDay()->format('Y-m-d'),
+            'preferred_time_slot' => 'morning',
+            'problem_description' => 'Comprehensive electrical safety and wiring inspection.',
+        ];
+
+        $response = $this->postJson('/booking', $bookingData);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+        ]);
+
+        $this->assertDatabaseHas('bookings', [
+            'customer_email' => $customer->email,
+            'division' => 'Chattogram',
+            'district' => 'Chattogram City',
+            'area' => 'Agrabad Commercial',
+            'status' => 'pending_review',
         ]);
     }
 }

@@ -31,7 +31,7 @@
     @if($bookings->isEmpty())
       <div style="text-align:center; padding:3.5rem 1rem; color:var(--paces-text-muted);">
         <div style="font-size:2.5rem; margin-bottom:10px;">📋</div>
-        <h4 style="font-size:1rem; font-weight:700; color:var(--paces-text-dark); margin-bottom:4px;">No Orders Found</h4>
+        <h4 style="font-size:1rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:4px;">No Orders Found</h4>
         <p style="font-size:0.85rem; max-width:400px; margin:0 auto;">No facility service bookings match your active filters.</p>
       </div>
     @else
@@ -52,15 +52,15 @@
             @foreach($bookings as $b)
               <tr>
                 <td>
-                  <strong style="color:var(--paces-primary); font-family:monospace; font-size:0.9rem;">#{{ $b->booking_number }}</strong>
+                  <strong style="color:var(--paces-primary); font-family:monospace; font-size:0.9rem; font-weight:500;">#{{ $b->booking_number }}</strong>
                   <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-top:2px;">{{ $b->created_at->format('M d, Y • h:i A') }}</div>
                 </td>
                 <td>
-                  <div style="font-weight:700; color:var(--paces-text-dark);">{{ $b->customer_name }}</div>
+                  <div style="font-weight:500; color:var(--paces-text-dark);">{{ $b->customer_name }}</div>
                   <div style="font-size:0.75rem; color:var(--paces-text-muted);">📞 {{ $b->customer_phone }}</div>
                 </td>
                 <td>
-                  <div style="font-weight:600; color:var(--paces-text-dark);">{{ $b->service?->title ?? ($b->amcPlan?->name ?? 'Custom Service') }}</div>
+                  <div style="font-weight:500; color:var(--paces-text-dark);">{{ $b->service?->title ?? ($b->amcPlan?->name ?? 'Custom Service') }}</div>
                   <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:capitalize;">{{ $b->property_type }}</div>
                 </td>
                 <td>

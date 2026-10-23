@@ -4,6 +4,7 @@ use App\Http\Controllers\Web\Auth\OtpAuthController;
 use App\Http\Controllers\Web\BookingController;
 use App\Http\Controllers\Web\CustomerPortalController;
 use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\SupportTicketController;
 use App\Models\Service;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,7 @@ Route::post('/contact', [HomeController::class, 'contact'])->name('contact.send'
 Route::get('/services/{slug}', function (string $slug) {
     $service = Service::with('category')->where('slug', $slug)->firstOrFail();
     $relatedServices = Service::where('id', '!=', $service->id)->where('is_active', true)->take(3)->get();
+
     return view('web.pages.service-details', compact('service', 'relatedServices'));
 })->name('services.show');
 
@@ -61,4 +63,27 @@ Route::middleware('auth:web')->prefix('my-bookings')->name('customer.')->group(f
 Route::middleware('auth:web')->prefix('profile')->name('customer.')->group(function () {
     Route::get('/', [CustomerPortalController::class, 'profile'])->name('profile');
     Route::put('/', [CustomerPortalController::class, 'updateProfile'])->name('profile.update');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Public Support Ticket Routes (Guest & User Accessible)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('support')->name('support.')->group(function () {
+    Route::get('/', [SupportTicketController::class, 'create'])->name('create');
+    Route::post('/', [SupportTicketController::class, 'store'])->name('store');
+    Route::match(['get', 'post'], '/track', [SupportTicketController::class, 'track'])->name('track');
+    Route::get('/tickets/{ticketNumber}', [SupportTicketController::class, 'show'])->name('show');
+    Route::post('/tickets/{ticketNumber}/reply', [SupportTicketController::class, 'reply'])->name('reply');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Customer Portal Support Tickets (Authenticated)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth:web')->prefix('my-tickets')->name('customer.tickets.')->group(function () {
+    Route::get('/', [SupportTicketController::class, 'customerIndex'])->name('index');
+    Route::get('/{ticketNumber}', [SupportTicketController::class, 'customerShow'])->name('show');
 });

@@ -84,6 +84,7 @@ class Booking extends Model
         $datePrefix = date('Ymd');
         $random = strtoupper(bin2hex(random_bytes(2)));
         $count = static::whereDate('created_at', today())->count() + 1;
+
         return sprintf('FIX-%s-%04d-%s', $datePrefix, $count, $random);
     }
 

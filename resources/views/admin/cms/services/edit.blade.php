@@ -22,11 +22,11 @@
 
       <!-- Image Upload Section -->
       <div style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem;">
-        <h4 style="font-size:0.95rem; font-weight:700; color:var(--paces-text-dark); margin-bottom:0.85rem;">📷 Service Card Image Upload</h4>
+        <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:0.85rem;">📷 Service Card Image Upload</h4>
         
         <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
           <div>
-            <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-bottom:6px; font-weight:600;">Current Thumbnail:</div>
+            <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-bottom:6px; font-weight:500;">Current Thumbnail:</div>
             <img src="{{ $service->thumbnail_url }}" alt="Preview" 
               style="width:130px; height:85px; object-fit:cover; border-radius:10px; border:1px solid var(--paces-border); box-shadow:var(--paces-shadow);">
           </div>
@@ -94,12 +94,12 @@
       </div>
 
       <div style="display:flex; gap:24px; margin-bottom:1.75rem; background:#f8fafc; padding:1rem 1.25rem; border-radius:8px; border:1px solid var(--paces-border);">
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; font-size:0.875rem;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:500; font-size:0.875rem;">
           <input type="checkbox" name="is_emergency" value="1" {{ $service->is_emergency ? 'checked' : '' }} style="accent-color:var(--paces-primary);">
           <span>Emergency 1-Hour SLA Available</span>
         </label>
 
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; font-size:0.875rem;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:500; font-size:0.875rem;">
           <input type="checkbox" name="is_active" value="1" {{ $service->is_active ? 'checked' : '' }} style="accent-color:var(--paces-primary);">
           <span>Live / Published on Website</span>
         </label>

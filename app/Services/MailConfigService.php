@@ -62,7 +62,7 @@ class MailConfigService
             }
         } catch (\Throwable $e) {
             // Graceful fallback during migration / setup
-            Log::debug('MailConfigService fallback: ' . $e->getMessage());
+            Log::debug('MailConfigService fallback: '.$e->getMessage());
         }
     }
 }

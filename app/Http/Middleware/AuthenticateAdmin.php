@@ -14,7 +14,7 @@ class AuthenticateAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::guard('admin')->check()) {
+        if (! Auth::guard('admin')->check()) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Unauthenticated admin.'], 401);
             }
@@ -23,7 +23,7 @@ class AuthenticateAdmin
         }
 
         $admin = Auth::guard('admin')->user();
-        if (!$admin->is_active) {
+        if (! $admin->is_active) {
             Auth::guard('admin')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

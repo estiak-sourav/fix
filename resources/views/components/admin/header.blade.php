@@ -25,15 +25,22 @@
       </a>
     </div>
 
-    <!-- User Profile Dropdown -->
-    <div class="topbar-user-profile">
+    <!-- User Profile Link to Self Profile -->
+    @php
+      $currentAdmin = auth('admin')->user() ?? auth()->user();
+    @endphp
+    <a href="{{ route('admin.profile') }}" class="topbar-user-profile" style="text-decoration:none;" title="My Profile & Avatar Settings">
       <div class="topbar-avatar">
-        <span>{{ substr((auth('admin')->user() ?? auth()->user())?->name ?? 'A', 0, 1) }}</span>
+        @if($currentAdmin?->avatar_url)
+          <img src="{{ $currentAdmin->avatar_url }}" alt="{{ $currentAdmin->name }}">
+        @else
+          <span>{{ substr($currentAdmin?->name ?? 'A', 0, 1) }}</span>
+        @endif
       </div>
       <div class="topbar-user-info">
-        <span class="topbar-user-name">{{ (auth('admin')->user() ?? auth()->user())?->name ?? 'Admin User' }}</span>
-        <span class="topbar-user-role">Operations HQ</span>
+        <span class="topbar-user-name">{{ $currentAdmin?->name ?? 'Admin User' }}</span>
+        <span class="topbar-user-role">{{ ucfirst(str_replace('_', ' ', $currentAdmin?->role ?? 'Operations HQ')) }}</span>
       </div>
-    </div>
+    </a>
   </div>
 </header>

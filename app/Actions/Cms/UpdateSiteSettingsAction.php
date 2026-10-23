@@ -18,9 +18,9 @@ class UpdateSiteSettingsAction
         foreach ($inputs as $key => $value) {
             if ($request->hasFile($key)) {
                 $file = $request->file($key);
-                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                $filename = time().'_'.Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
                 $file->move(public_path('uploads/branding'), $filename);
-                $value = 'uploads/branding/' . $filename;
+                $value = 'uploads/branding/'.$filename;
             }
 
             SiteSetting::set($key, $value);

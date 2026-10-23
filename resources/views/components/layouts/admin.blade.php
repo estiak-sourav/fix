@@ -63,14 +63,80 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     *, body, button, input, select, textarea {
       font-family: 'Poppins', sans-serif;
+      font-weight: 400;
     }
     body {
       font-family: 'Poppins', sans-serif;
+      font-weight: 400;
       background: var(--paces-bg);
       color: var(--paces-text-dark);
       display: flex;
       min-height: 100vh;
       overflow-x: clip;
+    }
+
+    /* ==========================================================================
+       CMS Typography Standardization (Normal: 400, Bold/Headings/Accents: 500)
+       ========================================================================== */
+    body, p, span, div, a, input, select, textarea, td, li, small, label, dd, dt {
+      font-weight: 400;
+    }
+
+    h1, h2, h3, h4, h5, h6,
+    b, strong, th,
+    .page-header-title,
+    .card-title-paces,
+    .panel-title,
+    .brand-title,
+    .brand-badge,
+    .nav-header,
+    .nav-item,
+    .nav-badge,
+    .topbar-user-name,
+    .topbar-badge,
+    .topbar-title,
+    .metric-value,
+    .metric-label,
+    .table-paces th,
+    .admin-table th,
+    .badge-pill-paces,
+    .status-badge,
+    .btn-paces,
+    .btn-admin,
+    .btn-topbar-site,
+    .btn-topbar-chime,
+    .form-label-paces,
+    .user-name,
+    .user-avatar-sm,
+    .topbar-avatar,
+    .top-kpi-label,
+    .top-kpi-value,
+    .fw-bold,
+    .font-bold,
+    .font-semibold,
+    .font-medium {
+      font-weight: 500 !important;
+    }
+
+    /* Enforce font-weight 500 for any overly bold inline weights in CMS views */
+    [style*="font-weight: 900"],
+    [style*="font-weight:900"],
+    [style*="font-weight: 800"],
+    [style*="font-weight:800"],
+    [style*="font-weight: 700"],
+    [style*="font-weight:700"],
+    [style*="font-weight: 600"],
+    [style*="font-weight:600"],
+    [style*="font-weight: bold"],
+    [style*="font-weight:bold"] {
+      font-weight: 500 !important;
+    }
+
+    [style*="font-weight: 400"],
+    [style*="font-weight:400"],
+    [style*="font-weight: normal"],
+    [style*="font-weight:normal"] {
+      font-weight: 400 !important;
     }
 
     /* ---------------- Sidebar (Paces Dark Sidebar) ---------------- */
@@ -113,14 +179,14 @@
     }
     .brand-title {
       font-size: 0.95rem;
-      font-weight: 800;
+      font-weight: 500;
       letter-spacing: 0.05em;
       color: #ffffff;
       font-family: 'Poppins', sans-serif;
     }
     .brand-badge {
       font-size: 0.6rem;
-      font-weight: 800;
+      font-weight: 500;
       color: #f59e0b;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -141,7 +207,7 @@
     }
     .nav-header {
       font-size: 0.68rem;
-      font-weight: 700;
+      font-weight: 500;
       color: #64748b;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -156,7 +222,7 @@
       color: var(--paces-sidebar-text);
       text-decoration: none;
       font-size: 0.875rem;
-      font-weight: 600;
+      font-weight: 500;
       transition: all 0.2s ease;
       margin-bottom: 3px;
     }
@@ -185,7 +251,7 @@
     }
     .nav-badge {
       font-size: 0.7rem;
-      font-weight: 800;
+      font-weight: 500;
       padding: 2px 7px;
       border-radius: 20px;
     }
@@ -229,7 +295,7 @@
     }
     .nav-group.active > .nav-toggle {
       color: #ffffff;
-      font-weight: 700;
+      font-weight: 500;
     }
     .nav-submenu {
       display: none;
@@ -261,7 +327,7 @@
     .nav-subitem.active {
       color: #ffffff;
       background: rgba(62, 96, 213, 0.22);
-      font-weight: 600;
+      font-weight: 500;
     }
     .nav-subitem.active .nav-subdot {
       background: var(--paces-primary);
@@ -292,9 +358,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
+      font-weight: 500;
       font-size: 0.85rem;
       flex-shrink: 0;
+      overflow: hidden;
+    }
+    .user-avatar-sm img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
     .user-meta {
       flex: 1;
@@ -302,7 +375,7 @@
     }
     .user-name {
       font-size: 0.85rem;
-      font-weight: 700;
+      font-weight: 500;
       color: #ffffff;
       white-space: nowrap;
       overflow: hidden;
@@ -428,7 +501,7 @@
       align-items: center;
       gap: 6px;
       font-size: 0.75rem;
-      font-weight: 700;
+      font-weight: 500;
       color: #16a34a;
     }
     .pulse-dot {
@@ -450,7 +523,7 @@
       border-radius: 20px;
       padding: 3px 8px;
       font-size: 0.7rem;
-      font-weight: 700;
+      font-weight: 500;
       color: #15803d;
       cursor: pointer;
     }
@@ -478,7 +551,7 @@
       background: var(--paces-danger);
       color: #fff;
       font-size: 0.65rem;
-      font-weight: 800;
+      font-weight: 500;
       border-radius: 10px;
       padding: 1px 5px;
     }
@@ -493,7 +566,7 @@
       color: var(--paces-text-dark);
       text-decoration: none;
       font-size: 0.8rem;
-      font-weight: 700;
+      font-weight: 500;
       transition: all 0.2s;
     }
     .btn-topbar-site:hover {
@@ -513,11 +586,19 @@
       border-radius: 50%;
       background: var(--paces-primary);
       color: #ffffff;
-      font-weight: 700;
+      font-weight: 500;
       font-size: 0.9rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .topbar-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
     .topbar-user-info {
       display: flex;
@@ -525,7 +606,7 @@
     }
     .topbar-user-name {
       font-size: 0.85rem;
-      font-weight: 700;
+      font-weight: 500;
       color: var(--paces-text-dark);
       line-height: 1.2;
     }
@@ -549,7 +630,7 @@
     }
     .page-header-title {
       font-size: 1.35rem;
-      font-weight: 800;
+      font-weight: 500;
       color: var(--paces-text-dark);
       font-family: 'Poppins', sans-serif;
     }
@@ -577,7 +658,7 @@
     }
     .card-title-paces {
       font-size: 1.05rem;
-      font-weight: 700;
+      font-weight: 500;
       color: var(--paces-text-dark);
       font-family: 'Poppins', sans-serif;
     }
@@ -611,7 +692,7 @@
     }
     .metric-label {
       font-size: 0.72rem;
-      font-weight: 700;
+      font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: var(--paces-text-muted);
@@ -631,7 +712,7 @@
     }
     .metric-value {
       font-size: 2rem;
-      font-weight: 800;
+      font-weight: 500;
       color: var(--paces-text-dark);
       font-family: 'Poppins', sans-serif;
       line-height: 1.1;
@@ -664,7 +745,7 @@
     .table-paces th {
       background: #f8fafc;
       color: var(--paces-text-muted);
-      font-weight: 700;
+      font-weight: 500;
       font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -691,7 +772,7 @@
       padding: 4px 10px;
       border-radius: 20px;
       font-size: 0.75rem;
-      font-weight: 700;
+      font-weight: 500;
     }
 
     /* Buttons */
@@ -702,7 +783,7 @@
       padding: 0.55rem 1rem;
       border-radius: var(--paces-radius-sm);
       font-size: 0.85rem;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
       text-decoration: none;
       border: 1px solid transparent;
@@ -747,7 +828,7 @@
     .form-label-paces {
       display: block;
       font-size: 0.82rem;
-      font-weight: 700;
+      font-weight: 500;
       color: var(--paces-text-dark);
       margin-bottom: 6px;
     }
@@ -786,7 +867,7 @@
     }
     .panel-title {
       font-size: 1.1rem;
-      font-weight: 800;
+      font-weight: 500;
       color: var(--paces-text-dark);
       font-family: 'Poppins', sans-serif;
     }
@@ -821,7 +902,7 @@
       padding: 0.55rem 1rem;
       border-radius: var(--paces-radius-sm);
       font-size: 0.85rem;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
       text-decoration: none;
       border: 1px solid transparent;
@@ -843,7 +924,7 @@
     .admin-table th {
       background: #f8fafc;
       color: var(--paces-text-muted);
-      font-weight: 700;
+      font-weight: 500;
       font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -869,7 +950,7 @@
       padding: 4px 10px;
       border-radius: 20px;
       font-size: 0.75rem;
-      font-weight: 700;
+      font-weight: 500;
     }
 
     /* Toast Notification Banner */
@@ -1032,7 +1113,7 @@
       toast.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
           <strong style="font-size:0.9rem; color:${isEmergency ? '#dc2626' : '#1e293b'};">${title}</strong>
-          <span style="font-size:0.75rem; color:#64748b; font-weight:700;">JUST NOW</span>
+          <span style="font-size:0.75rem; color:#64748b; font-weight:500;">JUST NOW</span>
         </div>
         <p style="margin:0; font-size:0.825rem; color:#475569;">${msg}</p>
       `;

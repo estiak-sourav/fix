@@ -13,6 +13,7 @@ class LoginAdminAction
      * Authenticate an admin user on the admin guard.
      *
      * @param  array{email: string, password: string, remember?: bool}  $credentials
+     *
      * @throws ValidationException
      */
     public function execute(array $credentials, Request $request): Admin
@@ -25,7 +26,7 @@ class LoginAdminAction
             'is_active' => true,
         ], $remember);
 
-        if (!$attempt) {
+        if (! $attempt) {
             throw ValidationException::withMessages([
                 'email' => [__('auth.failed')],
             ]);
