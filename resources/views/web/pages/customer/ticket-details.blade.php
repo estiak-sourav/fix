@@ -45,100 +45,45 @@
         </div>
       @endif
 
-      <!-- Step-by-Step Lifecycle Arrow Progress Bar -->
-      <div style="background:#ffffff; border:1px solid var(--border); border-radius:12px; padding:18px 24px; margin-bottom:2rem; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-        <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:12px; letter-spacing:0.04em;">
-          Resolution Progress Pipeline (Step-by-Step Flow):
-        </div>
-
-        @php
-          $hasAdminReply = $ticket->messages->where('sender_type', 'admin')->isNotEmpty();
-          $stepActive = $ticket->status === 'closed' ? 4 : ($hasAdminReply ? 3 : 2);
-        @endphp
-
-        <div class="arrow-steps-container">
-          <!-- Step 1 -->
-          <div class="arrow-step completed">
-            <span class="step-num">1</span>
-            <span class="step-text">Ticket Submitted</span>
-            <span class="step-arrow">➔</span>
-          </div>
-
-          <!-- Step 2 -->
-          <div class="arrow-step {{ $stepActive >= 2 ? 'completed' : 'pending' }}">
-            <span class="step-num">2</span>
-            <span class="step-text">Ops Assigned</span>
-            <span class="step-arrow">➔</span>
-          </div>
-
-          <!-- Step 3 -->
-          <div class="arrow-step {{ $stepActive >= 3 ? 'completed' : 'pending' }}">
-            <span class="step-num">3</span>
-            <span class="step-text">Active Chat Flow</span>
-            <span class="step-arrow">➔</span>
-          </div>
-
-          <!-- Step 4 -->
-          <div class="arrow-step {{ $stepActive >= 4 ? 'completed' : 'pending' }}">
-            <span class="step-num">4</span>
-            <span class="step-text">Issue Resolved</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Chatting Flow with Step-by-Step Arrow Indicators -->
-      <div style="margin-bottom:2.5rem;">
+      <!-- Chatting Thread (Normal Clean Chat Interface without Step counts or Step Pipeline) -->
+      <div style="margin-bottom:2rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
           <h2 style="font-size:1.25rem; font-weight:700; color:var(--text-main); margin:0;">
-            Conversation Thread
+            Support Conversation
           </h2>
           <span style="font-size:0.85rem; color:#64748b;">
-            {{ $ticket->messages->count() }} {{ \Illuminate\Support\Str::plural('Step Message', $ticket->messages->count()) }}
+            {{ $ticket->messages->count() }} {{ \Illuminate\Support\Str::plural('message', $ticket->messages->count()) }}
           </span>
         </div>
 
-        <div class="chat-thread-container">
+        <div class="chat-thread-container" style="display:flex; flex-direction:column; gap:16px;">
           @foreach($ticket->messages as $msg)
-            <!-- Single Step Message Card -->
-            <div class="message-card {{ $msg->sender_type === 'admin' ? 'admin-response' : 'customer-inquiry' }}">
+            <!-- Chat Bubble -->
+            <div class="message-card {{ $msg->sender_type === 'admin' ? 'admin-response' : 'customer-inquiry' }}" style="border-radius:12px; padding:1.25rem; border:1px solid var(--border); background:{{ $msg->sender_type === 'admin' ? '#eff6ff' : '#ffffff' }};">
               
-              <!-- Message Header with Step Number & Directional Indicator -->
-              <div class="message-header">
+              <!-- Message Header -->
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid rgba(0,0,0,0.05); padding-bottom:6px;">
                 <div style="display:flex; align-items:center; gap:8px;">
                   @if($msg->sender_type === 'admin')
-                    <span class="badge-step-admin">
-                      Step {{ $loop->iteration }} ➔ Support Admin Response
+                    <span style="font-size:0.875rem; font-weight:700; color:#1e40af;">
+                      🛠️ FIX Support Specialist
                     </span>
                   @else
-                    <span class="badge-step-customer">
-                      Step {{ $loop->iteration }} ➔ My Message
+                    <span style="font-size:0.875rem; font-weight:700; color:#1e293b;">
+                      👤 {{ $msg->sender_name }} (You)
                     </span>
                   @endif
-                  <span style="font-size:0.875rem; font-weight:700; color:#1e293b;">
-                    {{ $msg->sender_name }}
-                  </span>
                 </div>
                 <span style="font-size:0.75rem; color:#94a3b8;">
-                  {{ $msg->created_at->format('M d, Y • h:i A') }} ({{ $msg->created_at->diffForHumans() }})
+                  {{ $msg->created_at->format('M d, Y • h:i A') }}
                 </span>
               </div>
 
               <!-- Message Body -->
-              <div class="message-body">
-                {!! nl2br(e($msg->message)) !!}
+              <div class="message-body" style="font-size:0.92rem; line-height:1.6; color:#334155; white-space:pre-line;">
+                {{ $msg->message }}
               </div>
             </div>
-
-            <!-- Directional Flow Arrow Connecting Consecutive Steps -->
-            @if(! $loop->last)
-              <div class="flow-step-connector">
-                <div class="connector-line"></div>
-                <div class="connector-badge">
-                  <span>↓ Step {{ $loop->iteration }} ➔ Step {{ $loop->iteration + 1 }}</span>
-                </div>
-                <div class="connector-line"></div>
-              </div>
-            @endif
           @endforeach
         </div>
       </div>

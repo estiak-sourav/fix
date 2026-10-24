@@ -63,7 +63,7 @@
   </div>
 
   <!-- Search & Division Filter Controls -->
-  <div class="card-paces" style="margin-bottom:1.5rem; padding:16px;">
+  <div class="card-paces" style="margin-bottom:2rem; padding:20px;">
     <form action="{{ route('admin.area-analytics') }}" method="GET" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
       <!-- Search Input -->
       <div style="position:relative; flex:1; min-width:240px;">
@@ -144,8 +144,9 @@
                     📍 {{ $item['area'] }}
                   </div>
                   @if($item['latest_booking_at'])
-                    <div style="font-size:0.72rem; color:var(--paces-text-muted); margin-top:2px;">
-                      Latest: {{ \Carbon\Carbon::parse($item['latest_booking_at'])->format('M d, Y') }}
+                    <div style="font-size:0.75rem; color:var(--paces-text-dark); margin-top:4px; line-height:1.3;">
+                      <div style="font-weight:500; color:var(--paces-primary);">{{ \Carbon\Carbon::parse($item['latest_booking_at'])->format('h:i A') }}</div>
+                      <div style="color:var(--paces-text-muted); font-size:0.72rem;">{{ \Carbon\Carbon::parse($item['latest_booking_at'])->format('M d, Y') }}</div>
                     </div>
                   @endif
                 </td>
@@ -162,7 +163,7 @@
                   <div style="display:flex; flex-direction:column; gap:4px; font-size:0.78rem;">
                     <div>Standard: <strong style="font-weight:500;">{{ $item['total_count'] - $item['emergency_count'] }}</strong></div>
                     @if($item['emergency_count'] > 0)
-                      <div style="color:#dc2626; font-weight:500;">Emergency: {{ $item['emergency_count'] }}</div>
+                      <div style="color:#dc2626; font-weight:500; white-space:nowrap;">Emergency: {{ $item['emergency_count'] }}</div>
                     @endif
                   </div>
                 </td>

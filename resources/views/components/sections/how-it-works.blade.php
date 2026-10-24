@@ -1,10 +1,14 @@
+@props([
+  'content' => null,
+])
+
 <!-- How It Works Section -->
 <section id="howItWorks" class="section">
   <div class="container">
     <div class="section-header">
-      <h2 class="section-title">How It Works</h2>
+      <h2 class="section-title">{!! $content->title ?? 'How It Works' !!}</h2>
       <p class="section-subtitle">
-        Getting professional maintenance for your facility is straightforward, transparent, and hassle-free in just 4 simple steps.
+        {{ $content->subtitle ?? 'Getting professional maintenance for your facility is straightforward, transparent, and hassle-free in just 4 simple steps.' }}
       </p>
     </div>
 

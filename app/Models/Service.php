@@ -17,6 +17,7 @@ class Service extends Model
         'icon',
         'thumbnail_path',
         'hero_image_path',
+        'gallery_images',
         'price_starting',
         'pricing_unit',
         'sla_hours',
@@ -35,6 +36,7 @@ class Service extends Model
             'scope_included' => 'array',
             'scope_excluded' => 'array',
             'compliance_certs' => 'array',
+            'gallery_images' => 'array',
             'price_starting' => 'decimal:2',
             'sla_hours' => 'integer',
             'is_emergency' => 'boolean',
@@ -52,6 +54,21 @@ class Service extends Model
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Booking::class)->whereNotNull('review_rating')->latest('reviewed_at');
+    }
+
+    public function averageRating(): float
+    {
+        return round((float) ($this->bookings()->whereNotNull('review_rating')->avg('review_rating') ?: 5.0), 1);
+    }
+
+    public function reviewsCount(): int
+    {
+        return $this->bookings()->whereNotNull('review_rating')->count();
     }
 
     public function getThumbnailUrlAttribute(): string

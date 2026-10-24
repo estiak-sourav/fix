@@ -35,7 +35,7 @@
         </div>
         <h3 class="card-title-paces" style="margin-bottom:6px;">Site Settings & SMTP Gateway</h3>
         <p style="font-size:0.85rem; color:var(--paces-text-muted); line-height:1.5; margin-bottom:1rem;">
-          Configure logo branding, emergency hotline ({{ $stats['emergency_phone'] }}), support email, SEO meta tags, and live SMTP email delivery credentials.
+          Branding logos, emergency hotline ({{ $stats['emergency_phone'] }}), support contacts, SEO tags, and SMTP email setup.
         </p>
       </div>
       <div style="border-top:1px solid var(--paces-border); padding-top:1rem; display:flex; justify-content:space-between; align-items:center;">
@@ -46,55 +46,7 @@
       </div>
     </div>
 
-    <!-- 2. Services & Catalog -->
-    <div class="card-paces" style="display:flex; flex-direction:column; justify-content:space-between;">
-      <div>
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
-          <div style="width:44px; height:44px; border-radius:10px; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
-            🛠️
-          </div>
-          <span class="badge-pill-paces bg-primary-subtle">
-            {{ $stats['active_services'] }} Active Services
-          </span>
-        </div>
-        <h3 class="card-title-paces" style="margin-bottom:6px;">Services Portfolio & Pricing</h3>
-        <p style="font-size:0.85rem; color:var(--paces-text-muted); line-height:1.5; margin-bottom:1rem;">
-          Manage the public services directory, service categories, base pricing (৳), SLA hours, scope bullets, and thumbnail imagery.
-        </p>
-      </div>
-      <div style="border-top:1px solid var(--paces-border); padding-top:1rem; display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:0.8rem; color:var(--paces-text-muted);">{{ $stats['categories_count'] }} Categories</span>
-        <a href="{{ route('admin.web.services') }}" class="btn-paces btn-paces-primary" style="padding:0.45rem 1rem; font-size:0.82rem;">
-          Manage Services →
-        </a>
-      </div>
-    </div>
-
-    <!-- 3. AMC Packages -->
-    <div class="card-paces" style="display:flex; flex-direction:column; justify-content:space-between;">
-      <div>
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
-          <div style="width:44px; height:44px; border-radius:10px; background:#fef3c7; color:#d97706; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
-            📋
-          </div>
-          <span class="badge-pill-paces bg-warning-subtle">
-            {{ $stats['amc_plans_count'] }} Plans Configured
-          </span>
-        </div>
-        <h3 class="card-title-paces" style="margin-bottom:6px;">AMC Maintenance Packages</h3>
-        <p style="font-size:0.85rem; color:var(--paces-text-muted); line-height:1.5; margin-bottom:1rem;">
-          Control Annual Maintenance Contract packages (Home, Commercial, Industrial), pricing, emergency response SLAs, and feature perks.
-        </p>
-      </div>
-      <div style="border-top:1px solid var(--paces-border); padding-top:1rem; display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:0.8rem; color:var(--paces-text-muted);">Annual Contracts</span>
-        <a href="{{ route('admin.web.amc-plans') }}" class="btn-paces btn-paces-primary" style="padding:0.45rem 1rem; font-size:0.82rem;">
-          Manage Packages →
-        </a>
-      </div>
-    </div>
-
-    <!-- 4. Section Contents -->
+    <!-- 2. Section Contents & Hero Slider -->
     <div class="card-paces" style="display:flex; flex-direction:column; justify-content:space-between;">
       <div>
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
@@ -102,23 +54,23 @@
             📝
           </div>
           <span class="badge-pill-paces bg-info-subtle">
-            {{ $stats['contents_count'] }} Sections
+            {{ $stats['contents_count'] }} Page Sections
           </span>
         </div>
-        <h3 class="card-title-paces" style="margin-bottom:6px;">Hero Banner & Section Contents</h3>
+        <h3 class="card-title-paces" style="margin-bottom:6px;">Website Content & Hero Slider</h3>
         <p style="font-size:0.85rem; color:var(--paces-text-muted); line-height:1.5; margin-bottom:1rem;">
-          Update homepage hero titles, taglines, YouTube operations video portfolio URL, and "Why Choose FIX" engineering highlights.
+          Hero multi-image animated slider, section titles, copy, video showcase, and operations highlights.
         </p>
       </div>
       <div style="border-top:1px solid var(--paces-border); padding-top:1rem; display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:0.8rem; color:var(--paces-text-muted);">Landing Page Copy</span>
+        <span style="font-size:0.8rem; color:var(--paces-text-muted);">Landing Page Copy & Slides</span>
         <a href="{{ route('admin.web.contents') }}" class="btn-paces btn-paces-primary" style="padding:0.45rem 1rem; font-size:0.82rem;">
           Edit Contents →
         </a>
       </div>
     </div>
 
-    <!-- 5. FAQs Knowledgebase -->
+    <!-- 3. FAQs Knowledgebase -->
     <div class="card-paces" style="display:flex; flex-direction:column; justify-content:space-between;">
       <div>
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
@@ -126,12 +78,12 @@
             ❓
           </div>
           <span class="badge-pill-paces bg-success-subtle">
-            {{ $stats['faqs_count'] }} Questions Published
+            {{ $stats['faqs_count'] }} Questions
           </span>
         </div>
         <h3 class="card-title-paces" style="margin-bottom:6px;">Frequently Asked Questions (FAQ)</h3>
         <p style="font-size:0.85rem; color:var(--paces-text-muted); line-height:1.5; margin-bottom:1rem;">
-          Manage customer inquiries, booking instructions, AMC payment terms, and emergency response knowledge items.
+          Customer inquiries, booking procedures, AMC contract details, and emergency response answers.
         </p>
       </div>
       <div style="border-top:1px solid var(--paces-border); padding-top:1rem; display:flex; justify-content:space-between; align-items:center;">
@@ -142,7 +94,7 @@
       </div>
     </div>
 
-    <!-- 6. Client Testimonials -->
+    <!-- 4. Client Testimonials -->
     <div class="card-paces" style="display:flex; flex-direction:column; justify-content:space-between;">
       <div>
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
@@ -155,7 +107,7 @@
         </div>
         <h3 class="card-title-paces" style="margin-bottom:6px;">Client Testimonials & Trust</h3>
         <p style="font-size:0.85rem; color:var(--paces-text-muted); line-height:1.5; margin-bottom:1rem;">
-          Review and feature customer feedback, company endorsements, and 5-star ratings on the homepage social proof section.
+          Customer feedback, company endorsements, and 5-star ratings displayed on the website.
         </p>
       </div>
       <div style="border-top:1px solid var(--paces-border); padding-top:1rem; display:flex; justify-content:space-between; align-items:center;">

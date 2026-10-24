@@ -7,7 +7,6 @@
         </a>
       </div>
       <h1 class="page-header-title">Support Tickets Command Center</h1>
-      <p class="page-header-subtitle">Manage client inquiries, ongoing facility issues, and dispatch responses with step-by-step audit flows</p>
     </div>
     
     <div style="display:flex; gap:10px;">
@@ -25,73 +24,65 @@
     </div>
   @endif
 
-  <!-- 4 KPI Metrics Cards -->
-  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:16px; margin-bottom:1.5rem;">
+  <!-- Compact KPI Metrics Cards (Title on top, Counter number, Subtext removed, Reduced height) -->
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:1.5rem;">
     <!-- Total Tickets -->
-    <div class="card-paces" style="margin-bottom:0; padding:18px;">
+    <div class="card-paces" style="margin-bottom:0; padding:12px 16px;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <span style="font-size:0.8rem; font-weight:500; color:var(--paces-text-muted); text-transform:uppercase;">Total Inquiries</span>
-        <span style="font-size:1.25rem;">🎫</span>
+        <span style="font-size:1.1rem;">🎫</span>
       </div>
-      <div style="font-size:1.75rem; font-weight:500; color:var(--paces-text-dark); margin:8px 0 4px;">{{ $metrics['total'] }}</div>
-      <div style="font-size:0.75rem; color:var(--paces-text-muted);">All-time support tickets</div>
+      <div style="font-size:1.6rem; font-weight:500; color:var(--paces-text-dark); margin-top:4px; line-height:1.2;">{{ $metrics['total'] }}</div>
     </div>
 
     <!-- Open Tickets -->
-    <div class="card-paces" style="margin-bottom:0; padding:18px; border-left:4px solid #0284c7;">
+    <div class="card-paces" style="margin-bottom:0; padding:12px 16px; border-left:3px solid #0284c7;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <span style="font-size:0.8rem; font-weight:500; color:#0284c7; text-transform:uppercase;">Open Awaiting</span>
-        <span style="font-size:1.25rem;">📬</span>
+        <span style="font-size:1.1rem;">📬</span>
       </div>
-      <div style="font-size:1.75rem; font-weight:500; color:#0284c7; margin:8px 0 4px;">{{ $metrics['open'] }}</div>
-      <div style="font-size:0.75rem; color:var(--paces-text-muted);">Require engineering response</div>
+      <div style="font-size:1.6rem; font-weight:500; color:#0284c7; margin-top:4px; line-height:1.2;">{{ $metrics['open'] }}</div>
     </div>
 
     <!-- In Progress -->
-    <div class="card-paces" style="margin-bottom:0; padding:18px; border-left:4px solid #f59e0b;">
+    <div class="card-paces" style="margin-bottom:0; padding:12px 16px; border-left:3px solid #f59e0b;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <span style="font-size:0.8rem; font-weight:500; color:#b45309; text-transform:uppercase;">In Discussion</span>
-        <span style="font-size:1.25rem;">🔄</span>
+        <span style="font-size:1.1rem;">🔄</span>
       </div>
-      <div style="font-size:1.75rem; font-weight:500; color:#b45309; margin:8px 0 4px;">{{ $metrics['in_progress'] }}</div>
-      <div style="font-size:0.75rem; color:var(--paces-text-muted);">Active troubleshooting thread</div>
+      <div style="font-size:1.6rem; font-weight:500; color:#b45309; margin-top:4px; line-height:1.2;">{{ $metrics['in_progress'] }}</div>
     </div>
 
     <!-- Closed -->
-    <div class="card-paces" style="margin-bottom:0; padding:18px; border-left:4px solid #10b981;">
+    <div class="card-paces" style="margin-bottom:0; padding:12px 16px; border-left:3px solid #10b981;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <span style="font-size:0.8rem; font-weight:500; color:#10b981; text-transform:uppercase;">Resolved / Closed</span>
-        <span style="font-size:1.25rem;">✅</span>
+        <span style="font-size:1.1rem;">✅</span>
       </div>
-      <div style="font-size:1.75rem; font-weight:500; color:#10b981; margin:8px 0 4px;">{{ $metrics['closed'] }}</div>
-      <div style="font-size:0.75rem; color:var(--paces-text-muted);">Completed resolution sign-offs</div>
+      <div style="font-size:1.6rem; font-weight:500; color:#10b981; margin-top:4px; line-height:1.2;">{{ $metrics['closed'] }}</div>
     </div>
   </div>
 
   <!-- Filter Toolbar Card -->
-  <div class="card-paces" style="padding:16px 20px; margin-bottom:1.5rem;">
+  <div class="card-paces" style="padding:14px 18px; margin-bottom:1.5rem;">
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
       
       <!-- Status Tabs -->
       <div style="display:flex; gap:6px; flex-wrap:wrap;">
         <a href="{{ route('admin.tickets.index', ['status' => 'all', 'priority' => $priority, 'search' => $search]) }}"
-           style="padding:6px 14px; font-size:0.82rem; font-weight:500; border-radius:6px; text-decoration:none; transition:all 0.2s;
-           {{ $status === 'all' ? 'background:var(--paces-primary); color:#fff;' : 'background:#f1f5f9; color:#475569;' }}">
+           class="btn-paces {{ $status === 'all' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500;">
           All Tickets ({{ $metrics['total'] }})
         </a>
         <a href="{{ route('admin.tickets.index', ['status' => 'open', 'priority' => $priority, 'search' => $search]) }}"
-           style="padding:6px 14px; font-size:0.82rem; font-weight:500; border-radius:6px; text-decoration:none; transition:all 0.2s;
-           {{ $status === 'open' ? 'background:#0284c7; color:#fff;' : 'background:#f1f5f9; color:#475569;' }}">
+           class="btn-paces {{ $status === 'open' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500;">
           Open ({{ $metrics['open'] }})
         </a>
         <a href="{{ route('admin.tickets.index', ['status' => 'in_progress', 'priority' => $priority, 'search' => $search]) }}"
-           style="padding:6px 14px; font-size:0.82rem; font-weight:500; border-radius:6px; text-decoration:none; transition:all 0.2s;
-           {{ $status === 'in_progress' ? 'background:#f59e0b; color:#fff;' : 'background:#f1f5f9; color:#475569;' }}">
+           class="btn-paces {{ $status === 'in_progress' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500;">
           In Progress ({{ $metrics['in_progress'] }})
         </a>
         <a href="{{ route('admin.tickets.index', ['status' => 'closed', 'priority' => $priority, 'search' => $search]) }}"
-           style="padding:6px 14px; font-size:0.82rem; font-weight:500; border-radius:6px; text-decoration:none; transition:all 0.2s;
-           {{ $status === 'closed' ? 'background:#10b981; color:#fff;' : 'background:#f1f5f9; color:#475569;' }}">
+           class="btn-paces {{ $status === 'closed' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500;">
           Closed ({{ $metrics['closed'] }})
         </a>
       </div>
@@ -100,7 +91,7 @@
       <form action="{{ route('admin.tickets.index') }}" method="GET" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0;">
         <input type="hidden" name="status" value="{{ $status }}">
 
-        <select name="priority" onchange="this.form.submit()" style="padding:6px 12px; font-size:0.82rem; border:1px solid #cbd5e1; border-radius:6px; background:#fff; outline:none;">
+        <select name="priority" onchange="this.form.submit()" style="padding:6px 12px; font-size:0.82rem; border:1px solid #cbd5e1; border-radius:6px; background:#fff; outline:none; font-weight:500;">
           <option value="all" {{ $priority === 'all' ? 'selected' : '' }}>All Priorities</option>
           <option value="urgent" {{ $priority === 'urgent' ? 'selected' : '' }}>Urgent</option>
           <option value="high" {{ $priority === 'high' ? 'selected' : '' }}>High</option>
@@ -144,7 +135,6 @@
               <th style="padding:12px 16px;">Subject</th>
               <th style="padding:12px 16px;">Priority</th>
               <th style="padding:12px 16px;">Status</th>
-              <th style="padding:12px 16px;">Exchanges</th>
               <th style="padding:12px 16px;">Created / Active</th>
               <th style="padding:12px 18px; text-align:right;">Actions</th>
             </tr>
@@ -203,45 +193,17 @@
                   </span>
                 </td>
 
-                <!-- Exchanges -->
-                <td style="padding:14px 16px; color:#475569; font-weight:500;">
-                  <span style="background:#f1f5f9; padding:2px 8px; border-radius:10px; font-size:0.75rem;">
-                    {{ $ticket->messages->count() }} steps
-                  </span>
-                </td>
-
                 <!-- Created / Active -->
                 <td style="padding:14px 16px; font-size:0.78rem; color:#64748b;">
                   <div>{{ $ticket->created_at->format('M d, Y') }}</div>
                   <div style="color:#94a3b8;">{{ $ticket->updated_at->diffForHumans() }}</div>
                 </td>
 
-                <!-- Actions -->
+                <!-- Actions (Button Flow na View Hobe, fill color) -->
                 <td style="padding:14px 18px; text-align:right;">
-                  <div style="display:inline-flex; align-items:center; gap:6px;">
-                    <a href="{{ route('admin.tickets.show', $ticket) }}" class="btn-paces btn-paces-outline btn-paces-sm" title="View Step-by-Step Flow">
-                      Flow ➔
-                    </a>
-
-                    <!-- Quick Status Toggle -->
-                    @if($ticket->status === 'closed')
-                      <form action="{{ route('admin.tickets.update-status', $ticket) }}" method="POST" style="margin:0;">
-                        @csrf
-                        <input type="hidden" name="status" value="open">
-                        <button type="submit" class="btn-paces btn-paces-sm" style="background:#fef3c7; color:#92400e; border:none; cursor:pointer;" title="Re-open Ticket">
-                          Re-open
-                        </button>
-                      </form>
-                    @else
-                      <form action="{{ route('admin.tickets.update-status', $ticket) }}" method="POST" style="margin:0;">
-                        @csrf
-                        <input type="hidden" name="status" value="closed">
-                        <button type="submit" class="btn-paces btn-paces-sm" style="background:#f1f5f9; color:#64748b; border:none; cursor:pointer;" title="Close Ticket">
-                          Close
-                        </button>
-                      </form>
-                    @endif
-                  </div>
+                  <a href="{{ route('admin.tickets.show', $ticket) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:500; padding:6px 14px; text-decoration:none;">
+                    View →
+                  </a>
                 </td>
               </tr>
             @endforeach

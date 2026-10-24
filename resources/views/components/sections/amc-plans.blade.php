@@ -1,4 +1,5 @@
 @props([
+  'content' => null,
   'plans' => [],
 ])
 
@@ -6,7 +7,10 @@
 <section id="amc" class="amc-highlighted-section">
   <div class="container">
     <div class="section-header">
-      <h2 class="amc-section-title">Annual Maintenance Contracts <span>(AMC)</span></h2>
+      <h2 class="amc-section-title">{!! $content->title ?? 'Annual Maintenance Contracts <span>(AMC)</span>' !!}</h2>
+      @if(!empty($content?->subtitle))
+        <p class="section-subtitle" style="text-align:center; margin-bottom:2rem; color:var(--text-muted);">{{ $content->subtitle }}</p>
+      @endif
     </div>
 
     <!-- Interactive AMC Value Highlights Banner -->

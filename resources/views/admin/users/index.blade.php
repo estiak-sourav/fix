@@ -1,8 +1,7 @@
-<x-layouts.admin title="Client Users Directory & Access Controls | FIX Admin">
+<x-layouts.admin title="Client Users | FIX Admin">
   <div class="page-header-box">
     <div>
-      <h1 class="page-header-title">Client Users Directory & Controls</h1>
-      <p class="page-header-subtitle">Manage registered customers, corporate clients, facility booking history, and account statuses</p>
+      <h1 class="page-header-title">Client Users</h1>
     </div>
   </div>
 
@@ -23,9 +22,6 @@
         </div>
       </div>
       <div class="metric-value">{{ $stats['total_clients'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-text-muted);">
-        Total registered facility users
-      </div>
     </div>
 
     <div class="metric-card-paces">
@@ -36,9 +32,6 @@
         </div>
       </div>
       <div class="metric-value" style="color:var(--paces-success);">{{ $stats['active_clients'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-success); font-weight:500;">
-        Authorized to place work orders
-      </div>
     </div>
 
     <div class="metric-card-paces">
@@ -49,9 +42,6 @@
         </div>
       </div>
       <div class="metric-value" style="color:var(--paces-info);">{{ $stats['corporate_clients'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-text-muted);">
-        Companies & enterprise accounts
-      </div>
     </div>
 
     <div class="metric-card-paces">
@@ -62,9 +52,6 @@
         </div>
       </div>
       <div class="metric-value" style="color:var(--paces-warning);">{{ $stats['total_bookings'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-text-muted);">
-        Orders placed via user profiles
-      </div>
     </div>
   </div>
 
@@ -82,12 +69,6 @@
         <a href="{{ route('admin.users.index', ['status' => '0']) }}" class="btn-paces {{ request('status') === '0' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm">
           Deactivated ({{ $stats['deactivated_clients'] }})
         </a>
-        <a href="{{ route('admin.users.index', ['property_type' => 'commercial']) }}" class="btn-paces {{ request('property_type') === 'commercial' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm">
-          Commercial
-        </a>
-        <a href="{{ route('admin.users.index', ['property_type' => 'residential']) }}" class="btn-paces {{ request('property_type') === 'residential' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm">
-          Residential
-        </a>
       </div>
 
       <!-- Search Input Form -->
@@ -98,7 +79,7 @@
         @if(request('property_type'))
           <input type="hidden" name="property_type" value="{{ request('property_type') }}">
         @endif
-        <input type="text" name="search" value="{{ request('search') }}" class="topbar-search-input" placeholder="Search client name, email, phone, company..." style="width:280px;">
+        <input type="text" name="search" value="{{ request('search') }}" class="topbar-search-input" placeholder="Search client name, email, phone..." style="width:260px;">
         <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm">Search</button>
       </form>
     </div>
@@ -114,14 +95,12 @@
         <table class="table-paces">
           <thead>
             <tr>
-              <th>Client Information</th>
-              <th>Contact Details</th>
-              <th>Company & Type</th>
-              <th>Location</th>
+              <th>Client</th>
+              <th>Contact</th>
+              <th>Property / Area</th>
               <th>Orders</th>
-              <th>Account Status</th>
-              <th>Registered</th>
-              <th style="text-align:right;">Controls</th>
+              <th>Status</th>
+              <th style="text-align:right;">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -129,42 +108,36 @@
               <tr>
                 <td>
                   <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="width:36px; height:36px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:500; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0;">
+                    <div style="width:34px; height:34px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:500; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0;">
                       {{ strtoupper(substr($u->name, 0, 1)) }}
                     </div>
                     <div>
                       <div style="font-weight:500; color:var(--paces-text-dark);">{{ $u->name }}</div>
-                      <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:capitalize;">Role: {{ $u->role }}</div>
+                      <div style="font-size:0.75rem; color:var(--paces-text-muted);">Joined {{ $u->created_at->format('M d, Y') }}</div>
                     </div>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <a href="mailto:{{ $u->email }}" style="color:var(--paces-primary); text-decoration:none; font-weight:500;">{{ $u->email }}</a>
+                    <a href="mailto:{{ $u->email }}" style="color:var(--paces-primary); text-decoration:none; font-weight:500; font-size:0.88rem;">{{ $u->email }}</a>
                   </div>
                   @if($u->phone)
                     <div style="font-size:0.78rem; color:var(--paces-text-muted); margin-top:2px;">
-                      📞 <a href="tel:{{ $u->phone }}" style="color:inherit; text-decoration:none;">{{ $u->phone }}</a>
+                      {{ $u->phone }}
                     </div>
-                  @else
-                    <span style="font-size:0.75rem; color:#94a3b8;">No phone</span>
                   @endif
                 </td>
                 <td>
-                  @if($u->company_name)
-                    <div style="font-weight:500; color:var(--paces-text-dark);">{{ $u->company_name }}</div>
-                  @endif
-                  <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:capitalize;">
-                    {{ $u->property_type ?? 'Standard Client' }}
+                  <div style="font-weight:500; font-size:0.88rem; color:var(--paces-text-dark);">
+                    {{ $u->company_name ?? ($u->property_type ?? 'Individual Property') }}
+                  </div>
+                  <div style="font-size:0.75rem; color:var(--paces-text-muted);">
+                    {{ $u->area ?? 'Dhaka' }}{{ $u->district ? ', '.$u->district : '' }}
                   </div>
                 </td>
                 <td>
-                  <div style="font-weight:500;">{{ $u->area ?? 'Dhaka Area' }}</div>
-                  <div style="font-size:0.75rem; color:var(--paces-text-muted);">{{ $u->district ?? 'Dhaka' }}</div>
-                </td>
-                <td>
                   <a href="{{ route('admin.bookings.index', ['search' => $u->email]) }}" class="badge-pill-paces bg-primary-subtle" title="View bookings by this client" style="text-decoration:none;">
-                    {{ $u->bookings_count }} Bookings
+                    {{ $u->bookings_count }} Orders
                   </a>
                 </td>
                 <td>
@@ -176,28 +149,18 @@
                   @else
                     <span class="badge-pill-paces bg-danger-subtle">
                       <span style="width:6px; height:6px; border-radius:50%; background:#dc2626;"></span>
-                      Deactivated
+                      Disabled
                     </span>
                   @endif
-                </td>
-                <td>
-                  <span style="font-size:0.8rem; color:var(--paces-text-muted);">{{ $u->created_at->format('M d, Y') }}</span>
                 </td>
                 <td style="text-align:right;">
                   <div style="display:inline-flex; gap:6px; align-items:center;">
                     <!-- View Profile -->
-                    <a href="{{ route('admin.users.show', $u) }}" class="btn-paces btn-paces-outline btn-paces-sm" title="View Details & Orders">
+                    <a href="{{ route('admin.users.show', $u) }}" class="btn-paces btn-paces-outline btn-paces-sm">
                       View
                     </a>
 
-                    <!-- Open Support Ticket -->
-                    @if(auth('admin')->user()?->hasPermission('tickets.edit'))
-                      <a href="{{ route('admin.tickets.create', ['user_id' => $u->id]) }}" class="btn-paces btn-paces-outline btn-paces-sm" style="background:#f0fdf4; border-color:#bbf7d0; color:#166534;" title="Open Support Ticket">
-                        + Ticket
-                      </a>
-                    @endif
-
-                    <!-- Toggle Active Status Form -->
+                    <!-- Toggle Status Form -->
                     @if(auth('admin')->user()?->hasPermission('users.edit'))
                       <form action="{{ route('admin.users.toggle-status', $u) }}" method="POST" onsubmit="return confirm('Are you sure you want to {{ $u->is_active ? 'deactivate' : 'activate' }} client {{ $u->name }}?');" style="margin:0;">
                         @csrf

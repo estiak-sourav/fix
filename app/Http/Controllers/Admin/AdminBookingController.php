@@ -6,6 +6,8 @@ use App\Actions\Booking\UpdateBookingStatusAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateBookingStatusRequest;
 use App\Models\Booking;
+use App\Models\Partner;
+use App\Models\User;
 use App\Services\ActivityLogService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -108,56 +110,199 @@ class AdminBookingController extends Controller
     {
         $booking->load(['user', 'service', 'amcPlan', 'statusLogs.changedByUser', 'statusLogs.changedByAdmin']);
 
-        return view('admin.bookings.show', compact('booking'));
+        $fieldCrews = User::whereIn('role', ['technician', 'vendor', 'partner'])
+            ->orWhere('role', 'admin')
+            ->orderBy('name')
+            ->get(['id', 'name', 'phone', 'role', 'company_name']);
+
+        $enlistedPartners = Partner::where('status', 'approved')->orderBy('company_name')->get();
+
+        $crewOptions = collect();
+        foreach ($enlistedPartners as $p) {
+            $crewOptions->push((object) [
+                'name' => "{$p->company_name} — {$p->contact_person}",
+                'phone' => $p->phone,
+                'role' => "Enlisted Partner • {$p->trade_domain}",
+                'company_name' => $p->company_name,
+            ]);
+        }
+        foreach ($fieldCrews as $u) {
+            $crewOptions->push((object) [
+                'name' => $u->name,
+                'phone' => $u->phone,
+                'role' => ucfirst($u->role),
+                'company_name' => $u->company_name,
+            ]);
+        }
+
+        return view('admin.bookings.show', [
+            'booking' => $booking,
+            'fieldCrews' => $crewOptions,
+        ]);
+    }
+
+    /**
+     * Log phone contact status (e.g. unreachable, call back later).
+     */
+    public function logCallStatus(Request $request, Booking $booking): RedirectResponse
+    {
+        $validated = $request->validate([
+            'call_status' => ['required', 'string', 'in:unreachable,call_back_later,connected'],
+            'unreachable_reason' => ['nullable', 'string', 'max:255'],
+            'callback_time' => ['nullable', 'string', 'max:255'],
+            'call_notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+        $notesCombined = $validated['call_notes'] ?? '';
+        if ($validated['call_status'] === 'unreachable' && ! empty($validated['unreachable_reason'])) {
+            $notesCombined = 'Reason: '.$validated['unreachable_reason'].($notesCombined ? ' • Note: '.$notesCombined : '');
+        } elseif ($validated['call_status'] === 'call_back_later' && ! empty($validated['callback_time'])) {
+            $notesCombined = 'Follow-up: '.$validated['callback_time'].($notesCombined ? ' • Note: '.$notesCombined : '');
+        }
+
+        $booking->update([
+            'call_status' => $validated['call_status'],
+            'call_notes' => $notesCombined ?: null,
+        ]);
+
+        $statusText = match ($validated['call_status']) {
+            'unreachable' => 'Client Unreachable / No Answer over phone',
+            'call_back_later' => 'Client requested Callback Later / Follow-up required',
+            'connected' => 'Phone discussion connected with client',
+            default => 'Phone call status updated'
+        };
+        $logComment = $statusText.($notesCombined ? ' ('.$notesCombined.')' : '');
+
+        $booking->statusLogs()->create([
+            'from_status' => $booking->status,
+            'to_status' => $booking->status,
+            'comment' => $logComment,
+            'is_customer_visible' => false,
+            'admin_id' => $admin?->id,
+        ]);
+
+        ActivityLogService::logBooking('booking.call_status', "Phone call log for #{$booking->booking_number}: {$statusText}.", $booking, [
+            'call_status' => $validated['call_status'],
+            'call_notes' => $validated['call_notes'] ?? null,
+        ]);
+
+        return redirect()->back()->with('success', "Call status updated: {$statusText}");
     }
 
     /**
      * Accept a pending order after phone discussion with the client.
-     * Price can be set now or left for post-completion billing.
+     * Price can be set now (Estimated or Final) or left for post-completion billing.
      */
     public function accept(Request $request, Booking $booking, UpdateBookingStatusAction $action): RedirectResponse
     {
         $validated = $request->validate([
-            'pricing_type' => ['required', 'string', 'in:agreed,bill_later'],
-            'agreed_price' => ['nullable', 'numeric', 'min:0', 'required_if:pricing_type,agreed'],
+            'set_price' => ['nullable', 'boolean'],
+            'cost_type' => ['nullable', 'string', 'in:estimated,final'],
+            'cost_amount' => ['nullable', 'numeric', 'min:0'],
+            'preferred_date' => ['nullable', 'date'],
+            'preferred_time_slot' => ['nullable', 'string', 'max:100'],
             'assigned_team' => ['nullable', 'string', 'max:255'],
             'comment' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $admin = Auth::guard('admin')->user();
-        $pricingType = $validated['pricing_type'];
-        $agreedPrice = isset($validated['agreed_price']) ? (float) $validated['agreed_price'] : null;
+
+        // Update schedule if provided
+        $directUpdates = [];
+        if (! empty($validated['preferred_date'])) {
+            $directUpdates['preferred_date'] = $validated['preferred_date'];
+        }
+        if (! empty($validated['preferred_time_slot'])) {
+            $directUpdates['preferred_time_slot'] = $validated['preferred_time_slot'];
+        }
+        if (! empty($directUpdates)) {
+            $booking->update($directUpdates);
+        }
+
+        $pricingMode = $request->input('pricing_mode', 'price'); // 'price' or 'later'
+        $isEstimated = (bool) $request->input('is_estimated', false);
+        $costAmount = isset($validated['cost_amount']) && $validated['cost_amount'] !== '' ? (float) $validated['cost_amount'] : null;
+        $isPriceSet = ($pricingMode === 'price') && $costAmount !== null && $costAmount > 0;
+        $costType = $isEstimated ? 'estimated' : 'final';
 
         $comment = $validated['comment'] ?? null;
         if (! $comment) {
-            if ($pricingType === 'agreed' && $agreedPrice !== null) {
-                $comment = 'Order confirmed with client via phone. Agreed pricing: ৳ '.number_format($agreedPrice, 2);
+            if ($isPriceSet) {
+                $typeLabel = $isEstimated ? 'Agreed Estimated Price' : 'Final Invoiced Price';
+                $comment = "Order confirmed with client via phone. {$typeLabel}: ৳ ".number_format($costAmount, 2);
             } else {
                 $comment = 'Order confirmed with client via phone. Pricing to be finalized upon job completion / inspection.';
             }
         }
 
+        // Also mark call as connected since phone discussion took place
+        $booking->update(['call_status' => 'connected']);
+
         $payload = [
             'status' => 'accepted',
             'assigned_team' => $validated['assigned_team'] ?? $booking->assigned_team,
             'comment' => $comment,
-            'admin_notes' => "Order accepted by {$admin->name}. Pricing mode: {$pricingType}.",
+            'admin_notes' => "Order accepted by {$admin->name}. Pricing: ".($isPriceSet ? "৳ {$costAmount} ({$costType})" : 'Billed upon completion').'.',
         ];
 
-        if ($pricingType === 'agreed' && $agreedPrice !== null) {
-            $payload['estimated_cost'] = $agreedPrice;
+        if ($isPriceSet) {
+            if ($costType === 'final') {
+                $payload['final_cost'] = $costAmount;
+            } else {
+                $payload['estimated_cost'] = $costAmount;
+            }
         }
 
         $action->execute($booking, $payload, $admin);
 
         ActivityLogService::logBooking('booking.accept', "Accepted Work Order #{$booking->booking_number} after phone discussion with {$booking->customer_name}.", $booking, [
             'booking_number' => $booking->booking_number,
-            'pricing_type' => $pricingType,
-            'agreed_price' => $agreedPrice,
-            'assigned_team' => $booking->assigned_team,
+            'is_price_set' => $isPriceSet,
+            'cost_type' => $costType,
+            'cost_amount' => $costAmount,
+            'assigned_team' => $payload['assigned_team'],
         ]);
 
         return redirect()->back()->with('success', "Work Order #{$booking->booking_number} has been ACCEPTED successfully.");
+    }
+
+    /**
+     * Mark a work order as completed with admin remarks/feedback for the client.
+     */
+    public function complete(Request $request, Booking $booking, UpdateBookingStatusAction $action): RedirectResponse
+    {
+        $validated = $request->validate([
+            'completion_feedback' => ['required', 'string', 'max:2000'],
+            'final_cost' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+
+        $booking->completion_feedback = $validated['completion_feedback'];
+        if (! empty($validated['final_cost'])) {
+            $booking->final_cost = (float) $validated['final_cost'];
+        }
+        $booking->save();
+
+        $payload = [
+            'status' => 'completed',
+            'comment' => 'Work completed: '.$validated['completion_feedback'],
+            'admin_notes' => 'Completed by '.$admin->name.'. Feedback for client: '.$validated['completion_feedback'],
+        ];
+        if (! empty($validated['final_cost'])) {
+            $payload['final_cost'] = (float) $validated['final_cost'];
+        }
+
+        $action->execute($booking, $payload, $admin);
+
+        ActivityLogService::logBooking('booking.complete', "Marked Work Order #{$booking->booking_number} as COMPLETED with feedback for client.", $booking, [
+            'booking_number' => $booking->booking_number,
+            'feedback' => $validated['completion_feedback'],
+            'final_cost' => $booking->final_cost,
+        ]);
+
+        return redirect()->back()->with('success', "Work Order #{$booking->booking_number} marked as COMPLETED. Client can now submit feedback & rating.");
     }
 
     /**

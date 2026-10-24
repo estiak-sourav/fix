@@ -1,9 +1,13 @@
+@props([
+  'content' => null,
+])
+
 <!-- Reputed Clients & Corporate Partners Section -->
 <section id="clients" class="clients-section">
   <div class="container">
     <div class="clients-header">
       <div class="clients-header-text">
-        <h2 class="clients-title">Trusted by Leading Enterprises & Facilities</h2>
+        <h2 class="clients-title">{!! $content->title ?? 'Trusted by Leading Enterprises & Facilities' !!}</h2>
       </div>
       <div class="clients-nav-controls">
         <button type="button" class="clients-nav-arrow" id="clientsPrevBtn" aria-label="Previous Clients">

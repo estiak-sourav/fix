@@ -23,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class AdminCmsController extends Controller
 {
@@ -123,14 +124,41 @@ class AdminCmsController extends Controller
 
     /**
      * Update service details via UpdateServiceAction.
+    /**
+     * Update service details via UpdateServiceAction.
      */
     public function updateService(Service $service, UpdateServiceRequest $request, UpdateServiceAction $action): RedirectResponse
     {
-        $action->execute($service, $request->validated(), $request->file('thumbnail_file'));
+        $galleryFiles = $request->file('service_photos', []);
+        $action->execute($service, $request->validated(), $request->file('thumbnail_file'), is_array($galleryFiles) ? $galleryFiles : []);
 
         ActivityLogService::logService('service.update', "Updated service '{$service->title}'.", $service);
 
         return redirect()->route('admin.web.services')->with('success', "Service '{$service->title}' updated successfully.");
+    }
+
+    /**
+     * Toggle service active status (Publish / Unpublish).
+     */
+    public function toggleServiceStatus(Service $service): RedirectResponse
+    {
+        $service->update(['is_active' => ! $service->is_active]);
+        $statusStr = $service->is_active ? 'published' : 'unpublished';
+        ActivityLogService::logService('service.status', "Service '{$service->title}' was {$statusStr}.", $service);
+
+        return redirect()->back()->with('success', "Service '{$service->title}' {$statusStr} successfully.");
+    }
+
+    /**
+     * Delete service.
+     */
+    public function destroyService(Service $service): RedirectResponse
+    {
+        $title = $service->title;
+        $service->delete();
+        ActivityLogService::logService('service.delete', "Deleted service '{$title}'.");
+
+        return redirect()->route('admin.web.services')->with('success', "Service '{$title}' deleted successfully.");
     }
 
     /**
@@ -144,16 +172,53 @@ class AdminCmsController extends Controller
     }
 
     /**
+     * Store new AMC Plan.
+     */
+    public function storeAmcPlan(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'price_period' => ['nullable', 'string', 'max:50'],
+            'target_audience' => ['nullable', 'string', 'max:255'],
+            'tier' => ['nullable', 'string', 'max:50'],
+            'button_text' => ['nullable', 'string', 'max:50'],
+            'features' => ['nullable', 'string'],
+            'is_popular' => ['nullable', 'boolean'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $validated['price'] = 0;
+        $validated['sla_response_time'] = 'Standard SLA';
+        $validated['price_period'] = $validated['price_period'] ?? 'Negotiable';
+        $validated['tier'] = $validated['tier'] ?? 'standard';
+        $validated['button_text'] = $validated['button_text'] ?? 'Choose Plan';
+        $validated['slug'] = Str::slug($validated['name']);
+        $validated['is_popular'] = $request->boolean('is_popular');
+        $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['order'] = AmcPlan::max('order') + 1;
+
+        if (! empty($validated['features'])) {
+            $validated['features'] = array_values(array_filter(array_map('trim', explode("\n", (string) $validated['features']))));
+        }
+
+        $plan = AmcPlan::create($validated);
+        ActivityLogService::logService('amc.create', "Created AMC Plan '{$plan->name}'.", $plan);
+
+        return redirect()->back()->with('success', "AMC Plan '{$plan->name}' created successfully.");
+    }
+
+    /**
      * Update AMC Plan.
      */
     public function updateAmcPlan(AmcPlan $plan, Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'price_period' => ['required', 'string', 'max:50'],
-            'sla_response_time' => ['required', 'string', 'max:100'],
+            'price_period' => ['nullable', 'string', 'max:50'],
             'target_audience' => ['nullable', 'string', 'max:255'],
+            'tier' => ['nullable', 'string', 'max:50'],
+            'button_text' => ['nullable', 'string', 'max:50'],
+            'features' => ['nullable', 'string'],
             'is_popular' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -161,11 +226,38 @@ class AdminCmsController extends Controller
         $validated['is_popular'] = $request->boolean('is_popular');
         $validated['is_active'] = $request->boolean('is_active');
 
-        $plan->update($validated);
+        if (! empty($validated['features'])) {
+            $validated['features'] = array_values(array_filter(array_map('trim', explode("\n", (string) $validated['features']))));
+        }
 
+        $plan->update($validated);
         ActivityLogService::logService('amc.update', "Updated AMC Plan '{$plan->name}'.", $plan);
 
         return redirect()->back()->with('success', "AMC Plan '{$plan->name}' updated successfully.");
+    }
+
+    /**
+     * Toggle AMC Plan active status.
+     */
+    public function toggleAmcPlanStatus(AmcPlan $plan): RedirectResponse
+    {
+        $plan->update(['is_active' => ! $plan->is_active]);
+        $statusStr = $plan->is_active ? 'activated' : 'deactivated';
+        ActivityLogService::logService('amc.status', "AMC Plan '{$plan->name}' was {$statusStr}.", $plan);
+
+        return redirect()->back()->with('success', "AMC Plan '{$plan->name}' {$statusStr} successfully.");
+    }
+
+    /**
+     * Delete AMC Plan.
+     */
+    public function destroyAmcPlan(AmcPlan $plan): RedirectResponse
+    {
+        $name = $plan->name;
+        $plan->delete();
+        ActivityLogService::logService('amc.delete', "Deleted AMC Plan '{$name}'.");
+
+        return redirect()->back()->with('success', "AMC Plan '{$name}' deleted successfully.");
     }
 
     /**
@@ -179,25 +271,89 @@ class AdminCmsController extends Controller
     }
 
     /**
-     * Update Section Content.
+     * Update Section Content & Upload Images (Zero external URLs).
      */
     public function updateContent(SiteContent $content, Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
+            'title' => ['required', 'string', 'max:500'],
             'subtitle' => ['nullable', 'string'],
-            'badge' => ['nullable', 'string', 'max:100'],
+            'badge' => ['nullable', 'string', 'max:150'],
             'button_text' => ['nullable', 'string', 'max:100'],
             'button_url' => ['nullable', 'string', 'max:255'],
             'secondary_button_text' => ['nullable', 'string', 'max:100'],
             'secondary_button_url' => ['nullable', 'string', 'max:255'],
-            'media_path' => ['nullable', 'string', 'max:255'],
+            'media_path' => ['nullable', 'string', 'max:500'],
+            'hero_images.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
+            'remove_slides' => ['nullable', 'array'],
+            'section_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
+            'floating_badge_title' => ['nullable', 'string', 'max:150'],
+            'floating_badge_text' => ['nullable', 'string', 'max:255'],
+            'trust_badges' => ['nullable', 'array'],
         ]);
 
-        $content->update($validated);
+        $meta = $content->meta_data ?? [];
+
+        // 1. Multiple Hero Slides Upload & Remove
+        if ($content->section_key === 'hero') {
+            $slides = $meta['slides'] ?? [];
+
+            // Remove selected slides
+            if ($request->has('remove_slides')) {
+                $toRemove = (array) $request->input('remove_slides', []);
+                $slides = array_values(array_filter($slides, fn ($s) => ! in_array($s, $toRemove)));
+            }
+
+            // Upload new slide images
+            if ($request->hasFile('hero_images')) {
+                foreach ($request->file('hero_images') as $file) {
+                    $filename = 'hero_'.time().'_'.Str::random(6).'.'.$file->getClientOriginalExtension();
+                    $file->move(public_path('uploads/hero'), $filename);
+                    $slides[] = 'uploads/hero/'.$filename;
+                }
+            }
+
+            $meta['slides'] = $slides;
+            if (! empty($slides)) {
+                $validated['media_path'] = $slides[0];
+            }
+
+            if ($request->has('floating_badge_title')) {
+                $meta['floating_badge_title'] = $request->input('floating_badge_title');
+            }
+            if ($request->has('floating_badge_text')) {
+                $meta['floating_badge_text'] = $request->input('floating_badge_text');
+            }
+            if ($request->has('trust_badges')) {
+                $meta['trust_badges'] = array_values(array_filter($request->input('trust_badges', [])));
+            }
+        }
+
+        // 2. Single Section Image File Upload
+        if ($request->hasFile('section_image')) {
+            $file = $request->file('section_image');
+            $filename = $content->section_key.'_'.time().'_'.Str::random(6).'.'.$file->getClientOriginalExtension();
+            $file->move(public_path('uploads/web-content'), $filename);
+            $validated['media_path'] = 'uploads/web-content/'.$filename;
+        }
+
+        $content->update([
+            'title' => $validated['title'],
+            'subtitle' => $validated['subtitle'] ?? null,
+            'badge' => $validated['badge'] ?? null,
+            'button_text' => $validated['button_text'] ?? null,
+            'button_url' => $validated['button_url'] ?? null,
+            'secondary_button_text' => $validated['secondary_button_text'] ?? null,
+            'secondary_button_url' => $validated['secondary_button_url'] ?? null,
+            'media_path' => $validated['media_path'] ?? $content->media_path,
+            'meta_data' => $meta,
+        ]);
         Cache::forget("site_content:{$content->section_key}");
 
-        return redirect()->back()->with('success', "Section '{$content->section_key}' updated successfully.");
+        // Record Activity Log
+        ActivityLogService::logContent('web_content.update', "Updated website section '{$content->section_key}' ('{$content->title}').", $content);
+
+        return redirect()->back()->with('success', "Section '{$content->section_key}' updated and activity logged successfully.");
     }
 
     /**

@@ -1,10 +1,14 @@
+@props([
+  'content' => null,
+])
+
 <!-- Contact Section -->
 <section id="contact" class="section">
   <div class="container">
     <div class="section-header" style="text-align:center; margin-bottom: 3rem;">
-      <h2 class="section-title">Get in Touch with Our Operations Command</h2>
+      <h2 class="section-title">{!! $content->title ?? 'Get in Touch with Our Operations Command' !!}</h2>
       <p class="section-subtitle">
-        Have an urgent facility breakdown or need an on-site engineering audit for your commercial property?
+        {{ $content->subtitle ?? 'Have an urgent facility breakdown or need an on-site engineering audit for your commercial property?' }}
       </p>
     </div>
 

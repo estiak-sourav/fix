@@ -1,4 +1,5 @@
 @props([
+  'content' => null,
   'categories' => [],
   'services' => [],
 ])
@@ -7,7 +8,10 @@
 <section id="services" class="section section-alt">
   <div class="container">
     <div class="section-header">
-      <h2 class="section-title">Comprehensive Building & Facility Services</h2>
+      <h2 class="section-title">{!! $content->title ?? 'Comprehensive Building & Facility Services' !!}</h2>
+      @if(!empty($content?->subtitle))
+        <p class="section-subtitle">{{ $content->subtitle }}</p>
+      @endif
     </div>
 
     <!-- Filter Tabs -->

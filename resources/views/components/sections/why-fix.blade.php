@@ -1,10 +1,14 @@
+@props([
+  'content' => null,
+])
+
 <!-- Why Choose FIX Section -->
 <section id="whyFix" class="section section-alt">
   <div class="container">
     <div class="section-header">
-      <h2 class="section-title">Why Choose FIX?</h2>
+      <h2 class="section-title">{!! $content->title ?? 'Why Choose FIX?' !!}</h2>
       <p class="section-subtitle">
-        We combine skilled engineering, vetted vendor networks, and institutional-grade accountability to protect property value and enhance liveability.
+        {{ $content->subtitle ?? 'We combine skilled engineering, vetted vendor networks, and institutional-grade accountability to protect property value and enhance liveability.' }}
       </p>
     </div>
 

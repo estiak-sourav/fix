@@ -6,8 +6,11 @@ use App\Actions\Booking\UpdateBookingStatusAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateBookingStatusRequest;
 use App\Models\AdminNotification;
+use App\Models\AmcPlan;
 use App\Models\Booking;
 use App\Models\DailyAnalytics;
+use App\Models\Service;
+use App\Models\SupportTicket;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
@@ -426,6 +429,58 @@ class AdminDashboardController extends Controller
             'colors' => array_column($salesCategories, 'color'),
         ];
 
+        // 4. Pending Call Outreach Tasks (Item 7: Unreachable or Call Back Later)
+        $outreachTasks = Booking::whereIn('call_status', ['unreachable', 'call_back_later'])
+            ->where('status', 'pending_review')
+            ->latest('updated_at')
+            ->take(6)
+            ->get();
+
+        // 5. Dynamic Top Selling Services & AMC Packages (Item 8)
+        $popularServices = Service::withCount('bookings')
+            ->orderByDesc('bookings_count')
+            ->take(3)
+            ->get();
+        $popularAmc = AmcPlan::withCount('bookings')
+            ->orderByDesc('bookings_count')
+            ->take(2)
+            ->get();
+
+        $topItems = collect();
+        foreach ($popularServices as $srv) {
+            $topItems->push((object) [
+                'name' => $srv->title,
+                'subtitle' => 'On-Demand Service',
+                'orders_count' => $srv->bookings_count,
+                'type' => 'Service',
+            ]);
+        }
+        foreach ($popularAmc as $plan) {
+            $topItems->push((object) [
+                'name' => $plan->name,
+                'subtitle' => 'AMC Contract Plan',
+                'orders_count' => $plan->bookings_count,
+                'type' => 'AMC Package',
+            ]);
+        }
+        $totalOrdersCount = max($topItems->sum('orders_count'), 1);
+        $itemPalette = ['#4361ee', '#2ec4b6', '#ff5c5c', '#f59e0b', '#8b5cf6'];
+        $idx = 0;
+        $topSellingDynamic = $topItems->map(function ($it) use ($totalOrdersCount, $itemPalette, &$idx) {
+            $pct = round(($it->orders_count / $totalOrdersCount) * 100);
+            $color = $itemPalette[$idx % count($itemPalette)];
+            $idx++;
+            $it->pct = $pct;
+            $it->color = $color;
+
+            return $it;
+        });
+
+        // 6. Latest Support Ticket for Dashboard Chat Widget (Item 9)
+        $latestSupportTicket = SupportTicket::with(['messages', 'user'])
+            ->latest('updated_at')
+            ->first();
+
         return view('admin.dashboard', compact(
             'stats',
             'metricChart',
@@ -437,7 +492,10 @@ class AdminDashboardController extends Controller
             'unreadNotifications',
             'earningMonthlyData',
             'salesAnalytics',
-            'currentMonth'
+            'currentMonth',
+            'outreachTasks',
+            'topSellingDynamic',
+            'latestSupportTicket'
         ));
     }
 
@@ -589,6 +647,105 @@ class AdminDashboardController extends Controller
             'selectedDivision',
             'search',
             'range'
+        ));
+    }
+
+    /**
+     * Display dedicated revenue and earnings intelligence details directory.
+     */
+    public function earnings(Request $request): View
+    {
+        $range = $request->query('range', 'all_time');
+        $division = $request->query('division', 'all');
+        $serviceId = $request->query('service_id', 'all');
+        $paymentStatus = $request->query('payment_status', 'all');
+        $search = trim((string) $request->query('search', ''));
+
+        $query = Booking::with(['service.category', 'amcPlan', 'user'])
+            ->where(function ($q) {
+                $q->where('final_cost', '>', 0)
+                    ->orWhere('estimated_cost', '>', 0);
+            });
+
+        // Time filter
+        if ($range === 'today') {
+            $query->whereDate('created_at', Carbon::today());
+        } elseif ($range === 'week') {
+            $query->where('created_at', '>=', Carbon::today()->subDays(6));
+        } elseif ($range === 'month') {
+            $query->where('created_at', '>=', Carbon::today()->subDays(29));
+        } elseif ($range === 'year') {
+            $query->where('created_at', '>=', Carbon::today()->startOfYear());
+        }
+
+        // Division filter
+        if ($division !== 'all') {
+            $query->where('division', $division);
+        }
+
+        // Service filter
+        if ($serviceId !== 'all') {
+            $query->where('service_id', $serviceId);
+        }
+
+        // Search filter
+        if (! empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('booking_number', 'like', "%{$search}%")
+                    ->orWhere('customer_name', 'like', "%{$search}%")
+                    ->orWhere('company_name', 'like', "%{$search}%")
+                    ->orWhere('area', 'like', "%{$search}%");
+            });
+        }
+
+        // Cloned query for overall KPIs & aggregates
+        $allOrders = (clone $query)->get();
+
+        $totalRevenue = (float) $allOrders->sum(fn ($b) => $b->final_cost > 0 ? $b->final_cost : ($b->estimated_cost ?: 0));
+        $invoicedRevenue = (float) $allOrders->where('status', 'completed')->sum(fn ($b) => $b->final_cost ?: ($b->estimated_cost ?: 0));
+        $pendingPipeline = (float) $allOrders->whereIn('status', ['pending_review', 'accepted', 'assigned', 'in_progress'])->sum(fn ($b) => $b->estimated_cost ?: ($b->final_cost ?: 0));
+        $avgOrderValue = $allOrders->count() > 0 ? round($totalRevenue / $allOrders->count(), 2) : 0;
+
+        // Breakdown by Service
+        $revenueByService = $allOrders
+            ->groupBy(fn ($b) => $b->service?->title ?? ($b->amcPlan?->name ?? 'Custom Service'))
+            ->map(fn ($group, $title) => [
+                'title' => $title,
+                'count' => $group->count(),
+                'total' => (float) $group->sum(fn ($b) => $b->final_cost > 0 ? $b->final_cost : ($b->estimated_cost ?: 0)),
+            ])
+            ->sortByDesc('total')
+            ->take(5);
+
+        // Breakdown by Division
+        $revenueByDivision = $allOrders
+            ->whereNotNull('division')
+            ->groupBy('division')
+            ->map(fn ($group, $div) => [
+                'division' => $div,
+                'count' => $group->count(),
+                'total' => (float) $group->sum(fn ($b) => $b->final_cost > 0 ? $b->final_cost : ($b->estimated_cost ?: 0)),
+            ])
+            ->sortByDesc('total');
+
+        $bookings = $query->latest()->paginate(15)->withQueryString();
+
+        $servicesList = Service::where('is_active', true)->orderBy('title')->get(['id', 'title']);
+
+        return view('admin.analytics.earnings', compact(
+            'bookings',
+            'totalRevenue',
+            'invoicedRevenue',
+            'pendingPipeline',
+            'avgOrderValue',
+            'revenueByService',
+            'revenueByDivision',
+            'range',
+            'division',
+            'serviceId',
+            'paymentStatus',
+            'search',
+            'servicesList'
         ));
     }
 }

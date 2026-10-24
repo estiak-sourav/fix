@@ -849,6 +849,28 @@
       box-shadow: 0 0 0 3px rgba(62, 96, 213, 0.12);
       background: #ffffff;
     }
+    select, .form-select-paces, select.form-control-paces {
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      background-color: #ffffff;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+      background-position: right 14px center !important;
+      background-repeat: no-repeat !important;
+      background-size: 16px 16px !important;
+      padding-right: 2.85rem !important;
+      border: 1px solid var(--paces-border);
+      border-radius: var(--paces-radius-sm);
+      font-family: inherit;
+      color: var(--paces-text-dark);
+      cursor: pointer;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    select:focus, .form-select-paces:focus, select.form-control-paces:focus {
+      border-color: var(--paces-primary) !important;
+      box-shadow: 0 0 0 3px rgba(62, 96, 213, 0.12) !important;
+      outline: none !important;
+    }
     .form-help-paces {
       font-size: 0.78rem;
       color: var(--paces-text-muted);

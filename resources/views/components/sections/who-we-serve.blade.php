@@ -1,4 +1,5 @@
 @props([
+  'content' => null,
   'sectors' => [],
 ])
 
@@ -6,7 +7,10 @@
 <section id="whoWeServe" class="section">
   <div class="container">
     <div class="section-header">
-      <h2 class="section-title">Who We Serve</h2>
+      <h2 class="section-title">{!! $content->title ?? 'Who We Serve' !!}</h2>
+      @if(!empty($content?->subtitle))
+        <p class="section-subtitle">{{ $content->subtitle }}</p>
+      @endif
     </div>
 
     <div class="sectors-grid">

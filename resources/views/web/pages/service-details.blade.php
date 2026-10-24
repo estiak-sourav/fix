@@ -31,13 +31,59 @@
             @endif
           </ul>
 
-          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:2rem;">
             <a href="{{ route('booking.create', ['service' => $service->title]) }}" class="btn btn-accent btn-lg">
               Book {{ $service->title }} Now →
             </a>
             <a href="{{ route('home') }}#services" class="btn btn-outline btn-lg">
               Explore All Services
             </a>
+          </div>
+
+          <!-- Client Ratings & Verified Reviews -->
+          <div style="margin-top:2.5rem; border-top:1px solid var(--border); padding-top:2rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:10px;">
+              <div>
+                <h3 style="font-size:1.25rem; font-weight:700; color:var(--text-main); margin:0;">
+                  Client Ratings & Reviews ({{ $service->reviewsCount() }})
+                </h3>
+                <div style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+                  ⭐ Average Satisfaction: <strong>{{ $service->averageRating() }} / 5.0</strong>
+                </div>
+              </div>
+            </div>
+
+            @if($service->reviews->isEmpty())
+              <div style="background:var(--bg-page); border:1px dashed var(--border); border-radius:10px; padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.875rem;">
+                Verified customer reviews for this service will appear here after work orders are completed.
+              </div>
+            @else
+              <div style="display:flex; flex-direction:column; gap:1rem;">
+                @foreach($service->reviews as $rev)
+                  <div style="background:#ffffff; border:1px solid var(--border); border-radius:10px; padding:1.25rem; box-shadow:0 1px 4px rgba(0,0,0,0.02);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                      <div style="font-weight:700; color:var(--text-main); font-size:0.95rem;">
+                        {{ $rev->customer_name }}
+                        @if($rev->company_name)
+                          <span style="font-weight:400; font-size:0.8rem; color:var(--text-muted);">({{ $rev->company_name }})</span>
+                        @endif
+                      </div>
+                      <div style="color:#f59e0b; font-size:0.95rem;">
+                        @for($i = 1; $i <= 5; $i++)
+                          {{ $i <= $rev->review_rating ? '★' : '☆' }}
+                        @endfor
+                      </div>
+                    </div>
+                    <div style="font-size:0.88rem; color:var(--text-muted); line-height:1.5;">
+                      "{{ $rev->review_comment }}"
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">
+                      Work Order #{{ $rev->booking_number }} • {{ $rev->reviewed_at?->format('M d, Y') }}
+                    </div>
+                  </div>
+                @endforeach
+              </div>
+            @endif
           </div>
         </div>
 

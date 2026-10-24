@@ -4,6 +4,7 @@ use App\Http\Controllers\Web\Auth\OtpAuthController;
 use App\Http\Controllers\Web\BookingController;
 use App\Http\Controllers\Web\CustomerPortalController;
 use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\PartnerApplicationController;
 use App\Http\Controllers\Web\SupportTicketController;
 use App\Models\Service;
 use Illuminate\Support\Facades\Route;
@@ -70,6 +71,8 @@ Route::post('/book', [BookingController::class, 'store']);
 Route::get('/vendor', function () {
     return view('web.pages.vendor');
 })->name('vendor');
+Route::post('/vendor/apply', [PartnerApplicationController::class, 'store'])->name('vendor.apply');
+Route::post('/partner/register', [PartnerApplicationController::class, 'store'])->name('partner.register');
 
 // Web Login Redirect (triggers modal on booking page)
 Route::get('/login', function () {
@@ -95,6 +98,7 @@ Route::prefix('auth')->name('auth.')->group(function () {
 Route::middleware('auth:web')->prefix('my-bookings')->name('customer.')->group(function () {
     Route::get('/', [CustomerPortalController::class, 'myBookings'])->name('bookings');
     Route::get('/{bookingNumber}', [CustomerPortalController::class, 'showBooking'])->name('bookings.show');
+    Route::post('/{bookingNumber}/review', [CustomerPortalController::class, 'submitReview'])->name('bookings.review');
 });
 
 Route::middleware('auth:web')->prefix('profile')->name('customer.')->group(function () {

@@ -8,6 +8,7 @@ use App\Http\Requests\Web\UpdateProfileRequest;
 use App\Models\Booking;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CustomerPortalController extends Controller
@@ -38,6 +39,31 @@ class CustomerPortalController extends Controller
             ->firstOrFail();
 
         return view('web.pages.customer.booking-details', compact('booking'));
+    }
+
+    /**
+     * Submit client feedback rating and comment for completed booking.
+     */
+    public function submitReview(Request $request, string $bookingNumber): RedirectResponse
+    {
+        $validated = $request->validate([
+            'review_rating' => ['required', 'integer', 'between:1,5'],
+            'review_comment' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $user = Auth::guard('web')->user();
+        $booking = Booking::where('booking_number', $bookingNumber)
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->firstOrFail();
+
+        $booking->update([
+            'review_rating' => (int) $validated['review_rating'],
+            'review_comment' => $validated['review_comment'],
+            'reviewed_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Thank you! Your feedback and rating have been submitted successfully.');
     }
 
     /**

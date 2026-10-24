@@ -45,11 +45,36 @@
       </div>
     </div>
 
+    @php
+      $slides = $content?->meta_data['slides'] ?? [];
+      if (empty($slides)) {
+          if ($content && $content->media_path) {
+              $slides = [$content->media_path];
+          } else {
+              $slides = [
+                  'uploads/hero/slide_1.jpg',
+                  'uploads/hero/slide_2.jpg',
+                  'uploads/hero/slide_3.jpg',
+              ];
+          }
+      }
+    @endphp
+
     <div class="hero-media">
-      <div class="hero-image-wrapper">
-        <img src="{{ $content->media_url ?? 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1000&q=80' }}"
-          alt="Building Facility Maintenance" loading="eager"
-          onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1000&q=80';">
+      <div class="hero-image-wrapper hero-slider-wrap" id="heroAutoSlider">
+        @foreach($slides as $sIdx => $slide)
+          <div class="hero-slide-item {{ $sIdx === 0 ? 'active' : '' }}" data-slide-index="{{ $sIdx }}">
+            <img src="{{ asset($slide) }}" alt="FIX Building Service Facility {{ $sIdx + 1 }}" loading="{{ $sIdx === 0 ? 'eager' : 'lazy' }}">
+          </div>
+        @endforeach
+
+        @if(count($slides) > 1)
+          <div class="hero-slide-dots">
+            @foreach($slides as $sIdx => $slide)
+              <button type="button" class="hero-dot {{ $sIdx === 0 ? 'active' : '' }}" onclick="goToHeroSlide({{ $sIdx }})" aria-label="Slide {{ $sIdx + 1 }}"></button>
+            @endforeach
+          </div>
+        @endif
       </div>
 
       <!-- Floating Info Cards -->
@@ -67,6 +92,112 @@
     </div>
   </div>
 </section>
+
+<style>
+  .hero-slider-wrap {
+    position: relative !important;
+    overflow: hidden !important;
+    border-radius: var(--radius-lg, 16px) !important;
+    width: 100% !important;
+    min-height: 420px !important;
+    background: #0f172a !important;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25) !important;
+  }
+  .hero-slide-item {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    transform: scale(1.05) !important;
+    transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), transform 1.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+  }
+  .hero-slide-item.active {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+    pointer-events: auto !important;
+    z-index: 2 !important;
+  }
+  .hero-slide-item img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+  }
+  .hero-slide-dots {
+    position: absolute !important;
+    bottom: 18px !important;
+    right: 20px !important;
+    display: flex !important;
+    gap: 8px !important;
+    z-index: 10 !important;
+    background: rgba(15, 23, 42, 0.65) !important;
+    padding: 6px 12px !important;
+    border-radius: 20px !important;
+    backdrop-filter: blur(8px) !important;
+  }
+  .hero-dot {
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.45) !important;
+    border: none !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+  }
+  .hero-dot.active {
+    width: 24px !important;
+    border-radius: 10px !important;
+    background: #0d9488 !important;
+  }
+</style>
+
+<script>
+  let currentHeroSlide = 0;
+  let heroSlideTimer = null;
+
+  function initHeroSlider() {
+    const slides = document.querySelectorAll('.hero-slide-item');
+    if (slides.length <= 1) return;
+
+    if (heroSlideTimer) clearInterval(heroSlideTimer);
+    heroSlideTimer = setInterval(() => {
+      goToHeroSlide((currentHeroSlide + 1) % slides.length);
+    }, 4500);
+  }
+
+  function goToHeroSlide(index) {
+    const slides = document.querySelectorAll('.hero-slide-item');
+    const dots = document.querySelectorAll('.hero-dot');
+    if (!slides.length) return;
+
+    slides.forEach((slide, i) => {
+      if (i === index) {
+        slide.classList.add('active');
+      } else {
+        slide.classList.remove('active');
+      }
+    });
+
+    dots.forEach((dot, i) => {
+      if (i === index) {
+        dot.classList.add('active');
+      } else {
+        dot.classList.remove('active');
+      }
+    });
+
+    currentHeroSlide = index;
+  }
+
+  document.addEventListener('DOMContentLoaded', initHeroSlider);
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    initHeroSlider();
+  }
+</script>
 
 <!-- Quick Service Selector Strip (Overlapping Hero) -->
 <div class="container quick-book-strip">

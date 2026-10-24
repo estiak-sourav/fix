@@ -2,27 +2,38 @@
   <div class="page-header-box">
     <div>
       <div style="margin-bottom:0.5rem;">
-        <a href="{{ route('admin.cms.services') }}" class="btn-paces btn-paces-outline btn-paces-sm">
-          ← Back to Services Portfolio
+        <a href="{{ route('admin.web.services') }}" class="btn-paces btn-paces-outline btn-paces-sm">
+          ← Back to Service List
         </a>
       </div>
       <h1 class="page-header-title">Edit Service: {{ $service->title }}</h1>
-      <p class="page-header-subtitle">Update service pricing, details, and upload customized photo</p>
+      <p class="page-header-subtitle">Update standalone service details and upload up to 5 photos from your device</p>
     </div>
   </div>
 
+  @if($errors->any())
+    <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; max-width:850px;">
+      <div style="font-weight:500; margin-bottom:4px;">Please correct the following errors:</div>
+      <ul style="margin:0; padding-left:1.25rem;">
+        @foreach($errors->all() as $err)
+          <li>{{ $err }}</li>
+        @endforeach
+      </ul>
+    </div>
+  @endif
+
   <div class="card-paces" style="max-width:850px;">
     <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:1rem; margin-bottom:1.5rem;">
-      <h3 class="card-title-paces">Service Configuration & Media</h3>
+      <h3 class="card-title-paces">Service Configuration & Photos</h3>
     </div>
 
     <form action="{{ route('admin.cms.services.update', $service) }}" method="POST" enctype="multipart/form-data">
       @csrf
       @method('PUT')
 
-      <!-- Image Upload Section -->
+      <!-- Primary Thumbnail Image Upload -->
       <div style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem;">
-        <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:0.85rem;">📷 Service Card Image Upload</h4>
+        <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:0.85rem;">📷 Primary Thumbnail Photo</h4>
         
         <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
           <div>
@@ -32,36 +43,56 @@
           </div>
           <div style="flex:1; min-width:240px;">
             <label class="form-label-paces">
-              Upload New Photo from Computer
+              Upload New Main Photo from Computer
             </label>
             <input type="file" name="thumbnail_file" accept="image/*" class="form-control-paces">
-            <span class="form-help-paces">Selecting an image replaces the demo Unsplash URL with your custom uploaded file.</span>
+            <span class="form-help-paces">Selecting an image replaces the current primary thumbnail with your uploaded local photo.</span>
           </div>
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
-        <div>
-          <label class="form-label-paces">Service Title *</label>
-          <input type="text" name="title" value="{{ old('title', $service->title) }}" class="form-control-paces" required>
-        </div>
+      <!-- Multiple Gallery Photos Upload (Up to 5 Photos) -->
+      <div style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem;">
+        <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:0.85rem;">
+          🖼️ Service Photo Gallery (Up to 5 Photos)
+        </h4>
+
+        @php
+          $gallery = $service->gallery_images ?? [];
+        @endphp
+
+        @if(!empty($gallery))
+          <div style="margin-bottom:1rem;">
+            <div style="font-size:0.78rem; font-weight:500; color:var(--paces-text-muted); margin-bottom:6px;">Current Gallery Photos (Check to remove):</div>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+              @foreach($gallery as $gIdx => $gPath)
+                <div style="background:#ffffff; padding:6px; border-radius:8px; border:1px solid var(--paces-border); text-align:center; width:110px;">
+                  <img src="{{ asset($gPath) }}" alt="Photo {{ $gIdx + 1 }}" style="width:98px; height:65px; object-fit:cover; border-radius:6px; margin-bottom:4px;">
+                  <label style="font-size:0.75rem; color:#ef4444; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;">
+                    <input type="checkbox" name="remove_photos[]" value="{{ $gPath }}" style="accent-color:#ef4444;">
+                    <span>Remove</span>
+                  </label>
+                </div>
+              @endforeach
+            </div>
+          </div>
+        @endif
 
         <div>
-          <label class="form-label-paces">Category</label>
-          <select name="category_id" class="form-control-paces">
-            <option value="">Select Category...</option>
-            @foreach($categories as $cat)
-              <option value="{{ $cat->id }}" {{ $service->category_id == $cat->id ? 'selected' : '' }}>
-                {{ $cat->name }}
-              </option>
-            @endforeach
-          </select>
+          <label class="form-label-paces">Upload Additional Gallery Photos</label>
+          <input type="file" name="service_photos[]" multiple accept="image/*" class="form-control-paces">
+          <span class="form-help-paces">You can upload up to 5 photos total for this service to showcase actual completed work.</span>
         </div>
       </div>
 
       <div style="margin-bottom:1.25rem;">
+        <label class="form-label-paces">Service Title *</label>
+        <input type="text" name="title" value="{{ old('title', $service->title) }}" class="form-control-paces" required>
+      </div>
+
+      <div style="margin-bottom:1.25rem;">
         <label class="form-label-paces">Subtitle / Tagline</label>
-        <input type="text" name="subtitle" value="{{ old('subtitle', $service->subtitle) }}" class="form-control-paces">
+        <input type="text" name="subtitle" value="{{ old('subtitle', $service->subtitle) }}" class="form-control-paces" placeholder="e.g. Certified Mechanical & Engineering Maintenance">
       </div>
 
       <div style="margin-bottom:1.25rem;">
@@ -69,45 +100,21 @@
         <textarea name="description" class="form-control-paces" rows="4" required>{{ old('description', $service->description) }}</textarea>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
-        <div>
-          <label class="form-label-paces">Starting Price (৳)</label>
-          <input type="number" step="0.01" name="price_starting" value="{{ old('price_starting', $service->price_starting) }}" class="form-control-paces">
-        </div>
-
-        <div>
-          <label class="form-label-paces">Pricing Unit</label>
-          <input type="text" name="pricing_unit" value="{{ old('pricing_unit', $service->pricing_unit) }}" class="form-control-paces" placeholder="e.g. per visit, sqft">
-        </div>
-
-        <div>
-          <label class="form-label-paces">Emergency SLA (Hours) *</label>
-          <input type="number" name="sla_hours" value="{{ old('sla_hours', $service->sla_hours) }}" class="form-control-paces" required>
-        </div>
-      </div>
-
-      <div style="margin-bottom:1.25rem;">
+      <div style="margin-bottom:1.5rem;">
         <label class="form-label-paces">
-          Scope / Key Deliverables (One line each)
+          Scope / Key Deliverables (One item per line)
         </label>
-        <textarea name="scope_included" class="form-control-paces" rows="4">{{ is_array($service->scope_included) ? implode("\n", $service->scope_included) : '' }}</textarea>
+        <textarea name="scope_included" class="form-control-paces" rows="4" placeholder="Full diagnostic inspection&#10;Emergency team dispatch&#10;Written service report">{{ is_array($service->scope_included) ? implode("\n", $service->scope_included) : '' }}</textarea>
       </div>
 
-      <div style="display:flex; gap:24px; margin-bottom:1.75rem; background:#f8fafc; padding:1rem 1.25rem; border-radius:8px; border:1px solid var(--paces-border);">
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:500; font-size:0.875rem;">
-          <input type="checkbox" name="is_emergency" value="1" {{ $service->is_emergency ? 'checked' : '' }} style="accent-color:var(--paces-primary);">
-          <span>Emergency 1-Hour SLA Available</span>
-        </label>
-
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:500; font-size:0.875rem;">
-          <input type="checkbox" name="is_active" value="1" {{ $service->is_active ? 'checked' : '' }} style="accent-color:var(--paces-primary);">
-          <span>Live / Published on Website</span>
-        </label>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <a href="{{ route('admin.web.services') }}" class="btn-paces btn-paces-outline">
+          Cancel
+        </a>
+        <button type="submit" class="btn-paces btn-paces-primary" style="padding:0.75rem 2rem;">
+          Save Service Changes
+        </button>
       </div>
-
-      <button type="submit" class="btn-paces btn-paces-primary" style="padding:0.75rem 2rem;">
-        Update Service & Save Photo
-      </button>
     </form>
   </div>
 </x-layouts.admin>

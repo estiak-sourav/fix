@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminBookingController;
 use App\Http\Controllers\Admin\AdminCmsController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminNotificationController;
+use App\Http\Controllers\Admin\AdminPartnerController;
 use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\AdminStaffController;
 use App\Http\Controllers\Admin\AdminSupportTicketController;
@@ -39,6 +40,7 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
     // Dashboard & Operations Overview
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard')->middleware('admin.can:dashboard.view');
     Route::get('/area-analytics', [AdminDashboardController::class, 'areaAnalytics'])->name('area-analytics')->middleware('admin.can:analytics.view');
+    Route::get('/earnings', [AdminDashboardController::class, 'earnings'])->name('earnings.index')->middleware('admin.can:dashboard.view');
     Route::get('/alerts/check', [AdminDashboardController::class, 'checkNewAlerts'])->name('alerts.check');
 
     // Notifications Center
@@ -75,12 +77,23 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
         Route::put('/{user}', [AdminUserController::class, 'update'])->name('update')->middleware('admin.can:users.edit');
     });
 
+    // Partner & Field Crew Enlistment
+    Route::prefix('partners')->name('partners.')->group(function () {
+        Route::get('/', [AdminPartnerController::class, 'index'])->name('index')->middleware('admin.can:users.view');
+        Route::get('/{partner}', [AdminPartnerController::class, 'show'])->name('show')->middleware('admin.can:users.view');
+        Route::put('/{partner}/approve', [AdminPartnerController::class, 'approve'])->name('approve')->middleware('admin.can:users.edit');
+        Route::put('/{partner}/status', [AdminPartnerController::class, 'updateStatus'])->name('status')->middleware('admin.can:users.edit');
+        Route::delete('/{partner}', [AdminPartnerController::class, 'destroy'])->name('destroy')->middleware('admin.can:users.edit');
+    });
+
     // Bookings Management (Work Orders & Bookings)
     Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index')->middleware('admin.can:bookings.view');
     Route::get('/bookings/{booking}', [AdminBookingController::class, 'show'])->name('bookings.show')->middleware('admin.can:bookings.view');
     Route::put('/bookings/{booking}', [AdminBookingController::class, 'update'])->name('bookings.update')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/accept', [AdminBookingController::class, 'accept'])->name('bookings.accept')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->name('bookings.cancel')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/complete', [AdminBookingController::class, 'complete'])->name('bookings.complete')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/log-call', [AdminBookingController::class, 'logCallStatus'])->name('bookings.log-call')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status')->middleware('admin.can:bookings.edit');
 
     // Support Tickets System
@@ -107,10 +120,15 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
         Route::get('/services', [AdminCmsController::class, 'services'])->name('services')->middleware('admin.can:services.view');
         Route::get('/services/{service}/edit', [AdminCmsController::class, 'editService'])->name('services.edit')->middleware('admin.can:services.edit');
         Route::put('/services/{service}', [AdminCmsController::class, 'updateService'])->name('services.update')->middleware('admin.can:services.edit');
+        Route::post('/services/{service}/toggle-status', [AdminCmsController::class, 'toggleServiceStatus'])->name('services.toggle-status')->middleware('admin.can:services.edit');
+        Route::delete('/services/{service}', [AdminCmsController::class, 'destroyService'])->name('services.destroy')->middleware('admin.can:services.edit');
 
         // AMC Packages
         Route::get('/amc-plans', [AdminCmsController::class, 'amcPlans'])->name('amc-plans')->middleware('admin.can:amc_plans.view');
+        Route::post('/amc-plans', [AdminCmsController::class, 'storeAmcPlan'])->name('amc-plans.store')->middleware('admin.can:amc_plans.edit');
         Route::post('/amc-plans/{plan}', [AdminCmsController::class, 'updateAmcPlan'])->name('amc-plans.update')->middleware('admin.can:amc_plans.edit');
+        Route::post('/amc-plans/{plan}/toggle-status', [AdminCmsController::class, 'toggleAmcPlanStatus'])->name('amc-plans.toggle-status')->middleware('admin.can:amc_plans.edit');
+        Route::delete('/amc-plans/{plan}', [AdminCmsController::class, 'destroyAmcPlan'])->name('amc-plans.destroy')->middleware('admin.can:amc_plans.edit');
 
         // Section Contents & Hero
         Route::get('/contents', [AdminCmsController::class, 'contents'])->name('contents')->middleware('admin.can:web_content.view');

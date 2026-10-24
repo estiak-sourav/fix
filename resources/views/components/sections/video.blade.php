@@ -36,7 +36,7 @@
           data-title="Commercial Central HVAC & Chiller Overhaul"
           data-meta="Standard Chartered Tower • Banani, Dhaka">
           <div class="video-card-thumb-wrap">
-            <img src="https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=300&q=80" alt="HVAC Servicing">
+            <img src="{{ asset('uploads/hero/slide_2.jpg') }}" alt="HVAC Servicing">
             <div class="video-card-play-icon">
               <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             </div>
@@ -52,7 +52,7 @@
           data-title="High-Rise Glass Facade Cleaning & ACP Restoration"
           data-meta="Gulshan Centre Point • Gulshan 2, Dhaka">
           <div class="video-card-thumb-wrap">
-            <img src="https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=300&q=80" alt="Facade Cleaning">
+            <img src="{{ asset('uploads/hero/slide_1.jpg') }}" alt="Facade Cleaning">
             <div class="video-card-play-icon">
               <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             </div>
@@ -68,7 +68,7 @@
           data-title="Industrial 1000 kVA Substation & Switchgear Servicing"
           data-meta="Savar Export Processing Zone (DEPZ)">
           <div class="video-card-thumb-wrap">
-            <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80" alt="Substation Maintenance">
+            <img src="{{ asset('uploads/hero/slide_3.jpg') }}" alt="Substation Maintenance">
             <div class="video-card-play-icon">
               <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             </div>

@@ -103,8 +103,25 @@
         <p class="section-subtitle">Join our verified network of engineering contractors and technical experts.</p>
       </div>
 
+      @if(session('success'))
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:16px 20px; border-radius:12px; margin-bottom:1.5rem; font-weight:500; font-size:0.95rem; text-align:center;">
+          ✓ {{ session('success') }}
+        </div>
+      @endif
+
+      @if($errors->any())
+        <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:16px 20px; border-radius:12px; margin-bottom:1.5rem; font-size:0.9rem;">
+          <ul style="margin:0; padding-left:18px;">
+            @foreach($errors->all() as $err)
+              <li>{{ $err }}</li>
+            @endforeach
+          </ul>
+        </div>
+      @endif
+
       <div class="form-card">
-        <form onsubmit="event.preventDefault(); fixToast('Application received! Our partner enlistment officer will call within 24 hours.', 'success'); this.reset();">
+        <form action="{{ route('vendor.apply') }}" method="POST">
+          @csrf
           <div class="form-step-section">
             <div class="step-header-title">
               <span class="step-num-pill">1</span>
@@ -114,22 +131,22 @@
             <div class="form-row">
               <div class="form-group">
                 <label>Company / Trade Name <span class="required">*</span></label>
-                <input type="text" class="form-control" placeholder="e.g. Dhaka HVAC Engineering Works" required>
+                <input type="text" name="company_name" value="{{ old('company_name') }}" class="form-control" placeholder="e.g. Dhaka HVAC Engineering Works" required>
               </div>
               <div class="form-group">
                 <label>Lead Contact Person <span class="required">*</span></label>
-                <input type="text" class="form-control" placeholder="e.g. Engr. Shafiqul Alam" required>
+                <input type="text" name="contact_person" value="{{ old('contact_person') }}" class="form-control" placeholder="e.g. Engr. Shafiqul Alam" required>
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
                 <label>Mobile Number <span class="required">*</span></label>
-                <input type="tel" class="form-control" placeholder="017xxxxxxxx" required>
+                <input type="tel" name="phone" value="{{ old('phone') }}" class="form-control" placeholder="017xxxxxxxx" required>
               </div>
               <div class="form-group">
                 <label>Official Email</label>
-                <input type="email" class="form-control" placeholder="contact@company.com">
+                <input type="email" name="email" value="{{ old('email') }}" class="form-control" placeholder="contact@company.com">
               </div>
             </div>
           </div>
@@ -143,7 +160,7 @@
             <div class="form-row">
               <div class="form-group">
                 <label>Primary Technical Domain <span class="required">*</span></label>
-                <select class="form-control" required>
+                <select name="trade_domain" class="form-control" required>
                   <option value="Electrical & Substation">Electrical & Substation Power</option>
                   <option value="HVAC & Central Air Conditioning">HVAC & Central Air Conditioning</option>
                   <option value="Plumbing & Water Boosting">Plumbing & Water Boosting Systems</option>
@@ -156,7 +173,7 @@
 
               <div class="form-group">
                 <label>Active Field Technicians Count <span class="required">*</span></label>
-                <select class="form-control" required>
+                <select name="technicians_count" class="form-control" required>
                   <option value="1-5">1 - 5 Technicians</option>
                   <option value="6-15">6 - 15 Technicians</option>
                   <option value="16-50">16 - 50 Technicians</option>
@@ -166,8 +183,8 @@
             </div>
 
             <div class="form-group">
-              <label>Operating Coverage Areas</label>
-              <input type="text" class="form-control" placeholder="e.g. Dhaka Metro, Savar EPZ, Gazipur, Narayanganj" required>
+              <label>Operating Coverage Areas <span class="required">*</span></label>
+              <input type="text" name="coverage_areas" value="{{ old('coverage_areas') }}" class="form-control" placeholder="e.g. Dhaka Metro, Savar EPZ, Gazipur, Narayanganj" required>
             </div>
           </div>
 

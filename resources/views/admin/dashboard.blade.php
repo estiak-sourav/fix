@@ -444,8 +444,8 @@
               @endforeach
             </select>
           </form>
-          <a href="{{ route('admin.area-analytics') }}" class="btn-paces btn-paces-outline btn-paces-sm">
-            Area Details →
+          <a href="{{ route('admin.area-analytics') }}" class="btn-paces btn-paces-primary btn-paces-sm" style="text-decoration:none;">
+            {{ $areaHotspots->count() > 8 ? 'More Areas (' . $areaHotspots->count() . ') →' : 'Area Details →' }}
           </a>
         </div>
       </div>
@@ -456,7 +456,7 @@
         </div>
       @else
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-          @foreach($areaHotspots as $hotspot)
+          @foreach($areaHotspots->take(8) as $hotspot)
             @php
               $areaName = is_array($hotspot) ? ($hotspot['area'] ?? $hotspot['name'] ?? '') : (is_object($hotspot) ? ($hotspot->area ?? $hotspot->name ?? '') : (string)$hotspot);
               $count = is_array($hotspot) ? ($hotspot['count'] ?? 0) : (is_numeric($hotspot) ? $hotspot : 1);
@@ -464,7 +464,7 @@
               $divisionName = is_array($hotspot) ? ($hotspot['division'] ?? '') : (is_object($hotspot) ? ($hotspot->division ?? '') : '');
               $metaSub = $districtName ? ($districtName . ($divisionName ? ', ' . $divisionName : '')) : ($divisionName ?: 'Active Field Dispatch');
             @endphp
-            <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
+            <a href="{{ route('admin.bookings.index', ['area' => $areaName]) }}" style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; text-decoration:none; color:inherit; transition:all 0.2s; cursor:pointer;" onmouseover="this.style.borderColor='var(--paces-primary)'; this.style.background='#eff6ff';" onmouseout="this.style.borderColor='var(--paces-border)'; this.style.background='#f8fafc';" title="View bookings in {{ $areaName }}">
               <div>
                 <div style="font-size:0.85rem; font-weight:500; color:var(--paces-text-dark);">📍 {{ $areaName }}</div>
                 <div style="font-size:0.75rem; color:var(--paces-text-muted);">{{ $metaSub }}</div>
@@ -472,7 +472,7 @@
               <span class="badge-pill-paces bg-primary-subtle" style="font-size:0.8rem; font-weight:500;">
                 {{ $count }}
               </span>
-            </div>
+            </a>
           @endforeach
         </div>
       @endif
@@ -521,7 +521,7 @@
             <span style="font-size:0.78rem; color:#64748b; font-weight:500;">From previous period</span>
           </div>
 
-          <a href="{{ route('admin.bookings.index') }}" style="display:inline-flex; align-items:center; gap:8px; background:#4361ee; color:#ffffff; font-size:0.82rem; font-weight:500; padding:7px 16px; border-radius:6px; text-decoration:none; box-shadow:0 4px 10px rgba(67, 97, 238, 0.25); transition:all 0.2s ease;">
+          <a href="{{ route('admin.earnings.index') }}" style="display:inline-flex; align-items:center; gap:8px; background:#4361ee; color:#ffffff; font-size:0.82rem; font-weight:500; padding:7px 16px; border-radius:6px; text-decoration:none; box-shadow:0 4px 10px rgba(67, 97, 238, 0.25); transition:all 0.2s ease;">
             <span>View Details</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="9 18 15 12 9 6"></polyline>
@@ -577,278 +577,153 @@
   <!-- 🎯 Top Selling, Tasks & Chat Widget Row (Exact Screenshot Match) -->
   <div class="top-tasks-chat-grid">
 
-    <!-- Card 1: Top Selling Product -->
+    <!-- Card 1: Top Selling Services & AMC Packages -->
     <div class="card-paces" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
       <div>
         <!-- Header -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
-          <h3 style="font-size:1.05rem; font-weight:500; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Top Selling product</h3>
-          <div style="display:inline-flex; align-items:center; gap:6px;">
-            <div style="position:relative;">
-              <select style="appearance:none; -webkit-appearance:none; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:4px 26px 4px 10px; font-size:0.8rem; font-weight:500; color:#475569; cursor:pointer; outline:none; font-family:'Poppins', sans-serif;">
-                <option selected>Jan</option>
-                <option>Feb</option>
-                <option>Mar</option>
-                <option>Apr</option>
-                <option>May</option>
-                <option>Jun</option>
-                <option>Jul</option>
-                <option>Aug</option>
-                <option>Sep</option>
-                <option>Oct</option>
-                <option>Nov</option>
-                <option>Dec</option>
-              </select>
-              <svg style="position:absolute; right:8px; top:50%; transform:translateY(-50%); pointer-events:none;" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </div>
-            <button type="button" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:4px 12px; font-size:0.8rem; font-weight:500; color:#475569; cursor:pointer; font-family:'Poppins', sans-serif;">Month</button>
-          </div>
+          <h3 style="font-size:1.05rem; font-weight:500; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Top Selling Services</h3>
+          <span class="badge-pill-paces bg-primary-subtle" style="font-size:0.75rem;">
+            Dynamic Demand
+          </span>
         </div>
 
-        <!-- Top Summary Block (Centered) -->
+        @php
+          $top1 = $topSellingDynamic->first();
+        @endphp
+
+        <!-- Top Summary Block -->
         <div style="text-align:center; padding-bottom:1.25rem;">
-          <div style="font-size:0.85rem; color:#64748b; font-weight:500; margin-bottom:2px;">Product A</div>
-          <div style="font-size:1.85rem; font-weight:500; color:#1e293b; letter-spacing:-0.02em;">$ 6385</div>
+          <div style="font-size:0.85rem; color:#64748b; font-weight:500; margin-bottom:2px;">{{ $top1?->name ?? 'Leading Service' }}</div>
+          <div style="font-size:1.85rem; font-weight:500; color:#1e293b; letter-spacing:-0.02em;">{{ $top1?->orders_count ?? 0 }} Orders</div>
           <div style="display:inline-flex; align-items:center; gap:6px; margin-top:6px;">
             <span style="background:#dcfce7; color:#16a34a; font-size:0.75rem; font-weight:500; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:3px;">
-              0.6% <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+              {{ $top1?->pct ?? 0 }}% of Total
             </span>
-            <span style="font-size:0.78rem; color:#64748b; font-weight:500;">From previous period</span>
+            <span style="font-size:0.78rem; color:#64748b; font-weight:500;">Across client bookings</span>
           </div>
         </div>
 
-        <!-- Product List Rows -->
+        <!-- Product / Service List Rows -->
         <div style="display:flex; flex-direction:column;">
-          <!-- Item 1: Product A (37%) -->
-          <div style="border-top:1px solid #f1f5f9; padding:12px 0; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <div style="font-size:0.9rem; font-weight:500; color:#1e293b;">Product A</div>
-              <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">Neque quis est</div>
-            </div>
-            <div style="display:flex; align-items:center; gap:12px;">
-              <svg width="44" height="44" viewBox="0 0 44 44">
-                <circle cx="22" cy="22" r="17" fill="none" stroke="#f1f5f9" stroke-width="4.5" />
-                <circle cx="22" cy="22" r="17" fill="none" stroke="#4361ee" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="67.2" transform="rotate(-90 22 22)" />
-              </svg>
-              <div style="text-align:right; min-width:44px;">
-                <div style="font-size:0.72rem; color:#94a3b8; font-weight:500;">Sales</div>
-                <div style="font-size:0.95rem; font-weight:500; color:#1e293b;">37 %</div>
+          @forelse($topSellingDynamic as $item)
+            <div style="border-top:1px solid #f1f5f9; padding:12px 0; display:flex; justify-content:space-between; align-items:center;">
+              <div style="min-width:0; padding-right:10px;">
+                <div style="font-size:0.9rem; font-weight:500; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ $item->name }}">
+                  {{ $item->name }}
+                </div>
+                <div style="font-size:0.75rem; color:#94a3b8; margin-top:2px;">{{ $item->subtitle }} ({{ $item->orders_count }} booked)</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+                <div style="text-align:right;">
+                  <span class="badge-pill-paces" style="background:rgba(67, 97, 238, 0.1); color:{{ $item->color }}; font-weight:500;">
+                    {{ $item->pct }} %
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-
-          <!-- Item 2: Product B (72%) -->
-          <div style="border-top:1px solid #f1f5f9; padding:12px 0; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <div style="font-size:0.9rem; font-weight:500; color:#1e293b;">Product B</div>
-              <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">Quis autem iure</div>
+          @empty
+            <div style="padding:1rem; text-align:center; color:#94a3b8; font-size:0.85rem;">
+              No booking records recorded yet.
             </div>
-            <div style="display:flex; align-items:center; gap:12px;">
-              <svg width="44" height="44" viewBox="0 0 44 44">
-                <circle cx="22" cy="22" r="17" fill="none" stroke="#f1f5f9" stroke-width="4.5" />
-                <circle cx="22" cy="22" r="17" fill="none" stroke="#2ec4b6" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="29.9" transform="rotate(-90 22 22)" />
-              </svg>
-              <div style="text-align:right; min-width:44px;">
-                <div style="font-size:0.72rem; color:#94a3b8; font-weight:500;">Sales</div>
-                <div style="font-size:0.95rem; font-weight:500; color:#1e293b;">72 %</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Item 3: Product C (54%) -->
-          <div style="border-top:1px solid #f1f5f9; padding:12px 0 4px 0; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <div style="font-size:0.9rem; font-weight:500; color:#1e293b;">Product C</div>
-              <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">Sed aliquam mauris.</div>
-            </div>
-            <div style="display:flex; align-items:center; gap:12px;">
-              <svg width="44" height="44" viewBox="0 0 44 44">
-                <circle cx="22" cy="22" r="17" fill="none" stroke="#f1f5f9" stroke-width="4.5" />
-                <circle cx="22" cy="22" r="17" fill="none" stroke="#ff5c5c" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="49.1" transform="rotate(-90 22 22)" />
-              </svg>
-              <div style="text-align:right; min-width:44px;">
-                <div style="font-size:0.72rem; color:#94a3b8; font-weight:500;">Sales</div>
-                <div style="font-size:0.95rem; font-weight:500; color:#1e293b;">54 %</div>
-              </div>
-            </div>
-          </div>
+          @endforelse
         </div>
       </div>
     </div>
 
-    <!-- Card 2: Tasks -->
+    <!-- Card 2: Outreach Tasks -->
     <div class="card-paces" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
       <div>
-        <!-- Header with Segmented Switch -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
-          <h3 style="font-size:1.05rem; font-weight:500; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Tasks</h3>
-          <div style="display:inline-flex; background:#f1f5f9; border-radius:8px; padding:3px;">
-            <button id="taskTabInProcess" type="button" onclick="switchTaskTab('in_process')" style="background:#4361ee; color:#ffffff; border:none; padding:5px 14px; border-radius:6px; font-size:0.8rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;">In Process</button>
-            <button id="taskTabUpcoming" type="button" onclick="switchTaskTab('upcoming')" style="background:transparent; color:#64748b; border:none; padding:5px 14px; border-radius:6px; font-size:0.8rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;">Upcoming</button>
-          </div>
+          <h3 style="font-size:1.05rem; font-weight:500; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Outreach Tasks</h3>
+          <span class="badge-pill-paces {{ $outreachTasks->count() > 0 ? 'bg-warning-subtle' : 'bg-success-subtle' }}">
+            {{ $outreachTasks->count() }} Pending Calls
+          </span>
         </div>
 
-        <!-- Task List Items -->
-        <div id="taskListContainer" style="display:flex; flex-direction:column; gap:12px;">
-          <!-- Task Item 1 -->
-          <div class="task-row-item" style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f8fafc;">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <input type="checkbox" onchange="toggleTaskDone(this)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
-              <div>
-                <div class="task-title" style="font-size:0.88rem; font-weight:500; color:#1e293b; transition:color 0.2s;">Skote Saas Dashboard</div>
-                <div style="font-size:0.75rem; color:#94a3b8;">Assigned to Mark</div>
+        <div id="taskListContainer" style="display:flex; flex-direction:column; gap:10px;">
+          @forelse($outreachTasks as $task)
+            <div class="task-row-item" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:#f8fafc; border:1px solid #edf2f7; border-radius:8px;">
+              <div style="min-width:0; padding-right:8px;">
+                <div style="font-size:0.88rem; font-weight:500; color:#1e293b;">
+                  {{ $task->customer_name }} • <span style="font-family:monospace; color:var(--paces-primary);">#{{ $task->booking_number }}</span>
+                </div>
+                <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">
+                  📞 {{ $task->customer_phone }} — <span style="color:{{ $task->call_status === 'unreachable' ? '#dc2626' : '#d97706' }}; font-weight:500;">
+                    {{ $task->call_status === 'unreachable' ? 'Unreachable (Retry)' : 'Call Back Later' }}
+                  </span>
+                </div>
               </div>
+              <a href="{{ route('admin.bookings.show', $task) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="flex-shrink:0; padding:4px 10px; font-size:0.75rem;">
+                Call Order →
+              </a>
             </div>
-            <div style="display:inline-flex; align-items:center; gap:10px;">
-              <button type="button" onclick="editTask(this)" style="background:none; border:none; color:#10b981; cursor:pointer; padding:4px;" title="Edit Task">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-              </button>
-              <button type="button" onclick="deleteTask(this)" style="background:none; border:none; color:#ef4444; cursor:pointer; padding:4px;" title="Delete Task">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              </button>
+          @empty
+            <div style="text-align:center; padding:2rem 1rem; color:var(--paces-text-muted);">
+              <div style="font-size:2rem; margin-bottom:6px;">🎉</div>
+              <div style="font-weight:500; color:var(--paces-text-dark); font-size:0.9rem;">All Outreach Tasks Completed</div>
+              <p style="font-size:0.78rem; margin:4px 0 0;">No unreachable or call-back requests pending right now.</p>
             </div>
-          </div>
-
-          <!-- Task Item 2 -->
-          <div class="task-row-item" style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f8fafc;">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <input type="checkbox" onchange="toggleTaskDone(this)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
-              <div>
-                <div class="task-title" style="font-size:0.88rem; font-weight:500; color:#1e293b; transition:color 0.2s;">New Landing UI</div>
-                <div style="font-size:0.75rem; color:#94a3b8;">Assigned to Team A</div>
-              </div>
-            </div>
-            <div style="display:inline-flex; align-items:center; gap:10px;">
-              <button type="button" onclick="editTask(this)" style="background:none; border:none; color:#10b981; cursor:pointer; padding:4px;" title="Edit Task">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-              </button>
-              <button type="button" onclick="deleteTask(this)" style="background:none; border:none; color:#ef4444; cursor:pointer; padding:4px;" title="Delete Task">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- Task Item 3 -->
-          <div class="task-row-item" style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f8fafc;">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <input type="checkbox" onchange="toggleTaskDone(this)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
-              <div>
-                <div class="task-title" style="font-size:0.88rem; font-weight:500; color:#1e293b; transition:color 0.2s;">Brand logo design</div>
-                <div style="font-size:0.75rem; color:#94a3b8;">Assigned to Janis</div>
-              </div>
-            </div>
-            <div style="display:inline-flex; align-items:center; gap:10px;">
-              <button type="button" onclick="editTask(this)" style="background:none; border:none; color:#10b981; cursor:pointer; padding:4px;" title="Edit Task">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-              </button>
-              <button type="button" onclick="deleteTask(this)" style="background:none; border:none; color:#ef4444; cursor:pointer; padding:4px;" title="Delete Task">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- Task Item 4 -->
-          <div class="task-row-item" style="display:flex; align-items:center; justify-content:space-between; padding:10px 0;">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <input type="checkbox" onchange="toggleTaskDone(this)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
-              <div>
-                <div class="task-title" style="font-size:0.88rem; font-weight:500; color:#1e293b; transition:color 0.2s;">Blog Template UI</div>
-                <div style="font-size:0.75rem; color:#94a3b8;">Assigned to Dianna</div>
-              </div>
-            </div>
-            <div style="display:inline-flex; align-items:center; gap:10px;">
-              <button type="button" onclick="editTask(this)" style="background:none; border:none; color:#10b981; cursor:pointer; padding:4px;" title="Edit Task">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-              </button>
-              <button type="button" onclick="deleteTask(this)" style="background:none; border:none; color:#ef4444; cursor:pointer; padding:4px;" title="Delete Task">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              </button>
-            </div>
-          </div>
+          @endforelse
         </div>
       </div>
-
-      <!-- Add New Task Button -->
-      <div style="text-align:center; padding-top:1.25rem;">
-        <button type="button" onclick="addNewTaskPrompt()" style="background:#4361ee; color:#ffffff; border:none; padding:8px 24px; border-radius:6px; font-size:0.82rem; font-weight:500; cursor:pointer; box-shadow:0 4px 10px rgba(67, 97, 238, 0.25); transition:all 0.2s ease;">Add new Task</button>
+      <div style="text-align:center; padding-top:1rem; border-top:1px solid #f1f5f9; margin-top:1rem;">
+        <a href="{{ route('admin.bookings.index', ['status' => 'pending_review']) }}" class="btn-paces btn-paces-outline btn-paces-sm" style="width:100%;">
+          View All Pending Bookings →
+        </a>
       </div>
     </div>
 
-    <!-- Card 3: Steven Franklin (Live Chat / Dispatch Widget) -->
+    <!-- Card 3: Support Helpdesk Widget -->
     <div class="card-paces" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
       <div>
         <!-- Chat Header -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
           <div>
-            <h4 style="font-size:0.98rem; font-weight:500; color:#1e293b; margin:0;">Steven Franklin</h4>
+            <h4 style="font-size:0.98rem; font-weight:500; color:#1e293b; margin:0;">
+              {{ $latestSupportTicket?->customer_name ?? 'Support Helpdesk' }}
+            </h4>
             <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; color:#16a34a; font-weight:500; margin-top:2px;">
-              <span style="width:7px; height:7px; border-radius:50%; background:#16a34a; display:inline-block;"></span> Active now
+              <span style="width:7px; height:7px; border-radius:50%; background:#16a34a; display:inline-block;"></span>
+              Ticket #{{ $latestSupportTicket?->ticket_number ?? 'DESK' }}
             </div>
           </div>
-          <div style="display:inline-flex; align-items:center; gap:6px;">
-            <button type="button" style="width:32px; height:32px; border-radius:50%; border:1px solid #e2e8f0; background:#f8fafc; color:#64748b; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;" title="Search messages">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            </button>
-            <button type="button" style="width:32px; height:32px; border-radius:50%; border:1px solid #e2e8f0; background:#f8fafc; color:#64748b; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;" title="Chat settings">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            </button>
-            <button type="button" style="width:32px; height:32px; border-radius:50%; border:1px solid #e2e8f0; background:#f8fafc; color:#64748b; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;" title="Options">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-            </button>
-          </div>
+          @if($latestSupportTicket)
+            <a href="{{ route('admin.tickets.show', $latestSupportTicket) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.75rem; padding:4px 10px;">
+              Open Ticket →
+            </a>
+          @endif
         </div>
 
-        <!-- Chat Bubble Stream Area -->
-        <div id="dashboardChatStream" style="height:210px; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:12px; border-top:1px solid #f1f5f9; padding-top:12px;">
-          <!-- Bubble 1: Steven Franklin -->
-          <div style="position:relative; align-self:flex-start; max-width:85%;">
-            <div style="background:#eef2ff; border-radius:10px; padding:10px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <span style="font-size:0.78rem; font-weight:500; color:#4361ee;">Steven Franklin</span>
-                <span style="font-size:0.8rem; color:#94a3b8; cursor:pointer;">⋮</span>
+        <!-- Chat Stream Area -->
+        <div style="height:210px; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:10px; border-top:1px solid #f1f5f9; padding-top:12px;">
+          @if($latestSupportTicket && $latestSupportTicket->messages->isNotEmpty())
+            @foreach($latestSupportTicket->messages->take(3) as $msg)
+              <div style="position:relative; align-self:{{ $msg->is_admin_reply ? 'flex-end' : 'flex-start' }}; max-width:85%;">
+                <div style="background:{{ $msg->is_admin_reply ? '#f1f5f9' : '#eef2ff' }}; border-radius:10px; padding:8px 12px; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px; gap:8px;">
+                    <span style="font-size:0.75rem; font-weight:500; color:{{ $msg->is_admin_reply ? '#3e60d5' : '#4361ee' }};">
+                      {{ $msg->is_admin_reply ? 'Support Staff' : $latestSupportTicket->customer_name }}
+                    </span>
+                    <span style="font-size:0.65rem; color:#94a3b8;">{{ $msg->created_at->format('h:i A') }}</span>
+                  </div>
+                  <div style="font-size:0.8rem; color:#1e293b; line-height:1.4;">{{ Str::limit($msg->message, 90) }}</div>
+                </div>
               </div>
-              <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">& Next meeting tomorrow 10.00AM</div>
-              <div style="display:flex; align-items:center; gap:4px; font-size:0.68rem; color:#94a3b8; margin-top:6px;">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                10.06
-              </div>
+            @endforeach
+          @else
+            <div style="padding:1.5rem 1rem; text-align:center; color:#94a3b8; font-size:0.85rem;">
+              No active customer support messages.
             </div>
-            <!-- Avatar Icon Badge -->
-            <div style="position:absolute; right:-10px; bottom:-6px; width:22px; height:22px; border-radius:50%; background:#4361ee; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:0.65rem; border:2px solid #ffffff;">
-              👤
-            </div>
-          </div>
-
-          <!-- Bubble 2: Admin Outgoing -->
-          <div style="position:relative; align-self:flex-end; max-width:82%;">
-            <div style="background:#f1f5f9; border-radius:10px; padding:10px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.02); text-align:right;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; flex-direction:row-reverse;">
-                <span style="font-size:0.78rem; font-weight:500; color:#3e60d5;">admin</span>
-                <span style="font-size:0.8rem; color:#94a3b8; cursor:pointer;">⋮</span>
-              </div>
-              <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">Wow that's great</div>
-              <div style="display:flex; align-items:center; justify-content:flex-end; gap:4px; font-size:0.68rem; color:#94a3b8; margin-top:6px;">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                10.07
-              </div>
-            </div>
-          </div>
+          @endif
         </div>
       </div>
 
-      <!-- Chat Footer / Input Row -->
-      <div style="display:flex; gap:8px; align-items:center; margin-top:1rem; border-top:1px solid #f1f5f9; padding-top:10px;">
-        <div style="flex:1; display:flex; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:4px 8px;">
-          <input id="chatInputMessage" type="text" placeholder="Enter Mess..." onkeydown="if(event.key==='Enter') sendChatQuickMessage()" style="flex:1; border:none; background:transparent; font-size:0.82rem; color:#1e293b; outline:none; font-family:'Poppins', sans-serif; padding:4px;">
-          <div style="display:flex; align-items:center; gap:6px; color:#94a3b8; font-size:0.9rem; cursor:pointer;">
-            <span title="Emoji">😊</span>
-            <span title="Attach Image">🖼️</span>
-            <span title="Attach File">📄</span>
-          </div>
-        </div>
-        <button type="button" onclick="sendChatQuickMessage()" style="background:#4361ee; color:#ffffff; border:none; border-radius:6px; padding:7px 14px; font-size:0.82rem; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 3px 8px rgba(67, 97, 238, 0.25);">
-          Send <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-        </button>
+      <!-- Quick Link to Support Tickets -->
+      <div style="border-top:1px solid #f1f5f9; padding-top:10px; margin-top:1rem; text-align:center;">
+        <a href="{{ route('admin.tickets.index') }}" class="btn-paces btn-paces-primary btn-paces-sm" style="width:100%;">
+          View All Support Tickets ({{ \App\Models\SupportTicket::count() }}) →
+        </a>
       </div>
     </div>
 
@@ -880,7 +755,6 @@
               <th>Customer</th>
               <th>Service Scope</th>
               <th>Location</th>
-              <th>Urgency</th>
               <th>Cost (৳)</th>
               <th>Status</th>
               <th style="text-align:right;">Actions</th>
@@ -906,22 +780,6 @@
                   <div style="font-size:0.75rem; color:var(--paces-text-muted);">{{ $b->district }}</div>
                 </td>
                 <td>
-                  @if($b->urgency === 'emergency_1h')
-                    <span class="badge-pill-paces bg-danger-subtle">
-                      <span class="pulse-dot" style="background:#dc2626;"></span>
-                      <span>1h Emergency</span>
-                    </span>
-                  @elseif($b->urgency === 'urgent_4h' || $b->urgency === 'same_day_4h')
-                    <span class="badge-pill-paces bg-warning-subtle">
-                      <span>⚡ 4h Urgent</span>
-                    </span>
-                  @else
-                    <span class="badge-pill-paces bg-primary-subtle">
-                      <span>Standard</span>
-                    </span>
-                  @endif
-                </td>
-                <td>
                   <strong style="color:var(--paces-text-dark);">৳{{ number_format($b->final_cost ?? $b->estimated_cost ?? 0, 0) }}</strong>
                 </td>
                 <td>
@@ -940,26 +798,21 @@
                   </span>
                 </td>
                 <td style="text-align:right;">
-                  <div style="display:inline-flex; gap:6px;">
-                    <a href="{{ route('admin.bookings.show', $b) }}" class="btn-paces btn-paces-outline btn-paces-sm">
-                      View
-                    </a>
-                    @if($b->status === 'pending_review')
-                      <form action="{{ route('admin.bookings.update-status', $b) }}" method="POST" style="margin:0; display:inline;">
-                        @csrf
-                        <input type="hidden" name="status" value="accepted">
-                        <input type="hidden" name="comment" value="Request accepted by Operations Lead.">
-                        <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm">
-                          Accept ✓
-                        </button>
-                      </form>
-                    @endif
-                  </div>
+                  <a href="{{ route('admin.bookings.show', $b) }}" class="btn-paces btn-paces-primary btn-paces-sm">
+                    View Order →
+                  </a>
                 </td>
               </tr>
             @endforeach
           </tbody>
         </table>
+      </div>
+
+      <!-- More Orders Button at Bottom (Item 16) -->
+      <div style="text-align:center; padding:1.25rem 0 0.5rem; border-top:1px solid var(--paces-border); margin-top:1rem;">
+        <a href="{{ route('admin.bookings.index') }}" class="btn-paces btn-paces-primary" style="padding:0.65rem 2rem; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+          <span>More Orders →</span>
+        </a>
       </div>
     @endif
   </div>

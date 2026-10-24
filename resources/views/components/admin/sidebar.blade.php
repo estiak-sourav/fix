@@ -79,6 +79,20 @@
         </a>
       @endif
 
+      <!-- Partners & Enlisted Field Crew Network -->
+      @php
+        $pendingPartnersCount = \App\Models\Partner::where('status', 'pending')->count();
+      @endphp
+      <a href="{{ route('admin.partners.index') }}" class="nav-item {{ request()->routeIs('admin.partners.*') ? 'active' : '' }}">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </span>
+        <span class="nav-text">Partners & Field Crew</span>
+        @if($pendingPartnersCount > 0)
+          <span class="nav-badge bg-warning">{{ $pendingPartnersCount }}</span>
+        @endif
+      </a>
+
       <!-- Service Hub: Collapsible Submenu (Services + AMC Packages) -->
       @if($adminUser?->hasPermission('services.view') || $adminUser?->hasPermission('amc_plans.view'))
         <div class="nav-header">SERVICE & FACILITY</div>
@@ -99,7 +113,7 @@
             @if($adminUser?->hasPermission('services.view'))
               <a href="{{ route('admin.web.services') }}" class="nav-subitem {{ (request()->routeIs('admin.web.services*') || request()->routeIs('admin.cms.services*')) ? 'active' : '' }}">
                 <span class="nav-subdot"></span>
-                <span>Services & Catalog</span>
+                <span>Service List</span>
               </a>
             @endif
             @if($adminUser?->hasPermission('amc_plans.view'))
@@ -131,7 +145,7 @@
           <div class="nav-submenu">
             <a href="{{ route('admin.users.index') }}" class="nav-subitem {{ (request()->routeIs('admin.users.index') && !request('status')) ? 'active' : '' }}">
               <span class="nav-subdot"></span>
-              <span>All Client List & Control</span>
+              <span>Client Users</span>
             </a>
             <a href="{{ route('admin.users.index', ['status' => '1']) }}" class="nav-subitem {{ request('status') === '1' ? 'active' : '' }}">
               <span class="nav-subdot"></span>

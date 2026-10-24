@@ -35,6 +35,12 @@ class Booking extends Model
         'estimated_cost',
         'final_cost',
         'payment_status',
+        'call_status',
+        'call_notes',
+        'completion_feedback',
+        'review_rating',
+        'review_comment',
+        'reviewed_at',
         'accepted_at',
         'completed_at',
         'cancelled_at',
@@ -48,6 +54,8 @@ class Booking extends Model
             'estimated_sqft' => 'integer',
             'estimated_cost' => 'decimal:2',
             'final_cost' => 'decimal:2',
+            'review_rating' => 'integer',
+            'reviewed_at' => 'datetime',
             'accepted_at' => 'datetime',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
@@ -114,7 +122,7 @@ class Booking extends Model
         $prefix = static::divisionCode($division, $district);
         $count = static::where('booking_number', 'like', "{$prefix}-%")->count() + 1;
 
-        return sprintf('%s-%03d', $prefix, $count);
+        return sprintf('%s-%05d', $prefix, $count);
     }
 
     public function getStatusLabelAttribute(): string

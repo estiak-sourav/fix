@@ -1,4 +1,5 @@
 @props([
+  'content' => null,
   'faqs' => [],
 ])
 
@@ -6,7 +7,10 @@
 <section id="faq" class="section">
   <div class="container">
     <div class="section-header">
-      <h2 class="section-title">Frequently Asked Questions</h2>
+      <h2 class="section-title">{!! $content->title ?? 'Frequently Asked Questions' !!}</h2>
+      @if(!empty($content?->subtitle))
+        <p class="section-subtitle">{{ $content->subtitle }}</p>
+      @endif
     </div>
 
     <!-- FAQ Category Tabs -->
