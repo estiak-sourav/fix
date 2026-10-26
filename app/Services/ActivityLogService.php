@@ -134,4 +134,24 @@ class ActivityLogService
     {
         return self::log('content', $action, $description, $content, $properties);
     }
+
+    /**
+     * Log partners & vendor network events.
+     *
+     * @param  array<string, mixed>  $properties
+     */
+    public static function logPartner(string $action, string $description, ?Model $partner = null, array $properties = []): ?AdminActivityLog
+    {
+        return self::log('partners', $action, $description, $partner, $properties);
+    }
+
+    /**
+     * Log general or system level events.
+     *
+     * @param  array<string, mixed>  $properties
+     */
+    public static function logSystem(string $action, string $description, ?Model $subject = null, array $properties = []): ?AdminActivityLog
+    {
+        return self::log('system', $action, $description, $subject, $properties);
+    }
 }

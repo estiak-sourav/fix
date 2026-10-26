@@ -250,12 +250,12 @@
                 <div>
                   <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Select Unreachable Reason *</label>
                   <select name="unreachable_reason" class="form-control-paces" required style="font-size:0.82rem; padding:6px 12px;">
-                    <option value="Phone Switched Off / Out of Coverage">Phone Switched Off / Out of Coverage (ফোন বন্ধ / নেটওয়ার্কের বাইরে)</option>
-                    <option value="Ringing but No Answer">Ringing but No Answer (রিং বাজে কিন্তু ধরে না)</option>
-                    <option value="Busy / Call Waiting">Busy / Call Waiting (ব্যস্ত / কল ওয়েটিং)</option>
-                    <option value="Number Invalid / Disconnected">Number Invalid / Disconnected (নাম্বার সঠিক নয়)</option>
-                    <option value="Call Rejected by Client">Call Rejected by Client (কল কেটে দেওয়া হয়েছে)</option>
-                    <option value="Other / Client Unavailable">Other / Client Unavailable (অন্যান্য)</option>
+                    <option value="Phone Switched Off / Out of Coverage">Phone Switched Off / Out of Coverage</option>
+                    <option value="Ringing but No Answer">Ringing but No Answer</option>
+                    <option value="Busy / Call Waiting">Busy / Call Waiting</option>
+                    <option value="Number Invalid / Disconnected">Number Invalid / Disconnected</option>
+                    <option value="Call Rejected by Client">Call Rejected by Client</option>
+                    <option value="Other / Client Unavailable">Other / Client Unavailable</option>
                   </select>
                 </div>
                 <div>

@@ -94,10 +94,9 @@ class SendOtpAction
         } catch (\Throwable $e) {
             Log::error("Failed to send OTP email via SMTP to {$email}: ".$e->getMessage());
 
-            // If local or log driver, let local dev continue smoothly
-            if (! app()->isLocal() && config('mail.default') === 'smtp') {
+            if (config('mail.default') === 'smtp') {
                 throw ValidationException::withMessages([
-                    'email' => ['Failed to send OTP email. Please ensure your SMTP gateway is configured in the admin panel.'],
+                    'email' => ['Failed to send OTP verification email. Please verify SMTP gateway settings in the admin panel.'],
                 ]);
             }
         }

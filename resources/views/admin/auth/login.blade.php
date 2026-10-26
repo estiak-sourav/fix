@@ -342,7 +342,7 @@
               id="adminEmail" 
               name="email" 
               class="form-control" 
-              value="{{ old('email', 'admin@fix.com.bd') }}" 
+              value="{{ old('email') }}" 
               placeholder="admin@fix.com.bd"
               required 
               autofocus
@@ -364,7 +364,6 @@
               id="adminPassword" 
               name="password" 
               class="form-control" 
-              value="password123" 
               placeholder="••••••••••••"
               required
             >
@@ -384,7 +383,6 @@
               name="remember" 
               id="remember" 
               value="1" 
-              checked 
               style="width:16px; height:16px; accent-color:#3e60d5; border-radius:4px; cursor:pointer;"
             >
             <span>Remember Device</span>
@@ -399,11 +397,6 @@
             <polyline points="12 5 19 12 12 19"></polyline>
           </svg>
         </button>
-
-        <div class="credentials-chip">
-          <span>Demo Access:</span>
-          <span><code>admin@fix.com.bd</code> / <code>password123</code></span>
-        </div>
       </form>
     </div>
 

@@ -27,7 +27,6 @@ class OtpAuthController extends Controller
             'success' => true,
             'message' => "Verification code sent to {$result['email']} for {$actionWord}.",
             'purpose' => $result['purpose'] ?? 'login',
-            'debug_code' => app()->isLocal() ? $result['raw_otp'] : null,
         ]);
     }
 

@@ -205,12 +205,7 @@ async function handleSendOtp(e) {
       if (stepEmail) stepEmail.style.display = 'none';
       if (stepOtp) stepOtp.style.display = 'block';
 
-      let msg = data.message || 'Verification code sent successfully!';
-      if (data.debug_code) {
-        msg += `<div style="margin-top:8px; padding:8px 12px; background:#fef3c7; border:1px solid #fde68a; color:#92400e; border-radius:6px; font-weight:700; text-align:center;">Local Dev Code: <span style="font-size:1.25rem; letter-spacing:4px; font-family:monospace; color:#b45309;">${data.debug_code}</span></div>`;
-        const otpInput = document.getElementById('authOtpCode');
-        if (otpInput) otpInput.value = data.debug_code;
-      }
+      const msg = data.message || 'Verification code sent successfully!';
       showAuthNotice(msg, false);
 
       startResendCountdown(60);

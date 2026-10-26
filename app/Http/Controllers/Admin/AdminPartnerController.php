@@ -92,7 +92,7 @@ class AdminPartnerController extends Controller
             'approved_by_admin_id' => $admin?->id,
         ]);
 
-        ActivityLogService::logSystem('partner.approve', "Approved partner/crew '{$partner->company_name}' ({$partner->contact_person}). Added to dispatch network.", $partner);
+        ActivityLogService::logPartner('partner.approve', "Approved partner/crew '{$partner->company_name}' ({$partner->contact_person}). Added to dispatch network.", $partner);
 
         return redirect()->route('admin.partners.show', $partner)
             ->with('success', "Partner '{$partner->company_name}' has been approved and added to active field crew dispatch!");
@@ -113,7 +113,7 @@ class AdminPartnerController extends Controller
             'admin_notes' => $validated['admin_notes'] ?? $partner->admin_notes,
         ]);
 
-        ActivityLogService::logSystem('partner.status', "Changed status of '{$partner->company_name}' to {$validated['status']}.", $partner);
+        ActivityLogService::logPartner('partner.status', "Changed status of '{$partner->company_name}' to {$validated['status']}.", $partner);
 
         return back()->with('success', 'Partner status updated to '.ucfirst($validated['status']));
     }
@@ -126,7 +126,7 @@ class AdminPartnerController extends Controller
         $name = $partner->company_name;
         $partner->delete();
 
-        ActivityLogService::logSystem('partner.delete', "Deleted partner record for '{$name}'.");
+        ActivityLogService::logPartner('partner.delete', "Deleted partner record for '{$name}'.");
 
         return redirect()->route('admin.partners.index')->with('success', "Partner '{$name}' deleted.");
     }

@@ -104,13 +104,13 @@
                   name="password" 
                   id="password" 
                   class="form-control-paces" 
-                  value="{{ old('password', 'password123') }}" 
+                  value="{{ old('password') }}" 
                   placeholder="Min 8 characters" 
                   required
                 >
               </div>
               <small style="color:var(--paces-text-muted); font-size:0.78rem; display:block; margin-top:4px;">
-                Initial password provided to staff. Prefilled default: <code>password123</code>
+                Initial password provided to staff. Staff will be prompted to change it upon first login.
               </small>
             </div>
 
