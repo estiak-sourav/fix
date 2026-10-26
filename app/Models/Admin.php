@@ -60,6 +60,14 @@ class Admin extends Authenticatable
     }
 
     /**
+     * Check if administrator is an admin account.
+     */
+    public function isAdmin(): bool
+    {
+        return true;
+    }
+
+    /**
      * Check if administrator has super-admin privileges.
      */
     public function isSuperAdmin(): bool
@@ -127,6 +135,10 @@ class Admin extends Authenticatable
      */
     public function getAvatarUrlAttribute(): ?string
     {
-        return $this->avatar ? asset('storage/'.$this->avatar) : null;
+        if (! $this->avatar) {
+            return null;
+        }
+
+        return str_starts_with($this->avatar, 'http') ? $this->avatar : asset('storage/'.$this->avatar);
     }
 }

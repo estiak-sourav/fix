@@ -7,30 +7,38 @@
         </a>
       </div>
       <h1 class="page-header-title">{{ $partner->company_name }}</h1>
-      <p class="page-header-subtitle">Field contractor application review, trade credentials, and administrative payout setup</p>
     </div>
 
     <div>
       @php $badge = $partner->status_badge; @endphp
       <span class="badge-pill-paces {{ $badge['bg'] }}" style="color:{{ $badge['color'] }}; font-size:0.85rem; padding:6px 14px;">
-        ● {{ $badge['label'] }}
+        {{ $badge['label'] }}
       </span>
     </div>
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem;">
-      ✓ {{ session('success') }}
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" onclick="this.closest('div').remove()" style="background:none; border:none; color:inherit; cursor:pointer; padding:2px 6px; font-size:1.1rem; line-height:1; opacity:0.6; display:inline-flex; align-items:center;" title="Close" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
     </div>
   @endif
 
   @if($errors->any())
-    <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-size:0.875rem;">
+    <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-size:0.875rem; display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
       <ul style="margin:0; padding-left:18px;">
         @foreach($errors->all() as $err)
           <li>{{ $err }}</li>
         @endforeach
       </ul>
+      <button type="button" onclick="this.closest('div').remove()" style="background:none; border:none; color:inherit; cursor:pointer; padding:2px 6px; font-size:1.1rem; line-height:1; opacity:0.6; display:inline-flex; align-items:center;" title="Close" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
     </div>
   @endif
 
@@ -39,7 +47,6 @@
     <div class="card-paces">
       <div style="border-bottom:1px solid var(--paces-border); padding-bottom:0.75rem; margin-bottom:1rem;">
         <h3 class="card-title-paces" style="font-size:0.95rem; margin:0;">Applicant Profile (Web Submission)</h3>
-        <span style="font-size:0.75rem; color:var(--paces-text-muted);">Entered by partner during enlistment</span>
       </div>
 
       <div style="margin-bottom:14px;">
@@ -103,9 +110,6 @@
       <div class="card-paces">
         <div style="border-bottom:1px solid var(--paces-border); padding-bottom:1rem; margin-bottom:1.5rem;">
           <h3 class="card-title-paces" style="margin:0;">Administrative Credentials & Payout Setup</h3>
-          <p style="font-size:0.8rem; color:var(--paces-text-muted); margin:2px 0 0;">
-            Only administrators can configure partner contracting, entity type, and disbursement bank/MFS details.
-          </p>
         </div>
 
         <form action="{{ route('admin.partners.approve', $partner) }}" method="POST">

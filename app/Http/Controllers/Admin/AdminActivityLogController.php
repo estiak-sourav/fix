@@ -53,7 +53,7 @@ class AdminActivityLogController extends Controller
             'operational_actions' => AdminActivityLog::whereIn('category', ['bookings', 'tickets'])->count(),
         ];
 
-        $adminUsers = Admin::select('id', 'name', 'email')->orderBy('name')->get();
+        $adminUsers = Admin::select('id', 'name', 'email', 'avatar')->orderBy('name')->get();
 
         return view('admin.activity-logs.index', compact('logs', 'stats', 'adminUsers'));
     }

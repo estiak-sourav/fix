@@ -5,7 +5,6 @@
         <a href="{{ route('admin.users.index') }}" style="color:var(--paces-primary); text-decoration:none; font-size:0.85rem; font-weight:500;">← Back to Client Directory</a>
       </div>
       <h1 class="page-header-title">{{ $user->name }}</h1>
-      <p class="page-header-subtitle">Client account management, profile settings, and facility service history</p>
     </div>
     <div style="display:flex; gap:10px; align-items:center;">
       <a href="{{ route('admin.tickets.create', ['user_id' => $user->id]) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="display:inline-flex; align-items:center; gap:6px;">
@@ -27,8 +26,14 @@
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem;">
-      {{ session('success') }}
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" onclick="this.closest('div').remove()" style="background:none; border:none; color:inherit; cursor:pointer; padding:2px 6px; font-size:1.1rem; line-height:1; opacity:0.6; display:inline-flex; align-items:center;" title="Close" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
     </div>
   @endif
 
@@ -36,9 +41,13 @@
     <!-- Left Column: User Profile Card & Edit Form -->
     <div class="card-paces">
       <div style="text-align:center; padding-bottom:1.25rem; border-bottom:1px solid var(--paces-border); margin-bottom:1.25rem;">
-        <div style="width:72px; height:72px; border-radius:50%; background:var(--paces-primary); color:#ffffff; font-size:1.75rem; font-weight:500; display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">
-          {{ strtoupper(substr($user->name, 0, 1)) }}
-        </div>
+        @if($user->avatar_url)
+          <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" style="width:72px; height:72px; border-radius:50%; object-fit:cover; margin:0 auto 12px; display:block; border:2px solid var(--paces-border);">
+        @else
+          <div style="width:72px; height:72px; border-radius:50%; background:var(--paces-primary); color:#ffffff; font-size:1.75rem; font-weight:500; display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">
+            {{ strtoupper(substr($user->name, 0, 1)) }}
+          </div>
+        @endif
         <h3 style="font-size:1.15rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:4px;">{{ $user->name }}</h3>
         <div style="font-size:0.85rem; color:var(--paces-text-muted);">{{ $user->email }}</div>
 
@@ -58,13 +67,19 @@
       </div>
 
       <!-- Profile Update Form -->
-      <form action="{{ route('admin.users.update', $user) }}" method="POST">
+      <form action="{{ route('admin.users.update', $user) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
         @php
           $canEditUser = auth('admin')->user()?->hasPermission('users.edit');
         @endphp
+
+        <div style="margin-bottom:12px;">
+          <label class="form-label-paces">Profile Picture (Avatar)</label>
+          <input type="file" name="avatar" accept="image/*" class="form-control-paces" {{ $canEditUser ? '' : 'disabled' }}>
+          <span class="form-help-paces" style="font-size:0.75rem; color:var(--paces-text-muted); margin-top:2px; display:block;">Supported: JPG, PNG, WEBP (Max: 2MB)</span>
+        </div>
 
         <div style="margin-bottom:12px;">
           <label class="form-label-paces">Full Name</label>

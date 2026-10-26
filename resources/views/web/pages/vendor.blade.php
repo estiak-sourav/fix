@@ -104,18 +104,20 @@
       </div>
 
       @if(session('success'))
-        <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:16px 20px; border-radius:12px; margin-bottom:1.5rem; font-weight:500; font-size:0.95rem; text-align:center;">
-          ✓ {{ session('success') }}
+        <div data-alert style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:14px 20px; border-radius:12px; margin-bottom:1.5rem; font-weight:500; font-size:0.95rem; display:flex; align-items:center; justify-content:space-between;">
+          <span>✓ {{ session('success') }}</span>
+          <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#166534; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
         </div>
       @endif
 
       @if($errors->any())
-        <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:16px 20px; border-radius:12px; margin-bottom:1.5rem; font-size:0.9rem;">
+        <div data-alert style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:14px 20px; border-radius:12px; margin-bottom:1.5rem; font-size:0.9rem; display:flex; align-items:flex-start; justify-content:space-between;">
           <ul style="margin:0; padding-left:18px;">
             @foreach($errors->all() as $err)
               <li>{{ $err }}</li>
             @endforeach
           </ul>
+          <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
         </div>
       @endif
 

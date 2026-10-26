@@ -85,9 +85,12 @@
   </div>
 
   @if(session('success'))
-    <div style="background:#ecfdf5; border:1px solid #34d399; color:#065f46; padding:10px 16px; border-radius:6px; margin-bottom:1rem; display:flex; align-items:center; gap:8px; font-size:0.85rem;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-      <span>{{ session('success') }}</span>
+    <div data-alert style="background:#ecfdf5; border:1px solid #34d399; color:#065f46; padding:10px 16px; border-radius:6px; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; font-size:0.85rem;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#065f46; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
     </div>
   @endif
 
@@ -210,9 +213,18 @@
           Client Information
         </h4>
 
-        <div style="margin-bottom:12px;">
-          <div style="font-size:0.72rem; color:#94a3b8; text-transform:uppercase; font-weight:500;">Full Name</div>
-          <div style="font-size:0.95rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ $ticket->customer_name }}</div>
+        <div style="margin-bottom:12px; display:flex; align-items:center; gap:10px;">
+          @if($ticket->user?->avatar_url)
+            <img src="{{ $ticket->user->avatar_url }}" alt="{{ $ticket->customer_name }}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+          @else
+            <div style="width:38px; height:38px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:600; display:flex; align-items:center; justify-content:center; font-size:0.95rem; flex-shrink:0;">
+              {{ strtoupper(substr($ticket->customer_name ?: 'C', 0, 1)) }}
+            </div>
+          @endif
+          <div>
+            <div style="font-size:0.72rem; color:#94a3b8; text-transform:uppercase; font-weight:500;">Full Name</div>
+            <div style="font-size:0.95rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ $ticket->customer_name }}</div>
+          </div>
         </div>
 
         <div style="margin-bottom:12px;">

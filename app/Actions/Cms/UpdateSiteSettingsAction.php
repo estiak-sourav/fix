@@ -15,11 +15,16 @@ class UpdateSiteSettingsAction
      */
     public function execute(array $inputs, Request $request): void
     {
+        $uploadDir = public_path('uploads/branding');
+        if (! file_exists($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
         foreach ($inputs as $key => $value) {
             if ($request->hasFile($key)) {
                 $file = $request->file($key);
                 $filename = time().'_'.Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
-                $file->move(public_path('uploads/branding'), $filename);
+                $file->move($uploadDir, $filename);
                 $value = 'uploads/branding/'.$filename;
             }
 

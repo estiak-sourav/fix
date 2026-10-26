@@ -768,8 +768,19 @@
                   <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-top:2px;">{{ $b->created_at->format('M d, Y • h:i A') }}</div>
                 </td>
                 <td>
-                  <div style="font-weight:500; color:var(--paces-text-dark);">{{ $b->customer_name }}</div>
-                  <div style="font-size:0.75rem; color:var(--paces-text-muted);">{{ $b->customer_phone }}</div>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    @if($b->user?->avatar_url)
+                      <img src="{{ $b->user->avatar_url }}" alt="{{ $b->customer_name }}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+                    @else
+                      <div style="width:32px; height:32px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:600; display:flex; align-items:center; justify-content:center; font-size:0.8rem; flex-shrink:0;">
+                        {{ strtoupper(substr($b->customer_name ?: 'C', 0, 1)) }}
+                      </div>
+                    @endif
+                    <div>
+                      <div style="font-weight:500; color:var(--paces-text-dark);">{{ $b->customer_name }}</div>
+                      <div style="font-size:0.75rem; color:var(--paces-text-muted);">{{ $b->customer_phone }}</div>
+                    </div>
+                  </div>
                 </td>
                 <td>
                   <div style="font-weight:500; color:var(--paces-text-dark);">{{ $b->service?->title ?? ($b->amcPlan?->name ?? 'Custom Service') }}</div>

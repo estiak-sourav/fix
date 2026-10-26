@@ -128,3 +128,22 @@ Route::middleware('auth:web')->prefix('my-tickets')->name('customer.tickets.')->
     Route::get('/', [SupportTicketController::class, 'customerIndex'])->name('index');
     Route::get('/{ticketNumber}', [SupportTicketController::class, 'customerShow'])->name('show');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Legal & Compliance Pages
+|--------------------------------------------------------------------------
+*/
+Route::get('/terms', function () {
+    return view('web.pages.legal', [
+        'type' => 'terms',
+        'title' => 'Terms of Service',
+    ]);
+})->name('terms');
+
+Route::get('/privacy', function () {
+    return view('web.pages.legal', [
+        'type' => 'privacy',
+        'title' => 'Privacy Policy',
+    ]);
+})->name('privacy');

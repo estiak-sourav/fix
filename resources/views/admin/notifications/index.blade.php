@@ -2,7 +2,6 @@
   <div class="page-header-box">
     <div>
       <h1 class="page-header-title">Operations Notifications & Dispatch Alerts</h1>
-      <p class="page-header-subtitle">Real-time alerts, critical dispatch updates, and customer request stream</p>
     </div>
     <div style="display:flex; gap:10px; align-items:center;">
       @if($stats['unread_alerts'] > 0)
@@ -24,9 +23,14 @@
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:8px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-      {{ session('success') }}
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" onclick="this.closest('div').remove()" style="background:none; border:none; color:inherit; cursor:pointer; padding:2px 6px; font-size:1.1rem; line-height:1; opacity:0.6; display:inline-flex; align-items:center;" title="Close" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
     </div>
   @endif
 
@@ -34,9 +38,8 @@
   <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:1.5rem;">
     <!-- Total Alert Feed -->
     <div class="card-paces" style="margin-bottom:0; padding:12px 16px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
         <span style="font-size:0.8rem; font-weight:500; color:var(--paces-text-muted); text-transform:uppercase;">Total Alert Feed</span>
-        <span style="font-size:1.1rem;">🔔</span>
       </div>
       <div style="font-size:1.6rem; font-weight:500; color:var(--paces-text-dark); margin-top:4px; line-height:1.2;">
         {{ $stats['total_alerts'] }}
@@ -45,9 +48,8 @@
 
     <!-- Unread Alerts -->
     <div class="card-paces" style="margin-bottom:0; padding:12px 16px; border-left:3px solid #ef4444;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
         <span style="font-size:0.8rem; font-weight:500; color:#b91c1c; text-transform:uppercase;">Unread Alerts</span>
-        <span style="font-size:1.1rem;">⚠️</span>
       </div>
       <div style="font-size:1.6rem; font-weight:500; color:#dc2626; margin-top:4px; line-height:1.2;">
         {{ $stats['unread_alerts'] }}
@@ -56,9 +58,8 @@
 
     <!-- Emergency Requests -->
     <div class="card-paces" style="margin-bottom:0; padding:12px 16px; border-left:3px solid #dc2626;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
         <span style="font-size:0.8rem; font-weight:500; color:#dc2626; text-transform:uppercase;">Emergency Requests</span>
-        <span style="font-size:1.1rem;">⚡</span>
       </div>
       <div style="font-size:1.6rem; font-weight:500; color:#dc2626; margin-top:4px; line-height:1.2;">
         {{ $stats['emergency_alerts'] }}
@@ -67,9 +68,8 @@
 
     <!-- Work Order Inbound -->
     <div class="card-paces" style="margin-bottom:0; padding:12px 16px; border-left:3px solid var(--paces-primary);">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
         <span style="font-size:0.8rem; font-weight:500; color:var(--paces-text-muted); text-transform:uppercase;">Work Order Inbound</span>
-        <span style="font-size:1.1rem;">📋</span>
       </div>
       <div style="font-size:1.6rem; font-weight:500; color:var(--paces-primary); margin-top:4px; line-height:1.2;">
         {{ $stats['booking_alerts'] }}

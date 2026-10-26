@@ -114,6 +114,8 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
         // Site Settings & SMTP Gateway
         Route::get('/settings', [AdminCmsController::class, 'settings'])->name('settings')->middleware('admin.can:settings.view');
         Route::post('/settings', [AdminCmsController::class, 'updateSettings'])->name('settings.update')->middleware('admin.can:settings.edit');
+        Route::get('/smtp-settings', [AdminCmsController::class, 'smtpSettings'])->name('smtp-settings')->middleware('admin.can:settings.view');
+        Route::post('/smtp-settings', [AdminCmsController::class, 'updateSmtpSettings'])->name('smtp-settings.update')->middleware('admin.can:settings.edit');
         Route::post('/settings/test-smtp', [AdminCmsController::class, 'testSmtp'])->name('settings.test-smtp')->middleware('admin.can:settings.edit');
 
         // Services & Catalog

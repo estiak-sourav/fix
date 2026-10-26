@@ -183,14 +183,16 @@
 
     <main class="admin-body">
       @if(session('success'))
-        <div style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#34d399; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:600;">
-          {{ session('success') }}
+        <div data-alert style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#34d399; padding:0.85rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:600; display:flex; align-items:center; justify-content:space-between;">
+          <span>{{ session('success') }}</span>
+          <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#34d399; cursor:pointer; font-size:1.2rem; line-height:1; padding:0 4px;" aria-label="Close">&times;</button>
         </div>
       @endif
 
       @if(session('error'))
-        <div style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#f87171; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:600;">
-          {{ session('error') }}
+        <div data-alert style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#f87171; padding:0.85rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:600; display:flex; align-items:center; justify-content:space-between;">
+          <span>{{ session('error') }}</span>
+          <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:1.2rem; line-height:1; padding:0 4px;" aria-label="Close">&times;</button>
         </div>
       @endif
 
@@ -279,8 +281,11 @@
         animation: slideIn 0.3s ease;
       `;
       toast.innerHTML = `
-        <div style="font-weight:800; font-size:0.95rem; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
-          ${isEmergency ? '🚨' : '🔔'} ${title}
+        <div style="font-weight:800; font-size:0.95rem; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            ${isEmergency ? '🚨' : '🔔'} ${title}
+          </div>
+          <button type="button" onclick="this.closest('div[style*=\\'position\\'], div[style*=\\'box-shadow\\']').remove()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 0 0 8px; opacity:0.85;" aria-label="Close">&times;</button>
         </div>
         <div style="font-size:0.85rem; color:#f1f5f9;">${message}</div>
       `;

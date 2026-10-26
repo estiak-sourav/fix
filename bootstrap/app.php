@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AuthorizeAdminPermission;
+use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\EnsureAdminPasswordUpdated;
 use App\Http\Middleware\TrackWebsiteVisitor;
 use Illuminate\Foundation\Application;
@@ -32,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            CheckMaintenanceMode::class,
             TrackWebsiteVisitor::class,
         ]);
 

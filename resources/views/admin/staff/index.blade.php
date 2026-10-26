@@ -2,7 +2,6 @@
   <div class="page-header-box" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
     <div>
       <h1 class="page-header-title">Admin Staff & Role Permissions</h1>
-      <p class="page-header-subtitle">Manage administrative team members, assign modular feature permissions, and enforce secure first-login credential rotation</p>
     </div>
     @if(auth('admin')->user()?->hasPermission('staff_management.edit'))
       <a href="{{ route('admin.staff.create') }}" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:8px;">
@@ -13,16 +12,26 @@
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:8px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-      {{ session('success') }}
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" onclick="this.closest('div').remove()" style="background:none; border:none; color:inherit; cursor:pointer; padding:2px 6px; font-size:1.1rem; line-height:1; opacity:0.6; display:inline-flex; align-items:center;" title="Close" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
     </div>
   @endif
 
   @if(session('error'))
-    <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:8px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-      {{ session('error') }}
+    <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <span>{{ session('error') }}</span>
+      </div>
+      <button type="button" onclick="this.closest('div').remove()" style="background:none; border:none; color:inherit; cursor:pointer; padding:2px 6px; font-size:1.1rem; line-height:1; opacity:0.6; display:inline-flex; align-items:center;" title="Close" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
     </div>
   @endif
 
@@ -36,9 +45,6 @@
         </div>
       </div>
       <div class="metric-value">{{ $stats['total_staff'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-text-muted);">
-        Registered operations accounts
-      </div>
     </div>
 
     <div class="metric-card-paces">
@@ -49,9 +55,6 @@
         </div>
       </div>
       <div class="metric-value" style="color:var(--paces-success);">{{ $stats['active_staff'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-success); font-weight:500;">
-        Authorized login sessions
-      </div>
     </div>
 
     <div class="metric-card-paces">
@@ -62,9 +65,6 @@
         </div>
       </div>
       <div class="metric-value" style="color:var(--paces-info);">{{ $stats['super_admins'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-text-muted);">
-        Full system bypass privileges
-      </div>
     </div>
 
     <div class="metric-card-paces">
@@ -75,9 +75,6 @@
         </div>
       </div>
       <div class="metric-value" style="color:var(--paces-warning);">{{ $stats['pending_password_change'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-text-muted);">
-        Default password rotation required
-      </div>
     </div>
   </div>
 
@@ -146,9 +143,13 @@
             <tr>
               <td>
                 <div style="display:flex; align-items:center; gap:12px;">
-                  <div style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #3e60d5 0%, #1e293b 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:500; font-size:0.95rem; flex-shrink:0;">
-                    {{ strtoupper(substr($member->name, 0, 1)) }}
-                  </div>
+                  @if($member->avatar_url)
+                    <img src="{{ $member->avatar_url }}" alt="{{ $member->name }}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+                  @else
+                    <div style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #3e60d5 0%, #1e293b 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:0.95rem; flex-shrink:0;">
+                      {{ strtoupper(substr($member->name, 0, 1)) }}
+                    </div>
+                  @endif
                   <div>
                     <div style="font-weight:500; color:var(--paces-text); font-size:0.9rem;">
                       {{ $member->name }}

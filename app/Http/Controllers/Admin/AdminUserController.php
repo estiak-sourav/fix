@@ -9,6 +9,7 @@ use App\Services\ActivityLogService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AdminUserController extends Controller
 {
@@ -101,6 +102,7 @@ class AdminUserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'company_name' => ['nullable', 'string', 'max:255'],
             'property_type' => ['nullable', 'string', 'max:50'],
             'default_address' => ['nullable', 'string', 'max:500'],
@@ -108,6 +110,13 @@ class AdminUserController extends Controller
             'district' => ['nullable', 'string', 'max:50'],
             'is_active' => ['nullable', 'boolean'],
         ]);
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $validated['avatar'] = $request->file('avatar')->store('avatars/users', 'public');
+        }
 
         $validated['is_active'] = $request->boolean('is_active');
 

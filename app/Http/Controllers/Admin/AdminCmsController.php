@@ -23,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class AdminCmsController extends Controller
@@ -68,7 +69,38 @@ class AdminCmsController extends Controller
 
         ActivityLogService::logSettings('settings.update', 'Updated site settings & configuration.');
 
-        return redirect()->back()->with('success', 'Site & SMTP settings updated successfully.');
+        return redirect()->back()->with('success', 'General site settings updated successfully.');
+    }
+
+    /**
+     * Dedicated SMTP Gateway Setup view.
+     */
+    public function smtpSettings(): View
+    {
+        $mailConfig = [
+            'mail_mailer' => SiteSetting::get('mail_mailer', config('mail.default', 'smtp')),
+            'mail_host' => SiteSetting::get('mail_host', config('mail.mailers.smtp.host', 'smtp.gmail.com')),
+            'mail_port' => SiteSetting::get('mail_port', config('mail.mailers.smtp.port', 587)),
+            'mail_encryption' => SiteSetting::get('mail_encryption', config('mail.mailers.smtp.encryption', 'tls')),
+            'mail_username' => SiteSetting::get('mail_username', config('mail.mailers.smtp.username')),
+            'mail_password' => SiteSetting::get('mail_password', config('mail.mailers.smtp.password')),
+            'mail_from_address' => SiteSetting::get('mail_from_address', config('mail.from.address', 'noreply@fix.com.bd')),
+            'mail_from_name' => SiteSetting::get('mail_from_name', config('mail.from.name', 'FIX Operations')),
+        ];
+
+        return view('admin.cms.smtp', compact('mailConfig'));
+    }
+
+    /**
+     * Update SMTP Gateway settings.
+     */
+    public function updateSmtpSettings(UpdateSiteSettingsRequest $request, UpdateSiteSettingsAction $action): RedirectResponse
+    {
+        $action->execute($request->except(['_token', '_method']), $request);
+
+        ActivityLogService::logSettings('settings.smtp_update', 'Updated SMTP gateway configuration.');
+
+        return redirect()->back()->with('success', 'SMTP Gateway configuration updated successfully.');
     }
 
     /**
@@ -382,7 +414,8 @@ class AdminCmsController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['order'] = $validated['order'] ?? (Faq::max('order') + 1);
 
-        Faq::create($validated);
+        $faq = Faq::create($validated);
+        ActivityLogService::logContent('faq.create', "Created FAQ '{$faq->question}'.", $faq);
 
         return redirect()->back()->with('success', 'New FAQ added successfully.');
     }
@@ -403,6 +436,7 @@ class AdminCmsController extends Controller
         $validated['is_active'] = $request->boolean('is_active');
 
         $faq->update($validated);
+        ActivityLogService::logContent('faq.update', "Updated FAQ '{$faq->question}'.", $faq);
 
         return redirect()->back()->with('success', 'FAQ updated successfully.');
     }
@@ -412,7 +446,9 @@ class AdminCmsController extends Controller
      */
     public function deleteFaq(Faq $faq): RedirectResponse
     {
+        $q = $faq->question;
         $faq->delete();
+        ActivityLogService::logContent('faq.delete', "Deleted FAQ '{$q}'.");
 
         return redirect()->back()->with('success', 'FAQ deleted successfully.');
     }
@@ -428,7 +464,7 @@ class AdminCmsController extends Controller
     }
 
     /**
-     * Store Testimonial.
+     * Store Testimonial with image upload support.
      */
     public function storeTestimonial(Request $request): RedirectResponse
     {
@@ -438,6 +474,7 @@ class AdminCmsController extends Controller
             'company_name' => ['nullable', 'string', 'max:255'],
             'rating' => ['required', 'integer', 'between:1,5'],
             'quote' => ['required', 'string'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'is_featured' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -446,13 +483,18 @@ class AdminCmsController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['order'] = Testimonial::max('order') + 1;
 
-        Testimonial::create($validated);
+        if ($request->hasFile('avatar')) {
+            $validated['avatar_path'] = $request->file('avatar')->store('testimonials', 'public');
+        }
+
+        $testimonial = Testimonial::create($validated);
+        ActivityLogService::logContent('testimonial.create', "Created testimonial for '{$testimonial->client_name}'.", $testimonial);
 
         return redirect()->back()->with('success', 'Testimonial added successfully.');
     }
 
     /**
-     * Update Testimonial.
+     * Update Testimonial with avatar replacement and removal.
      */
     public function updateTestimonial(Testimonial $testimonial, Request $request): RedirectResponse
     {
@@ -462,6 +504,8 @@ class AdminCmsController extends Controller
             'company_name' => ['nullable', 'string', 'max:255'],
             'rating' => ['required', 'integer', 'between:1,5'],
             'quote' => ['required', 'string'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'remove_avatar' => ['nullable', 'boolean'],
             'is_featured' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -469,17 +513,38 @@ class AdminCmsController extends Controller
         $validated['is_featured'] = $request->boolean('is_featured');
         $validated['is_active'] = $request->boolean('is_active');
 
+        if ($request->boolean('remove_avatar') && $testimonial->avatar_path) {
+            if (! str_starts_with($testimonial->avatar_path, 'http://') && ! str_starts_with($testimonial->avatar_path, 'https://')) {
+                Storage::disk('public')->delete($testimonial->avatar_path);
+            }
+            $validated['avatar_path'] = null;
+        }
+
+        if ($request->hasFile('avatar')) {
+            if ($testimonial->avatar_path && ! str_starts_with($testimonial->avatar_path, 'http://') && ! str_starts_with($testimonial->avatar_path, 'https://')) {
+                Storage::disk('public')->delete($testimonial->avatar_path);
+            }
+            $validated['avatar_path'] = $request->file('avatar')->store('testimonials', 'public');
+        }
+
         $testimonial->update($validated);
+        ActivityLogService::logContent('testimonial.update', "Updated testimonial for '{$testimonial->client_name}'.", $testimonial);
 
         return redirect()->back()->with('success', 'Testimonial updated successfully.');
     }
 
     /**
-     * Delete Testimonial.
+     * Delete Testimonial and remove uploaded file.
      */
     public function deleteTestimonial(Testimonial $testimonial): RedirectResponse
     {
+        if ($testimonial->avatar_path && ! str_starts_with($testimonial->avatar_path, 'http://') && ! str_starts_with($testimonial->avatar_path, 'https://')) {
+            Storage::disk('public')->delete($testimonial->avatar_path);
+        }
+
+        $name = $testimonial->client_name;
         $testimonial->delete();
+        ActivityLogService::logContent('testimonial.delete', "Deleted testimonial for '{$name}'.");
 
         return redirect()->back()->with('success', 'Testimonial deleted successfully.');
     }

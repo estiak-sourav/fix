@@ -47,7 +47,7 @@
             <li><a href="{{ route('customer.bookings') }}" class="dropdown-item">My Bookings</a></li>
             <li><a href="{{ route('customer.tickets.index') }}" class="dropdown-item">Support Tickets</a></li>
             <li><a href="{{ route('customer.profile') }}" class="dropdown-item">Profile Settings</a></li>
-            @if(auth()->user()->isAdmin())
+            @if(method_exists(auth()->user(), 'isAdmin') && auth()->user()->isAdmin())
               <li><a href="/admin" target="_blank" class="dropdown-item" style="color:var(--accent); font-weight:700;">Admin Panel ↗</a></li>
             @endif
             <li>

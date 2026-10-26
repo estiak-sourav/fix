@@ -15,7 +15,13 @@
           <div class="testimonial-stars">{{ str_repeat('★', $t->rating) }}</div>
           <p>"{{ $t->quote }}"</p>
           <div class="testimonial-author">
-            <img src="{{ $t->avatar_path }}" alt="{{ $t->client_name }}" class="author-avatar">
+            @if($t->avatar_url)
+              <img src="{{ $t->avatar_url }}" alt="{{ $t->client_name }}" class="author-avatar">
+            @else
+              <div class="author-avatar" style="background:#3e60d5; color:#ffffff; display:inline-flex; align-items:center; justify-content:center; font-weight:600; font-size:1.05rem; border-radius:50%; width:44px; height:44px; flex-shrink:0;">
+                {{ strtoupper(substr($t->client_name, 0, 1)) }}
+              </div>
+            @endif
             <div class="author-info">
               <h5>{{ $t->client_name }}</h5>
               <span>{{ $t->client_title }}, {{ $t->company_name }}</span>

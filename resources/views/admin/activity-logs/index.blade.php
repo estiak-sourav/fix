@@ -2,7 +2,6 @@
   <div class="page-header-box" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
     <div>
       <h1 class="page-header-title">Administrative Activity Logs</h1>
-      <p class="page-header-subtitle">Chronological audit trail of all operations center actions, authentication logins, permission assignments, and system modifications</p>
     </div>
   </div>
 
@@ -16,9 +15,6 @@
         </div>
       </div>
       <div class="metric-value">{{ number_format($stats['total_activities']) }}</div>
-      <div class="metric-subtext" style="color:var(--paces-text-muted);">
-        All-time recorded security events
-      </div>
     </div>
 
     <div class="metric-card-paces">
@@ -29,9 +25,6 @@
         </div>
       </div>
       <div class="metric-value" style="color:var(--paces-info);">{{ number_format($stats['today_activities']) }}</div>
-      <div class="metric-subtext" style="color:var(--paces-info); font-weight:500;">
-        Recorded since 12:00 AM today
-      </div>
     </div>
 
     <div class="metric-card-paces">
@@ -42,9 +35,6 @@
         </div>
       </div>
       <div class="metric-value" style="color:var(--paces-warning);">{{ number_format($stats['staff_actions']) }}</div>
-      <div class="metric-subtext" style="color:var(--paces-text-muted);">
-        Staff account & permission changes
-      </div>
     </div>
 
     <div class="metric-card-paces">
@@ -55,9 +45,6 @@
         </div>
       </div>
       <div class="metric-value" style="color:var(--paces-success);">{{ number_format($stats['operational_actions']) }}</div>
-      <div class="metric-subtext" style="color:var(--paces-text-muted);">
-        Dispatches & client support updates
-      </div>
     </div>
   </div>
 
@@ -163,9 +150,13 @@
               <!-- Actor -->
               <td style="vertical-align:top;">
                 <div style="display:flex; align-items:center; gap:10px;">
-                  <div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, #3e60d5 0%, #1e293b 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:500; font-size:0.85rem; flex-shrink:0;">
-                    {{ strtoupper(substr($log->admin_name ?: 'S', 0, 1)) }}
-                  </div>
+                  @if($log->admin?->avatar_url)
+                    <img src="{{ $log->admin->avatar_url }}" alt="{{ $log->admin_name }}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+                  @else
+                    <div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, #3e60d5 0%, #1e293b 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:0.85rem; flex-shrink:0;">
+                      {{ strtoupper(substr($log->admin_name ?: 'S', 0, 1)) }}
+                    </div>
+                  @endif
                   <div>
                     <div style="font-weight:500; color:var(--paces-text); font-size:0.875rem;">
                       {{ $log->admin_name ?: 'System Automation' }}

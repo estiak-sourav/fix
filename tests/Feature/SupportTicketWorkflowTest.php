@@ -137,11 +137,11 @@ class SupportTicketWorkflowTest extends TestCase
         $indexRes->assertSee($ticket->ticket_number);
         $indexRes->assertSee('Elevator lift motor unusual vibration');
 
-        // Visit customer ticket details with step-by-step chatting flow
+        // Visit customer ticket details
         $detailRes = $this->actingAs($user, 'web')->get(route('customer.tickets.show', $ticket->ticket_number));
         $detailRes->assertStatus(200);
-        $detailRes->assertSee('Step 1 ➔ My Message');
-        $detailRes->assertSee('Resolution Progress Pipeline (Step-by-Step Flow)');
+        $detailRes->assertSee('Support Conversation');
+        $detailRes->assertSee('Elevator lift motor unusual vibration');
     }
 
     /**
@@ -176,11 +176,10 @@ class SupportTicketWorkflowTest extends TestCase
         $this->assertNull($ticket->closed_at);
         $this->assertCount(2, $ticket->messages);
 
-        // Check step-by-step indicator shows 2 steps and arrow connector
+        // Check messages are displayed
         $detailRes = $this->actingAs($user, 'web')->get(route('customer.tickets.show', $ticket->ticket_number));
-        $detailRes->assertSee('Step 1 ➔ My Message');
-        $detailRes->assertSee('Step 2 ➔ My Message');
-        $detailRes->assertSee('↓ Step 1 ➔ Step 2');
+        $detailRes->assertSee('Original request regarding generator fuel sensors.');
+        $detailRes->assertSee('The issue occurred again today during testing. Please inspect relay circuit.');
     }
 
     /**

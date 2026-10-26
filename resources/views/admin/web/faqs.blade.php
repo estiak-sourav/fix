@@ -1,120 +1,335 @@
 <x-layouts.admin title="FAQs Knowledgebase | FIX Admin">
-  <div class="page-header-box">
+  <div class="page-header-box" style="margin-bottom:1.25rem;">
     <div>
-      <h1 class="page-header-title">❓ FAQs Knowledgebase Management</h1>
-      <p class="page-header-subtitle">Manage customer questions, answers, and categorical knowledge displayed on the website</p>
+      <h1 class="page-header-title">Web Content</h1>
+      <p class="page-header-subtitle">Manage customer frequently asked questions, answers, and category classifications</p>
     </div>
-    <div style="display:flex; gap:10px;">
-      <a href="{{ route('admin.web.index') }}" class="btn-paces btn-paces-primary" style="background:#475569; border-color:#475569;">
-        ← Back to Web Control
+    <div style="display:flex; gap:10px; align-items:center;">
+      <a href="/" target="_blank" class="btn-paces btn-paces-outline btn-paces-sm" style="display:inline-flex; align-items:center; gap:6px;">
+        <span>View Live Website</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
       </a>
+      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddFaqModal()" style="display:inline-flex; align-items:center; gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>+ Add New FAQ</span>
+      </button>
     </div>
   </div>
 
+  <!-- Content Navigation Tabs -->
+  <div style="display:flex; gap:8px; border-bottom:1px solid var(--paces-border); margin-bottom:1.5rem; max-width:960px;">
+    <a href="{{ route('admin.web.contents') }}" style="padding:0.6rem 1.25rem; font-size:0.88rem; font-weight:500; color:var(--paces-text-muted); text-decoration:none; border-bottom:2px solid transparent; display:flex; align-items:center; gap:6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+      Section Content
+    </a>
+    <a href="{{ route('admin.web.faqs') }}" style="padding:0.6rem 1.25rem; font-size:0.88rem; font-weight:600; color:var(--paces-primary); text-decoration:none; border-bottom:2px solid var(--paces-primary); display:flex; align-items:center; gap:6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      FAQs Knowledgebase
+    </a>
+    <a href="{{ route('admin.web.testimonials') }}" style="padding:0.6rem 1.25rem; font-size:0.88rem; font-weight:500; color:var(--paces-text-muted); text-decoration:none; border-bottom:2px solid transparent; display:flex; align-items:center; gap:6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+      Client Testimonials
+    </a>
+  </div>
+
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:center; gap:8px;">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-      {{ session('success') }}
+    <div data-alert style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:0.85rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#16a34a; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
     </div>
   @endif
 
-  <div style="display:grid; grid-template-columns: 1fr 2fr; gap:1.5rem; align-items:flex-start;">
-    
-    <!-- Add New FAQ Card -->
-    <div class="card-paces">
-      <h3 class="card-title-paces" style="margin-bottom:1rem;">Add New FAQ</h3>
+  @if($errors->any())
+    <div data-alert style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:0.85rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:flex-start; justify-content:space-between;">
+      <div>
+        <div style="font-weight:600; margin-bottom:4px;">Please correct the following errors:</div>
+        <ul style="margin:0; padding-left:1.25rem; font-size:0.88rem;">
+          @foreach($errors->all() as $err)
+            <li>{{ $err }}</li>
+          @endforeach
+        </ul>
+      </div>
+      <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
+    </div>
+  @endif
+
+  <!-- Existing FAQs List Table Card -->
+  <div class="card-paces">
+    <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.85rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h3 class="card-title-paces" style="margin:0;">
+          FAQs Knowledgebase List ({{ $faqs->total() }})
+        </h3>
+        <p style="margin:3px 0 0; font-size:0.82rem; color:var(--paces-text-muted);">
+          All published questions, answers, and category groupings for the public help center
+        </p>
+      </div>
+      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddFaqModal()" style="display:inline-flex; align-items:center; gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>+ Add New FAQ</span>
+      </button>
+    </div>
+
+    <div class="table-responsive-paces">
+      <table class="table-paces">
+        <thead>
+          <tr>
+            <th style="width:140px;">Category</th>
+            <th style="width:280px;">Question</th>
+            <th>Detailed Answer</th>
+            <th style="width:80px; text-align:center;">Order</th>
+            <th style="width:110px;">Status</th>
+            <th style="width:110px; text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($faqs as $faq)
+            @php
+              $faqData = [
+                'id' => $faq->id,
+                'category' => $faq->category,
+                'question' => $faq->question,
+                'answer' => $faq->answer,
+                'order' => $faq->order,
+                'is_active' => (bool)$faq->is_active,
+                'update_url' => route('admin.web.faqs.update', $faq),
+                'delete_url' => route('admin.web.faqs.destroy', $faq),
+              ];
+            @endphp
+            <tr>
+              <td>
+                <span class="badge-pill-paces bg-primary-subtle" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.03em;">
+                  {{ $faq->category }}
+                </span>
+              </td>
+              <td>
+                <div style="font-weight:600; color:var(--paces-text-dark); font-size:0.9rem; line-height:1.4;">
+                  {{ $faq->question }}
+                </div>
+              </td>
+              <td>
+                <p style="margin:0; font-size:0.85rem; color:#475569; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                  {{ $faq->answer }}
+                </p>
+              </td>
+              <td style="text-align:center;">
+                <span style="font-size:0.82rem; font-weight:600; color:var(--paces-text-muted);">
+                  {{ $faq->order }}
+                </span>
+              </td>
+              <td>
+                @if($faq->is_active)
+                  <span class="badge-pill-paces bg-success-subtle" style="font-size:0.72rem;">● Active</span>
+                @else
+                  <span class="badge-pill-paces bg-danger-subtle" style="font-size:0.72rem;">○ Inactive</span>
+                @endif
+              </td>
+              <td style="text-align:right;">
+                <button type="button" 
+                        class="btn-paces btn-paces-primary btn-paces-sm" 
+                        onclick="openEditFaqModal({{ json_encode($faqData) }})"
+                        style="display:inline-flex; align-items:center; gap:5px; padding:0.35rem 0.75rem;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  <span>Edit</span>
+                </button>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="6" style="text-align:center; padding:2.5rem; color:var(--paces-text-muted);">
+                <div style="font-size:1.8rem; margin-bottom:8px;">❓</div>
+                <div style="font-weight:500;">No FAQs found.</div>
+                <p style="margin:4px 0 12px; font-size:0.82rem;">Add answers to common customer questions.</p>
+                <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddFaqModal()">
+                  + Add New FAQ
+                </button>
+              </td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+
+    @if($faqs->hasPages())
+      <div style="margin-top:1.25rem;">
+        {{ $faqs->links() }}
+      </div>
+    @endif
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 1. ADD FAQ MODAL                               -->
+  <!-- ============================================== -->
+  <div id="addFaqModal" class="modal-backdrop-paces" style="display:none;">
+    <div class="modal-dialog-paces" style="max-width:620px;">
+      <div class="modal-header-paces">
+        <h3 class="modal-title-paces">+ Add New FAQ</h3>
+        <button type="button" class="modal-close-btn" onclick="closeAddFaqModal()">✕</button>
+      </div>
+
       <form action="{{ route('admin.web.faqs.store') }}" method="POST">
         @csrf
-
-        <div style="margin-bottom:1rem;">
-          <label class="form-label-paces">Category *</label>
-          <input type="text" name="category" required placeholder="e.g. General, Booking, AMC" class="form-control-paces" value="General">
-        </div>
-
-        <div style="margin-bottom:1rem;">
-          <label class="form-label-paces">Question *</label>
-          <input type="text" name="question" required placeholder="e.g. What is the emergency response SLA?" class="form-control-paces">
-        </div>
-
-        <div style="margin-bottom:1rem;">
-          <label class="form-label-paces">Detailed Answer *</label>
-          <textarea name="answer" required rows="4" placeholder="Enter clear explanation for clients..." class="form-control-paces"></textarea>
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:1.25rem;">
-          <div>
-            <label class="form-label-paces">Display Order</label>
-            <input type="number" name="order" value="1" class="form-control-paces">
+        <div class="modal-body-paces">
+          <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:1rem;">
+            <div>
+              <label class="form-label-paces">Category *</label>
+              <input type="text" name="category" required placeholder="e.g. General, Booking, AMC, Billing" class="form-control-paces" value="General">
+            </div>
+            <div>
+              <label class="form-label-paces">Display Order</label>
+              <input type="number" name="order" value="{{ $faqs->total() + 1 }}" class="form-control-paces">
+            </div>
           </div>
-          <div style="display:flex; align-items:flex-end; padding-bottom:6px;">
-            <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:500; cursor:pointer;">
-              <input type="checkbox" name="is_active" value="1" checked>
-              Active / Visible
+
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-paces">Question *</label>
+            <input type="text" name="question" required placeholder="e.g. What is the emergency response SLA?" class="form-control-paces">
+          </div>
+
+          <div style="margin-bottom:1.25rem;">
+            <label class="form-label-paces">Detailed Answer *</label>
+            <textarea name="answer" required rows="5" placeholder="Enter clear, helpful explanation for customers and building owners..." class="form-control-paces"></textarea>
+          </div>
+
+          <div style="background:#f8fafc; border-radius:8px; padding:10px 14px; border:1px solid var(--paces-border);">
+            <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.88rem; font-weight:500; cursor:pointer;">
+              <input type="checkbox" name="is_active" value="1" checked style="accent-color:var(--paces-primary);">
+              Active / Visible on Help Center
             </label>
           </div>
         </div>
 
-        <button type="submit" class="btn-paces btn-paces-primary" style="width:100%;">
-          Publish New FAQ
-        </button>
+        <div class="modal-footer-paces">
+          <button type="button" class="btn-paces btn-paces-outline" onclick="closeAddFaqModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:6px;">
+            <span>Publish FAQ</span>
+          </button>
+        </div>
       </form>
     </div>
+  </div>
 
-    <!-- Existing FAQs Table -->
-    <div class="card-paces">
-      <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.75rem; margin-bottom:1rem;">
-        <h3 class="card-title-paces">Existing FAQs ({{ $faqs->total() }})</h3>
+  <!-- ============================================== -->
+  <!-- 2. EDIT FAQ MODAL (With Edit & Delete)         -->
+  <!-- ============================================== -->
+  <div id="editFaqModal" class="modal-backdrop-paces" style="display:none;">
+    <div class="modal-dialog-paces" style="max-width:620px;">
+      <div class="modal-header-paces">
+        <h3 class="modal-title-paces" id="editFaqModalHeaderTitle">Edit FAQ</h3>
+        <button type="button" class="modal-close-btn" onclick="closeEditFaqModal()">✕</button>
       </div>
 
-      <div style="display:flex; flex-direction:column; gap:12px;">
-        @forelse($faqs as $faq)
-          <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:10px; padding:1.2rem;">
-            <form action="{{ route('admin.web.faqs.update', $faq) }}" method="POST">
-              @csrf
-              @method('PUT')
+      <form id="editFaqForm" method="POST" action="">
+        @csrf
+        @method('PUT')
 
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span class="badge-pill-paces bg-primary-subtle" style="font-size:0.75rem;">
-                  {{ $faq->category }}
-                </span>
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <label style="display:inline-flex; align-items:center; gap:4px; font-size:0.8rem; font-weight:500; cursor:pointer;">
-                    <input type="checkbox" name="is_active" value="1" {{ $faq->is_active ? 'checked' : '' }}>
-                    Active
-                  </label>
-                  <button type="submit" class="btn-paces btn-paces-primary" style="padding:0.35rem 0.75rem; font-size:0.75rem;">
-                    Update
-                  </button>
-                </div>
-              </div>
-
-              <div style="margin-bottom:8px;">
-                <input type="hidden" name="category" value="{{ $faq->category }}">
-                <input type="hidden" name="order" value="{{ $faq->order }}">
-                <input type="text" name="question" value="{{ $faq->question }}" class="form-control-paces" style="font-weight:500; background:#ffffff; font-size:0.92rem; margin-bottom:6px;" required>
-                <textarea name="answer" rows="2" class="form-control-paces" style="background:#ffffff; font-size:0.85rem;" required>{{ $faq->answer }}</textarea>
-              </div>
-            </form>
-
-            <div style="display:flex; justify-content:flex-end; margin-top:6px;">
-              <form action="{{ route('admin.web.faqs.destroy', $faq) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this FAQ?');" style="margin:0;">
-                @csrf
-                @method('DELETE')
-                <button type="submit" style="background:none; border:none; color:#ef4444; font-size:0.78rem; font-weight:500; cursor:pointer;">
-                  🗑️ Delete FAQ
-                </button>
-              </form>
+        <div class="modal-body-paces">
+          <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:1rem;">
+            <div>
+              <label class="form-label-paces">Category *</label>
+              <input type="text" name="category" id="editFaqCategory" required class="form-control-paces">
+            </div>
+            <div>
+              <label class="form-label-paces">Display Order</label>
+              <input type="number" name="order" id="editFaqOrder" class="form-control-paces">
             </div>
           </div>
-        @empty
-          <p style="color:var(--paces-text-muted); font-size:0.85rem;">No FAQs added yet.</p>
-        @endforelse
-      </div>
 
-      <div style="margin-top:1.25rem;">
-        {{ $faqs->links() }}
-      </div>
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-paces">Question *</label>
+            <input type="text" name="question" id="editFaqQuestion" required class="form-control-paces">
+          </div>
+
+          <div style="margin-bottom:1.25rem;">
+            <label class="form-label-paces">Detailed Answer *</label>
+            <textarea name="answer" id="editFaqAnswer" required rows="5" class="form-control-paces"></textarea>
+          </div>
+
+          <div style="background:#f8fafc; border-radius:8px; padding:10px 14px; border:1px solid var(--paces-border);">
+            <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.88rem; font-weight:500; cursor:pointer;">
+              <input type="checkbox" name="is_active" id="editFaqIsActive" value="1" style="accent-color:var(--paces-primary);">
+              Active / Visible on Help Center
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer-paces" style="justify-content:space-between;">
+          <button type="button" class="btn-paces btn-paces-danger" onclick="triggerDeleteFaq()" style="display:inline-flex; align-items:center; gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <span>Delete FAQ</span>
+          </button>
+
+          <div style="display:flex; gap:10px;">
+            <button type="button" class="btn-paces btn-paces-outline" onclick="closeEditFaqModal()">
+              Cancel
+            </button>
+            <button type="submit" class="btn-paces btn-paces-primary">
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
-
   </div>
+
+  <!-- Separate Hidden Delete Form -->
+  <form id="deleteFaqForm" method="POST" action="" style="display:none;">
+    @csrf
+    @method('DELETE')
+  </form>
+
+  <script>
+    function openAddFaqModal() {
+      const modal = document.getElementById('addFaqModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeAddFaqModal() {
+      const modal = document.getElementById('addFaqModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    let activeFaqDeleteUrl = '';
+
+    function openEditFaqModal(data) {
+      const form = document.getElementById('editFaqForm');
+      form.action = data.update_url;
+      activeFaqDeleteUrl = data.delete_url;
+
+      document.getElementById('editFaqModalHeaderTitle').textContent = 'Edit FAQ: ' + data.question.substring(0, 35) + '...';
+      document.getElementById('editFaqCategory').value = data.category || '';
+      document.getElementById('editFaqOrder').value = data.order || 1;
+      document.getElementById('editFaqQuestion').value = data.question || '';
+      document.getElementById('editFaqAnswer').value = data.answer || '';
+      document.getElementById('editFaqIsActive').checked = Boolean(data.is_active);
+
+      document.getElementById('editFaqModal').style.display = 'flex';
+    }
+
+    function closeEditFaqModal() {
+      document.getElementById('editFaqModal').style.display = 'none';
+    }
+
+    function triggerDeleteFaq() {
+      if (!confirm('Are you sure you want to permanently delete this FAQ?')) {
+        return;
+      }
+      const delForm = document.getElementById('deleteFaqForm');
+      delForm.action = activeFaqDeleteUrl;
+      delForm.submit();
+    }
+
+    // Close on backdrop click
+    window.addEventListener('click', function(e) {
+      const addModal = document.getElementById('addFaqModal');
+      const editModal = document.getElementById('editFaqModal');
+      if (e.target === addModal) closeAddFaqModal();
+      if (e.target === editModal) closeEditFaqModal();
+    });
+  </script>
 </x-layouts.admin>

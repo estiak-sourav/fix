@@ -92,8 +92,9 @@
         <p>Have a question or request? Fill out the form below and our team will get back to you within 30 minutes.</p>
 
         @if(session('success'))
-          <div style="background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; padding:12px 16px; border-radius:8px; margin-bottom:1.25rem; font-size:0.9rem;">
-            {{ session('success') }}
+          <div data-alert style="background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; padding:10px 16px; border-radius:8px; margin-bottom:1.25rem; font-size:0.9rem; display:flex; align-items:center; justify-content:space-between;">
+            <span>{{ session('success') }}</span>
+            <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#065f46; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
           </div>
         @endif
 

@@ -293,19 +293,23 @@
       </div>
 
       @if($errors->any())
-        <div class="alert-error">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px; flex-shrink:0;">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
-          <span>{{ $errors->first() }}</span>
+        <div data-alert class="alert-error" style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px; flex-shrink:0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ $errors->first() }}</span>
+          </div>
+          <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
         </div>
       @endif
 
       @if(session('warning'))
-        <div style="background:#fffbeb; border:1px solid #fef3c7; color:#b45309; padding:0.85rem 1rem; border-radius:10px; margin-bottom:1.25rem; font-size:0.83rem;">
-          {{ session('warning') }}
+        <div data-alert style="background:#fffbeb; border:1px solid #fef3c7; color:#b45309; padding:0.85rem 1rem; border-radius:10px; margin-bottom:1.25rem; font-size:0.83rem; display:flex; align-items:center; justify-content:space-between;">
+          <span>{{ session('warning') }}</span>
+          <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#b45309; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
         </div>
       @endif
 

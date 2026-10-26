@@ -1,223 +1,291 @@
-<x-layouts.admin title="Global Site Settings & SMTP Configuration | FIX Admin">
-  <div class="page-header-box">
+<x-layouts.admin title="Site Settings | FIX Admin">
+  <div class="page-header-box" style="margin-bottom:1.25rem;">
     <div>
-      <h1 class="page-header-title">Global Site Settings & SMTP Configuration</h1>
-      <p class="page-header-subtitle">Manage corporate logos, emergency contact details, email SMTP gateway, and SEO metadata</p>
+      <h1 class="page-header-title">Web Settings</h1>
     </div>
   </div>
 
+  <!-- Settings Navigation Tabs -->
+  <div style="display:flex; gap:8px; border-bottom:1px solid var(--paces-border); margin-bottom:1.5rem; max-width:960px;">
+    <a href="{{ route('admin.web.settings') }}" style="padding:0.6rem 1.25rem; font-size:0.88rem; font-weight:600; color:var(--paces-primary); text-decoration:none; border-bottom:2px solid var(--paces-primary); display:flex; align-items:center; gap:6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      General Site Settings
+    </a>
+    <a href="{{ route('admin.web.smtp-settings') }}" style="padding:0.6rem 1.25rem; font-size:0.88rem; font-weight:500; color:var(--paces-text-muted); text-decoration:none; border-bottom:2px solid transparent; display:flex; align-items:center; gap:6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+      SMTP Gateway Setup
+    </a>
+  </div>
+
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:center; gap:8px; max-width:900px;">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-      {{ session('success') }}
+    <div data-alert style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:0.85rem 1.25rem; border-radius:8px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:center; justify-content:space-between; max-width:960px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#16a34a; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
     </div>
   @endif
 
   @if(session('error'))
-    <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:center; gap:8px; max-width:900px;">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-      {{ session('error') }}
+    <div data-alert style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:0.85rem 1.25rem; border-radius:8px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:center; justify-content:space-between; max-width:960px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <span>{{ session('error') }}</span>
+      </div>
+      <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
     </div>
   @endif
 
   @if($errors->any())
-    <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; max-width:900px;">
-      <div style="font-weight:500; margin-bottom:4px;">Please correct the following errors:</div>
-      <ul style="margin:0; padding-left:1.25rem;">
-        @foreach($errors->all() as $err)
-          <li>{{ $err }}</li>
-        @endforeach
-      </ul>
+    <div data-alert style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:0.85rem 1.25rem; border-radius:8px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:flex-start; justify-content:space-between; max-width:960px;">
+      <div>
+        <div style="font-weight:600; margin-bottom:4px;">Please correct the following errors:</div>
+        <ul style="margin:0; padding-left:1.25rem; font-size:0.88rem;">
+          @foreach($errors->all() as $err)
+            <li>{{ $err }}</li>
+          @endforeach
+        </ul>
+      </div>
+      <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
     </div>
   @endif
 
-  <div style="display:grid; grid-template-columns: 1fr; gap:1.5rem; max-width:900px;">
-    
-    <!-- Primary Settings Form -->
-    <div class="card-paces">
-      <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:1rem; margin-bottom:1.5rem;">
+  <div style="max-width:960px;">
+    <form action="{{ route('admin.web.settings.update') }}" method="POST" enctype="multipart/form-data">
+      @csrf
+
+      <!-- 1. General Identity -->
+      <div class="card-paces" style="margin-bottom:1.5rem;">
+        <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.85rem; margin-bottom:1.25rem;">
+          <h3 class="card-title-paces" style="margin:0;">Site Identity</h3>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+          <div>
+            <label class="form-label-paces">Site Title / Name *</label>
+            <input type="text" name="site_name" value="{{ \App\Models\SiteSetting::get('site_name', 'FIX Facility Management Services') }}" class="form-control-paces" required>
+            <span class="form-help-paces">The primary brand name displayed across the site and browser tabs.</span>
+          </div>
+
+          <div>
+            <label class="form-label-paces">Tagline / Slogan</label>
+            <input type="text" name="site_tagline" value="{{ \App\Models\SiteSetting::get('site_tagline', 'Clean • Safe • Sustainable') }}" class="form-control-paces">
+            <span class="form-help-paces">A short slogan or mission statement displayed under the logo.</span>
+          </div>
+        </div>
+
         <div>
-          <h3 class="card-title-paces">Corporate Identity & Live Settings</h3>
-          <p style="font-size:0.8rem; color:var(--paces-text-muted);">Controls live branding, email gateway, and operational parameters</p>
+          <label class="form-label-paces">Site Description</label>
+          <textarea name="site_description" class="form-control-paces" rows="2">{{ \App\Models\SiteSetting::get('site_description', 'Professional facility management, HVAC, electrical, plumbing, fire safety and AMC services in Bangladesh.') }}</textarea>
+          <span class="form-help-paces">Brief overview used as default text for browsers and search engine indexers.</span>
         </div>
       </div>
 
-      <form action="{{ route('admin.cms.settings.update') }}" method="POST" enctype="multipart/form-data">
-        @csrf
+      <!-- 2. Site Logos & Favicon -->
+      <div class="card-paces" style="margin-bottom:1.5rem;">
+        <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.85rem; margin-bottom:1.25rem;">
+          <h3 class="card-title-paces" style="margin:0;">Site Logos & Favicon</h3>
+        </div>
 
-        <!-- 📧 Email Delivery & SMTP Gateway Setup -->
-        <div id="smtpSettings" style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem; scroll-margin-top: 80px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-            <div>
-              <h4 style="font-size:1rem; font-weight:500; color:var(--paces-text-dark); margin:0;">📧 Email Delivery & SMTP Gateway Setup</h4>
-              <p style="font-size:0.8rem; color:var(--paces-text-muted); margin:2px 0 0;">Configures outgoing email server for customer OTPs, registration, and dispatch notifications</p>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:1.25rem;">
+          <div>
+            <label class="form-label-paces">Header Logo (Light Mode)</label>
+            <div style="background:#ffffff; padding:12px; border-radius:8px; margin-bottom:8px; border:1px solid var(--paces-border); text-align:center;">
+              <img src="{{ asset(\App\Models\SiteSetting::get('header_logo', 'assets/images/logo-dark-crop.png')) }}" alt="Header Logo" style="height:36px; max-width:180px; object-fit:contain;">
             </div>
-            <span class="badge-pill-paces bg-primary-subtle" style="font-size:0.75rem;">
-              Driver: {{ strtoupper(\App\Models\SiteSetting::get('mail_mailer', 'smtp')) }}
-            </span>
-          </div>
-
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1rem;">
-            <div>
-              <label class="form-label-paces">Mail Driver / Mailer *</label>
-              <select name="mail_mailer" class="form-control-paces" required>
-                <option value="smtp" {{ \App\Models\SiteSetting::get('mail_mailer', 'smtp') === 'smtp' ? 'selected' : '' }}>SMTP (Production Live Gateway)</option>
-                <option value="log" {{ \App\Models\SiteSetting::get('mail_mailer', 'smtp') === 'log' ? 'selected' : '' }}>Log (Dev/Testing - Log files only)</option>
-              </select>
-              <span class="form-help-paces">Select SMTP for real email delivery to user inboxes.</span>
-            </div>
-
-            <div>
-              <label class="form-label-paces">SMTP Server Host *</label>
-              <input type="text" name="mail_host" value="{{ \App\Models\SiteSetting::get('mail_host', config('mail.mailers.smtp.host', 'smtp.gmail.com')) }}" class="form-control-paces" placeholder="e.g. smtp.gmail.com or mail.fix.com.bd" required>
-              <span class="form-help-paces">Hostname of your email provider.</span>
-            </div>
-          </div>
-
-          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1.25rem; margin-bottom:1rem;">
-            <div>
-              <label class="form-label-paces">SMTP Port *</label>
-              <input type="number" name="mail_port" value="{{ \App\Models\SiteSetting::get('mail_port', config('mail.mailers.smtp.port', 587)) }}" class="form-control-paces" placeholder="587 / 465 / 25" required>
-              <span class="form-help-paces">587 for TLS, 465 for SSL.</span>
-            </div>
-
-            <div>
-              <label class="form-label-paces">Encryption Protocol *</label>
-              <select name="mail_encryption" class="form-control-paces" required>
-                <option value="tls" {{ \App\Models\SiteSetting::get('mail_encryption', 'tls') === 'tls' ? 'selected' : '' }}>TLS (Recommended - Port 587)</option>
-                <option value="ssl" {{ \App\Models\SiteSetting::get('mail_encryption', 'tls') === 'ssl' ? 'selected' : '' }}>SSL (Port 465)</option>
-                <option value="none" {{ \App\Models\SiteSetting::get('mail_encryption', 'tls') === 'none' ? 'selected' : '' }}>None (Port 25 / Local)</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="form-label-paces">Sender From Email *</label>
-              <input type="email" name="mail_from_address" value="{{ \App\Models\SiteSetting::get('mail_from_address', config('mail.from.address', 'noreply@fix.com.bd')) }}" class="form-control-paces" placeholder="noreply@fix.com.bd" required>
-              <span class="form-help-paces">Must match your authorized sender.</span>
-            </div>
-          </div>
-
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1rem;">
-            <div>
-              <label class="form-label-paces">SMTP Username *</label>
-              <input type="text" name="mail_username" value="{{ \App\Models\SiteSetting::get('mail_username', config('mail.mailers.smtp.username')) }}" class="form-control-paces" placeholder="support@fix.com.bd or SMTP User">
-              <span class="form-help-paces">Your SMTP account email or login key.</span>
-            </div>
-
-            <div>
-              <label class="form-label-paces">SMTP Password / App Secret</label>
-              <input type="password" name="mail_password" value="{{ \App\Models\SiteSetting::get('mail_password', config('mail.mailers.smtp.password')) }}" class="form-control-paces" placeholder="Enter SMTP password or App Password">
-              <span class="form-help-paces">For Gmail, use a 16-character Google App Password.</span>
-            </div>
+            <input type="file" name="header_logo" accept="image/*" class="form-control-paces">
+            <span class="form-help-paces">Main navigation logo for light backgrounds.</span>
           </div>
 
           <div>
-            <label class="form-label-paces">Sender From Name</label>
-            <input type="text" name="mail_from_name" value="{{ \App\Models\SiteSetting::get('mail_from_name', config('mail.from.name', 'FIX Facility Operations')) }}" class="form-control-paces" placeholder="FIX Facility Operations">
-            <span class="form-help-paces">Appears as the sender display name in users' inbox.</span>
-          </div>
-        </div>
-
-        <!-- 🖼️ Logo & Brand Assets -->
-        <div style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem;">
-          <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:1rem;">🖼️ Logo & Brand Assets</h4>
-
-          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem;">
-            <div>
-              <label class="form-label-paces">Header Logo (Dark)</label>
-              <div style="background:#ffffff; padding:12px; border-radius:8px; margin-bottom:10px; display:inline-block; border:1px solid var(--paces-border);">
-                <img src="{{ asset(\App\Models\SiteSetting::get('header_logo', 'assets/images/logo-dark-crop.png')) }}" alt="Current Header Logo" style="height:36px; max-width:180px; object-fit:contain;">
-              </div>
-              <input type="file" name="header_logo" accept="image/*" class="form-control-paces">
-              <span class="form-help-paces">Used on main navigation bar (PNG/SVG recommended).</span>
+            <label class="form-label-paces">Header Logo (Dark Mode)</label>
+            <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:8px; border:1px solid #334155; text-align:center;">
+              <img src="{{ asset(\App\Models\SiteSetting::get('header_logo_dark', \App\Models\SiteSetting::get('header_logo', 'assets/images/logo-white-crop.png'))) }}" alt="Dark Header Logo" style="height:36px; max-width:180px; object-fit:contain;">
             </div>
-
-            <div>
-              <label class="form-label-paces">Footer Logo (Light / White)</label>
-              <div style="background:#1e2229; padding:12px; border-radius:8px; margin-bottom:10px; display:inline-block; border:1px solid #334155;">
-                <img src="{{ asset(\App\Models\SiteSetting::get('footer_logo', 'assets/images/logo-white-crop.png')) }}" alt="Current Footer Logo" style="height:36px; max-width:180px; object-fit:contain;">
-              </div>
-              <input type="file" name="footer_logo" accept="image/*" class="form-control-paces">
-              <span class="form-help-paces">Used on dark footer and auth dialogs.</span>
-            </div>
-
-            <div>
-              <label class="form-label-paces">Browser Favicon</label>
-              <div style="background:#1e2229; padding:12px; border-radius:8px; margin-bottom:10px; display:inline-block; border:1px solid #334155;">
-                <img src="{{ asset(\App\Models\SiteSetting::get('favicon', 'assets/images/favicon-white.png')) }}" alt="Current Favicon" style="height:36px; max-width:36px; object-fit:contain;">
-              </div>
-              <input type="file" name="favicon" accept="image/*" class="form-control-paces">
-              <span class="form-help-paces">Browser tab icon (PNG/ICO/SVG).</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 📞 Contact & Operations Info -->
-        <div style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem;">
-          <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:1rem;">📞 Contact & Operations Info</h4>
-
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1rem;">
-            <div>
-              <label class="form-label-paces">Emergency Hotline *</label>
-              <input type="text" name="emergency_phone" value="{{ \App\Models\SiteSetting::get('emergency_phone', '+880 1700-000000') }}" class="form-control-paces" required>
-            </div>
-
-            <div>
-              <label class="form-label-paces">Support Email *</label>
-              <input type="email" name="support_email" value="{{ \App\Models\SiteSetting::get('support_email', 'support@fix.com.bd') }}" class="form-control-paces" required>
-            </div>
+            <input type="file" name="header_logo_dark" accept="image/*" class="form-control-paces">
+            <span class="form-help-paces">Alternate logo for dark navbar or dark mode.</span>
           </div>
 
           <div>
-            <label class="form-label-paces">Head Office Address *</label>
-            <input type="text" name="head_office_address" value="{{ \App\Models\SiteSetting::get('head_office_address', 'Plot 12, Road 11, Block D, Banani, Dhaka-1213') }}" class="form-control-paces" required>
-          </div>
-        </div>
-
-        <!-- 🔍 SEO Defaults -->
-        <div style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem;">
-          <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:1rem;">🔍 SEO Defaults</h4>
-
-          <div style="margin-bottom:1rem;">
-            <label class="form-label-paces">Default Meta Title</label>
-            <input type="text" name="meta_title" value="{{ \App\Models\SiteSetting::get('meta_title') }}" class="form-control-paces">
+            <label class="form-label-paces">Footer Logo</label>
+            <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:8px; border:1px solid #334155; text-align:center;">
+              <img src="{{ asset(\App\Models\SiteSetting::get('footer_logo', 'assets/images/logo-white-crop.png')) }}" alt="Footer Logo" style="height:36px; max-width:180px; object-fit:contain;">
+            </div>
+            <input type="file" name="footer_logo" accept="image/*" class="form-control-paces">
+            <span class="form-help-paces">Used in footer section and dark themed dialogs.</span>
           </div>
 
           <div>
-            <label class="form-label-paces">Default Meta Description</label>
-            <textarea name="meta_description" class="form-control-paces" rows="3">{{ \App\Models\SiteSetting::get('meta_description') }}</textarea>
+            <label class="form-label-paces">Favicon</label>
+            <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:8px; border:1px solid #334155; text-align:center;">
+              <img src="{{ asset(\App\Models\SiteSetting::get('favicon', 'assets/images/favicon-white.png')) }}" alt="Favicon" style="height:36px; max-width:36px; object-fit:contain;">
+            </div>
+            <input type="file" name="favicon" accept="image/*" class="form-control-paces">
+            <span class="form-help-paces">Browser tab icon (.ico or .png, 32x32 / 16x16).</span>
           </div>
-        </div>
-
-        <button type="submit" class="btn-paces btn-paces-primary" style="padding:0.75rem 1.75rem; font-size:0.95rem; font-weight:500;">
-          Save All Site & SMTP Settings
-        </button>
-      </form>
-    </div>
-
-    <!-- 🚀 Test SMTP Gateway Card -->
-    <div class="card-paces" style="background:#f8fafc; border:1px solid var(--paces-primary-border);">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:0.75rem;">
-        <span style="font-size:1.4rem;">🧪</span>
-        <div>
-          <h3 class="card-title-paces" style="margin:0;">Test SMTP Gateway Connection</h3>
-          <p style="font-size:0.8rem; color:var(--paces-text-muted); margin:2px 0 0;">
-            Dispatch an instant test email to verify your SMTP server authentication, host, port, and TLS handshake.
-          </p>
         </div>
       </div>
 
-      <form action="{{ route('admin.cms.settings.test-smtp') }}" method="POST" style="margin-top:1rem; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
-        @csrf
-        <div style="flex:1; min-width:260px;">
-          <label class="form-label-paces" style="margin-bottom:4px;">Test Recipient Email Address</label>
-          <input type="email" name="test_email" required placeholder="your-email@example.com" class="form-control-paces" style="background:#ffffff;">
+      <!-- 3. Contact & Official Information -->
+      <div class="card-paces" style="margin-bottom:1.5rem;">
+        <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.85rem; margin-bottom:1.25rem;">
+          <h3 class="card-title-paces" style="margin:0;">Contact & Official Information</h3>
         </div>
-        <button type="submit" class="btn-paces btn-paces-primary" style="background:var(--paces-success); border-color:var(--paces-success); padding:0.65rem 1.25rem;">
-          🚀 Send Test Email Now
-        </button>
-      </form>
-    </div>
 
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+          <div>
+            <label class="form-label-paces">Admin Email Address *</label>
+            <input type="email" name="admin_email" value="{{ \App\Models\SiteSetting::get('admin_email', 'admin@fix.com.bd') }}" class="form-control-paces" required>
+            <span class="form-help-paces">Primary email for system alerts, error reports, and password recoveries.</span>
+          </div>
+
+          <div>
+            <label class="form-label-paces">Public Support Email *</label>
+            <input type="email" name="support_email" value="{{ \App\Models\SiteSetting::get('support_email', 'support@fix.com.bd') }}" class="form-control-paces" required>
+            <span class="form-help-paces">Customer-facing contact email shown on website pages and footer.</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+          <div>
+            <label class="form-label-paces">Phone Number / Hotline *</label>
+            <input type="text" name="emergency_phone" value="{{ \App\Models\SiteSetting::get('emergency_phone', '+880 1700-000000') }}" class="form-control-paces" required>
+            <span class="form-help-paces">Customer service telephone number displayed for emergency dispatches.</span>
+          </div>
+
+          <div>
+            <label class="form-label-paces">Copyright Notice *</label>
+            <input type="text" name="copyright_text" value="{{ \App\Models\SiteSetting::get('copyright_text', '© 2026 FIX Facility Management Services. All Rights Reserved.') }}" class="form-control-paces" required>
+            <span class="form-help-paces">Notice displayed at the bottom of all web pages.</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label-paces">Physical Office Address *</label>
+          <input type="text" name="head_office_address" value="{{ \App\Models\SiteSetting::get('head_office_address', 'Plot 12, Road 11, Block D, Banani, Dhaka-1213') }}" class="form-control-paces" required>
+          <span class="form-help-paces">Official location rendered dynamically in contact sections and footer.</span>
+        </div>
+      </div>
+
+      <!-- 4. Maintenance & Operations Mode -->
+      <div class="card-paces" style="margin-bottom:1.5rem;">
+        <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.85rem; margin-bottom:1.25rem;">
+          <h3 class="card-title-paces" style="margin:0;">Maintenance Mode</h3>
+        </div>
+
+        <div style="margin-bottom:1.25rem; display:flex; align-items:flex-start; gap:12px;">
+          <input type="hidden" name="maintenance_mode" value="0">
+          <input type="checkbox" name="maintenance_mode" value="1" id="maintenance_mode_toggle" {{ \App\Models\SiteSetting::get('maintenance_mode', '0') == '1' ? 'checked' : '' }} style="width:18px; height:18px; margin-top:3px; accent-color:var(--paces-primary); cursor:pointer;">
+          <div>
+            <label for="maintenance_mode_toggle" style="font-weight:600; font-size:0.9rem; cursor:pointer; color:var(--paces-text-dark); display:block;">Enable Maintenance / Under Construction Mode</label>
+            <span class="form-help-paces" style="margin-top:2px;">When active, public visitors will see a maintenance screen. Authenticated administrators can preview the full website.</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label-paces">Maintenance Message</label>
+          <textarea name="maintenance_message" class="form-control-paces" rows="2" placeholder="We are currently undergoing scheduled maintenance. We will be back online shortly.">{{ \App\Models\SiteSetting::get('maintenance_message', 'We are currently performing scheduled maintenance to upgrade our systems. We will be back online shortly.') }}</textarea>
+          <span class="form-help-paces">Message displayed to visitors when maintenance mode is active.</span>
+        </div>
+      </div>
+
+      <!-- 5. Search Engine Optimization (SEO) & Social Meta -->
+      <div class="card-paces" style="margin-bottom:1.5rem;">
+        <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.85rem; margin-bottom:1.25rem;">
+          <h3 class="card-title-paces" style="margin:0;">Search Engine Optimization (SEO) & Social Sharing</h3>
+        </div>
+
+        <div style="margin-bottom:1.25rem; display:flex; align-items:flex-start; gap:12px;">
+          <input type="hidden" name="search_engine_visibility" value="0">
+          <input type="checkbox" name="search_engine_visibility" value="1" id="search_engine_visibility_toggle" {{ \App\Models\SiteSetting::get('search_engine_visibility', '1') == '1' ? 'checked' : '' }} style="width:18px; height:18px; margin-top:3px; accent-color:var(--paces-primary); cursor:pointer;">
+          <div>
+            <label for="search_engine_visibility_toggle" style="font-weight:600; font-size:0.9rem; cursor:pointer; color:var(--paces-text-dark); display:block;">Allow Search Engines to Index This Site</label>
+            <span class="form-help-paces" style="margin-top:2px;">Uncheck to discourage search engines from indexing this site (outputs noindex, nofollow - recommended for staging/development).</span>
+          </div>
+        </div>
+
+        <div style="margin-bottom:1.25rem;">
+          <label class="form-label-paces">Default Meta Title</label>
+          <input type="text" name="meta_title" value="{{ \App\Models\SiteSetting::get('meta_title', 'FIX - Comprehensive Building & Facility Services in Bangladesh') }}" class="form-control-paces">
+          <span class="form-help-paces">Fallback title tag when a page does not define a custom title.</span>
+        </div>
+
+        <div style="margin-bottom:1.25rem;">
+          <label class="form-label-paces">Default Meta Description</label>
+          <textarea name="meta_description" class="form-control-paces" rows="2">{{ \App\Models\SiteSetting::get('meta_description', 'Professional facility management, HVAC chillers, electrical, plumbing, fire safety & AMC services in Dhaka, Bangladesh.') }}</textarea>
+          <span class="form-help-paces">Fallback meta description for search engines.</span>
+        </div>
+
+        <div>
+          <label class="form-label-paces">Default Open Graph (OG) Image</label>
+          <div style="display:flex; align-items:center; gap:15px; margin-bottom:8px;">
+            <div style="background:#f1f5f9; padding:8px; border-radius:6px; border:1px solid var(--paces-border);">
+              <img src="{{ asset(\App\Models\SiteSetting::get('og_image', 'assets/images/logo-dark-crop.png')) }}" alt="OG Preview" style="height:44px; max-width:140px; object-fit:contain;">
+            </div>
+            <input type="file" name="og_image" accept="image/*" class="form-control-paces" style="flex:1;">
+          </div>
+          <span class="form-help-paces">Preview image shown when pages are shared on Facebook, LinkedIn, Twitter, and WhatsApp.</span>
+        </div>
+      </div>
+
+      <!-- 6. Compliance & Legal Notices -->
+      <div class="card-paces" style="margin-bottom:1.5rem;">
+        <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.85rem; margin-bottom:1.25rem;">
+          <h3 class="card-title-paces" style="margin:0;">Compliance & Legal Policies</h3>
+        </div>
+
+        <div style="margin-bottom:1.25rem; display:flex; align-items:flex-start; gap:12px;">
+          <input type="hidden" name="cookie_consent_enabled" value="0">
+          <input type="checkbox" name="cookie_consent_enabled" value="1" id="cookie_consent_toggle" {{ \App\Models\SiteSetting::get('cookie_consent_enabled', '1') == '1' ? 'checked' : '' }} style="width:18px; height:18px; margin-top:3px; accent-color:var(--paces-primary); cursor:pointer;">
+          <div>
+            <label for="cookie_consent_toggle" style="font-weight:600; font-size:0.9rem; cursor:pointer; color:var(--paces-text-dark); display:block;">Enable Cookie Consent Banner</label>
+            <span class="form-help-paces" style="margin-top:2px;">Display a GDPR and privacy policy acknowledgement banner to first-time visitors.</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem;">
+          <div>
+            <label class="form-label-paces">Terms of Service Page</label>
+            <select name="terms_page_slug" class="form-control-paces">
+              <option value="terms" {{ \App\Models\SiteSetting::get('terms_page_slug', 'terms') === 'terms' ? 'selected' : '' }}>Terms of Service (Default)</option>
+              <option value="sla-guarantee" {{ \App\Models\SiteSetting::get('terms_page_slug') === 'sla-guarantee' ? 'selected' : '' }}>SLA & Guarantee</option>
+              @if(isset($siteContents))
+                @foreach($siteContents as $sc)
+                  <option value="{{ $sc->section_key }}" {{ \App\Models\SiteSetting::get('terms_page_slug') === $sc->section_key ? 'selected' : '' }}>
+                    {{ $sc->title ?: $sc->section_key }}
+                  </option>
+                @endforeach
+              @endif
+            </select>
+            <span class="form-help-paces">Target page linked in registration forms and checkout disclaimers.</span>
+          </div>
+
+          <div>
+            <label class="form-label-paces">Privacy Policy Page</label>
+            <select name="privacy_page_slug" class="form-control-paces">
+              <option value="privacy" {{ \App\Models\SiteSetting::get('privacy_page_slug', 'privacy') === 'privacy' ? 'selected' : '' }}>Privacy Policy (Default)</option>
+              <option value="data-security" {{ \App\Models\SiteSetting::get('privacy_page_slug') === 'data-security' ? 'selected' : '' }}>Data Security Policy</option>
+              @if(isset($siteContents))
+                @foreach($siteContents as $sc)
+                  <option value="{{ $sc->section_key }}" {{ \App\Models\SiteSetting::get('privacy_page_slug') === $sc->section_key ? 'selected' : '' }}>
+                    {{ $sc->title ?: $sc->section_key }}
+                  </option>
+                @endforeach
+              @endif
+            </select>
+            <span class="form-help-paces">Target page linked in cookie notices and privacy disclosures.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div style="margin-top:1.5rem; margin-bottom:2rem;">
+        <button type="submit" class="btn-paces btn-paces-primary" style="padding:0.75rem 2rem; font-size:0.95rem; font-weight:500;">
+          Save Site Settings
+        </button>
+      </div>
+
+    </form>
   </div>
 </x-layouts.admin>

@@ -20,7 +20,7 @@ class AdminPartnerController extends Controller
         $status = $request->query('status', 'all');
         $search = $request->query('search');
 
-        $query = Partner::query()->latest();
+        $query = Partner::with('user')->latest();
 
         if ($status !== 'all') {
             $query->where('status', $status);

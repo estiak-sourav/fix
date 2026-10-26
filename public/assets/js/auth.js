@@ -365,7 +365,7 @@ function fixToast(message, type = 'info') {
     font-family: 'Poppins', sans-serif;
   `;
 
-  toast.innerHTML = `<span>${message}</span>`;
+  toast.innerHTML = `<span style="flex:1;">${message}</span><button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#ffffff; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 0 0 8px; opacity:0.85;" aria-label="Close">&times;</button>`;
   container.appendChild(toast);
 
   setTimeout(() => {

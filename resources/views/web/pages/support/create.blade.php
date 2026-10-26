@@ -23,20 +23,26 @@
         <div class="form-card" style="padding:2.25rem 2rem; border:1px solid var(--border); box-shadow:0 4px 20px rgba(0,0,0,0.04); border-radius:12px;">
           
           @if(session('success'))
-            <div style="background:#ecfdf5; border:1px solid #34d399; color:#065f46; padding:1rem 1.25rem; border-radius:8px; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              <span>{{ session('success') }}</span>
+            <div data-alert style="background:#ecfdf5; border:1px solid #34d399; color:#065f46; padding:0.85rem 1.25rem; border-radius:8px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>{{ session('success') }}</span>
+              </div>
+              <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#065f46; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
             </div>
           @endif
 
           @if($errors->any())
-            <div style="background:#fef2f2; border:1px solid #f87171; color:#991b1b; padding:1rem 1.25rem; border-radius:8px; margin-bottom:1.5rem;">
-              <strong style="display:block; margin-bottom:6px;">Please correct the highlighted fields:</strong>
-              <ul style="margin:0; padding-left:1.25rem; font-size:0.875rem;">
-                @foreach($errors->all() as $err)
-                  <li>{{ $err }}</li>
-                @endforeach
-              </ul>
+            <div data-alert style="background:#fef2f2; border:1px solid #f87171; color:#991b1b; padding:0.85rem 1.25rem; border-radius:8px; margin-bottom:1.5rem; display:flex; align-items:flex-start; justify-content:space-between;">
+              <div>
+                <strong style="display:block; margin-bottom:6px;">Please correct the highlighted fields:</strong>
+                <ul style="margin:0; padding-left:1.25rem; font-size:0.875rem;">
+                  @foreach($errors->all() as $err)
+                    <li>{{ $err }}</li>
+                  @endforeach
+                </ul>
+              </div>
+              <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#991b1b; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
             </div>
           @endif
 

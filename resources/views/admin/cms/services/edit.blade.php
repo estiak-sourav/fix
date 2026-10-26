@@ -7,18 +7,22 @@
         </a>
       </div>
       <h1 class="page-header-title">Edit Service: {{ $service->title }}</h1>
-      <p class="page-header-subtitle">Update standalone service details and upload up to 5 photos from your device</p>
     </div>
   </div>
 
   @if($errors->any())
-    <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; max-width:850px;">
-      <div style="font-weight:500; margin-bottom:4px;">Please correct the following errors:</div>
-      <ul style="margin:0; padding-left:1.25rem;">
-        @foreach($errors->all() as $err)
-          <li>{{ $err }}</li>
-        @endforeach
-      </ul>
+    <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; max-width:850px; display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+      <div>
+        <div style="font-weight:500; margin-bottom:4px;">Please correct the following errors:</div>
+        <ul style="margin:0; padding-left:1.25rem;">
+          @foreach($errors->all() as $err)
+            <li>{{ $err }}</li>
+          @endforeach
+        </ul>
+      </div>
+      <button type="button" onclick="this.closest('div').remove()" style="background:none; border:none; color:inherit; cursor:pointer; padding:2px 6px; font-size:1.1rem; line-height:1; opacity:0.6; display:inline-flex; align-items:center;" title="Close" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
     </div>
   @endif
 
@@ -33,7 +37,7 @@
 
       <!-- Primary Thumbnail Image Upload -->
       <div style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem;">
-        <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:0.85rem;">📷 Primary Thumbnail Photo</h4>
+        <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:0.85rem;">Primary Thumbnail Photo</h4>
         
         <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
           <div>
@@ -54,7 +58,7 @@
       <!-- Multiple Gallery Photos Upload (Up to 5 Photos) -->
       <div style="background:#f8fafc; border-radius:10px; padding:1.25rem; border:1px solid var(--paces-border); margin-bottom:1.5rem;">
         <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-bottom:0.85rem;">
-          🖼️ Service Photo Gallery (Up to 5 Photos)
+          Service Photo Gallery (Up to 5 Photos)
         </h4>
 
         @php

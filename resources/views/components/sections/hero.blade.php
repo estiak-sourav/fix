@@ -153,6 +153,32 @@
     border-radius: 10px !important;
     background: #0d9488 !important;
   }
+  .hero-floating-card {
+    padding: 0.55rem 0.95rem !important;
+    gap: 0.7rem !important;
+    max-width: 280px !important;
+    bottom: -15px !important;
+    left: -15px !important;
+  }
+  .floating-card-icon {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 8px !important;
+  }
+  .floating-card-icon svg {
+    width: 17px !important;
+    height: 17px !important;
+  }
+  .floating-card-text h4 {
+    font-size: 0.85rem !important;
+    margin-bottom: 2px !important;
+    line-height: 1.2 !important;
+  }
+  .floating-card-text p {
+    font-size: 0.72rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 0 !important;
+  }
 </style>
 
 <script>

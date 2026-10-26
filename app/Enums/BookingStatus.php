@@ -13,7 +13,7 @@ enum BookingStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::PENDING_REVIEW => 'Pending Review',
+            self::PENDING_REVIEW => 'Pending',
             self::CONFIRMED => 'Confirmed',
             self::IN_PROGRESS => 'In Progress',
             self::COMPLETED => 'Completed',

@@ -49,7 +49,7 @@ class Partner extends Model
     public function getStatusBadgeAttribute(): array
     {
         return match ($this->status) {
-            'approved' => ['bg' => 'bg-success-subtle', 'color' => '#16a34a', 'label' => 'Approved / Enlisted'],
+            'approved' => ['bg' => 'bg-success-subtle', 'color' => '#16a34a', 'label' => 'Approved'],
             'pending' => ['bg' => 'bg-warning-subtle', 'color' => '#d97706', 'label' => 'Pending Approval'],
             'rejected' => ['bg' => 'bg-danger-subtle', 'color' => '#dc2626', 'label' => 'Rejected'],
             'suspended' => ['bg' => 'bg-danger-subtle', 'color' => '#991b1b', 'label' => 'Suspended'],

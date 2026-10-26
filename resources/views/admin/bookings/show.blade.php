@@ -35,20 +35,26 @@
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:10px 16px; border-radius:var(--paces-radius-sm); margin-bottom:1.25rem; font-weight:500; font-size:0.85rem; display:flex; align-items:center; gap:8px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-      {{ session('success') }}
+    <div data-alert style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:10px 16px; border-radius:var(--paces-radius-sm); margin-bottom:1.25rem; font-weight:500; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#166534; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
     </div>
   @endif
 
   @if($errors->any())
-    <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:10px 16px; border-radius:var(--paces-radius-sm); margin-bottom:1.25rem; font-size:0.85rem;">
-      <div style="font-weight:500; margin-bottom:4px;">Please review the following errors:</div>
-      <ul style="padding-left:18px; margin:0;">
-        @foreach($errors->all() as $err)
-          <li>{{ $err }}</li>
-        @endforeach
-      </ul>
+    <div data-alert style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:10px 16px; border-radius:var(--paces-radius-sm); margin-bottom:1.25rem; font-size:0.85rem; display:flex; align-items:flex-start; justify-content:space-between;">
+      <div>
+        <div style="font-weight:500; margin-bottom:4px;">Please review the following errors:</div>
+        <ul style="padding-left:18px; margin:0;">
+          @foreach($errors->all() as $err)
+            <li>{{ $err }}</li>
+          @endforeach
+        </ul>
+      </div>
+      <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
     </div>
   @endif
 
@@ -77,17 +83,26 @@
           <h3 class="card-title-paces" style="font-size:0.95rem; margin:0;">Customer & Site Profile</h3>
         </div>
 
-        <!-- Full Name -->
-        <div style="margin-bottom:12px;">
-          <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">Client Name</div>
-          <div style="font-size:1.02rem; font-weight:500; color:var(--paces-text-dark); margin-top:2px;">
-            {{ $booking->customer_name }}
-          </div>
-          @if($booking->company_name)
-            <div style="font-size:0.78rem; color:var(--paces-primary); font-weight:500; margin-top:2px;">
-              🏢 {{ $booking->company_name }}
+        <!-- Full Name with Avatar -->
+        <div style="margin-bottom:12px; display:flex; align-items:center; gap:12px;">
+          @if($booking->user?->avatar_url)
+            <img src="{{ $booking->user->avatar_url }}" alt="{{ $booking->customer_name }}" style="width:42px; height:42px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+          @else
+            <div style="width:42px; height:42px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:600; display:flex; align-items:center; justify-content:center; font-size:1.05rem; flex-shrink:0;">
+              {{ strtoupper(substr($booking->customer_name ?: 'C', 0, 1)) }}
             </div>
           @endif
+          <div>
+            <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">Client Name</div>
+            <div style="font-size:1.02rem; font-weight:500; color:var(--paces-text-dark); margin-top:2px;">
+              {{ $booking->customer_name }}
+            </div>
+            @if($booking->company_name)
+              <div style="font-size:0.78rem; color:var(--paces-primary); font-weight:500; margin-top:2px;">
+                🏢 {{ $booking->company_name }}
+              </div>
+            @endif
+          </div>
         </div>
 
         <!-- Phone with Copy Button -->
@@ -214,7 +229,15 @@
 
     <!-- RIGHT COLUMN: Booking Accept / Booking Details / Edit / Complete -->
     <div>
-      
+      @if(!auth('admin')->user()?->hasPermission('bookings.edit'))
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1.25rem; font-size:0.85rem; color:#475569; line-height:1.5; margin-bottom:1.5rem;">
+          <div style="font-weight:500; color:#1e293b; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>👁️ Read-Only Access</span>
+          </div>
+          You have view-only privileges for Work Orders. Status adjustments, team dispatch, and invoice modification require Edit permissions.
+        </div>
+      @endif
+
       <!-- ============================================== -->
       <!-- SECTION 1: IF STATUS IS PENDING REVIEW         -->
       <!-- ============================================== -->
@@ -599,7 +622,7 @@
                   <div>
                     <label class="form-label-paces" style="font-weight:500;">Work Order Status</label>
                     <select name="status" class="form-control-paces" required>
-                      @foreach(['pending_review' => 'Pending Review', 'accepted' => 'Accepted', 'assigned' => 'Assigned', 'in_progress' => 'In Progress', 'completed' => 'Completed', 'cancelled' => 'Cancelled'] as $stKey => $stLbl)
+                      @foreach(['pending_review' => 'Pending', 'accepted' => 'Accepted', 'assigned' => 'Assigned', 'in_progress' => 'In Progress', 'completed' => 'Completed', 'cancelled' => 'Cancelled'] as $stKey => $stLbl)
                         <option value="{{ $stKey }}" {{ $booking->status === $stKey ? 'selected' : '' }}>
                           {{ $stLbl }}
                         </option>

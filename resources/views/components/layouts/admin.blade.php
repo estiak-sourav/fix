@@ -665,16 +665,16 @@
 
     .metrics-grid-paces {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1.25rem;
-      margin-bottom: 1.75rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 1.25rem;
     }
     .metric-card-paces {
       background: var(--paces-card-bg);
       border: 1px solid var(--paces-border);
       border-radius: var(--paces-radius);
       box-shadow: var(--paces-shadow);
-      padding: 1.35rem;
+      padding: 10px 16px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -688,35 +688,36 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 4px;
     }
     .metric-label {
       font-size: 0.72rem;
       font-weight: 500;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.05em;
       color: var(--paces-text-muted);
     }
     .metric-icon-badge {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 0.95rem;
     }
     .metric-icon-badge svg {
-      width: 22px;
-      height: 22px;
+      width: 16px;
+      height: 16px;
       stroke-width: 2;
     }
     .metric-value {
-      font-size: 2rem;
+      font-size: 1.55rem;
       font-weight: 500;
       color: var(--paces-text-dark);
       font-family: 'Poppins', sans-serif;
-      line-height: 1.1;
-      margin-bottom: 8px;
+      line-height: 1.15;
+      margin-bottom: 0;
     }
     .metric-subtext {
       font-size: 0.78rem;
@@ -1004,6 +1005,94 @@
         display: none;
       }
     }
+    /* ---------------- Paces Modern Modals ---------------- */
+    .modal-backdrop-paces {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(4px);
+      z-index: 1050;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      box-sizing: border-box;
+      animation: fadeInPaces 0.18s ease-out;
+    }
+
+    .modal-dialog-paces {
+      background: #ffffff;
+      border-radius: 12px;
+      width: 100%;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--paces-border);
+      display: flex;
+      flex-direction: column;
+      max-height: 90vh;
+      overflow: hidden;
+      animation: scaleUpPaces 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-header-paces {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--paces-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      background: #ffffff;
+    }
+
+    .modal-title-paces {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 500;
+      color: var(--paces-text-dark);
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--paces-text-muted);
+      cursor: pointer;
+      padding: 2px 8px;
+      line-height: 1;
+      border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .modal-close-btn:hover {
+      background: #f1f5f9;
+      color: var(--paces-text-dark);
+    }
+
+    .modal-body-paces {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-footer-paces {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--paces-border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      background: #f8fafc;
+    }
+
+    @keyframes fadeInPaces {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes scaleUpPaces {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -1135,7 +1224,10 @@
       toast.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
           <strong style="font-size:0.9rem; color:${isEmergency ? '#dc2626' : '#1e293b'};">${title}</strong>
-          <span style="font-size:0.75rem; color:#64748b; font-weight:500;">JUST NOW</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:0.75rem; color:#64748b; font-weight:500;">JUST NOW</span>
+            <button type="button" onclick="this.closest('div[style*=\\'position\\'], div[style*=\\'box-shadow\\']').remove()" style="background:none; border:none; color:#64748b; cursor:pointer; font-size:1.15rem; line-height:1; padding:0;" aria-label="Close">&times;</button>
+          </div>
         </div>
         <p style="margin:0; font-size:0.825rem; color:#475569;">${msg}</p>
       `;

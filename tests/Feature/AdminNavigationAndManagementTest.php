@@ -6,9 +6,14 @@ use App\Models\Admin;
 use App\Models\AdminNotification;
 use App\Models\Booking;
 use App\Models\DailyAnalytics;
+use App\Models\Faq;
+use App\Models\SiteContent;
+use App\Models\Testimonial;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminNavigationAndManagementTest extends TestCase
@@ -31,31 +36,33 @@ class AdminNavigationAndManagementTest extends TestCase
         $response = $this->actingAs($admin, 'admin')->get('/admin');
         $response->assertStatus(200);
 
-        // 1. Work Orders & Bookings (As it is)
-        $response->assertSee('Work Orders & Bookings', false);
+        // 1. Booking (As it is)
+        $response->assertSee('Booking', false);
 
         // 2. Notifications Page (Newly added page)
         $response->assertSee('Notifications');
 
         // 3. Service Hub Collapsible Submenu
         $response->assertSee('Service Hub');
-        $response->assertSee('Services & Catalog', false);
+        $response->assertSee('Service List', false);
         $response->assertSee('AMC Packages');
 
-        // 4. Web Settings Collapsible Submenu
+        // 4. Web Settings (Direct menu item, internal tabs)
         $response->assertSee('Web Settings');
-        $response->assertSee('General Site Settings');
-        $response->assertSee('SMTP Gateway Setup');
+        $settingsPage = $this->actingAs($admin, 'admin')->get(route('admin.web.settings'));
+        $settingsPage->assertSee('General Site Settings');
+        $settingsPage->assertSee('SMTP Gateway Setup');
 
-        // 5. Web Content Collapsible Submenu
+        // 5. Web Content (Direct menu item, internal tabs)
         $response->assertSee('Web Content');
-        $response->assertSee('Section Contents & Hero', false);
-        $response->assertSee('FAQs Knowledgebase');
-        $response->assertSee('Client Testimonials');
+        $contentPage = $this->actingAs($admin, 'admin')->get(route('admin.web.contents'));
+        $contentPage->assertSee('Section Content', false);
+        $contentPage->assertSee('FAQs Knowledgebase');
+        $contentPage->assertSee('Client Testimonials');
 
         // 6. Client Users
         $response->assertSee('Client Users');
-        $response->assertSee('All Client List & Control', false);
+        $response->assertSee('Active Accounts');
     }
 
     /**
@@ -444,5 +451,141 @@ class AdminNavigationAndManagementTest extends TestCase
         $this->assertArrayHasKey('total', $salesAnalytics);
         $this->assertGreaterThan(0, $salesAnalytics['total']);
         $this->assertStringContainsString('৳', $salesAnalytics['total_formatted']);
+    }
+
+    /**
+     * Test testimonials page, list display, avatar image upload, update, and deletion.
+     */
+    public function test_testimonials_page_and_avatar_upload_crud_workflow(): void
+    {
+        Storage::fake('public');
+        $admin = Admin::first();
+
+        // 1. Visit testimonials page
+        $res = $this->actingAs($admin, 'admin')->get(route('admin.web.testimonials'));
+        $res->assertStatus(200);
+        $res->assertSee('Client Testimonials List');
+        $res->assertSee('+ Add Testimonial');
+        $res->assertSee('Section Content');
+
+        // 2. Add new testimonial with avatar upload
+        $avatarFile = UploadedFile::fake()->image('test_client.jpg', 200, 200);
+        $storeRes = $this->actingAs($admin, 'admin')->post(route('admin.web.testimonials.store'), [
+            'client_name' => 'Farhan Chowdhury',
+            'client_title' => 'Chief Operations Officer',
+            'company_name' => 'Summit Towers',
+            'rating' => 5,
+            'quote' => 'FIX provides exceptional engineering SLA response times.',
+            'avatar' => $avatarFile,
+            'is_featured' => '1',
+            'is_active' => '1',
+        ]);
+        $storeRes->assertRedirect();
+
+        $testimonial = Testimonial::where('client_name', 'Farhan Chowdhury')->first();
+        $this->assertNotNull($testimonial);
+        $this->assertNotNull($testimonial->avatar_path);
+        Storage::disk('public')->assertExists($testimonial->avatar_path);
+        $this->assertStringContainsString('storage/'.$testimonial->avatar_path, $testimonial->avatar_url);
+
+        // 3. Update testimonial with new data and remove avatar
+        $updateRes = $this->actingAs($admin, 'admin')->put(route('admin.web.testimonials.update', $testimonial), [
+            'client_name' => 'Farhan Chowdhury Senior',
+            'client_title' => 'Director of Facilities',
+            'company_name' => 'Summit Towers Holdings',
+            'rating' => 5,
+            'quote' => 'Updated review text for FIX maintenance services.',
+            'remove_avatar' => '1',
+            'is_featured' => '1',
+            'is_active' => '1',
+        ]);
+        $updateRes->assertRedirect();
+
+        $testimonial->refresh();
+        $this->assertSame('Farhan Chowdhury Senior', $testimonial->client_name);
+        $this->assertNull($testimonial->avatar_path);
+
+        // 4. Delete testimonial
+        $deleteRes = $this->actingAs($admin, 'admin')->delete(route('admin.web.testimonials.destroy', $testimonial));
+        $deleteRes->assertRedirect();
+        $this->assertDatabaseMissing('testimonials', ['id' => $testimonial->id]);
+    }
+
+    /**
+     * Test FAQs page, list display, store, update, and delete workflow.
+     */
+    public function test_faqs_page_and_crud_workflow(): void
+    {
+        $admin = Admin::first();
+
+        // 1. Visit FAQs page
+        $res = $this->actingAs($admin, 'admin')->get(route('admin.web.faqs'));
+        $res->assertStatus(200);
+        $res->assertSee('FAQs Knowledgebase List');
+        $res->assertSee('+ Add New FAQ');
+        $res->assertSee('Section Content');
+
+        // 2. Store new FAQ
+        $storeRes = $this->actingAs($admin, 'admin')->post(route('admin.web.faqs.store'), [
+            'category' => 'Engineering',
+            'question' => 'How quickly are facility engineers dispatched?',
+            'answer' => 'Engineers are dispatched within 60 minutes for emergency alerts.',
+            'order' => 1,
+            'is_active' => '1',
+        ]);
+        $storeRes->assertRedirect();
+
+        $faq = Faq::where('question', 'How quickly are facility engineers dispatched?')->first();
+        $this->assertNotNull($faq);
+
+        // 3. Update FAQ
+        $updateRes = $this->actingAs($admin, 'admin')->put(route('admin.web.faqs.update', $faq), [
+            'category' => 'Engineering',
+            'question' => 'How quickly are facility engineers dispatched in Dhaka?',
+            'answer' => 'Engineers arrive within 45 minutes across all metropolitan areas.',
+            'order' => 2,
+            'is_active' => '1',
+        ]);
+        $updateRes->assertRedirect();
+
+        $faq->refresh();
+        $this->assertSame('How quickly are facility engineers dispatched in Dhaka?', $faq->question);
+
+        // 4. Delete FAQ
+        $deleteRes = $this->actingAs($admin, 'admin')->delete(route('admin.web.faqs.destroy', $faq));
+        $deleteRes->assertRedirect();
+        $this->assertDatabaseMissing('faqs', ['id' => $faq->id]);
+    }
+
+    /**
+     * Test Section Content view and update modal action.
+     */
+    public function test_section_content_page_and_update_workflow(): void
+    {
+        $admin = Admin::first();
+
+        // 1. Visit Section Content page
+        $res = $this->actingAs($admin, 'admin')->get(route('admin.web.contents'));
+        $res->assertStatus(200);
+        $res->assertSee('Section Content');
+        $res->assertSee('Edit Section');
+
+        // 2. Update a section
+        $content = SiteContent::firstOrCreate(
+            ['section_key' => 'hero'],
+            ['title' => 'Original Hero Title', 'subtitle' => 'Original Subtitle']
+        );
+
+        $updateRes = $this->actingAs($admin, 'admin')->post(route('admin.web.contents.update', $content), [
+            'title' => 'Premier Facilities & Engineering Management in Bangladesh',
+            'subtitle' => 'Trusted commercial building maintenance and 24/7 technical dispatch.',
+            'badge' => 'OPERATIONS COMMAND',
+            'button_text' => 'Book Maintenance',
+            'button_url' => '/booking',
+        ]);
+        $updateRes->assertRedirect();
+
+        $content->refresh();
+        $this->assertSame('Premier Facilities & Engineering Management in Bangladesh', $content->title);
     }
 }

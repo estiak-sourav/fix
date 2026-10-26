@@ -2,14 +2,18 @@
   <div class="page-header-box" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
     <div>
       <h1 class="page-header-title">Enlisted Partners & Field Crew Network</h1>
-      <p class="page-header-subtitle">Manage engineering contractor applications, technical workforce enlistment, and dispatch credentials</p>
     </div>
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:8px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-      {{ session('success') }}
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" onclick="this.closest('div').remove()" style="background:none; border:none; color:inherit; cursor:pointer; padding:2px 6px; font-size:1.1rem; line-height:1; opacity:0.6; display:inline-flex; align-items:center;" title="Close" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
     </div>
   @endif
 
@@ -21,20 +25,14 @@
         <div class="metric-icon-badge bg-primary-subtle">👷</div>
       </div>
       <div class="metric-value">{{ $stats['total'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-text-muted);">
-        All registered contractor submissions
-      </div>
     </div>
 
     <div class="metric-card-paces">
       <div class="metric-top">
-        <span class="metric-label">Pending Review</span>
+        <span class="metric-label">Pending</span>
         <div class="metric-icon-badge bg-warning-subtle">⏳</div>
       </div>
       <div class="metric-value" style="color:#d97706;">{{ $stats['pending'] }}</div>
-      <div class="metric-subtext" style="color:#d97706; font-weight:500;">
-        Awaiting admin approval & payout setup
-      </div>
     </div>
 
     <div class="metric-card-paces">
@@ -43,9 +41,6 @@
         <div class="metric-icon-badge bg-success-subtle">✓</div>
       </div>
       <div class="metric-value" style="color:var(--paces-success);">{{ $stats['approved'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-success); font-weight:500;">
-        Active in dispatch dropdown
-      </div>
     </div>
 
     <div class="metric-card-paces">
@@ -54,9 +49,6 @@
         <div class="metric-icon-badge bg-danger-subtle">✕</div>
       </div>
       <div class="metric-value" style="color:var(--paces-danger);">{{ $stats['rejected'] }}</div>
-      <div class="metric-subtext" style="color:var(--paces-text-muted);">
-        Declined applications
-      </div>
     </div>
   </div>
 
@@ -120,14 +112,25 @@
             @foreach($partners as $p)
               <tr>
                 <td>
-                  <div style="font-weight:500; font-size:0.92rem; color:var(--paces-text-dark);">
-                    {{ $p->company_name }}
-                  </div>
-                  <div style="font-size:0.8rem; color:var(--paces-primary); font-weight:500; margin-top:2px;">
-                    👤 {{ $p->contact_person }}
-                  </div>
-                  <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-top:2px;">
-                    📞 {{ $p->phone }} {{ $p->email ? '• ' . $p->email : '' }}
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    @if($p->user?->avatar_url)
+                      <img src="{{ $p->user->avatar_url }}" alt="{{ $p->company_name }}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+                    @else
+                      <div style="width:36px; height:36px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:600; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0;">
+                        {{ strtoupper(substr($p->company_name, 0, 1)) }}
+                      </div>
+                    @endif
+                    <div>
+                      <div style="font-weight:500; font-size:0.92rem; color:var(--paces-text-dark);">
+                        {{ $p->company_name }}
+                      </div>
+                      <div style="font-size:0.8rem; color:var(--paces-primary); font-weight:500; margin-top:2px;">
+                        👤 {{ $p->contact_person }}
+                      </div>
+                      <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-top:2px;">
+                        📞 {{ $p->phone }} {{ $p->email ? '• ' . $p->email : '' }}
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td>

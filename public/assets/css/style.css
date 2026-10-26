@@ -888,26 +888,26 @@ button, input, select, textarea {
 
 .hero-floating-card {
   position: absolute;
-  bottom: -25px;
-  left: -25px;
+  bottom: -15px;
+  left: -15px;
   background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
-  padding: 1.25rem 1.5rem;
-  border-radius: var(--radius-lg);
+  padding: 0.55rem 0.95rem;
+  border-radius: var(--radius-md, 10px);
   box-shadow: var(--shadow-xl);
   border: 1px solid rgba(255, 255, 255, 0.8);
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.7rem;
   color: var(--dark);
-  max-width: 290px;
+  max-width: 280px;
   z-index: 3;
 }
 
 .floating-card-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
   background: linear-gradient(135deg, var(--accent) 0%, #028090 100%);
   display: flex;
   align-items: center;
@@ -917,21 +917,23 @@ button, input, select, textarea {
 }
 
 .floating-card-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 17px;
+  height: 17px;
 }
 
 .floating-card-text h4 {
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--primary);
-  margin-bottom: 0.15rem;
+  margin-bottom: 2px;
+  line-height: 1.2;
 }
 
 .floating-card-text p {
-  font-size: 0.775rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   margin-bottom: 0;
+  line-height: 1.25;
 }
 
 .hero-rating-badge {

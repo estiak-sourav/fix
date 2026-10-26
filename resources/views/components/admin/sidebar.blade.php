@@ -187,66 +187,21 @@
       @endif
 
       @if($adminUser?->hasPermission('settings.view'))
-        @php
-          $isWebSettingsActive = request()->routeIs('admin.web.settings*') || request()->routeIs('admin.cms.settings*') || request()->routeIs('admin.web.index');
-        @endphp
-        <div class="nav-group {{ $isWebSettingsActive ? 'open active' : '' }}">
-          <button type="button" class="nav-item nav-toggle {{ $isWebSettingsActive ? 'active' : '' }}" onclick="toggleNavGroup(this)">
-            <span class="nav-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            </span>
-            <span class="nav-text">Web Settings</span>
-            <span class="nav-arrow">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </span>
-          </button>
-          <div class="nav-submenu">
-            <a href="{{ route('admin.web.settings') }}" class="nav-subitem {{ (request()->routeIs('admin.web.settings*') || request()->routeIs('admin.cms.settings*')) ? 'active' : '' }}">
-              <span class="nav-subdot"></span>
-              <span>General Site Settings</span>
-            </a>
-            <a href="{{ route('admin.web.settings') }}#smtpSettings" class="nav-subitem">
-              <span class="nav-subdot"></span>
-              <span>SMTP Gateway Setup</span>
-            </a>
-            <a href="{{ route('admin.web.index') }}" class="nav-subitem {{ request()->routeIs('admin.web.index') ? 'active' : '' }}">
-              <span class="nav-subdot"></span>
-              <span>Web Control Overview</span>
-            </a>
-          </div>
-        </div>
+        <a href="{{ route('admin.web.settings') }}" class="nav-item {{ (request()->routeIs('admin.web.settings*') || request()->routeIs('admin.web.smtp*') || request()->routeIs('admin.cms.settings*')) ? 'active' : '' }}">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </span>
+          <span class="nav-text">Web Settings</span>
+        </a>
       @endif
 
-      <!-- Web Content: Collapsible Submenu (Sections, FAQs, Testimonials) -->
       @if($adminUser?->hasPermission('web_content.view'))
-        @php
-          $isWebContentActive = request()->routeIs('admin.web.contents*') || request()->routeIs('admin.web.faqs*') || request()->routeIs('admin.web.testimonials*');
-        @endphp
-        <div class="nav-group {{ $isWebContentActive ? 'open active' : '' }}">
-          <button type="button" class="nav-item nav-toggle {{ $isWebContentActive ? 'active' : '' }}" onclick="toggleNavGroup(this)">
-            <span class="nav-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-            </span>
-            <span class="nav-text">Web Content</span>
-            <span class="nav-arrow">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </span>
-          </button>
-          <div class="nav-submenu">
-            <a href="{{ route('admin.web.contents') }}" class="nav-subitem {{ request()->routeIs('admin.web.contents*') ? 'active' : '' }}">
-              <span class="nav-subdot"></span>
-              <span>Section Contents & Hero</span>
-            </a>
-            <a href="{{ route('admin.web.faqs') }}" class="nav-subitem {{ request()->routeIs('admin.web.faqs*') ? 'active' : '' }}">
-              <span class="nav-subdot"></span>
-              <span>FAQs Knowledgebase</span>
-            </a>
-            <a href="{{ route('admin.web.testimonials') }}" class="nav-subitem {{ request()->routeIs('admin.web.testimonials*') ? 'active' : '' }}">
-              <span class="nav-subdot"></span>
-              <span>Client Testimonials</span>
-            </a>
-          </div>
-        </div>
+        <a href="{{ route('admin.web.contents') }}" class="nav-item {{ (request()->routeIs('admin.web.contents*') || request()->routeIs('admin.web.faqs*') || request()->routeIs('admin.web.testimonials*') || request()->routeIs('admin.web.index')) ? 'active' : '' }}">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          </span>
+          <span class="nav-text">Web Content</span>
+        </a>
       @endif
 
       <div class="nav-header">PUBLIC PORTAL</div>

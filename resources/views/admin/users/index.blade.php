@@ -1,14 +1,17 @@
 <x-layouts.admin title="Client Users | FIX Admin">
   <div class="page-header-box">
     <div>
-      <h1 class="page-header-title">Client Users</h1>
+      <h1 class="page-header-title">Client Users Directory</h1>
     </div>
   </div>
 
   @if(session('success'))
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:8px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-      {{ session('success') }}
+    <div data-alert style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 18px; border-radius:var(--paces-radius-sm); margin-bottom:1.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#166534; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
     </div>
   @endif
 
@@ -108,11 +111,17 @@
               <tr>
                 <td>
                   <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="width:34px; height:34px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:500; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0;">
-                      {{ strtoupper(substr($u->name, 0, 1)) }}
-                    </div>
+                    @if($u->avatar_url)
+                      <img src="{{ $u->avatar_url }}" alt="{{ $u->name }}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+                    @else
+                      <div style="width:34px; height:34px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:600; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0;">
+                        {{ strtoupper(substr($u->name, 0, 1)) }}
+                      </div>
+                    @endif
                     <div>
-                      <div style="font-weight:500; color:var(--paces-text-dark);">{{ $u->name }}</div>
+                      <div style="font-weight:500; color:var(--paces-text-dark);">
+                        <a href="{{ route('admin.users.show', $u) }}" style="color:inherit; text-decoration:none;">{{ $u->name }}</a>
+                      </div>
                       <div style="font-size:0.75rem; color:var(--paces-text-muted);">Joined {{ $u->created_at->format('M d, Y') }}</div>
                     </div>
                   </div>

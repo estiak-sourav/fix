@@ -91,11 +91,11 @@
 
     <div class="footer-bottom">
       <div>
-        &copy; 2026 FIX Facility Management Services. All Rights Reserved. Clean • Safe • Sustainable.
+        {{ \App\Models\SiteSetting::get('copyright_text', '© 2026 FIX Facility Management Services. All Rights Reserved. Clean • Safe • Sustainable.') }}
       </div>
       <div class="footer-bottom-links">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
+        <a href="{{ route('privacy') }}">Privacy Policy</a>
+        <a href="{{ route('terms') }}">Terms of Service</a>
         <a href="#">SLA & Guarantee</a>
         <a href="#">Sitemap</a>
       </div>

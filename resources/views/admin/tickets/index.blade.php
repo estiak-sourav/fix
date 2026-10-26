@@ -18,9 +18,12 @@
   </div>
 
   @if(session('success'))
-    <div style="background:#ecfdf5; border:1px solid #34d399; color:#065f46; padding:12px 18px; border-radius:8px; margin-bottom:1.5rem; display:flex; align-items:center; gap:8px;">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-      <span>{{ session('success') }}</span>
+    <div data-alert style="background:#ecfdf5; border:1px solid #34d399; color:#065f46; padding:12px 18px; border-radius:8px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#065f46; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
     </div>
   @endif
 
@@ -28,36 +31,32 @@
   <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:1.5rem;">
     <!-- Total Tickets -->
     <div class="card-paces" style="margin-bottom:0; padding:12px 16px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
         <span style="font-size:0.8rem; font-weight:500; color:var(--paces-text-muted); text-transform:uppercase;">Total Inquiries</span>
-        <span style="font-size:1.1rem;">🎫</span>
       </div>
       <div style="font-size:1.6rem; font-weight:500; color:var(--paces-text-dark); margin-top:4px; line-height:1.2;">{{ $metrics['total'] }}</div>
     </div>
 
     <!-- Open Tickets -->
     <div class="card-paces" style="margin-bottom:0; padding:12px 16px; border-left:3px solid #0284c7;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
         <span style="font-size:0.8rem; font-weight:500; color:#0284c7; text-transform:uppercase;">Open Awaiting</span>
-        <span style="font-size:1.1rem;">📬</span>
       </div>
       <div style="font-size:1.6rem; font-weight:500; color:#0284c7; margin-top:4px; line-height:1.2;">{{ $metrics['open'] }}</div>
     </div>
 
     <!-- In Progress -->
     <div class="card-paces" style="margin-bottom:0; padding:12px 16px; border-left:3px solid #f59e0b;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
         <span style="font-size:0.8rem; font-weight:500; color:#b45309; text-transform:uppercase;">In Discussion</span>
-        <span style="font-size:1.1rem;">🔄</span>
       </div>
       <div style="font-size:1.6rem; font-weight:500; color:#b45309; margin-top:4px; line-height:1.2;">{{ $metrics['in_progress'] }}</div>
     </div>
 
     <!-- Closed -->
     <div class="card-paces" style="margin-bottom:0; padding:12px 16px; border-left:3px solid #10b981;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
         <span style="font-size:0.8rem; font-weight:500; color:#10b981; text-transform:uppercase;">Resolved / Closed</span>
-        <span style="font-size:1.1rem;">✅</span>
       </div>
       <div style="font-size:1.6rem; font-weight:500; color:#10b981; margin-top:4px; line-height:1.2;">{{ $metrics['closed'] }}</div>
     </div>
@@ -152,17 +151,28 @@
 
                 <!-- Client / Submitter -->
                 <td style="padding:14px 16px;">
-                  <div style="font-weight:500; color:#1e293b;">{{ $ticket->customer_name }}</div>
-                  <div style="font-size:0.78rem; color:#64748b;">{{ $ticket->customer_email }}</div>
-                  @if($ticket->user)
-                    <span style="display:inline-block; font-size:0.68rem; font-weight:500; background:#e0e7ff; color:#3730a3; padding:1px 6px; border-radius:10px; margin-top:2px;">
-                      Registered Client
-                    </span>
-                  @else
-                    <span style="display:inline-block; font-size:0.68rem; font-weight:500; background:#f1f5f9; color:#64748b; padding:1px 6px; border-radius:10px; margin-top:2px;">
-                      Guest Email
-                    </span>
-                  @endif
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    @if($ticket->user?->avatar_url)
+                      <img src="{{ $ticket->user->avatar_url }}" alt="{{ $ticket->customer_name }}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+                    @else
+                      <div style="width:34px; height:34px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:600; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0;">
+                        {{ strtoupper(substr($ticket->customer_name ?: 'C', 0, 1)) }}
+                      </div>
+                    @endif
+                    <div>
+                      <div style="font-weight:500; color:#1e293b;">{{ $ticket->customer_name }}</div>
+                      <div style="font-size:0.78rem; color:#64748b;">{{ $ticket->customer_email }}</div>
+                      @if($ticket->user)
+                        <span style="display:inline-block; font-size:0.68rem; font-weight:500; background:#e0e7ff; color:#3730a3; padding:1px 6px; border-radius:10px; margin-top:2px;">
+                          Registered Client
+                        </span>
+                      @else
+                        <span style="display:inline-block; font-size:0.68rem; font-weight:500; background:#f1f5f9; color:#64748b; padding:1px 6px; border-radius:10px; margin-top:2px;">
+                          Guest Email
+                        </span>
+                      @endif
+                    </div>
+                  </div>
                 </td>
 
                 <!-- Subject -->
