@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Mail\SupportTicketCreatedMail;
 use App\Models\AdminNotification;
 use App\Models\AmcPlan;
 use App\Models\Faq;
@@ -10,11 +11,16 @@ use App\Models\Sector;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\SiteContent;
+use App\Models\SiteSetting;
+use App\Models\SupportTicket;
+use App\Models\SupportTicketMessage;
 use App\Models\Testimonial;
+use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class HomeController extends Controller
@@ -64,7 +70,22 @@ class HomeController extends Controller
     }
 
     /**
-     * Handle incoming contact inquiries and dispatch admin alert.
+     * Render the dedicated About Us company page.
+     */
+    public function about(): View
+    {
+        $heroContent = SiteContent::forSection('about_hero');
+        $overviewContent = SiteContent::forSection('about_overview');
+        $services = Service::with('category')->where('is_active', true)->orderBy('order')->take(6)->get();
+        $clientsContent = SiteContent::forSection('clients');
+        $sectors = Sector::where('is_active', true)->orderBy('order')->get();
+        $siteSettings = SiteSetting::all()->pluck('value', 'key');
+
+        return view('web.pages.about', compact('heroContent', 'overviewContent', 'services', 'clientsContent', 'sectors', 'siteSettings'));
+    }
+
+    /**
+     * Handle incoming contact inquiries by creating a unified Support Ticket.
      */
     public function contact(Request $request): JsonResponse|RedirectResponse
     {
@@ -76,25 +97,70 @@ class HomeController extends Controller
             'message' => 'required|string|max:2000',
         ]);
 
-        $subject = $validated['subject'] ?? 'General Facility Inquiry';
+        $user = auth()->user();
 
-        AdminNotification::create([
-            'title' => 'New Facility Inquiry: '.$subject,
-            'message' => $validated['name'].' ('.$validated['phone'].'): '.Str::limit($validated['message'], 120),
-            'type' => 'inquiry',
-            'sound_played' => false,
-            'is_read' => false,
+        // If guest provided an email that belongs to a registered customer, link it
+        if (! $user && ! empty($validated['email'])) {
+            $user = User::where('email', $validated['email'])->first();
+        }
+
+        $subject = ! empty($validated['subject']) ? $validated['subject'] : 'General Facility & Service Inquiry';
+        $customerEmail = ! empty($validated['email']) ? $validated['email'] : ($user?->email ?? ($validated['phone'].'@guest.fix.com.bd'));
+
+        $ticket = SupportTicket::create([
+            'ticket_number' => SupportTicket::generateTicketNumber(),
+            'user_id' => $user?->id,
+            'customer_name' => $validated['name'],
+            'customer_email' => $customerEmail,
+            'customer_phone' => $validated['phone'],
+            'subject' => $subject,
+            'priority' => 'normal',
+            'status' => 'open',
+            'created_by' => 'customer',
+            'access_token' => Str::random(40),
+            'last_reply_at' => now(),
         ]);
 
-        $msg = 'Thank you! Your inquiry has been sent to FIX Operations Command. A coordinator will reach you within 30 minutes.';
+        SupportTicketMessage::create([
+            'support_ticket_id' => $ticket->id,
+            'sender_type' => 'customer',
+            'sender_id' => $user?->id,
+            'sender_name' => $validated['name'],
+            'message' => $validated['message'],
+        ]);
+
+        AdminNotification::create([
+            'type' => 'support_ticket',
+            'title' => "New Inquiry/Ticket: #{$ticket->ticket_number}",
+            'message' => "Client {$ticket->customer_name} ({$ticket->customer_phone}): {$ticket->subject}",
+            'is_read' => false,
+            'sound_played' => false,
+        ]);
+
+        // If a real email address is available, send confirmation email
+        if (! empty($validated['email']) || ($user && $user->email)) {
+            try {
+                Mail::to($customerEmail)->send(new SupportTicketCreatedMail($ticket, $ticket->access_token));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        $trackUrl = auth()->check()
+            ? route('customer.tickets.show', $ticket->ticket_number)
+            : route('support.show', ['ticketNumber' => $ticket->ticket_number, 'token' => $ticket->access_token]);
+
+        $msg = "Thank you! Your inquiry has been registered as Ticket #{$ticket->ticket_number}. Our operations command will reach you shortly.";
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
+                'ticket_number' => $ticket->ticket_number,
+                'track_url' => $trackUrl,
                 'message' => $msg,
             ]);
         }
 
-        return back()->with('success', $msg);
+        return redirect($trackUrl)->with('success', $msg);
     }
 }

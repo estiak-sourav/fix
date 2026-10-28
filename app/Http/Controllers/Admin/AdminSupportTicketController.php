@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AdminCreateSupportTicketRequest;
 use App\Http\Requests\Admin\AdminReplySupportTicketRequest;
+use App\Mail\SupportTicketAdminReplyMail;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
 use App\Models\User;
@@ -12,6 +13,7 @@ use App\Services\ActivityLogService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class AdminSupportTicketController extends Controller
@@ -144,7 +146,7 @@ class AdminSupportTicketController extends Controller
     {
         $admin = auth('admin')->user();
 
-        SupportTicketMessage::create([
+        $replyMessage = SupportTicketMessage::create([
             'support_ticket_id' => $ticket->id,
             'sender_type' => 'admin',
             'sender_id' => $admin?->id,
@@ -171,6 +173,10 @@ class AdminSupportTicketController extends Controller
             'ticket_number' => $ticket->ticket_number,
             'status' => $ticket->status,
         ]);
+
+        // Notify customer by email when admin replies
+        Mail::to($ticket->customer_email)
+            ->send(new SupportTicketAdminReplyMail($ticket, $replyMessage, $ticket->access_token));
 
         return redirect()
             ->route('admin.tickets.show', $ticket)

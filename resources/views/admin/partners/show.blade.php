@@ -221,7 +221,7 @@
           <!-- Internal Admin Notes -->
           <div style="margin-bottom:1.5rem;">
             <label class="form-label-paces">Internal Admin Notes & Contract Verification</label>
-            <textarea name="admin_notes" class="form-control-paces" rows="2" placeholder="e.g. Trade license verified, physical inspection scheduled, certified safety gear issued...">{{ old('admin_notes', $partner->admin_notes) }}</textarea>
+            <textarea name="admin_notes" class="form-control-paces" rows="5" placeholder="e.g. Trade license verified, physical inspection scheduled, certified safety gear issued...">{{ old('admin_notes', $partner->admin_notes) }}</textarea>
           </div>
 
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">

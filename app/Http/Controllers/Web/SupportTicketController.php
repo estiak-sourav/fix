@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\ReplySupportTicketRequest;
 use App\Http\Requests\Web\StoreSupportTicketRequest;
+use App\Mail\SupportTicketCreatedMail;
 use App\Models\AdminNotification;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
@@ -12,6 +13,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class SupportTicketController extends Controller
@@ -69,6 +71,10 @@ class SupportTicketController extends Controller
             'is_read' => false,
             'sound_played' => false,
         ]);
+
+        // Send confirmation email to customer
+        Mail::to($ticket->customer_email)
+            ->send(new SupportTicketCreatedMail($ticket, $ticket->access_token));
 
         if (auth()->check()) {
             return redirect()

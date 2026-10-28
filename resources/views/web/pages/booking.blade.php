@@ -1,11 +1,9 @@
 <x-layouts.app title="Book a Service | FIX Facility Management">
   <!-- Page Header -->
-  <section class="page-hero">
-    <div class="container">
-      <h1>Book a Building & Facility Service</h1>
-      <p>Submit your maintenance or inspection request. Our certified technical teams are ready to resolve any issue across your property.</p>
-    </div>
-  </section>
+  <x-page-hero 
+    title="Book a Building & Facility Service"
+    subtitle="Submit your maintenance or inspection request. Our certified technical teams are ready to resolve any issue across your property."
+  />
 
   <!-- Main Booking Form Layout -->
   <section class="section" style="padding-top:0;">
@@ -88,17 +86,24 @@
 
               <div class="form-row">
                 <div class="form-group">
-                  <label for="bookCategory">Service Category <span class="required">*</span></label>
-                  <select id="bookCategory" name="service_category" class="form-control" required>
-                    <option value="">Select Service Category...</option>
-                    <!-- Populated dynamically via booking.js -->
+                  <label for="bookCategory">Select Service Required <span class="required">*</span></label>
+                  <select id="bookCategory" name="service_id" class="form-control" required>
+                    <option value="">-- Choose Required Service --</option>
+                    @foreach($services as $srv)
+                      <option value="{{ $srv->id }}"
+                        data-title="{{ $srv->title }}"
+                        data-slug="{{ $srv->slug }}"
+                        {{ (old('service_id') == $srv->id || (isset($selectedService) && (strtolower(trim($selectedService)) == strtolower(trim($srv->title)) || strtolower(trim($selectedService)) == strtolower(trim($srv->slug)) || $selectedService == $srv->id))) ? 'selected' : '' }}>
+                        {{ $srv->title }}
+                      </option>
+                    @endforeach
                   </select>
                 </div>
 
                 <div class="form-group">
-                  <label for="bookSpecificService">Specific Service Required <span class="required">*</span></label>
-                  <select id="bookSpecificService" name="specific_service" class="form-control" disabled required>
-                    <option value="">First choose a Category above</option>
+                  <label for="bookSpecificService">Specific Task / Scope</label>
+                  <select id="bookSpecificService" name="specific_service" class="form-control">
+                    <option value="">Comprehensive Inspection / General Service</option>
                   </select>
                 </div>
               </div>
@@ -250,7 +255,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
               </div>
               <div>
-                <span id="sidebarCategoryName" style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--accent);">Select Category</span>
+                <span id="sidebarCategoryName" style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--accent);">Service</span>
                 <h4 id="sidebarServiceName" style="font-size:1.05rem; margin:0.15rem 0;">General Service</h4>
                 <span id="sidebarPropertyType" style="font-size:0.8rem; color:var(--text-muted);">Corporate Office</span>
               </div>

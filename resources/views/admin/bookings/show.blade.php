@@ -243,12 +243,12 @@
       <!-- ============================================== -->
       @if($booking->status === 'pending_review' && auth('admin')->user()?->hasPermission('bookings.edit'))
         
-        <!-- Call Tracking Bar (Unreachable with Reasons Dropdown / Call Back Later) -->
+        <!-- Call Tracking Bar (Unreachable / Call Back Later / Custom Task) -->
         <div class="card-paces" style="padding:1rem 1.25rem; margin-bottom:1.5rem; background:#f8fafc; border:1px solid #e2e8f0;">
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <div>
-              <strong style="font-size:0.88rem; color:var(--paces-text-dark); font-weight:500;">Phone Outreach Status:</strong>
-              <div style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:400;">Log contact attempt if client is unavailable or requested callback</div>
+              <strong style="font-size:0.88rem; color:var(--paces-text-dark); font-weight:500;">Phone Outreach & Follow-up Tasks:</strong>
+              <div style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:400;">Log contact attempt, callback request, or schedule follow-up tasks</div>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               <!-- Button to open Unreachable Dropdown Form -->
@@ -258,7 +258,12 @@
 
               <!-- Button: Call Back Later Toggle -->
               <button type="button" onclick="toggleCallBackLaterBox()" class="btn-paces btn-paces-outline btn-paces-sm" style="border-color:#fde68a; color:#b45309; font-weight:500;">
-                ⏱️ Call Back Later Note ▼
+                ⏱️ Call Back Later ▼
+              </button>
+
+              <!-- Button: Add Custom Task -->
+              <button type="button" onclick="toggleCustomTaskBox()" class="btn-paces btn-paces-outline btn-paces-sm" style="border-color:#93c5fd; color:#1d4ed8; font-weight:500;">
+                📝 + Add Outreach Task ▼
               </button>
             </div>
           </div>
@@ -289,7 +294,7 @@
 
               <div style="display:flex; justify-content:flex-end;">
                 <button type="submit" class="btn-paces btn-paces-danger btn-paces-sm" style="font-size:0.82rem;">
-                  Save Unreachable Log
+                  Save Unreachable (Auto-creates Task)
                 </button>
               </div>
             </form>
@@ -320,11 +325,102 @@
 
               <div style="display:flex; justify-content:flex-end;">
                 <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.82rem;">
-                  Save Follow-up Note
+                  Save Follow-up (Auto-creates Task)
                 </button>
               </div>
             </form>
           </div>
+
+          <!-- Inline Box for Manual Custom Outreach Task -->
+          <div id="customTaskBox" style="display:none; margin-top:12px; padding-top:12px; border-top:1px dashed #cbd5e1;">
+            <form action="{{ route('admin.outreach-tasks.store') }}" method="POST">
+              @csrf
+              <input type="hidden" name="booking_id" value="{{ $booking->id }}">
+              <input type="hidden" name="customer_name" value="{{ $booking->customer_name }}">
+              <input type="hidden" name="customer_phone" value="{{ $booking->customer_phone }}">
+
+              <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:10px; margin-bottom:8px;">
+                <div>
+                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Task Action / Title *</label>
+                  <input type="text" name="title" class="form-control-paces" placeholder="e.g. Call client regarding quotation approval" required style="font-size:0.82rem; padding:6px 10px;">
+                </div>
+                <div>
+                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Task Type *</label>
+                  <select name="task_type" class="form-control-paces" required style="font-size:0.82rem; padding:6px 10px;">
+                    <option value="follow_up">Follow-up Call</option>
+                    <option value="quotation">Send Quotation</option>
+                    <option value="inspection">Site Inspection</option>
+                    <option value="booking_confirmation">Confirmation</option>
+                    <option value="general">General Task</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Priority *</label>
+                  <select name="priority" class="form-control-paces" required style="font-size:0.82rem; padding:6px 10px;">
+                    <option value="normal" selected>Normal</option>
+                    <option value="high">High</option>
+                    <option value="urgent">🚨 Urgent</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 2fr; gap:10px; margin-bottom:8px;">
+                <div>
+                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Due Time (Optional)</label>
+                  <input type="datetime-local" name="due_at" class="form-control-paces" style="font-size:0.82rem; padding:6px 10px;">
+                </div>
+                <div>
+                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Notes (Optional)</label>
+                  <input type="text" name="notes" class="form-control-paces" placeholder="e.g. Client requested callback before 4 PM..." style="font-size:0.82rem; padding:6px 10px;">
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end;">
+                <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.82rem;">
+                  Save Task
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Existing Outreach Tasks for this booking -->
+          @if($booking->outreachTasks->isNotEmpty())
+            <div style="margin-top:14px; padding-top:12px; border-top:1px solid #e2e8f0;">
+              <strong style="font-size:0.8rem; color:#1e293b; display:block; margin-bottom:8px;">Outreach Tasks for this Order:</strong>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                @foreach($booking->outreachTasks as $ot)
+                  <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:#ffffff; border:1px solid #edf2f7; border-radius:6px; font-size:0.8rem; gap:8px;">
+                    <div>
+                      <div style="font-weight:600; color:{{ $ot->status === 'completed' ? '#64748b' : '#1e293b' }}; text-decoration:{{ $ot->status === 'completed' ? 'line-through' : 'none' }};">
+                        {{ $ot->title }}
+                      </div>
+                      <div style="font-size:0.72rem; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span style="font-weight:500; text-transform:uppercase;">{{ $ot->type_label }}</span>
+                        @if($ot->due_at)
+                          <span>• Due: {{ $ot->due_at->diffForHumans() }}</span>
+                        @endif
+                        @if($ot->notes)
+                          <span>• Note: {{ $ot->notes }}</span>
+                        @endif
+                        @if($ot->status === 'completed')
+                          <span style="color:#16a34a; font-weight:600;">• ✓ Completed</span>
+                        @endif
+                      </div>
+                    </div>
+
+                    @if($ot->status === 'pending')
+                      <form action="{{ route('admin.outreach-tasks.complete', $ot) }}" method="POST" style="margin:0;">
+                        @csrf
+                        <button type="submit" class="btn-paces btn-paces-sm" style="padding:3px 8px; font-size:0.72rem; background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; font-weight:600; border-radius:5px; cursor:pointer;" title="Mark Task Complete">
+                          ✓ Done
+                        </button>
+                      </form>
+                    @endif
+                  </div>
+                @endforeach
+              </div>
+            </div>
+          @endif
         </div>
 
         <!-- Accept Work Order Card -->
@@ -458,7 +554,7 @@
               @csrf
               <div style="margin-bottom:10px;">
                 <label class="form-label-paces" style="font-size:0.82rem; font-weight:500;">Cancellation Reason <span style="color:#ef4444;">*</span></label>
-                <textarea name="cancellation_reason" class="form-control-paces" rows="2" placeholder="e.g. Client requested cancellation or duplicate request..." required></textarea>
+                <textarea name="cancellation_reason" class="form-control-paces" rows="4" placeholder="e.g. Client requested cancellation or duplicate request..." required></textarea>
               </div>
               <button type="submit" class="btn-paces" style="background:#dc2626; color:#fff; font-weight:500; font-size:0.85rem; border:none; padding:8px 16px; border-radius:var(--paces-radius-sm); cursor:pointer;">
                 ✕ Confirm Cancellation
@@ -679,7 +775,7 @@
 
                 <div style="margin-bottom:1.25rem;">
                   <label class="form-label-paces" style="font-weight:500;">Internal Admin Notes</label>
-                  <textarea name="admin_notes" class="form-control-paces" rows="2" placeholder="Internal remarks...">{{ old('admin_notes', $booking->admin_notes) }}</textarea>
+                  <textarea name="admin_notes" class="form-control-paces" rows="5" placeholder="Internal remarks...">{{ old('admin_notes', $booking->admin_notes) }}</textarea>
                 </div>
 
                 <div style="margin-bottom:1.5rem;">
@@ -712,7 +808,7 @@
                     <form action="{{ route('admin.bookings.cancel', $booking) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this work order?');">
                       @csrf
                       <div style="margin-bottom:10px;">
-                        <textarea name="cancellation_reason" class="form-control-paces" rows="2" placeholder="State reason for cancellation..." required></textarea>
+                        <textarea name="cancellation_reason" class="form-control-paces" rows="4" placeholder="State reason for cancellation..." required></textarea>
                       </div>
                       <button type="submit" class="btn-paces" style="background:#dc2626; color:#fff; font-weight:500; font-size:0.82rem; border:none; padding:7px 16px; border-radius:var(--paces-radius-sm); cursor:pointer;">
                         ✕ Confirm Cancellation
@@ -777,18 +873,33 @@
     function toggleUnreachableBox() {
       const box = document.getElementById('unreachableReasonBox');
       const cbBox = document.getElementById('callBackLaterBox');
+      const cBox = document.getElementById('customTaskBox');
       if (box) {
         box.style.display = box.style.display === 'none' ? 'block' : 'none';
         if (cbBox) cbBox.style.display = 'none';
+        if (cBox) cBox.style.display = 'none';
       }
     }
 
     function toggleCallBackLaterBox() {
       const cbBox = document.getElementById('callBackLaterBox');
       const box = document.getElementById('unreachableReasonBox');
+      const cBox = document.getElementById('customTaskBox');
       if (cbBox) {
         cbBox.style.display = cbBox.style.display === 'none' ? 'block' : 'none';
         if (box) box.style.display = 'none';
+        if (cBox) cBox.style.display = 'none';
+      }
+    }
+
+    function toggleCustomTaskBox() {
+      const cBox = document.getElementById('customTaskBox');
+      const box = document.getElementById('unreachableReasonBox');
+      const cbBox = document.getElementById('callBackLaterBox');
+      if (cBox) {
+        cBox.style.display = cBox.style.display === 'none' ? 'block' : 'none';
+        if (box) box.style.display = 'none';
+        if (cbBox) cbBox.style.display = 'none';
       }
     }
 

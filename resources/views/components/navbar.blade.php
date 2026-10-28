@@ -6,7 +6,7 @@
       <span class="nav-brand-tagline">CLEAN • SAFE • SUSTAINABLE</span>
     </a>
 
-    <nav>
+    <nav class="desktop-nav" style="margin-left: clamp(1.75rem, 3.5vw, 3.25rem);">
       <ul class="nav-links">
         <li><a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">Home</a></li>
         <li><a href="{{ route('home') }}#services" class="nav-link">Services</a></li>
@@ -22,14 +22,13 @@
             <li><a href="{{ route('home') }}#whoWeServe" class="dropdown-item">Who We Serve</a></li>
           </ul>
         </li>
-        <li><a href="{{ route('home') }}#about" class="nav-link">About Us</a></li>
+        <li><a href="{{ route('about') }}" class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}">About Us</a></li>
         <li><a href="{{ route('home') }}#faq" class="nav-link">FAQ</a></li>
-        <li><a href="{{ route('home') }}#contact" class="nav-link">Contact</a></li>
-        <li><a href="{{ route('support.create') }}" class="nav-link {{ request()->routeIs('support.*') ? 'active' : '' }}">Support</a></li>
+        <li><a href="{{ request()->routeIs('home') ? '#contact' : route('support.create') }}" class="nav-link {{ request()->routeIs('support.*') ? 'active' : '' }}">Contact &amp; Support</a></li>
       </ul>
     </nav>
 
-    <div class="nav-actions">
+    <div class="nav-actions" style="margin-left: 2.25rem;">
       <a href="{{ route('vendor') }}" class="btn btn-vendor-nav">Become a Partner</a>
 
       @auth
@@ -108,10 +107,10 @@
         <li><a href="{{ route('home') }}#whoWeServe" class="drawer-sublink">Who We Serve</a></li>
       </ul>
     </li>
-    <li><a href="{{ route('home') }}#about" class="drawer-link">About Company</a></li>
+    <li><a href="{{ route('about') }}" class="drawer-link {{ request()->routeIs('about') ? 'active' : '' }}">About Company</a></li>
     <li><a href="{{ route('home') }}#faq" class="drawer-link">FAQ</a></li>
-    <li><a href="{{ route('home') }}#contact" class="drawer-link">Contact Support</a></li>
-    <li><a href="{{ route('support.create') }}" class="drawer-link">Submit Support Ticket</a></li>
+    <li><a href="{{ request()->routeIs('home') ? '#contact' : route('support.create') }}" class="drawer-link">Contact &amp; Support Helpdesk</a></li>
+    <li><a href="{{ route('support.track') }}" class="drawer-link">Track Support Ticket</a></li>
     @auth
       <li><a href="{{ route('customer.bookings') }}" class="drawer-link" style="color:var(--accent); font-weight:700;">My Bookings & Status</a></li>
       <li><a href="{{ route('customer.tickets.index') }}" class="drawer-link">My Support Tickets</a></li>

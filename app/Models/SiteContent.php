@@ -9,6 +9,7 @@ class SiteContent extends Model
 {
     protected $fillable = [
         'section_key',
+        'is_active',
         'title',
         'subtitle',
         'badge',
@@ -24,15 +25,39 @@ class SiteContent extends Model
     protected function casts(): array
     {
         return [
+            'is_active' => 'boolean',
             'meta_data' => 'array',
         ];
     }
 
-    public static function forSection(string $sectionKey): ?static
+    public function isActive(): bool
     {
-        return Cache::remember("site_content:{$sectionKey}", 3600, function () use ($sectionKey) {
-            return static::where('section_key', $sectionKey)->first();
-        });
+        return (bool) ($this->is_active ?? true);
+    }
+
+    public static function forSection(string $sectionKey, bool $mustBeActive = false): ?static
+    {
+        $cached = Cache::get("site_content:{$sectionKey}");
+        if ($cached instanceof static) {
+            if ($mustBeActive && ! $cached->isActive()) {
+                return null;
+            }
+
+            return $cached;
+        }
+
+        Cache::forget("site_content:{$sectionKey}");
+
+        $content = static::where('section_key', $sectionKey)->first();
+        if ($content) {
+            Cache::put("site_content:{$sectionKey}", $content, 3600);
+        }
+
+        if ($content && $mustBeActive && ! $content->isActive()) {
+            return null;
+        }
+
+        return $content;
     }
 
     public function getMediaUrlAttribute(): ?string

@@ -4,7 +4,9 @@
 ])
 
 <!-- Who We Serve Section -->
-<section id="whoWeServe" class="section">
+<section id="who-we-serve" class="section" data-section="who_we_serve" data-section-key="who_we_serve">
+  <div id="whoWeServe" class="section-anchor-target"></div>
+  <div id="who_we_serve" class="section-anchor-target"></div>
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">{!! $content->title ?? 'Who We Serve' !!}</h2>

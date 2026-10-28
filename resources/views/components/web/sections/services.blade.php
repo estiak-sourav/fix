@@ -22,8 +22,10 @@
     <div class="services-grid">
       @foreach($services as $service)
         <div class="service-card" data-category="{{ $service->category?->slug ?? 'maintenance' }}">
-          <div class="service-image-wrapper">
-            <img src="{{ $service->thumbnail_url }}" alt="{{ $service->title }}" loading="lazy">
+          <div class="service-card-image service-image-wrapper">
+            <a href="{{ route('services.show', $service->slug ?? $service->id) }}">
+              <img src="{{ $service->thumbnail_url }}" alt="{{ $service->title }}" loading="lazy">
+            </a>
             <span class="service-category-tag">{{ $service->category?->name ?? 'Facility Maintenance' }}</span>
           </div>
           <div class="service-card-body">

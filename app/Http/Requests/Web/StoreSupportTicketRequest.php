@@ -20,7 +20,7 @@ class StoreSupportTicketRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'phone' => ['required', 'string', 'max:30'],
             'subject' => ['required', 'string', 'max:255'],
             'priority' => ['nullable', 'string', 'in:low,normal,high,urgent'],
             'message' => ['required', 'string', 'min:5', 'max:10000'],

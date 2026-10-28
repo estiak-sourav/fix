@@ -120,6 +120,7 @@ class SupportTicketWorkflowTest extends TestCase
         $res = $this->actingAs($user, 'web')->post(route('support.store'), [
             'name' => $user->name,
             'email' => $user->email,
+            'phone' => '01711223344',
             'subject' => 'Elevator lift motor unusual vibration',
             'priority' => 'urgent',
             'message' => 'The passenger lift motor is producing grinding sounds on floors 4 to 7.',
@@ -314,5 +315,75 @@ class SupportTicketWorkflowTest extends TestCase
         $ticket->refresh();
         $this->assertEquals('open', $ticket->status);
         $this->assertNull($ticket->closed_at);
+    }
+
+    /**
+     * 9. Test authenticated customer submitting contact form automatically links ticket to account.
+     */
+    public function test_contact_submission_by_authenticated_customer_links_ticket_to_account(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Kaiser Ahmed',
+            'email' => 'kaiser@square.com',
+            'phone' => '01811223344',
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('contact.send'), [
+            'name' => 'Kaiser Ahmed',
+            'phone' => '01811223344',
+            'email' => 'kaiser@square.com',
+            'subject' => 'Cleanroom HVAC Balancing Request',
+            'message' => 'Need differential pressure calibration on Cleanroom Suite B.',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+        ]);
+
+        $ticket = SupportTicket::where('subject', 'Cleanroom HVAC Balancing Request')->first();
+        $this->assertNotNull($ticket);
+        $this->assertEquals($user->id, $ticket->user_id);
+        $this->assertEquals('kaiser@square.com', $ticket->customer_email);
+
+        $response->assertJson([
+            'ticket_number' => $ticket->ticket_number,
+            'track_url' => route('customer.tickets.show', $ticket->ticket_number),
+        ]);
+    }
+
+    /**
+     * 10. Test guest submitting contact form via standard POST redirects to public ticket view.
+     */
+    public function test_contact_submission_by_guest_via_form_redirects_to_ticket_show_page(): void
+    {
+        $response = $this->post(route('contact.send'), [
+            'name' => 'Jannatul Ferdous',
+            'phone' => '01999887766',
+            'email' => 'jannat@dhakagroup.com',
+            'subject' => 'Elevator Sensor Check',
+            'message' => 'Elevator door obstruction detector needs maintenance.',
+        ]);
+
+        $ticket = SupportTicket::where('customer_email', 'jannat@dhakagroup.com')->first();
+        $this->assertNotNull($ticket);
+        $this->assertNull($ticket->user_id);
+
+        $expectedUrl = route('support.show', [
+            'ticketNumber' => $ticket->ticket_number,
+            'token' => $ticket->access_token,
+        ]);
+
+        $response->assertRedirect($expectedUrl);
+        $response->assertSessionHas('success');
+    }
+
+    /**
+     * 11. Test GET /contact smoothly redirects to home anchor.
+     */
+    public function test_get_contact_redirects_to_home_contact_section(): void
+    {
+        $response = $this->get('/contact');
+        $response->assertRedirect('/#contact');
     }
 }

@@ -5,7 +5,8 @@
 ])
 
 <!-- Hero Section -->
-<section class="hero">
+<section class="hero" id="hero" data-section="hero" data-section-key="hero">
+  <div id="hero-section" class="section-anchor-target"></div>
   <div class="container hero-grid">
     <div class="hero-content">
       <h1 style="padding-bottom: 160px;">{!! $content->title ?? 'Your Trusted Partner for <span>Every Building</span> Service' !!}</h1>
@@ -240,38 +241,41 @@
 
     <form id="quickBookForm" class="quick-book-form" action="{{ route('booking.create') }}" method="GET">
       <div class="form-group-quick">
-        <label for="quickCategory">1. Service Category</label>
-        <select id="quickCategory" name="category" class="select-custom">
-          <option value="all">All Service Categories</option>
-          @foreach($categories as $category)
-            <option value="{{ $category->slug }}">{{ $category->name }}</option>
-          @endforeach
-        </select>
-      </div>
-
-      <div class="form-group-quick">
-        <label for="quickService">2. Specific Service</label>
-        <select id="quickService" name="service" class="select-custom">
+        <label for="quickService">1. Select Service</label>
+        <select id="quickService" name="service" class="select-custom" required>
+          <option value="">-- Choose Required Service --</option>
           @foreach($services as $service)
-            <option value="{{ $service->title }}" data-category="{{ $service->category?->slug ?? 'maintenance' }}">{{ $service->title }}</option>
+            <option value="{{ $service->title }}">{{ $service->title }}</option>
           @endforeach
         </select>
       </div>
 
       <div class="form-group-quick">
-        <label for="quickProperty">3. Property Type</label>
+        <label for="quickProperty">2. Property Type</label>
         <select id="quickProperty" name="property_type" class="select-custom">
           <option value="Corporate Office">Corporate Office</option>
-          <option value="Residential Complex / Apartment">Residential Apartment</option>
-          <option value="Commercial Building">Commercial Building</option>
-          <option value="Hospital / Healthcare">Hospital / Clinic</option>
-          <option value="Industrial Factory / EPZ">Factory / Industrial</option>
+          <option value="Commercial Building / Plaza">Commercial Building / Plaza</option>
+          <option value="Residential Apartment / Flat">Residential Apartment / Flat</option>
+          <option value="Residential Building (Full Complex)">Residential Building (Full Complex)</option>
+          <option value="Hospital / Healthcare Clinic">Hospital / Healthcare Clinic</option>
+          <option value="Industrial Factory / EPZ Facility">Industrial Factory / EPZ</option>
           <option value="Educational Institution">Educational Campus</option>
         </select>
       </div>
 
+      <div class="form-group-quick">
+        <label for="quickSchedule">3. Preferred Schedule</label>
+        <select id="quickSchedule" name="schedule" class="select-custom">
+          <option value="Standard Inspection (Next Day)">Standard Inspection (Next Day)</option>
+          <option value="Morning (9:00 AM - 12:00 PM)">Morning (9:00 AM - 12:00 PM)</option>
+          <option value="Afternoon (12:00 PM - 4:00 PM)">Afternoon (12:00 PM - 4:00 PM)</option>
+          <option value="Evening (4:00 PM - 8:00 PM)">Evening (4:00 PM - 8:00 PM)</option>
+          <option value="Emergency (Immediate Dispatch ASAP)">🚨 Emergency (Immediate Dispatch)</option>
+        </select>
+      </div>
+
       <div>
-        <button type="submit" class="btn btn-accent btn-block" style="padding:0.75rem 1.5rem; margin-top:1.45rem;">
+        <button type="submit" class="btn btn-accent btn-block" style="padding:0.75rem 1.5rem; margin-top:1.45rem; font-weight:700;">
           Book Now
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <polyline points="9 18 15 12 9 6"></polyline>

@@ -246,6 +246,17 @@ document.addEventListener("DOMContentLoaded", () => {
   initDemoStorageBadge();
   initVideoPortfolio();
   initClientsHorizontalScroll();
+  handleSectionAnchorNavigation();
+});
+
+window.addEventListener("load", () => {
+  if (window.location.hash || window.location.search.includes('section') || window.location.search.includes('require_login')) {
+    handleSectionAnchorNavigation();
+  }
+});
+
+window.addEventListener("hashchange", () => {
+  handleSectionAnchorNavigation();
 });
 
 /* ==========================================================================
@@ -316,15 +327,31 @@ function initServiceTabs() {
 
   if (!servicesGrid) return;
 
-  // Render initial services
-  renderServices("all");
+  const serverCards = servicesGrid.querySelectorAll(".service-card");
+
+  // Only render static fallback if server rendered no cards
+  if (serverCards.length === 0) {
+    renderServices("all");
+  }
 
   tabBtns.forEach(btn => {
     btn.addEventListener("click", () => {
       tabBtns.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       const category = btn.getAttribute("data-category") || "all";
-      renderServices(category);
+
+      if (serverCards.length > 0) {
+        serverCards.forEach(card => {
+          const cardCat = card.getAttribute("data-category");
+          if (category === "all" || cardCat === category) {
+            card.style.display = "";
+          } else {
+            card.style.display = "none";
+          }
+        });
+      } else {
+        renderServices(category);
+      }
     });
   });
 }
@@ -359,7 +386,7 @@ function renderServices(category) {
           <button type="button" class="btn btn-outline btn-sm view-service-btn" data-id="${service.id}">
             View Details
           </button>
-          <a href="booking.html?service=${encodeURIComponent(service.title)}" class="btn btn-accent btn-sm">
+          <a href="/booking?service=${encodeURIComponent(service.title)}" class="btn btn-accent btn-sm">
             Book Now
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -447,7 +474,7 @@ function openServiceModal(serviceId) {
   if (modalSla) modalSla.textContent = service.details.sla;
 
   if (modalBookBtn) {
-    modalBookBtn.href = `booking.html?service=${encodeURIComponent(service.title)}`;
+    modalBookBtn.href = `/booking?service=${encodeURIComponent(service.title)}`;
   }
 
   modal.classList.add("active");
@@ -458,37 +485,26 @@ function openServiceModal(serviceId) {
    ========================================================================== */
 function initQuickBookingWidget() {
   const quickForm = document.getElementById("quickBookForm");
-  const categorySelect = document.getElementById("quickCategory");
+  if (!quickForm) return;
+
   const serviceSelect = document.getElementById("quickService");
-
-  if (!quickForm || !categorySelect || !serviceSelect) return;
-
-  // Populate services based on category
-  function updateServices() {
-    const selectedCat = categorySelect.value;
-    const filtered = selectedCat === "all"
-      ? FIX_SERVICES
-      : FIX_SERVICES.filter(s => s.category === selectedCat);
-
-    serviceSelect.innerHTML = `<option value="">Select Service...</option>` +
-      filtered.map(s => `<option value="${s.title}">${s.title}</option>`).join('');
-  }
-
-  categorySelect.addEventListener("change", updateServices);
-  updateServices();
+  const propertySelect = document.getElementById("quickProperty");
+  const scheduleSelect = document.getElementById("quickSchedule");
 
   quickForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    const service = serviceSelect.value;
-    const property = document.getElementById("quickProperty")?.value || "";
-    
-    let targetUrl = "booking.html";
+    const service = serviceSelect?.value || "";
+    const property = propertySelect?.value || "";
+    const schedule = scheduleSelect?.value || "";
+
+    let targetUrl = quickForm.getAttribute("action") || "/booking";
     const params = new URLSearchParams();
     if (service) params.set("service", service);
     if (property) params.set("property", property);
+    if (schedule) params.set("schedule", schedule);
 
     if (params.toString()) {
-      targetUrl += `?${params.toString()}`;
+      targetUrl += (targetUrl.includes("?") ? "&" : "?") + params.toString();
     }
     window.location.href = targetUrl;
   });
@@ -592,7 +608,24 @@ function initContactForm() {
 
       if (res.ok && data.success) {
         form.reset();
-        showToast(data.message || "Thank you! Your message has been sent to FIX Operations Command.");
+        if (data.track_url) {
+          form.innerHTML = `
+            <div style="background:#ecfdf5; border:1px solid #34d399; border-radius:12px; padding:2rem 1.5rem; text-align:center;">
+              <div style="width:52px; height:52px; border-radius:50%; background:#d1fae5; color:#059669; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <h4 style="font-size:1.2rem; font-weight:800; color:#065f46; margin-bottom:4px;">Support Ticket Registered!</h4>
+              <p style="font-size:0.95rem; color:#047857; margin-bottom:10px;">Ticket Reference: <strong style="font-size:1.05rem; letter-spacing:0.5px;">${data.ticket_number}</strong></p>
+              <p style="font-size:0.85rem; color:#475569; margin-bottom:1.25rem;">${data.message}</p>
+              <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                <a href="${data.track_url}" class="btn btn-accent" style="padding:0.6rem 1.25rem; font-weight:700; font-size:0.875rem;">Track Ticket Status ↗</a>
+                <button type="button" onclick="location.reload()" class="btn btn-outline" style="padding:0.6rem 1.25rem; font-size:0.875rem;">Send Another Inquiry</button>
+              </div>
+            </div>
+          `;
+        } else {
+          showToast(data.message || "Thank you! Your message has been sent to FIX Operations Command.");
+        }
       } else {
         const errorMsg = data.errors ? Object.values(data.errors)[0][0] : (data.message || "Validation failed.");
         showToast(errorMsg);
@@ -839,4 +872,105 @@ function initClientsHorizontalScroll() {
 
   startAutoScroll();
 }
+
+/* ==========================================================================
+   Section Anchor Navigation, Auth Modal Gate & Highlight
+   ========================================================================== */
+const SECTION_ANCHOR_MAP = {
+  'hero': ['hero', 'hero-section'],
+  'clients': ['clients', 'partners'],
+  'services': ['services'],
+  'amc_plans': ['amc-plans', 'amc', 'packages', 'amc_plans'],
+  'amc-plans': ['amc-plans', 'amc', 'packages', 'amc_plans'],
+  'amc': ['amc-plans', 'amc', 'packages', 'amc_plans'],
+  'how_it_works': ['how-it-works', 'howItWorks', 'how_it_works'],
+  'how-it-works': ['how-it-works', 'howItWorks', 'how_it_works'],
+  'howItWorks': ['how-it-works', 'howItWorks', 'how_it_works'],
+  'video_portfolio': ['video-portfolio', 'portfolioVideo', 'video_portfolio'],
+  'video-portfolio': ['video-portfolio', 'portfolioVideo', 'video_portfolio'],
+  'portfolioVideo': ['video-portfolio', 'portfolioVideo', 'video_portfolio'],
+  'why_fix': ['why-fix', 'whyFix', 'why_fix', 'about'],
+  'why-fix': ['why-fix', 'whyFix', 'why_fix', 'about'],
+  'whyFix': ['why-fix', 'whyFix', 'why_fix', 'about'],
+  'who_we_serve': ['who-we-serve', 'whoWeServe', 'who_we_serve'],
+  'who-we-serve': ['who-we-serve', 'whoWeServe', 'who_we_serve'],
+  'whoWeServe': ['who-we-serve', 'whoWeServe', 'who_we_serve'],
+  'testimonials': ['testimonials', 'reviews'],
+  'faq': ['faq', 'faqs'],
+  'contact': ['contact', 'command-center'],
+  'vendor_hero': ['vendor-hero', 'vendor_hero'],
+  'vendor-hero': ['vendor-hero', 'vendor_hero'],
+  'vendor_benefits': ['vendor-benefits', 'vendor_benefits'],
+  'vendor-benefits': ['vendor-benefits', 'vendor_benefits'],
+  'legal_privacy': ['legal-content', 'privacy-content', 'legal_privacy'],
+  'legal_terms': ['legal-content', 'terms-content', 'legal_terms'],
+  'legal_sla': ['legal-content', 'sla-content', 'legal_sla'],
+  'legal-content': ['legal-content'],
+  'support_desk': ['support-portal', 'support_desk', 'support-desk'],
+  'support-portal': ['support-portal', 'support_desk', 'support-desk']
+};
+
+function handleSectionAnchorNavigation() {
+  const url = new URL(window.location.href);
+  const rawHash = window.location.hash ? window.location.hash.replace(/^#/, '') : '';
+  const sectionParam = url.searchParams.get('section') || url.searchParams.get('preview_section') || rawHash;
+
+  if (!sectionParam) return;
+
+  function findTargetElement() {
+    const cleanKey = sectionParam.trim();
+    const candidateList = SECTION_ANCHOR_MAP[cleanKey] || [
+      cleanKey,
+      cleanKey.replace(/_/g, '-'),
+      cleanKey.replace(/-/g, '_'),
+      cleanKey + '-section',
+      cleanKey + '_section',
+      cleanKey + '-content',
+      cleanKey + '-portal'
+    ];
+
+    for (const id of candidateList) {
+      const el = document.getElementById(id);
+      if (el) {
+        if (el.tagName === 'DIV' && el.innerHTML.trim() === '' && el.parentElement) {
+          return el.closest('section') || el.parentElement;
+        }
+        return el.closest('section') || el;
+      }
+    }
+
+    return document.querySelector(`[data-section="${cleanKey}"]`) ||
+           document.querySelector(`[data-section-key="${cleanKey}"]`) ||
+           document.querySelector(`[data-section="${cleanKey.replace(/-/g, '_')}"]`) ||
+           document.querySelector(`[data-section="${cleanKey.replace(/_/g, '-')}"]`);
+  }
+
+  function doScrollAndHighlight() {
+    const targetEl = findTargetElement();
+    if (!targetEl) return;
+
+    // Use native scrollIntoView so CSS scroll-margin-top: 96px is automatically respected
+    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Subtle pulse outline animation
+    targetEl.classList.remove('section-preview-highlight');
+    void targetEl.offsetWidth; // trigger reflow
+    targetEl.classList.add('section-preview-highlight');
+
+    setTimeout(() => {
+      targetEl.classList.remove('section-preview-highlight');
+    }, 3500);
+  }
+
+  // Multi-pass execution to survive dynamic layout shifts (images, fonts, sliders)
+  setTimeout(doScrollAndHighlight, 120);
+  setTimeout(doScrollAndHighlight, 450);
+  if (document.readyState !== 'complete') {
+    window.addEventListener('load', () => {
+      setTimeout(doScrollAndHighlight, 150);
+    }, { once: true });
+  }
+}
+
+window.handleSectionAnchorNavigation = handleSectionAnchorNavigation;
 

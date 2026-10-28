@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60" fill="none">
+  <!-- BRAC Flowing Bird Wings -->
+  <g transform="translate(12, 10)">
+    <path d="M19 4L34 19L19 34L4 19Z" fill="#BE185D"/>
+    <circle cx="19" cy="19" r="6" fill="#FFFFFF"/>
+  </g>
+  <!-- Brand Typography -->
+  <text x="58" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="900" fill="#BE185D" letter-spacing="1.5">brac</text>
+  <text x="58" y="42" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" font-weight="600" fill="#64748B" letter-spacing="0.4">CENTRE &amp; CAMPUS</text>
+</svg>

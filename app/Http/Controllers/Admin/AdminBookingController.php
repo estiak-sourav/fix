@@ -6,6 +6,7 @@ use App\Actions\Booking\UpdateBookingStatusAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateBookingStatusRequest;
 use App\Models\Booking;
+use App\Models\OutreachTask;
 use App\Models\Partner;
 use App\Models\User;
 use App\Services\ActivityLogService;
@@ -182,12 +183,65 @@ class AdminBookingController extends Controller
             'admin_id' => $admin?->id,
         ]);
 
+        // Automatically create or resolve OutreachTask based on call outcome
+        if ($validated['call_status'] === 'unreachable') {
+            $reasonText = ! empty($validated['unreachable_reason']) ? $validated['unreachable_reason'] : 'Client unreachable / no answer';
+            OutreachTask::create([
+                'booking_id' => $booking->id,
+                'admin_id' => $admin?->id,
+                'created_by_admin_id' => $admin?->id,
+                'title' => "Retry Call: {$booking->customer_name} (#{$booking->booking_number})",
+                'task_type' => 'call_unreachable',
+                'customer_name' => $booking->customer_name,
+                'customer_phone' => $booking->customer_phone,
+                'priority' => $booking->urgency === 'emergency_1h' ? 'urgent' : 'high',
+                'status' => 'pending',
+                'due_at' => now()->addMinutes(30),
+                'notes' => $notesCombined ?: $reasonText,
+                'is_automated' => true,
+            ]);
+        } elseif ($validated['call_status'] === 'call_back_later') {
+            $callbackText = ! empty($validated['callback_time']) ? $validated['callback_time'] : 'Call back requested';
+            $dueAt = now()->addHours(2);
+            $lower = strtolower($callbackText);
+            if (str_contains($lower, '1 hour')) {
+                $dueAt = now()->addHour();
+            } elseif (str_contains($lower, 'afternoon')) {
+                $dueAt = now()->hour < 14 ? now()->setHour(14)->setMinute(0) : now()->addHours(2);
+            } elseif (str_contains($lower, 'evening')) {
+                $dueAt = now()->hour < 18 ? now()->setHour(18)->setMinute(0) : now()->addHours(2);
+            } elseif (str_contains($lower, 'tomorrow')) {
+                $dueAt = now()->addDay()->setHour(10)->setMinute(0);
+            }
+
+            OutreachTask::create([
+                'booking_id' => $booking->id,
+                'admin_id' => $admin?->id,
+                'created_by_admin_id' => $admin?->id,
+                'title' => "Follow-up Call: {$booking->customer_name} (#{$booking->booking_number})",
+                'task_type' => 'call_back_later',
+                'customer_name' => $booking->customer_name,
+                'customer_phone' => $booking->customer_phone,
+                'priority' => $booking->urgency === 'emergency_1h' ? 'urgent' : 'high',
+                'status' => 'pending',
+                'due_at' => $dueAt,
+                'notes' => $notesCombined ?: $callbackText,
+                'is_automated' => true,
+            ]);
+        } elseif ($validated['call_status'] === 'connected') {
+            $booking->outreachTasks()->where('status', 'pending')->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+                'completed_by_admin_id' => $admin?->id,
+            ]);
+        }
+
         ActivityLogService::logBooking('booking.call_status', "Phone call log for #{$booking->booking_number}: {$statusText}.", $booking, [
             'call_status' => $validated['call_status'],
             'call_notes' => $validated['call_notes'] ?? null,
         ]);
 
-        return redirect()->back()->with('success', "Call status updated: {$statusText}");
+        return redirect()->back()->with('success', "Call status updated: {$statusText} (Outreach Task updated)");
     }
 
     /**
@@ -238,6 +292,13 @@ class AdminBookingController extends Controller
 
         // Also mark call as connected since phone discussion took place
         $booking->update(['call_status' => 'connected']);
+
+        // Auto-complete any pending outreach tasks for this booking
+        $booking->outreachTasks()->where('status', 'pending')->update([
+            'status' => 'completed',
+            'completed_at' => now(),
+            'completed_by_admin_id' => $admin?->id,
+        ]);
 
         $payload = [
             'status' => 'accepted',

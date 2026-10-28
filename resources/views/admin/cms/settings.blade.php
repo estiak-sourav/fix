@@ -77,7 +77,7 @@
 
         <div>
           <label class="form-label-paces">Site Description</label>
-          <textarea name="site_description" class="form-control-paces" rows="2">{{ \App\Models\SiteSetting::get('site_description', 'Professional facility management, HVAC, electrical, plumbing, fire safety and AMC services in Bangladesh.') }}</textarea>
+          <textarea name="site_description" class="form-control-paces" rows="5">{{ \App\Models\SiteSetting::get('site_description', 'Professional facility management, HVAC, electrical, plumbing, fire safety and AMC services in Bangladesh.') }}</textarea>
           <span class="form-help-paces">Brief overview used as default text for browsers and search engine indexers.</span>
         </div>
       </div>
@@ -161,10 +161,57 @@
           </div>
         </div>
 
-        <div>
+        <div style="margin-bottom:1.25rem;">
           <label class="form-label-paces">Physical Office Address *</label>
           <input type="text" name="head_office_address" value="{{ \App\Models\SiteSetting::get('head_office_address', 'Plot 12, Road 11, Block D, Banani, Dhaka-1213') }}" class="form-control-paces" required>
           <span class="form-help-paces">Official location rendered dynamically in contact sections and footer.</span>
+        </div>
+
+        <div>
+          <label class="form-label-paces">Operating Hours</label>
+          <input type="text" name="operating_hours" value="{{ \App\Models\SiteSetting::get('operating_hours', '24/7 Operations Command Center') }}" class="form-control-paces">
+          <span class="form-help-paces">Working schedule displayed in contact sections and footer.</span>
+        </div>
+      </div>
+
+      <!-- Social Media & Messaging Channels -->
+      <div class="card-paces" style="margin-bottom:1.5rem;">
+        <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.85rem; margin-bottom:1.25rem;">
+          <h3 class="card-title-paces" style="margin:0;">Social Media & Communication Channels</h3>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+          <div>
+            <label class="form-label-paces">Facebook Page URL</label>
+            <input type="url" name="facebook_url" value="{{ \App\Models\SiteSetting::get('facebook_url') }}" placeholder="https://facebook.com/yourpage" class="form-control-paces">
+            <span class="form-help-paces">Target URL for Facebook icon in footer.</span>
+          </div>
+
+          <div>
+            <label class="form-label-paces">LinkedIn Company URL</label>
+            <input type="url" name="linkedin_url" value="{{ \App\Models\SiteSetting::get('linkedin_url') }}" placeholder="https://linkedin.com/company/yourpage" class="form-control-paces">
+            <span class="form-help-paces">Target URL for LinkedIn icon in footer.</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+          <div>
+            <label class="form-label-paces">Instagram Profile URL</label>
+            <input type="url" name="instagram_url" value="{{ \App\Models\SiteSetting::get('instagram_url') }}" placeholder="https://instagram.com/yourprofile" class="form-control-paces">
+            <span class="form-help-paces">Target URL for Instagram icon in footer.</span>
+          </div>
+
+          <div>
+            <label class="form-label-paces">YouTube Channel URL</label>
+            <input type="url" name="youtube_url" value="{{ \App\Models\SiteSetting::get('youtube_url') }}" placeholder="https://youtube.com/@yourchannel" class="form-control-paces">
+            <span class="form-help-paces">Target URL for YouTube video channels.</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label-paces">WhatsApp Contact Number</label>
+          <input type="text" name="whatsapp_number" value="{{ \App\Models\SiteSetting::get('whatsapp_number') }}" placeholder="+8801700000000" class="form-control-paces">
+          <span class="form-help-paces">Direct WhatsApp helpline number (with international country code).</span>
         </div>
       </div>
 
@@ -185,7 +232,7 @@
 
         <div>
           <label class="form-label-paces">Maintenance Message</label>
-          <textarea name="maintenance_message" class="form-control-paces" rows="2" placeholder="We are currently undergoing scheduled maintenance. We will be back online shortly.">{{ \App\Models\SiteSetting::get('maintenance_message', 'We are currently performing scheduled maintenance to upgrade our systems. We will be back online shortly.') }}</textarea>
+          <textarea name="maintenance_message" class="form-control-paces" rows="5" placeholder="We are currently undergoing scheduled maintenance. We will be back online shortly.">{{ \App\Models\SiteSetting::get('maintenance_message', 'We are currently performing scheduled maintenance to upgrade our systems. We will be back online shortly.') }}</textarea>
           <span class="form-help-paces">Message displayed to visitors when maintenance mode is active.</span>
         </div>
       </div>
@@ -213,7 +260,7 @@
 
         <div style="margin-bottom:1.25rem;">
           <label class="form-label-paces">Default Meta Description</label>
-          <textarea name="meta_description" class="form-control-paces" rows="2">{{ \App\Models\SiteSetting::get('meta_description', 'Professional facility management, HVAC chillers, electrical, plumbing, fire safety & AMC services in Dhaka, Bangladesh.') }}</textarea>
+          <textarea name="meta_description" class="form-control-paces" rows="5">{{ \App\Models\SiteSetting::get('meta_description', 'Professional facility management, HVAC chillers, electrical, plumbing, fire safety & AMC services in Dhaka, Bangladesh.') }}</textarea>
           <span class="form-help-paces">Fallback meta description for search engines.</span>
         </div>
 

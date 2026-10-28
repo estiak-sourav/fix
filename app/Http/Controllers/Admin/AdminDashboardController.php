@@ -9,6 +9,7 @@ use App\Models\AdminNotification;
 use App\Models\AmcPlan;
 use App\Models\Booking;
 use App\Models\DailyAnalytics;
+use App\Models\OutreachTask;
 use App\Models\Service;
 use App\Models\SupportTicket;
 use App\Models\User;
@@ -429,12 +430,40 @@ class AdminDashboardController extends Controller
             'colors' => array_column($salesCategories, 'color'),
         ];
 
-        // 4. Pending Call Outreach Tasks (Item 7: Unreachable or Call Back Later)
-        $outreachTasks = Booking::whereIn('call_status', ['unreachable', 'call_back_later'])
+        // 4. Outreach Tasks (Automatic unreachable/callback + Manual tasks)
+        // Self-heal/sync: ensure any pending_review bookings with unreachable/call_back_later have an OutreachTask
+        $legacyUnsyncedBookings = Booking::whereIn('call_status', ['unreachable', 'call_back_later'])
             ->where('status', 'pending_review')
-            ->latest('updated_at')
-            ->take(6)
+            ->whereDoesntHave('outreachTasks', fn ($q) => $q->where('status', 'pending'))
             ->get();
+
+        foreach ($legacyUnsyncedBookings as $legacyBooking) {
+            $type = $legacyBooking->call_status === 'unreachable' ? 'call_unreachable' : 'call_back_later';
+            $title = ($legacyBooking->call_status === 'unreachable' ? 'Retry Call: ' : 'Follow-up Call: ').$legacyBooking->customer_name." (#{$legacyBooking->booking_number})";
+            OutreachTask::create([
+                'booking_id' => $legacyBooking->id,
+                'title' => $title,
+                'task_type' => $type,
+                'customer_name' => $legacyBooking->customer_name,
+                'customer_phone' => $legacyBooking->customer_phone,
+                'priority' => $legacyBooking->urgency === 'emergency_1h' ? 'urgent' : 'high',
+                'status' => 'pending',
+                'due_at' => now()->addMinutes(30),
+                'notes' => $legacyBooking->call_notes,
+                'is_automated' => true,
+            ]);
+        }
+
+        $outreachTasks = OutreachTask::with(['booking.service', 'user', 'createdByAdmin', 'completedByAdmin'])
+            ->where('status', 'pending')
+            ->orderByRaw("CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 ELSE 4 END")
+            ->orderBy('due_at', 'asc')
+            ->take(12)
+            ->get();
+
+        $recentPendingBookings = Booking::where('status', 'pending_review')->latest()->take(20)->get();
+        $taskBookings = Booking::with(['service', 'user'])->latest()->take(60)->get();
+        $taskUsers = User::latest()->take(60)->get(['id', 'name', 'email', 'phone', 'default_address', 'division', 'district', 'area', 'created_at']);
 
         // 5. Dynamic Top Selling Services & AMC Packages (Item 8)
         $popularServices = Service::withCount('bookings')
@@ -494,6 +523,9 @@ class AdminDashboardController extends Controller
             'salesAnalytics',
             'currentMonth',
             'outreachTasks',
+            'recentPendingBookings',
+            'taskBookings',
+            'taskUsers',
             'topSellingDynamic',
             'latestSupportTicket'
         ));

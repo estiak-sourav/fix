@@ -51,6 +51,13 @@
             </label>
             <input type="file" name="thumbnail_file" accept="image/*" class="form-control-paces">
             <span class="form-help-paces">Selecting an image replaces the current primary thumbnail with your uploaded local photo.</span>
+            <div style="display:flex; align-items:flex-start; gap:8px; margin-top:10px; padding:8px 12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; font-size:0.8rem; color:#1e40af;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <div>
+                <strong>সুপারিশকৃত সাইজ (Recommended):</strong> ৮০০ × ৫০০ পিক্সেল (১৬:১০ বা ১৬:৯ রেশিও, JPG/PNG/WebP)।<br>
+                <span style="color:#2563eb; font-size:0.75rem;">💡 যেকোনো সাইজ বা রেশিওর ছবি আপলোড করা যাবে (কোনো সাইজ লিমিট বা বাধ্যবাধকতা নেই)। ওয়েবসাইটে ইমেজগুলো স্বয়ংক্রিয়ভাবে ফিক্সড হাইট ও উইথে প্রফেশনালভাবে ক্রপ হয়ে প্রদর্শিত হবে।</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -71,7 +78,7 @@
             <div style="display:flex; gap:12px; flex-wrap:wrap;">
               @foreach($gallery as $gIdx => $gPath)
                 <div style="background:#ffffff; padding:6px; border-radius:8px; border:1px solid var(--paces-border); text-align:center; width:110px;">
-                  <img src="{{ asset($gPath) }}" alt="Photo {{ $gIdx + 1 }}" style="width:98px; height:65px; object-fit:cover; border-radius:6px; margin-bottom:4px;">
+                  <img src="{{ str_starts_with($gPath, 'http') ? $gPath : asset($gPath) }}" alt="Photo {{ $gIdx + 1 }}" style="width:98px; height:65px; object-fit:cover; border-radius:6px; margin-bottom:4px;">
                   <label style="font-size:0.75rem; color:#ef4444; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;">
                     <input type="checkbox" name="remove_photos[]" value="{{ $gPath }}" style="accent-color:#ef4444;">
                     <span>Remove</span>
@@ -86,6 +93,13 @@
           <label class="form-label-paces">Upload Additional Gallery Photos</label>
           <input type="file" name="service_photos[]" multiple accept="image/*" class="form-control-paces">
           <span class="form-help-paces">You can upload up to 5 photos total for this service to showcase actual completed work.</span>
+          <div style="display:flex; align-items:flex-start; gap:8px; margin-top:10px; padding:8px 12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; font-size:0.8rem; color:#1e40af;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <div>
+              <strong>সুপারিশকৃত গ্যালারি সাইজ (Recommended):</strong> ৮০০ × ৬০০ পিক্সেল (৪:৩ বা ১৬:৯ রেশিও)।<br>
+              <span style="color:#2563eb; font-size:0.75rem;">💡 যেকোনো রেজোলিউশনের ইমেজ আপলোড করতে পারেন (কোনো সাইজ চেক নেই)। সার্ভিস ডিটেইলস পেজের ফটো গ্যালারিতে এটি স্বয়ংক্রিয়ভাবে ফিক্সড সাইজ থাম্বনেইল ও প্রিভিউ হিসেবে সুন্দরভাবে দেখাবে।</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -101,14 +115,14 @@
 
       <div style="margin-bottom:1.25rem;">
         <label class="form-label-paces">Detailed Description *</label>
-        <textarea name="description" class="form-control-paces" rows="4" required>{{ old('description', $service->description) }}</textarea>
+        <textarea name="description" class="form-control-paces" rows="5" required>{{ old('description', $service->description) }}</textarea>
       </div>
 
       <div style="margin-bottom:1.5rem;">
         <label class="form-label-paces">
           Scope / Key Deliverables (One item per line)
         </label>
-        <textarea name="scope_included" class="form-control-paces" rows="4" placeholder="Full diagnostic inspection&#10;Emergency team dispatch&#10;Written service report">{{ is_array($service->scope_included) ? implode("\n", $service->scope_included) : '' }}</textarea>
+        <textarea name="scope_included" class="form-control-paces" rows="5" placeholder="Full diagnostic inspection&#10;Emergency team dispatch&#10;Written service report">{{ is_array($service->scope_included) ? implode("\n", $service->scope_included) : '' }}</textarea>
       </div>
 
       <div style="display:flex; justify-content:flex-end; gap:10px;">

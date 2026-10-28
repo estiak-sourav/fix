@@ -82,4 +82,31 @@ class Service extends Model
 
         return asset('assets/images/placeholder-service.jpg');
     }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getGalleryUrlsAttribute(): array
+    {
+        $gallery = $this->gallery_images;
+        if (empty($gallery) || ! is_array($gallery)) {
+            return [];
+        }
+
+        $urls = [];
+        foreach ($gallery as $item) {
+            if (empty($item)) {
+                continue;
+            }
+            if (str_starts_with($item, 'http://') || str_starts_with($item, 'https://')) {
+                $urls[] = $item;
+            } elseif (file_exists(public_path($item))) {
+                $urls[] = asset($item);
+            } else {
+                $urls[] = asset($item);
+            }
+        }
+
+        return $urls;
+    }
 }

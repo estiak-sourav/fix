@@ -380,6 +380,280 @@
     </div>
   </div>
 
+  @php
+    $bookingOptionsData = ($taskBookings ?? collect())->map(function($b) {
+        return [
+            'id' => $b->id,
+            'number' => $b->booking_number,
+            'name' => $b->customer_name,
+            'phone' => $b->customer_phone,
+            'email' => $b->customer_email,
+            'service' => $b->service?->title ?? 'General Maintenance',
+            'status' => ucfirst(str_replace('_', ' ', $b->status)),
+            'call_status' => $b->call_status ? ucfirst(str_replace('_', ' ', $b->call_status)) : null,
+            'call_notes' => $b->call_notes,
+            'address' => trim(($b->street_address ?? '').', '.($b->area ?? '').', '.($b->district ?? '')),
+            'date' => $b->preferred_date ? \Carbon\Carbon::parse($b->preferred_date)->format('M d, Y') : null,
+            'time' => $b->preferred_time_slot,
+            'cost' => ($b->final_cost ?? $b->estimated_cost) ? '৳ '.number_format($b->final_cost ?? $b->estimated_cost, 0) : null,
+            'user_id' => $b->user_id,
+        ];
+    })->values();
+
+    $userOptionsData = ($taskUsers ?? collect())->map(function($u) {
+        return [
+            'id' => $u->id,
+            'name' => $u->name,
+            'phone' => $u->phone,
+            'email' => $u->email,
+            'address' => $u->default_address ?? trim(($u->area ?? '').', '.($u->district ?? '')),
+            'created_at' => $u->created_at ? $u->created_at->format('M d, Y') : null,
+            'company' => $u->company_name,
+        ];
+    })->values();
+  @endphp
+
+  <!-- Create Outreach Task Popup Modal -->
+  <div id="createTaskModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.5); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#ffffff; border-radius:14px; box-shadow:0 20px 45px rgba(0,0,0,0.18); width:92%; max-width:520px; padding:22px 24px; position:relative; max-height:90vh; overflow-y:auto;" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div>
+          <h3 style="margin:0; font-size:1.1rem; font-weight:600; color:#1e293b; font-family:'Poppins', sans-serif;">Create Task</h3>
+          <p style="margin:2px 0 0; font-size:0.78rem; color:#64748b;">Add a new simple task, or link to a booking/user for detailed follow-up.</p>
+        </div>
+        <button type="button" onclick="closeCreateTaskModal()" style="background:none; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; line-height:1; padding:0 4px;">&times;</button>
+      </div>
+
+      <form action="{{ route('admin.outreach-tasks.store') }}" method="POST" style="margin:0;">
+        @csrf
+
+        <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
+          <!-- 1. Basic Info: Title -->
+          <div>
+            <label style="display:block; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:4px;">Task Title *</label>
+            <input type="text" name="title" id="taskTitleInput" class="form-control-paces" placeholder="e.g. Call customer for site visit schedule" required style="width:100%; font-size:0.85rem; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+          </div>
+
+          <!-- Priority & Due Time -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div>
+              <label style="display:block; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:4px;">Priority</label>
+              <select name="priority" class="form-control-paces" style="width:100%; font-size:0.85rem; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="normal" selected>Normal</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:4px;">Due Date & Time (Optional)</label>
+              <input type="datetime-local" name="due_at" class="form-control-paces" style="width:100%; font-size:0.85rem; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+            </div>
+          </div>
+
+          <!-- 2. Searchable Booking Dropdown -->
+          <div style="position:relative;">
+            <label style="display:block; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:4px;">Link to Booking (Optional)</label>
+            <input type="hidden" name="booking_id" id="taskBookingId" value="">
+            
+            <div id="bookingDropdownTrigger" onclick="toggleTaskDropdown('bookingDropdownMenu')" style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; cursor:pointer; font-size:0.85rem; min-height:38px;">
+              <span id="bookingDropdownSelectedText" style="color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Select a booking (Optional)...</span>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span id="bookingClearBtn" onclick="clearSelectedBooking(event)" style="display:none; color:#94a3b8; font-size:1.1rem; line-height:1; padding:0 3px; cursor:pointer;" title="Clear booking">&times;</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+            </div>
+
+            <div id="bookingDropdownMenu" style="display:none; position:absolute; top:calc(100% + 4px); left:0; width:100%; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 12px 28px rgba(0,0,0,0.14); z-index:10010; flex-direction:column; overflow:hidden;">
+              <div style="padding:8px; border-bottom:1px solid #f1f5f9; background:#f8fafc;">
+                <input type="text" id="bookingSearchInput" oninput="filterBookings(this.value)" placeholder="Search booking #, customer, phone..." style="width:100%; padding:6px 10px; font-size:0.82rem; border:1px solid #cbd5e1; border-radius:6px; outline:none;" onclick="event.stopPropagation()">
+              </div>
+              <div id="bookingOptionsList" style="overflow-y:auto; max-height:180px; padding:4px 0;">
+                <!-- Populated dynamically via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Searchable User Dropdown -->
+          <div style="position:relative;">
+            <label style="display:block; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:4px;">Link to Customer / User (Optional)</label>
+            <input type="hidden" name="user_id" id="taskUserId" value="">
+            
+            <div id="userDropdownTrigger" onclick="toggleTaskDropdown('userDropdownMenu')" style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; cursor:pointer; font-size:0.85rem; min-height:38px;">
+              <span id="userDropdownSelectedText" style="color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Select a customer / user (Optional)...</span>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span id="userClearBtn" onclick="clearSelectedUser(event)" style="display:none; color:#94a3b8; font-size:1.1rem; line-height:1; padding:0 3px; cursor:pointer;" title="Clear customer">&times;</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+            </div>
+
+            <div id="userDropdownMenu" style="display:none; position:absolute; top:calc(100% + 4px); left:0; width:100%; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 12px 28px rgba(0,0,0,0.14); z-index:10010; flex-direction:column; overflow:hidden;">
+              <div style="padding:8px; border-bottom:1px solid #f1f5f9; background:#f8fafc;">
+                <input type="text" id="userSearchInput" oninput="filterUsers(this.value)" placeholder="Search customer by name, phone, email..." style="width:100%; padding:6px 10px; font-size:0.82rem; border:1px solid #cbd5e1; border-radius:6px; outline:none;" onclick="event.stopPropagation()">
+              </div>
+              <div id="userOptionsList" style="overflow-y:auto; max-height:180px; padding:4px 0;">
+                <!-- Populated dynamically via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Dynamic Previous Details Info Card (Visible when Booking or User is chosen) -->
+          <div id="linkedEntityDetailsCard" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px; font-size:0.8rem;">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- 5. New Info / Notes Textarea (Visible when Booking or User is chosen) -->
+          <div id="taskNewInfoContainer" style="display:none;">
+            <label style="display:block; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:4px;">
+              <span>New Info / Notes for this Task</span>
+              <span style="font-size:0.75rem; color:#10b981; font-weight:500; margin-left:4px;">(Visible because entity is selected)</span>
+            </label>
+            <textarea name="notes" id="taskNotesInput" class="form-control-paces" rows="3" placeholder="Enter instructions, discussion points, new customer details or action items..." style="width:100%; font-size:0.85rem; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;"></textarea>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onclick="closeCreateTaskModal()" class="btn-paces btn-paces-outline btn-paces-sm" style="height:36px; padding:0 14px;">Cancel</button>
+          <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="height:36px; padding:0 18px;">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Outreach Task Modal -->
+  <div id="editTaskModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.5); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#ffffff; border-radius:14px; box-shadow:0 20px 45px rgba(0,0,0,0.18); width:92%; max-width:480px; padding:22px 24px; position:relative; max-height:90vh; overflow-y:auto;" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div>
+          <h3 style="margin:0; font-size:1.1rem; font-weight:600; color:#1e293b; font-family:'Poppins', sans-serif;">Edit Task</h3>
+          <p style="margin:2px 0 0; font-size:0.78rem; color:#64748b;">Update task details, notes or mark as completed.</p>
+        </div>
+        <button type="button" onclick="closeEditTaskModal()" style="background:none; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; line-height:1; padding:0 4px;">&times;</button>
+      </div>
+
+      <form id="editTaskForm" method="POST" style="margin:0;">
+        @csrf
+        @method('PUT')
+
+        <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
+          <div>
+            <label style="display:block; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:4px;">Task Title *</label>
+            <input type="text" name="title" id="editTaskTitle" class="form-control-paces" required style="width:100%; font-size:0.85rem; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div>
+              <label style="display:block; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:4px;">Priority</label>
+              <select name="priority" id="editTaskPriority" class="form-control-paces" style="width:100%; font-size:0.85rem; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:4px;">Status</label>
+              <select name="status" id="editTaskStatus" class="form-control-paces" style="width:100%; font-size:0.85rem; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label style="display:block; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:4px;">Due Date & Time (Optional)</label>
+            <input type="datetime-local" name="due_at" id="editTaskDueAt" class="form-control-paces" style="width:100%; font-size:0.85rem; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+          </div>
+
+          <div id="editTaskLinkedInfo" style="display:none; font-size:0.78rem; padding:8px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; color:#475569;">
+            <!-- dynamically populated -->
+          </div>
+
+          <div>
+            <label style="display:block; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:4px;">Task Notes / Details</label>
+            <textarea name="notes" id="editTaskNotes" class="form-control-paces" rows="3" placeholder="Enter task notes or instructions..." style="width:100%; font-size:0.85rem; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;"></textarea>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onclick="closeEditTaskModal()" class="btn-paces btn-paces-outline btn-paces-sm" style="height:36px; padding:0 14px;">Cancel</button>
+          <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="height:36px; padding:0 18px;">Update Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Task Details Popup Modal (Clean & Minimal) -->
+  <div id="taskDetailsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.55); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center;" onclick="closeTaskDetailsModal()">
+    <div style="background:#ffffff; border-radius:14px; box-shadow:0 20px 45px rgba(0,0,0,0.18); width:92%; max-width:540px; padding:22px 24px; position:relative; max-height:90vh; overflow-y:auto;" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#64748b;" id="modalTaskType">Task Details</span>
+          <span id="modalTaskPriorityBadge"></span>
+          <span id="modalTaskStatusBadge"></span>
+        </div>
+        <button type="button" onclick="closeTaskDetailsModal()" style="background:none; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; line-height:1; padding:0 4px;">&times;</button>
+      </div>
+
+      <!-- Task Title -->
+      <h2 id="modalTaskTitle" style="font-size:1.2rem; font-weight:700; color:#0f172a; margin:0 0 12px; line-height:1.35;"></h2>
+
+      <!-- Due Date -->
+      <div id="modalTaskDueDateRow" style="display:flex; align-items:center; gap:6px; font-size:0.83rem; color:#475569; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid #f1f5f9;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <span id="modalTaskDueText"></span>
+      </div>
+
+      <!-- Notes Box -->
+      <div style="margin-bottom:16px;">
+        <label style="font-size:0.75rem; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">Notes & Instructions</label>
+        <div id="modalTaskNotes" style="font-size:0.875rem; color:#334155; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px; line-height:1.5; white-space:pre-wrap;"></div>
+      </div>
+
+      <!-- Linked Booking Info (if any) -->
+      <div id="modalLinkedBookingCard" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:12px 14px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:0.75rem; font-weight:700; color:#047857; text-transform:uppercase;">Linked Booking</span>
+          <a href="#" id="modalBookingLink" target="_blank" style="font-size:0.78rem; font-weight:600; color:#059669; text-decoration:none;">Open Booking →</a>
+        </div>
+        <div id="modalBookingDetails" style="font-size:0.84rem; color:#1e293b;"></div>
+      </div>
+
+      <!-- Linked Customer Info (if any) -->
+      <div id="modalLinkedUserCard" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:0.75rem; font-weight:700; color:#475569; text-transform:uppercase;">Linked Customer</span>
+          <a href="#" id="modalUserLink" target="_blank" style="font-size:0.78rem; font-weight:600; color:var(--paces-primary, #3e60d5); text-decoration:none;">View Customer →</a>
+        </div>
+        <div id="modalUserDetails" style="font-size:0.84rem; color:#1e293b;"></div>
+      </div>
+
+      <!-- Audit Meta -->
+      <div style="font-size:0.76rem; color:#94a3b8; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f1f5f9; padding-top:12px; margin-bottom:16px;">
+        <span id="modalTaskCreatedMeta"></span>
+        <span id="modalTaskCompletedMeta"></span>
+      </div>
+
+      <!-- Modal Actions -->
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <form id="modalDeleteForm" method="POST" style="margin:0;" onsubmit="return confirm('Delete this task?');">
+          @csrf
+          @method('DELETE')
+          <button type="submit" class="btn-paces btn-paces-sm" style="color:#ef4444; border:1px solid #fecaca; background:#fff; height:36px; padding:0 12px;">Delete</button>
+        </form>
+
+        <div style="display:flex; gap:8px;">
+          <button type="button" id="modalEditBtn" class="btn-paces btn-paces-outline btn-paces-sm" style="height:36px; padding:0 14px;">Edit Task</button>
+          
+          <form id="modalCompleteForm" method="POST" style="margin:0;">
+            @csrf
+            <button type="submit" id="modalCompleteBtn" class="btn-paces btn-paces-primary btn-paces-sm" style="height:36px; padding:0 16px;">Mark Completed</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Operational Insights: Category Demand & Dhaka Hotspots -->
   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
     <!-- Service Category Demand -->
@@ -631,45 +905,149 @@
       </div>
     </div>
 
-    <!-- Card 2: Outreach Tasks -->
+    <!-- Card 2: Outreach Tasks (Clean & Minimal) -->
     <div class="card-paces" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
       <div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
-          <h3 style="font-size:1.05rem; font-weight:500; color:var(--paces-text-dark); margin:0; font-family:'Poppins', sans-serif;">Outreach Tasks</h3>
-          <span class="badge-pill-paces {{ $outreachTasks->count() > 0 ? 'bg-warning-subtle' : 'bg-success-subtle' }}">
-            {{ $outreachTasks->count() }} Pending Calls
-          </span>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 style="font-size:1.05rem; font-weight:600; color:#0f172a; margin:0; font-family:'Poppins', sans-serif;">Outreach Tasks</h3>
+            <span style="font-size:0.75rem; font-weight:600; padding:2px 8px; border-radius:12px; background:{{ $outreachTasks->count() > 0 ? '#fffbeb' : '#ecfdf5' }}; color:{{ $outreachTasks->count() > 0 ? '#b45309' : '#047857' }}; border:1px solid {{ $outreachTasks->count() > 0 ? '#fde68a' : '#a7f3d0' }};">
+              {{ $outreachTasks->count() }} Pending
+            </span>
+          </div>
+
+          <button type="button" onclick="openCreateTaskModal()" class="btn-paces btn-paces-primary btn-paces-sm" style="padding:4px 10px; font-size:0.75rem; display:inline-flex; align-items:center; gap:5px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>Create Task</span>
+          </button>
         </div>
 
-        <div id="taskListContainer" style="display:flex; flex-direction:column; gap:10px;">
+        <div id="taskListContainer" style="display:flex; flex-direction:column; gap:8px;">
           @forelse($outreachTasks as $task)
-            <div class="task-row-item" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:#f8fafc; border:1px solid #edf2f7; border-radius:8px;">
-              <div style="min-width:0; padding-right:8px;">
-                <div style="font-size:0.88rem; font-weight:500; color:#1e293b;">
-                  {{ $task->customer_name }} • <span style="font-family:monospace; color:var(--paces-primary);">#{{ $task->booking_number }}</span>
-                </div>
-                <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">
-                  📞 {{ $task->customer_phone }} — <span style="color:{{ $task->call_status === 'unreachable' ? '#dc2626' : '#d97706' }}; font-weight:500;">
-                    {{ $task->call_status === 'unreachable' ? 'Unreachable (Retry)' : 'Call Back Later' }}
-                  </span>
+            @php
+              $taskData = [
+                'id' => $task->id,
+                'title' => $task->title,
+                'task_type' => ucfirst(str_replace('_', ' ', $task->task_type ?? 'General')),
+                'priority' => $task->priority,
+                'status' => $task->status,
+                'due_at' => $task->due_at ? $task->due_at->format('M d, Y, h:i A') : null,
+                'due_at_input' => $task->due_at ? $task->due_at->format('Y-m-d\TH:i') : '',
+                'is_overdue' => $task->due_at ? $task->due_at->isPast() : false,
+                'overdue_text' => $task->due_at ? ($task->due_at->isPast() ? $task->due_at->diffForHumans() : '') : '',
+                'notes' => $task->notes ?? '',
+                'customer_name' => $task->customer_name ?? ($task->booking?->customer_name ?? $task->user?->name),
+                'customer_phone' => $task->customer_phone ?? ($task->booking?->customer_phone ?? $task->user?->phone),
+                'booking_id' => $task->booking_id,
+                'booking_number' => $task->booking?->booking_number,
+                'booking_url' => $task->booking ? route('admin.bookings.show', $task->booking) : null,
+                'booking_service' => $task->booking?->service?->title ?? ($task->booking?->service_type ? ucfirst(str_replace('_', ' ', $task->booking->service_type)) : null),
+                'booking_status' => $task->booking?->status ? ucfirst(str_replace('_', ' ', $task->booking->status)) : null,
+                'user_id' => $task->user_id,
+                'user_name' => $task->user?->name,
+                'user_email' => $task->user?->email,
+                'user_url' => $task->user ? route('admin.users.show', $task->user) : null,
+                'created_at' => $task->created_at ? $task->created_at->format('M d, Y h:i A') : '',
+                'created_by' => $task->createdByAdmin?->name ?? 'System',
+                'completed_at' => $task->completed_at ? $task->completed_at->format('M d, Y h:i A') : null,
+                'completed_by' => $task->completedByAdmin?->name,
+                'complete_url' => route('admin.outreach-tasks.complete', $task),
+                'update_url' => route('admin.outreach-tasks.update', $task),
+                'delete_url' => route('admin.outreach-tasks.destroy', $task),
+              ];
+            @endphp
+            <div class="task-interactive-row" onclick="openTaskDetailsModal({{ json_encode($taskData) }})" style="display:flex; align-items:center; justify-content:space-between; padding:9px 12px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; gap:10px; cursor:pointer; transition:all 0.15s ease;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#ffffff'; this.style.borderColor='#e2e8f0';">
+              <!-- Left: Checkbox + Title & Meta -->
+              <div style="display:flex; align-items:center; gap:10px; min-width:0; flex:1;">
+                <form action="{{ route('admin.outreach-tasks.complete', $task) }}" method="POST" style="margin:0; flex-shrink:0;" onclick="event.stopPropagation()">
+                  @csrf
+                  <button type="submit" title="Mark as Done" style="width:20px; height:20px; border-radius:50%; border:2px solid #cbd5e1; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; color:transparent; transition:all 0.15s ease;" onmouseover="this.style.borderColor='#10b981'; this.style.color='#10b981';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='transparent';">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </button>
+                </form>
+
+                <div style="min-width:0; flex:1;">
+                  <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                    <span style="font-size:0.86rem; font-weight:600; color:#1e293b; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:240px;" title="{{ $task->title }}">
+                      {{ $task->title }}
+                    </span>
+                    @if($task->priority === 'urgent')
+                      <span style="font-size:0.65rem; font-weight:700; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; padding:1px 5px; border-radius:6px; text-transform:uppercase;">Urgent</span>
+                    @elseif($task->priority === 'high')
+                      <span style="font-size:0.65rem; font-weight:700; background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; padding:1px 5px; border-radius:6px; text-transform:uppercase;">High</span>
+                    @endif
+                  </div>
+
+                  @if($task->due_at || $task->booking || $task->user)
+                    <div style="font-size:0.73rem; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                      @if($task->due_at)
+                        <span style="color:{{ $task->due_at->isPast() ? '#dc2626' : '#64748b' }}; font-weight:{{ $task->due_at->isPast() ? '600' : '400' }}; display:inline-flex; align-items:center; gap:3px;">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                          <span>{{ $task->due_at->isPast() ? 'Overdue: '.$task->due_at->diffForHumans() : $task->due_at->format('M d, h:i A') }}</span>
+                        </span>
+                      @endif
+
+                      @if($task->booking)
+                        <span style="display:inline-flex; align-items:center; gap:3px;" onclick="event.stopPropagation()">
+                          <a href="{{ route('admin.bookings.show', $task->booking) }}" style="color:var(--paces-primary, #3e60d5); text-decoration:none; font-size:0.72rem; font-weight:600; font-family:monospace;" title="Linked Booking">
+                            #{{ $task->booking->booking_number }}
+                          </a>
+                        </span>
+                      @elseif($task->user)
+                        <span style="font-size:0.72rem; color:#475569; display:inline-flex; align-items:center; gap:3px;" onclick="event.stopPropagation()">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                          <span>{{ $task->user->name }}</span>
+                        </span>
+                      @endif
+                    </div>
+                  @endif
                 </div>
               </div>
-              <a href="{{ route('admin.bookings.show', $task) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="flex-shrink:0; padding:4px 10px; font-size:0.75rem;">
-                Call Order →
-              </a>
+
+              <!-- Right: Clean Action Buttons (NO TEXT) -->
+              <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;" onclick="event.stopPropagation()">
+                <!-- Edit Icon Button -->
+                <button type="button" onclick="openEditTaskModal({{ json_encode($taskData) }})" style="width:28px; height:28px; border-radius:6px; border:1px solid #e2e8f0; background:#ffffff; color:#64748b; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.background='#ffffff'; this.style.color='#64748b';" title="Edit Task">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </button>
+
+                <!-- Done Icon Button -->
+                <form action="{{ route('admin.outreach-tasks.complete', $task) }}" method="POST" style="margin:0;">
+                  @csrf
+                  <button type="submit" style="width:28px; height:28px; border-radius:6px; border:1px solid #a7f3d0; background:#ecfdf5; color:#059669; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#d1fae5'; this.style.color='#047857';" onmouseout="this.style.background='#ecfdf5'; this.style.color='#059669';" title="Mark as Done">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </button>
+                </form>
+
+                <!-- Delete Icon Button -->
+                <form action="{{ route('admin.outreach-tasks.destroy', $task) }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete this task?');">
+                  @csrf
+                  @method('DELETE')
+                  <button type="submit" style="width:28px; height:28px; border-radius:6px; border:1px solid #fee2e2; background:#ffffff; color:#ef4444; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='#ffffff';" title="Delete Task">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  </button>
+                </form>
+              </div>
             </div>
           @empty
-            <div style="text-align:center; padding:2rem 1rem; color:var(--paces-text-muted);">
-              <div style="font-size:2rem; margin-bottom:6px;">🎉</div>
-              <div style="font-weight:500; color:var(--paces-text-dark); font-size:0.9rem;">All Outreach Tasks Completed</div>
-              <p style="font-size:0.78rem; margin:4px 0 0;">No unreachable or call-back requests pending right now.</p>
+            <div style="text-align:center; padding:1.75rem 1rem; color:var(--paces-text-muted);">
+              <div style="width:40px; height:40px; border-radius:50%; background:#ecfdf5; color:#059669; display:inline-flex; align-items:center; justify-content:center; margin-bottom:8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <div style="font-weight:600; color:#1e293b; font-size:0.88rem;">All Tasks Completed</div>
+              <p style="font-size:0.76rem; color:#64748b; margin:2px 0 10px;">No pending follow-ups or outreaches right now.</p>
+              <button type="button" onclick="openCreateTaskModal()" class="btn-paces btn-paces-primary btn-paces-sm" style="padding:4px 10px; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Create Task</span>
+              </button>
             </div>
           @endforelse
         </div>
       </div>
-      <div style="text-align:center; padding-top:1rem; border-top:1px solid #f1f5f9; margin-top:1rem;">
-        <a href="{{ route('admin.bookings.index', ['status' => 'pending_review']) }}" class="btn-paces btn-paces-outline btn-paces-sm" style="width:100%;">
-          View All Pending Bookings →
+      <div style="text-align:center; padding-top:0.85rem; border-top:1px solid #f1f5f9; margin-top:0.85rem;">
+        <a href="{{ route('admin.outreach-tasks.index') }}" class="btn-paces btn-paces-outline btn-paces-sm" style="width:100%; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+          <span>View All Tasks</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
         </a>
       </div>
     </div>
@@ -1138,102 +1516,374 @@
       });
     }
 
-    // Tasks Interactive Handlers (In Process / Upcoming)
-    const taskDatasets = {
-      in_process: [
-        { title: "Skote Saas Dashboard", assigned: "Assigned to Mark", done: false },
-        { title: "New Landing UI", assigned: "Assigned to Team A", done: false },
-        { title: "Brand logo design", assigned: "Assigned to Janis", done: false },
-        { title: "Blog Template UI", assigned: "Assigned to Dianna", done: false }
-      ],
-      upcoming: [
-        { title: "HVAC Chiller Maintenance", assigned: "Assigned to Engr. Farhan", done: false },
-        { title: "Substation Relay Calibration", assigned: "Assigned to Team Alpha", done: false },
-        { title: "Fire Hydrant Pressure Test", assigned: "Assigned to Safety Lead", done: false },
-        { title: "Water Tank Disinfection", assigned: "Assigned to Sanitize Unit", done: false }
-      ]
-    };
-    let currentTaskTab = "in_process";
+    // Outreach Tasks Management & Searchable Dropdowns
+    const taskBookingsData = @json($bookingOptionsData ?? []);
+    const taskUsersData = @json($userOptionsData ?? []);
+    let selectedTaskBooking = null;
+    let selectedTaskUser = null;
 
-    function renderTasks() {
-      const container = document.getElementById("taskListContainer");
-      if (!container) return;
-      const list = taskDatasets[currentTaskTab] || [];
-      container.innerHTML = "";
+    function renderBookingOptions(filter = '') {
+      const list = document.getElementById('bookingOptionsList');
+      if (!list) return;
+      const q = filter.trim().toLowerCase();
+      const filtered = taskBookingsData.filter(b => {
+        if (!q) return true;
+        return (b.number && b.number.toLowerCase().includes(q)) ||
+               (b.name && b.name.toLowerCase().includes(q)) ||
+               (b.phone && b.phone.toLowerCase().includes(q)) ||
+               (b.service && b.service.toLowerCase().includes(q));
+      });
 
-      list.forEach((t, idx) => {
-        const item = document.createElement("div");
-        item.className = "task-row-item";
-        item.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f8fafc;";
-        item.innerHTML = `
-          <div style="display:flex; align-items:center; gap:12px;">
-            <input type="checkbox" ${t.done ? "checked" : ""} onchange="toggleTaskDoneIdx(${idx}, this.checked)" style="width:17px; height:17px; border-radius:4px; border:1.5px solid #cbd5e1; cursor:pointer; accent-color:#4361ee;">
-            <div>
-              <div class="task-title" style="font-size:0.88rem; font-weight:500; color:${t.done ? "#94a3b8" : "#1e293b"}; text-decoration:${t.done ? "line-through" : "none"}; transition:all 0.2s;">${t.title}</div>
-              <div style="font-size:0.75rem; color:#94a3b8;">${t.assigned}</div>
-            </div>
+      if (filtered.length === 0) {
+        list.innerHTML = '<div style="padding:10px 12px; font-size:0.8rem; color:#94a3b8; text-align:center;">No matching bookings found</div>';
+        return;
+      }
+
+      list.innerHTML = filtered.map(b => `
+        <div onclick="selectBooking(${b.id})" style="padding:8px 12px; cursor:pointer; font-size:0.82rem; border-bottom:1px solid #f1f5f9; display:flex; flex-direction:column; gap:2px;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:600; color:var(--paces-primary); font-family:monospace;">#${b.number}</span>
+            <span style="font-size:0.7rem; color:#64748b; background:#f1f5f9; padding:1px 6px; border-radius:4px;">${b.status}</span>
           </div>
-          <div style="display:inline-flex; align-items:center; gap:10px;">
-            <button type="button" onclick="editTaskIdx(${idx})" style="background:none; border:none; color:#10b981; cursor:pointer; padding:4px;" title="Edit Task">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-            </button>
-            <button type="button" onclick="deleteTaskIdx(${idx})" style="background:none; border:none; color:#ef4444; cursor:pointer; padding:4px;" title="Delete Task">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </button>
+          <div style="color:#1e293b; font-weight:500;">${b.name || 'Unknown'} ${b.phone ? '• <span style="color:#64748b;">'+b.phone+'</span>' : ''}</div>
+          <div style="font-size:0.75rem; color:#64748b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${b.service || ''} ${b.cost ? '• '+b.cost : ''}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderUserOptions(filter = '') {
+      const list = document.getElementById('userOptionsList');
+      if (!list) return;
+      const q = filter.trim().toLowerCase();
+      const filtered = taskUsersData.filter(u => {
+        if (!q) return true;
+        return (u.name && u.name.toLowerCase().includes(q)) ||
+               (u.phone && u.phone.toLowerCase().includes(q)) ||
+               (u.email && u.email.toLowerCase().includes(q));
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<div style="padding:10px 12px; font-size:0.8rem; color:#94a3b8; text-align:center;">No matching customers found</div>';
+        return;
+      }
+
+      list.innerHTML = filtered.map(u => `
+        <div onclick="selectUser(${u.id})" style="padding:8px 12px; cursor:pointer; font-size:0.82rem; border-bottom:1px solid #f1f5f9; display:flex; flex-direction:column; gap:2px;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+          <div style="font-weight:600; color:#1e293b;">${u.name}</div>
+          <div style="font-size:0.75rem; color:#64748b;">${u.phone || ''} ${u.email ? '• '+u.email : ''}</div>
+        </div>
+      `).join('');
+    }
+
+    function filterBookings(val) {
+      renderBookingOptions(val);
+    }
+
+    function filterUsers(val) {
+      renderUserOptions(val);
+    }
+
+    function toggleTaskDropdown(menuId) {
+      const menu = document.getElementById(menuId);
+      if (!menu) return;
+      const isOpen = menu.style.display === 'flex';
+      const bMenu = document.getElementById('bookingDropdownMenu');
+      const uMenu = document.getElementById('userDropdownMenu');
+      if (bMenu) bMenu.style.display = 'none';
+      if (uMenu) uMenu.style.display = 'none';
+
+      if (!isOpen) {
+        menu.style.display = 'flex';
+        if (menuId === 'bookingDropdownMenu') {
+          renderBookingOptions('');
+          const inp = document.getElementById('bookingSearchInput');
+          if (inp) { inp.value = ''; inp.focus(); }
+        } else if (menuId === 'userDropdownMenu') {
+          renderUserOptions('');
+          const inp = document.getElementById('userSearchInput');
+          if (inp) { inp.value = ''; inp.focus(); }
+        }
+      }
+    }
+
+    function selectBooking(id) {
+      selectedTaskBooking = taskBookingsData.find(b => b.id == id);
+      const hiddenInput = document.getElementById('taskBookingId');
+      const textSpan = document.getElementById('bookingDropdownSelectedText');
+      const clearBtn = document.getElementById('bookingClearBtn');
+      const menu = document.getElementById('bookingDropdownMenu');
+
+      if (hiddenInput) hiddenInput.value = id;
+      if (textSpan && selectedTaskBooking) {
+        textSpan.textContent = '#' + selectedTaskBooking.number + ' • ' + (selectedTaskBooking.name || 'Customer');
+        textSpan.style.color = '#1e293b';
+        textSpan.style.fontWeight = '600';
+      }
+      if (clearBtn) clearBtn.style.display = 'inline';
+      if (menu) menu.style.display = 'none';
+
+      updateEntityPreviewAndNotes();
+    }
+
+    function clearSelectedBooking(e) {
+      if (e) e.stopPropagation();
+      selectedTaskBooking = null;
+      const hiddenInput = document.getElementById('taskBookingId');
+      const textSpan = document.getElementById('bookingDropdownSelectedText');
+      const clearBtn = document.getElementById('bookingClearBtn');
+
+      if (hiddenInput) hiddenInput.value = '';
+      if (textSpan) {
+        textSpan.textContent = 'Select a booking (Optional)...';
+        textSpan.style.color = '#64748b';
+        textSpan.style.fontWeight = 'normal';
+      }
+      if (clearBtn) clearBtn.style.display = 'none';
+
+      updateEntityPreviewAndNotes();
+    }
+
+    function selectUser(id) {
+      selectedTaskUser = taskUsersData.find(u => u.id == id);
+      const hiddenInput = document.getElementById('taskUserId');
+      const textSpan = document.getElementById('userDropdownSelectedText');
+      const clearBtn = document.getElementById('userClearBtn');
+      const menu = document.getElementById('userDropdownMenu');
+
+      if (hiddenInput) hiddenInput.value = id;
+      if (textSpan && selectedTaskUser) {
+        textSpan.textContent = selectedTaskUser.name + (selectedTaskUser.phone ? ' (' + selectedTaskUser.phone + ')' : '');
+        textSpan.style.color = '#1e293b';
+        textSpan.style.fontWeight = '600';
+      }
+      if (clearBtn) clearBtn.style.display = 'inline';
+      if (menu) menu.style.display = 'none';
+
+      updateEntityPreviewAndNotes();
+    }
+
+    function clearSelectedUser(e) {
+      if (e) e.stopPropagation();
+      selectedTaskUser = null;
+      const hiddenInput = document.getElementById('taskUserId');
+      const textSpan = document.getElementById('userDropdownSelectedText');
+      const clearBtn = document.getElementById('userClearBtn');
+
+      if (hiddenInput) hiddenInput.value = '';
+      if (textSpan) {
+        textSpan.textContent = 'Select a customer / user (Optional)...';
+        textSpan.style.color = '#64748b';
+        textSpan.style.fontWeight = 'normal';
+      }
+      if (clearBtn) clearBtn.style.display = 'none';
+
+      updateEntityPreviewAndNotes();
+    }
+
+    function updateEntityPreviewAndNotes() {
+      const previewCard = document.getElementById('linkedEntityDetailsCard');
+      const notesContainer = document.getElementById('taskNewInfoContainer');
+      if (!previewCard || !notesContainer) return;
+
+      if (selectedTaskBooking) {
+        const b = selectedTaskBooking;
+        previewCard.style.display = 'block';
+        previewCard.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #bbf7d0; padding-bottom:6px;">
+            <span style="font-weight:700; color:#166534; font-size:0.82rem;">Previous Booking Details (#${b.number})</span>
+            <span style="font-size:0.7rem; font-weight:600; padding:2px 8px; border-radius:12px; background:#dcfce7; color:#15803d;">${b.status}</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; color:#1e293b; font-size:0.78rem;">
+            <div><span style="color:#64748b;">Customer:</span> <strong>${b.name || 'N/A'}</strong></div>
+            <div><span style="color:#64748b;">Phone:</span> <strong style="color:#0284c7;">${b.phone || 'N/A'}</strong></div>
+            <div><span style="color:#64748b;">Service:</span> ${b.service || 'N/A'}</div>
+            <div><span style="color:#64748b;">Amount:</span> <strong>${b.cost || 'N/A'}</strong></div>
+            ${b.date ? `<div><span style="color:#64748b;">Schedule:</span> ${b.date} ${b.time ? '('+b.time+')' : ''}</div>` : ''}
+            ${b.address ? `<div style="grid-column: span 2;"><span style="color:#64748b;">Address:</span> ${b.address}</div>` : ''}
+          </div>
+          ${b.call_status ? `<div style="margin-top:6px; padding-top:6px; border-top:1px dashed #86efac; font-size:0.75rem; color:#166534;"><span style="font-weight:600;">Previous Call Status:</span> ${b.call_status} ${b.call_notes ? '— <em>'+b.call_notes+'</em>' : ''}</div>` : ''}
+        `;
+        notesContainer.style.display = 'block';
+      } else if (selectedTaskUser) {
+        const u = selectedTaskUser;
+        previewCard.style.display = 'block';
+        previewCard.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #bbf7d0; padding-bottom:6px;">
+            <span style="font-weight:700; color:#166534; font-size:0.82rem;">Customer Profile Details</span>
+            <span style="font-size:0.7rem; color:#15803d; font-weight:600; background:#dcfce7; padding:2px 8px; border-radius:12px;">Registered</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; color:#1e293b; font-size:0.78rem;">
+            <div><span style="color:#64748b;">Name:</span> <strong>${u.name}</strong></div>
+            <div><span style="color:#64748b;">Phone:</span> <strong style="color:#0284c7;">${u.phone || 'N/A'}</strong></div>
+            <div><span style="color:#64748b;">Email:</span> ${u.email || 'N/A'}</div>
+            <div><span style="color:#64748b;">Joined:</span> ${u.created_at || 'N/A'}</div>
+            ${u.address ? `<div style="grid-column: span 2;"><span style="color:#64748b;">Address:</span> ${u.address}</div>` : ''}
           </div>
         `;
-        container.appendChild(item);
-      });
-    }
-
-    function switchTaskTab(tab) {
-      currentTaskTab = tab;
-      const inBtn = document.getElementById("taskTabInProcess");
-      const upBtn = document.getElementById("taskTabUpcoming");
-      if (tab === "in_process") {
-        if (inBtn) { inBtn.style.background = "#4361ee"; inBtn.style.color = "#ffffff"; }
-        if (upBtn) { upBtn.style.background = "transparent"; upBtn.style.color = "#64748b"; }
+        notesContainer.style.display = 'block';
       } else {
-        if (upBtn) { upBtn.style.background = "#4361ee"; upBtn.style.color = "#ffffff"; }
-        if (inBtn) { inBtn.style.background = "transparent"; inBtn.style.color = "#64748b"; }
-      }
-      renderTasks();
-    }
-
-    function toggleTaskDoneIdx(idx, isChecked) {
-      if (taskDatasets[currentTaskTab] && taskDatasets[currentTaskTab][idx]) {
-        taskDatasets[currentTaskTab][idx].done = isChecked;
-        renderTasks();
+        previewCard.style.display = 'none';
+        previewCard.innerHTML = '';
+        notesContainer.style.display = 'none';
       }
     }
 
-    function editTaskIdx(idx) {
-      const current = taskDatasets[currentTaskTab][idx];
-      if (!current) return;
-      const newTitle = prompt("Edit Task Title:", current.title);
-      if (newTitle && newTitle.trim()) {
-        current.title = newTitle.trim();
-        renderTasks();
+    // Open Task Details Modal
+    function openTaskDetailsModal(data) {
+      document.getElementById('modalTaskTitle').innerText = data.title;
+      document.getElementById('modalTaskType').innerText = data.task_type || 'General Task';
+
+      // Priority badge
+      const priorityEl = document.getElementById('modalTaskPriorityBadge');
+      if (data.priority === 'urgent') {
+        priorityEl.innerHTML = '<span style="font-size:0.7rem; font-weight:700; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; padding:1px 8px; border-radius:10px; text-transform:uppercase;">Urgent</span>';
+      } else if (data.priority === 'high') {
+        priorityEl.innerHTML = '<span style="font-size:0.7rem; font-weight:700; background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; padding:1px 8px; border-radius:10px; text-transform:uppercase;">High</span>';
+      } else {
+        priorityEl.innerHTML = '<span style="font-size:0.7rem; font-weight:600; background:#f1f5f9; color:#475569; padding:1px 8px; border-radius:10px; text-transform:capitalize;">' + (data.priority || 'Normal') + '</span>';
+      }
+
+      // Status badge
+      const statusEl = document.getElementById('modalTaskStatusBadge');
+      if (data.status === 'completed') {
+        statusEl.innerHTML = '<span style="font-size:0.7rem; font-weight:600; background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; padding:1px 8px; border-radius:10px;">Completed</span>';
+      } else {
+        statusEl.innerHTML = '<span style="font-size:0.7rem; font-weight:600; background:#fffbeb; color:#b45309; border:1px solid #fde68a; padding:1px 8px; border-radius:10px;">Pending</span>';
+      }
+
+      // Due date
+      const dueRow = document.getElementById('modalTaskDueDateRow');
+      if (data.due_at) {
+        dueRow.style.display = 'flex';
+        let dueHtml = '<span>Due: ' + data.due_at + '</span>';
+        if (data.is_overdue && data.status !== 'completed') {
+          dueHtml += ' <span style="color:#dc2626; font-weight:600; margin-left:6px;">(Overdue: ' + data.overdue_text + ')</span>';
+        }
+        document.getElementById('modalTaskDueText').innerHTML = dueHtml;
+      } else {
+        dueRow.style.display = 'none';
+      }
+
+      // Notes
+      const notesEl = document.getElementById('modalTaskNotes');
+      if (data.notes && data.notes.trim()) {
+        notesEl.innerText = data.notes;
+        notesEl.style.color = '#334155';
+        notesEl.style.fontStyle = 'normal';
+      } else {
+        notesEl.innerText = 'No instructions or notes added to this task.';
+        notesEl.style.color = '#94a3b8';
+        notesEl.style.fontStyle = 'italic';
+      }
+
+      // Linked Booking
+      const bookingCard = document.getElementById('modalLinkedBookingCard');
+      if (data.booking_id && data.booking_number) {
+        bookingCard.style.display = 'block';
+        document.getElementById('modalBookingLink').href = data.booking_url || '#';
+        document.getElementById('modalBookingDetails').innerHTML = `
+          <div style="font-weight:600; color:var(--paces-primary, #3e60d5); font-family:monospace; margin-bottom:2px;">#${data.booking_number}</div>
+          <div style="color:#475569;">${data.customer_name || 'Customer'} ${data.customer_phone ? '• ' + data.customer_phone : ''}</div>
+          <div style="font-size:0.76rem; color:#64748b; margin-top:2px;">${data.booking_service || 'Service Order'} ${data.booking_status ? '• Status: ' + data.booking_status : ''}</div>
+        `;
+      } else {
+        bookingCard.style.display = 'none';
+      }
+
+      // Linked User
+      const userCard = document.getElementById('modalLinkedUserCard');
+      if (data.user_id && data.user_name && !data.booking_id) {
+        userCard.style.display = 'block';
+        document.getElementById('modalUserLink').href = data.user_url || '#';
+        document.getElementById('modalUserDetails').innerHTML = `
+          <div style="font-weight:600; color:#1e293b;">${data.user_name}</div>
+          <div style="color:#64748b; font-size:0.78rem;">${data.customer_phone || ''} ${data.user_email ? '• ' + data.user_email : ''}</div>
+        `;
+      } else {
+        userCard.style.display = 'none';
+      }
+
+      // Audit meta
+      document.getElementById('modalTaskCreatedMeta').innerText = 'Created ' + (data.created_at || 'Recently') + ' by ' + (data.created_by || 'Admin');
+      if (data.status === 'completed' && data.completed_at) {
+        document.getElementById('modalTaskCompletedMeta').innerText = 'Completed: ' + data.completed_at;
+      } else {
+        document.getElementById('modalTaskCompletedMeta').innerText = '';
+      }
+
+      // Form actions
+      document.getElementById('modalCompleteForm').action = data.complete_url;
+      const compBtn = document.getElementById('modalCompleteBtn');
+      if (data.status === 'completed') {
+        compBtn.style.display = 'none';
+      } else {
+        compBtn.style.display = 'inline-block';
+      }
+
+      document.getElementById('modalDeleteForm').action = data.delete_url;
+      document.getElementById('modalEditBtn').onclick = function() {
+        closeTaskDetailsModal();
+        openEditTaskModal(data);
+      };
+
+      const modal = document.getElementById('taskDetailsModal');
+      modal.style.display = 'flex';
+    }
+
+    function closeTaskDetailsModal() {
+      const modal = document.getElementById('taskDetailsModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function openCreateTaskModal() {
+      const modal = document.getElementById('createTaskModal');
+      if (modal) {
+        clearSelectedBooking();
+        clearSelectedUser();
+        const titleInp = document.getElementById('taskTitleInput');
+        if (titleInp) titleInp.value = '';
+        const notesInp = document.getElementById('taskNotesInput');
+        if (notesInp) notesInp.value = '';
+        modal.style.display = 'flex';
       }
     }
 
-    function deleteTaskIdx(idx) {
-      if (confirm("Are you sure you want to delete this task?")) {
-        taskDatasets[currentTaskTab].splice(idx, 1);
-        renderTasks();
-      }
+    function closeCreateTaskModal() {
+      const modal = document.getElementById('createTaskModal');
+      if (modal) modal.style.display = 'none';
+      const bMenu = document.getElementById('bookingDropdownMenu');
+      const uMenu = document.getElementById('userDropdownMenu');
+      if (bMenu) bMenu.style.display = 'none';
+      if (uMenu) uMenu.style.display = 'none';
     }
 
-    function addNewTaskPrompt() {
-      const title = prompt("Enter new task name:");
-      if (!title || !title.trim()) return;
-      const assigned = prompt("Assigned to (e.g. Mark, Team A):", "Assigned to Ops Lead");
-      taskDatasets[currentTaskTab].push({
-        title: title.trim(),
-        assigned: assigned ? assigned.trim() : "Assigned to Ops Lead",
-        done: false
-      });
-      renderTasks();
+    function openEditTaskModal(task) {
+      const modal = document.getElementById('editTaskModal');
+      const form = document.getElementById('editTaskForm');
+      if (!modal || !form) return;
+
+      form.action = task.update_url;
+      document.getElementById('editTaskTitle').value = task.title || '';
+      document.getElementById('editTaskPriority').value = task.priority || 'normal';
+      document.getElementById('editTaskStatus').value = task.status || 'pending';
+      document.getElementById('editTaskDueAt').value = task.due_at_input || task.due_at || '';
+      document.getElementById('editTaskNotes').value = task.notes || '';
+
+      const linkedInfo = document.getElementById('editTaskLinkedInfo');
+      if (task.booking_label || task.user_label) {
+        linkedInfo.style.display = 'block';
+        linkedInfo.innerHTML = `<strong>Linked to:</strong> ${task.booking_label || task.user_label}`;
+      } else {
+        linkedInfo.style.display = 'none';
+        linkedInfo.innerHTML = '';
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeEditTaskModal() {
+      const modal = document.getElementById('editTaskModal');
+      if (modal) modal.style.display = 'none';
     }
 
     // Chat Interactive Handlers
@@ -1268,16 +1918,45 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      renderTasks();
       initEarningSplineChart({{ $currentMonth }});
       initSalesAnalyticsDonut();
       initUnifiedBarChart();
+
       const modal = document.getElementById('dateToDateModal');
       if (modal) {
         modal.addEventListener('click', (e) => {
           if (e.target === modal) closeDateModal();
         });
       }
+
+      const taskModal = document.getElementById('createTaskModal');
+      if (taskModal) {
+        taskModal.addEventListener('click', (e) => {
+          if (e.target === taskModal) closeCreateTaskModal();
+        });
+      }
+
+      const editModal = document.getElementById('editTaskModal');
+      if (editModal) {
+        editModal.addEventListener('click', (e) => {
+          if (e.target === editModal) closeEditTaskModal();
+        });
+      }
+
+      // Close dropdowns on outside click
+      document.addEventListener('click', (e) => {
+        const bTrigger = document.getElementById('bookingDropdownTrigger');
+        const bMenu = document.getElementById('bookingDropdownMenu');
+        if (bMenu && bMenu.style.display === 'flex' && !bMenu.contains(e.target) && !bTrigger.contains(e.target)) {
+          bMenu.style.display = 'none';
+        }
+
+        const uTrigger = document.getElementById('userDropdownTrigger');
+        const uMenu = document.getElementById('userDropdownMenu');
+        if (uMenu && uMenu.style.display === 'flex' && !uMenu.contains(e.target) && !uTrigger.contains(e.target)) {
+          uMenu.style.display = 'none';
+        }
+      });
     });
   </script>
 </x-layouts.admin>

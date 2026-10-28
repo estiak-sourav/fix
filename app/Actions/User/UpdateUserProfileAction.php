@@ -3,6 +3,7 @@
 namespace App\Actions\User;
 
 use App\Models\User;
+use App\Services\ImageService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -21,7 +22,7 @@ class UpdateUserProfileAction
             if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
                 Storage::disk('public')->delete($user->avatar);
             }
-            $data['avatar'] = $data['avatar']->store('avatars/users', 'public');
+            $data['avatar'] = ImageService::cropSquareAndStore($data['avatar']);
         } elseif (! empty($data['remove_avatar'])) {
             if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
                 Storage::disk('public')->delete($user->avatar);

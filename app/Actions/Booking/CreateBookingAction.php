@@ -73,14 +73,10 @@ class CreateBookingAction
                 'sound_played' => false,
             ]);
 
-            // Update user default profile fields if empty
+            // Update user default contact fields if empty (address is kept separate from profile)
             $user->update([
                 'phone' => $user->phone ?: $data['customer_phone'],
                 'company_name' => $user->company_name ?: ($data['company_name'] ?? null),
-                'default_address' => $user->default_address ?: $data['street_address'],
-                'division' => $user->division ?: $data['division'],
-                'district' => $user->district ?: $data['district'],
-                'area' => $user->area ?: $data['area'],
             ]);
 
             return $booking;

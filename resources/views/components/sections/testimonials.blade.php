@@ -4,7 +4,8 @@
 ])
 
 <!-- Client Testimonials -->
-<section class="section section-alt">
+<section id="testimonials" class="section section-alt" data-section="testimonials" data-section-key="testimonials">
+  <div id="reviews" class="section-anchor-target"></div>
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">{!! $content->title ?? 'Trusted by Facility Owners & Managers' !!}</h2>

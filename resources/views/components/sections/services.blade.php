@@ -5,7 +5,7 @@
 ])
 
 <!-- Service Categories Section -->
-<section id="services" class="section section-alt">
+<section id="services" class="section section-alt" data-section="services" data-section-key="services">
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">{!! $content->title ?? 'Comprehensive Building & Facility Services' !!}</h2>
@@ -26,7 +26,7 @@
     <div class="services-grid">
       @foreach($services as $service)
         <div class="service-card" data-category="{{ $service->category?->slug ?? 'maintenance' }}">
-          <div class="service-image-wrapper">
+          <div class="service-card-image service-image-wrapper">
             <a href="{{ route('services.show', $service->slug ?? $service->id) }}">
               <img src="{{ $service->thumbnail_url }}" alt="{{ $service->title }}" loading="lazy">
             </a>

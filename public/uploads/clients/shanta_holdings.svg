@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60" fill="none">
+  <!-- Shanta Architectural Monogram -->
+  <g transform="translate(14, 10)">
+    <rect x="0" y="16" width="10" height="24" rx="2" fill="#D97706"/>
+    <rect x="13" y="6" width="10" height="34" rx="2" fill="#92400E"/>
+    <rect x="26" y="12" width="10" height="28" rx="2" fill="#B45309"/>
+    <line x1="18" y1="1" x2="18" y2="6" stroke="#D97706" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <!-- Brand Typography -->
+  <text x="64" y="27" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="800" fill="#1E293B" letter-spacing="1">SHANTA</text>
+  <text x="64" y="42" font-family="system-ui, -apple-system, sans-serif" font-size="10.5" font-weight="600" fill="#B45309" letter-spacing="0.5">HOLDINGS</text>
+</svg>

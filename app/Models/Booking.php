@@ -87,6 +87,11 @@ class Booking extends Model
         return $this->hasMany(AdminNotification::class);
     }
 
+    public function outreachTasks(): HasMany
+    {
+        return $this->hasMany(OutreachTask::class)->latest();
+    }
+
     public static function divisionCode(?string $division, ?string $district = null): string
     {
         $div = strtolower(trim($division ?? ''));

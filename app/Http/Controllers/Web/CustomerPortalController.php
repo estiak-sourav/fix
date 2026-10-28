@@ -4,12 +4,17 @@ namespace App\Http\Controllers\Web;
 
 use App\Actions\User\UpdateUserProfileAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Web\UpdateAvatarRequest;
 use App\Http\Requests\Web\UpdateProfileRequest;
 use App\Models\Booking;
+use App\Models\Division;
+use App\Services\ImageService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class CustomerPortalController extends Controller
 {
@@ -73,7 +78,58 @@ class CustomerPortalController extends Controller
     {
         $user = Auth::guard('web')->user();
 
-        return view('web.pages.customer.profile', compact('user'));
+        $divisionsData = Cache::rememberForever('bd_locations_dropdown', function () {
+            return Division::with(['districts.thanas'])->orderBy('name')->get()->map(function ($div) {
+                return [
+                    'name' => $div->name,
+                    'districts' => $div->districts->sortBy('name')->map(function ($dist) {
+                        return [
+                            'name' => $dist->name,
+                            'thanas' => $dist->thanas->sortBy('name')->pluck('name')->values(),
+                        ];
+                    })->values(),
+                ];
+            })->values();
+        });
+
+        return view('web.pages.customer.profile', compact('user', 'divisionsData'));
+    }
+
+    /**
+     * Upload/replace customer avatar only — center cropped into square.
+     */
+    public function updateAvatar(UpdateAvatarRequest $request): RedirectResponse
+    {
+        $user = Auth::guard('web')->user();
+        $file = $request->file('avatar');
+
+        if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+            Storage::disk('public')->delete($user->avatar);
+        }
+
+        $user->avatar = ImageService::cropSquareAndStore($file);
+        $user->save();
+
+        return redirect()->route('customer.profile')
+            ->with('success', 'Profile picture updated successfully.');
+    }
+
+    /**
+     * Remove customer avatar.
+     */
+    public function removeAvatar(): RedirectResponse
+    {
+        $user = Auth::guard('web')->user();
+
+        if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+            Storage::disk('public')->delete($user->avatar);
+        }
+
+        $user->avatar = null;
+        $user->save();
+
+        return redirect()->route('customer.profile')
+            ->with('success', 'Profile picture removed successfully.');
     }
 
     /**

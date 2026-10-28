@@ -1,9 +1,18 @@
-<x-layouts.admin title="Service List | FIX Admin">
-  <div class="page-header-box">
+<x-layouts.admin title="Services | Web Content | FIX Admin">
+  <div class="page-header-box" style="margin-bottom:1.25rem;">
     <div>
-      <h1 class="page-header-title">Service List</h1>
+      <h1 class="page-header-title">Web Content</h1>
+      <p class="page-header-subtitle">Manage standalone facility services, descriptions, photo galleries, and publication statuses</p>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <a href="/" target="_blank" class="btn-paces btn-paces-outline btn-paces-sm" style="display:inline-flex; align-items:center; gap:6px;">
+        <span>View Live Website</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+      </a>
     </div>
   </div>
+
+  <x-admin.web-content-tabs active="services" />
 
   @if(session('success'))
     <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:1rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-weight:500; display:flex; align-items:center; justify-content:space-between; gap:8px;">

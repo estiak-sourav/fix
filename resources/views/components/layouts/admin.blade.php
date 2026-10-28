@@ -850,6 +850,11 @@
       box-shadow: 0 0 0 3px rgba(62, 96, 213, 0.12);
       background: #ffffff;
     }
+    textarea.form-control-paces {
+      min-height: 120px;
+      line-height: 1.5;
+      resize: vertical;
+    }
     select, .form-select-paces, select.form-control-paces {
       appearance: none !important;
       -webkit-appearance: none !important;

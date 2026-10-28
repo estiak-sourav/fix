@@ -1,18 +1,11 @@
 <x-layouts.app title="Track Support Ticket | FIX Helpdesk">
-  <section class="page-hero">
-    <div class="container">
-      <div style="max-width:600px; margin:0 auto; text-align:center;">
-        <h1 style="font-size:2rem; font-weight:800; color:var(--text-main); margin-bottom:0.75rem;">
-          Track Support Ticket
-        </h1>
-        <p style="font-size:0.95rem; color:var(--text-muted); line-height:1.6; margin:0;">
-          Enter your ticket reference and email address to view updates, chat responses, and resolution status.
-        </p>
-      </div>
-    </div>
-  </section>
+  <x-page-hero 
+    title="Track Support Ticket"
+    subtitle="Enter your ticket reference and email address to view updates, chat responses, and resolution status."
+    maxWidth="600px"
+  />
 
-  <section class="section" style="padding-top:0;">
+  <section class="section" style="padding-top:3rem; padding-bottom:4.5rem;">
     <div class="container" style="max-width:580px;">
       <div class="form-card" style="padding:2.25rem 2rem; border:1px solid var(--border); box-shadow:0 4px 20px rgba(0,0,0,0.04); border-radius:12px;">
         

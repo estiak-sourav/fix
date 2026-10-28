@@ -4,7 +4,8 @@
 ])
 
 <!-- FAQ Section -->
-<section id="faq" class="section">
+<section id="faq" class="section" data-section="faq" data-section-key="faq">
+  <div id="faqs" class="section-anchor-target"></div>
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">{!! $content->title ?? 'Frequently Asked Questions' !!}</h2>

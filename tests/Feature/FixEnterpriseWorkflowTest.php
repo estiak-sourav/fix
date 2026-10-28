@@ -294,7 +294,7 @@ class FixEnterpriseWorkflowTest extends TestCase
     }
 
     /**
-     * Test contact inquiry submission triggers admin notification with alert chime.
+     * Test contact inquiry submission triggers unified Support Ticket and admin notification.
      */
     public function test_customer_can_send_contact_inquiry_and_notify_admin(): void
     {
@@ -310,10 +310,23 @@ class FixEnterpriseWorkflowTest extends TestCase
         $response->assertJson([
             'success' => true,
         ]);
+        $response->assertJsonStructure([
+            'success',
+            'ticket_number',
+            'track_url',
+            'message',
+        ]);
+
+        $this->assertDatabaseHas('support_tickets', [
+            'customer_name' => 'Farhan Kabir',
+            'customer_email' => 'farhan@apex.com',
+            'customer_phone' => '+880 1712-345678',
+            'subject' => 'Corporate AMC',
+            'status' => 'open',
+        ]);
 
         $this->assertDatabaseHas('admin_notifications', [
-            'title' => 'New Facility Inquiry: Corporate AMC',
-            'type' => 'inquiry',
+            'type' => 'support_ticket',
             'sound_played' => false,
             'is_read' => false,
         ]);

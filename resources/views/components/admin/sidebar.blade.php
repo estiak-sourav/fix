@@ -47,6 +47,20 @@
             <span class="nav-badge bg-warning">{{ $pendingCount }}</span>
           @endif
         </a>
+
+        <!-- Outreach Tasks -->
+        <a href="{{ route('admin.outreach-tasks.index') }}" class="nav-item {{ request()->routeIs('admin.outreach-tasks.*') ? 'active' : '' }}">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          </span>
+          <span class="nav-text">Outreach Tasks</span>
+          @php
+            $pendingTasksCount = \App\Models\OutreachTask::where('status', 'pending')->count();
+          @endphp
+          @if($pendingTasksCount > 0)
+            <span class="nav-badge bg-warning">{{ $pendingTasksCount }}</span>
+          @endif
+        </a>
       @endif
 
       <!-- Notifications & Alerts Page (Always available to authenticated staff) -->
@@ -196,7 +210,7 @@
       @endif
 
       @if($adminUser?->hasPermission('web_content.view'))
-        <a href="{{ route('admin.web.contents') }}" class="nav-item {{ (request()->routeIs('admin.web.contents*') || request()->routeIs('admin.web.faqs*') || request()->routeIs('admin.web.testimonials*') || request()->routeIs('admin.web.index')) ? 'active' : '' }}">
+        <a href="{{ route('admin.web.contents') }}" class="nav-item {{ (request()->routeIs('admin.web.contents*') || request()->routeIs('admin.web.faqs*') || request()->routeIs('admin.web.testimonials*') || request()->routeIs('admin.web.services*') || request()->routeIs('admin.cms.services*') || request()->routeIs('admin.web.amc-plans*') || request()->routeIs('admin.web.index')) ? 'active' : '' }}">
           <span class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
           </span>

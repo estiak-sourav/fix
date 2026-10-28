@@ -3,7 +3,7 @@
 ])
 
 <!-- Contact Section -->
-<section id="contact" class="section">
+<section id="contact" class="section" data-section="contact" data-section-key="contact">
   <div class="container">
     <div class="section-header" style="text-align:center; margin-bottom: 3rem;">
       <h2 class="section-title">{!! $content->title ?? 'Get in Touch with Our Operations Command' !!}</h2>
@@ -16,8 +16,8 @@
       <!-- Left Column: Operations Command Center Info Card -->
       <div class="contact-info-card">
         <div>
-          <h3>We Are Ready to Assist Your Property</h3>
-          <p>Have an urgent maintenance request or need a custom corporate facility audit? Contact our central operations center.</p>
+          <h3>{{ $content?->meta_data['card_title'] ?? 'Operations Command & Technical Support' }}</h3>
+          <p>{{ $content?->meta_data['card_desc'] ?? 'Have an urgent maintenance request or need facility engineering assistance? Contact our central operations center 24/7.' }}</p>
 
           <ul class="contact-details-list">
             <li class="contact-detail-item">
@@ -75,21 +75,35 @@
               </div>
               <div class="contact-detail-text">
                 <h5>Operating Hours</h5>
-                <p>General Support: 8:00 AM – 10:00 PM (Daily)<br>Emergency Callouts: 24/7 Available</p>
+                <p>{!! nl2br(e($content?->meta_data['operating_hours'] ?? "General Support: 8:00 AM – 10:00 PM (Daily)\nEmergency Callouts: 24/7 Available")) !!}</p>
               </div>
             </li>
           </ul>
+
+          <!-- Unified Support Tracker Quick Link Box -->
+          <div style="margin-top:1.5rem; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); border-radius:10px; padding:1rem 1.15rem; text-align:left;">
+            <div style="font-size:0.875rem; font-weight:700; color:#ffffff; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <span>Already Have a Support Ticket?</span>
+            </div>
+            <p style="font-size:0.8rem; color:#cbd5e1; margin-bottom:10px; line-height:1.4;">
+              Track real-time engineering work progress, replies, and status updates.
+            </p>
+            <a href="{{ route('support.track') }}" style="display:inline-flex; align-items:center; gap:6px; color:#38bdf8; font-size:0.825rem; font-weight:700; text-decoration:none;">
+              Track Your Existing Ticket &rarr;
+            </a>
+          </div>
         </div>
 
-        <div style="border-top:1px solid rgba(255,255,255,0.15); padding-top:1.5rem; font-size:0.85rem; color:#cbd5e1;">
-          Covering Dhaka North, Dhaka South, Gazipur, Savar, EPZ & Major Industrial Zones.
+        <div style="border-top:1px solid rgba(255,255,255,0.15); padding-top:1.25rem; margin-top:1rem; font-size:0.85rem; color:#cbd5e1;">
+          {{ $content?->meta_data['coverage_text'] ?? 'Covering Dhaka North, Dhaka South, Gazipur, Savar, EPZ & Major Industrial Zones.' }}
         </div>
       </div>
 
       <!-- Right Column: Interactive Send Us a Message Card -->
       <div class="contact-form-card">
-        <h3>Send Us a Message</h3>
-        <p>Have a question or request? Fill out the form below and our team will get back to you within 30 minutes.</p>
+        <h3>Contact &amp; Submit Support Inquiry</h3>
+        <p>Send your message below. A unified support ticket reference with live status tracking will be generated instantly.</p>
 
         @if(session('success'))
           <div data-alert style="background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; padding:10px 16px; border-radius:8px; margin-bottom:1.25rem; font-size:0.9rem; display:flex; align-items:center; justify-content:space-between;">
@@ -103,27 +117,27 @@
           <div class="form-row">
             <div class="form-group">
               <label for="contactName">Your Name <span class="required" style="color:var(--accent);">*</span></label>
-              <input type="text" id="contactName" name="name" class="form-control" placeholder="e.g. Asif Chowdhury" required>
+              <input type="text" id="contactName" name="name" value="{{ auth()->user()?->name ?? '' }}" class="form-control" placeholder="e.g. Asif Chowdhury" required>
             </div>
             <div class="form-group">
               <label for="contactPhone">Mobile Number <span class="required" style="color:var(--accent);">*</span></label>
-              <input type="tel" id="contactPhone" name="phone" class="form-control" placeholder="017xxxxxxxx" required>
+              <input type="tel" id="contactPhone" name="phone" value="{{ auth()->user()?->phone ?? '' }}" class="form-control" placeholder="017xxxxxxxx" required>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="contactEmail">Email Address</label>
-              <input type="email" id="contactEmail" name="email" class="form-control" placeholder="name@company.com">
+              <label for="contactEmail">Email Address <span class="required" style="color:var(--accent);">*</span></label>
+              <input type="email" id="contactEmail" name="email" value="{{ auth()->user()?->email ?? '' }}" class="form-control" placeholder="name@company.com" required>
             </div>
             <div class="form-group">
               <label for="contactSubject">Service Interest</label>
               <select id="contactSubject" name="subject" class="form-control">
-                <option value="General Inquiry">General Facility Inquiry</option>
-                <option value="Corporate AMC">Corporate Annual Maintenance (AMC)</option>
-                <option value="Residential Service">Residential Building Care</option>
-                <option value="Vendor Partnership">Vendor Partnership Inquiry</option>
-                <option value="Emergency Breakdown">Emergency Technical Breakdown</option>
+                <option value="General Facility Inquiry">General Facility Inquiry</option>
+                <option value="Corporate AMC Maintenance">Corporate Annual Maintenance (AMC)</option>
+                <option value="Residential Building Care">Residential Building Care</option>
+                <option value="Vendor Partnership Inquiry">Vendor Partnership Inquiry</option>
+                <option value="Emergency Technical Breakdown">Emergency Technical Breakdown</option>
               </select>
             </div>
           </div>
@@ -135,7 +149,7 @@
           </div>
 
           <button type="submit" class="btn btn-accent btn-lg btn-block" style="display:flex; align-items:center; justify-content:center; gap:8px;">
-            <span>Send Message</span>
+            <span>Submit Inquiry &amp; Generate Ticket</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:18px; height:18px;">
               <line x1="22" y1="2" x2="11" y2="13"></line>
               <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>

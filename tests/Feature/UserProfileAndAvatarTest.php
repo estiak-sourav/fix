@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\Service;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -48,7 +49,8 @@ class UserProfileAndAvatarTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Tanvir Customer');
-        $response->assertSee('Profile Picture (DP)');
+        $response->assertSee('Profile Picture');
+        $response->assertSee('Address');
     }
 
     /**
@@ -86,6 +88,60 @@ class UserProfileAndAvatarTest extends TestCase
         $this->assertStringStartsWith('avatars/users/', $this->user->avatar);
 
         Storage::disk('public')->assertExists($this->user->avatar);
+
+        // Verify the saved image is square cropped
+        $savedPath = Storage::disk('public')->path($this->user->avatar);
+        if (file_exists($savedPath)) {
+            [$w, $h] = getimagesize($savedPath);
+            $this->assertSame($w, $h, 'Avatar image must be cropped to a 1:1 square');
+        }
+    }
+
+    /**
+     * Test uploaded rectangular avatar is center-cropped to a square.
+     */
+    public function test_uploaded_rectangular_avatar_is_center_cropped_to_square(): void
+    {
+        Storage::fake('public');
+
+        // Rectangular image (800x400)
+        $fakeAvatar = UploadedFile::fake()->image('rectangle.jpg', 800, 400);
+
+        $response = $this->actingAs($this->user)
+            ->post(route('customer.profile.avatar'), [
+                'avatar' => $fakeAvatar,
+            ]);
+
+        $response->assertRedirect(route('customer.profile'));
+
+        $this->user->refresh();
+        $this->assertNotNull($this->user->avatar);
+        Storage::disk('public')->assertExists($this->user->avatar);
+
+        $savedPath = Storage::disk('public')->path($this->user->avatar);
+        $this->assertFileExists($savedPath);
+        [$w, $h] = getimagesize($savedPath);
+        $this->assertSame($w, $h, 'Rectangular upload must be center-cropped to a 1:1 square');
+    }
+
+    /**
+     * Test profile page renders cascading division, district, thana dropdowns and clean UI.
+     */
+    public function test_customer_profile_renders_location_dropdowns_and_clean_ui(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->get(route('customer.profile'));
+
+        $response->assertStatus(200);
+        $response->assertSee('name="division"', false);
+        $response->assertSee('name="district"', false);
+        $response->assertSee('name="area"', false);
+        $response->assertSee('Address');
+        $response->assertDontSee('Default Facility Address (Optional)');
+        $response->assertDontSee('(DP)');
+        $response->assertDontSee('Upload your profile photo independently');
+        $response->assertDontSee('Recommended: 400×400 square');
+        $response->assertDontSee('Optional — if saved, automatically pre-fills during service bookings');
     }
 
     /**
@@ -260,5 +316,104 @@ class UserProfileAndAvatarTest extends TestCase
         $this->admin->refresh();
         $this->assertNull($this->admin->avatar);
         Storage::disk('public')->assertMissing($storedPath);
+    }
+
+    /**
+     * Test client user can upload avatar independently without providing address or other fields.
+     */
+    public function test_customer_can_upload_avatar_standalone_without_providing_address(): void
+    {
+        Storage::fake('public');
+
+        $fakeAvatar = UploadedFile::fake()->image('tanvir_dp.png', 400, 400);
+
+        // User currently has no address in profile
+        $this->assertNull($this->user->default_address);
+        $this->assertNull($this->user->division);
+
+        $response = $this->actingAs($this->user)
+            ->post(route('customer.profile.avatar'), [
+                'avatar' => $fakeAvatar,
+            ]);
+
+        $response->assertRedirect(route('customer.profile'));
+        $response->assertSessionHas('success');
+
+        $this->user->refresh();
+        $this->assertNotNull($this->user->avatar);
+        $this->assertStringStartsWith('avatars/users/', $this->user->avatar);
+        // Address remains null
+        $this->assertNull($this->user->default_address);
+        Storage::disk('public')->assertExists($this->user->avatar);
+    }
+
+    /**
+     * Test client user can remove avatar via dedicated DELETE endpoint.
+     */
+    public function test_customer_can_remove_avatar_via_delete_endpoint(): void
+    {
+        Storage::fake('public');
+
+        $storedPath = 'avatars/users/existing_user_dp.jpg';
+        Storage::disk('public')->put($storedPath, 'user-image-binary');
+        $this->user->update(['avatar' => $storedPath]);
+
+        $response = $this->actingAs($this->user)
+            ->delete(route('customer.profile.avatar.remove'));
+
+        $response->assertRedirect(route('customer.profile'));
+        $response->assertSessionHas('success');
+
+        $this->user->refresh();
+        $this->assertNull($this->user->avatar);
+        Storage::disk('public')->assertMissing($storedPath);
+    }
+
+    /**
+     * Test service booking does NOT overwrite or set customer's profile address.
+     */
+    public function test_service_booking_does_not_overwrite_customer_profile_address(): void
+    {
+        $service = Service::first();
+
+        // Customer has NO address in profile
+        $this->assertNull($this->user->default_address);
+        $this->assertNull($this->user->division);
+
+        $bookingData = [
+            'service_type' => 'on_demand',
+            'service_id' => $service->id,
+            'customer_name' => $this->user->name,
+            'customer_phone' => '01711223344',
+            'company_name' => 'Custom Office BD',
+            'property_type' => 'commercial',
+            'division' => 'Chattogram',
+            'district' => 'Chattogram',
+            'area' => 'Agrabad',
+            'street_address' => 'Plot #42, Commercial Area, Agrabad C/A',
+            'preferred_date' => now()->addDays(2)->format('Y-m-d'),
+            'preferred_time_slot' => '10:00 AM - 01:00 PM',
+            'urgency' => 'standard',
+            'problem_description' => 'Test emergency AC system check in Agrabad office',
+        ];
+
+        $response = $this->actingAs($this->user)
+            ->post('/booking', $bookingData);
+
+        $response->assertRedirect();
+
+        // Verify booking has the booking address
+        $this->assertDatabaseHas('bookings', [
+            'user_id' => $this->user->id,
+            'street_address' => 'Plot #42, Commercial Area, Agrabad C/A',
+            'division' => 'Chattogram',
+        ]);
+
+        // Verify customer profile address was NOT updated with booking address
+        $this->user->refresh();
+        $this->assertNull($this->user->default_address);
+        $this->assertNull($this->user->division);
+        $this->assertNull($this->user->district);
+        $this->assertNull($this->user->area);
     }
 }

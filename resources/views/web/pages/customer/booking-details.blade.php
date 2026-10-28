@@ -1,10 +1,8 @@
 <x-layouts.app title="Booking #{{ $booking->booking_number }} | FIX Facility Management">
-  <section class="page-hero">
-    <div class="container">
-      <h1>Booking #{{ $booking->booking_number }}</h1>
-      <p>Real-time dispatch timeline and technical work progress.</p>
-    </div>
-  </section>
+  <x-page-hero 
+    title="Booking #{{ $booking->booking_number }}"
+    subtitle="Real-time dispatch timeline and technical work progress."
+  />
 
   <section class="section" style="padding-top:0;">
     <div class="container" style="max-width:850px;">

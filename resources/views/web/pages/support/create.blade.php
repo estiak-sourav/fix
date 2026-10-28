@@ -1,21 +1,16 @@
 <x-layouts.app title="Submit Support Ticket | FIX Helpdesk">
-  <section class="page-hero">
-    <div class="container">
-      <div style="max-width:720px; margin:0 auto; text-align:center;">
-        <span style="display:inline-block; font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; background:rgba(67, 97, 238, 0.12); color:var(--primary); padding:4px 12px; border-radius:20px; margin-bottom:12px;">
-          24/7 ENGINEERING HELPDESK
-        </span>
-        <h1 style="font-size:2.2rem; font-weight:800; color:var(--text-main); margin-bottom:0.75rem;">
-          Submit a Support Ticket
-        </h1>
-        <p style="font-size:1rem; color:var(--text-muted); line-height:1.6; margin:0;">
-          Need assistance with ongoing facility maintenance, emergency engineering, or an existing service? Log a ticket below. Guests and registered clients can both generate tickets.
-        </p>
-      </div>
-    </div>
-  </section>
+  @php
+    $supportDesk = \App\Models\SiteContent::forSection('support_desk');
+  @endphp
+  <x-page-hero 
+    :title="$supportDesk?->title ?? 'Submit a Support Ticket'"
+    :subtitle="$supportDesk?->subtitle ?? 'Need facility maintenance or emergency engineering assistance? Submit your request below for rapid dispatch.'"
+    maxWidth="720px"
+  />
 
-  <section class="section" style="padding-top:0;">
+  <section id="support-portal" class="section" style="padding-top:3rem; padding-bottom:4.5rem;">
+    <div id="support_desk"></div>
+    <div id="support-desk"></div>
     <div class="container">
       <div style="display:grid; grid-template-columns:1fr 340px; gap:32px; align-items:start;" class="support-grid-responsive">
         
@@ -46,14 +41,12 @@
             </div>
           @endif
 
-          <!-- Guest / Logged-in Notice Banner -->
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid var(--primary); padding:14px 18px; border-radius:8px; margin-bottom:1.75rem; font-size:0.875rem; color:#475569; line-height:1.5;">
-            @auth
+          @auth
+            <!-- Logged-in Notice Banner -->
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid var(--primary); padding:14px 18px; border-radius:8px; margin-bottom:1.75rem; font-size:0.875rem; color:#475569; line-height:1.5;">
               <strong>Logged in as:</strong> {{ auth()->user()->name }} ({{ auth()->user()->email }}). This ticket will automatically be linked to your customer dashboard.
-            @else
-              <strong>No account needed:</strong> You can submit a ticket using your email address without logging in. You will receive real-time updates and can track your ticket at any time using your email and ticket reference.
-            @endauth
-          </div>
+            </div>
+          @endauth
 
           <form action="{{ route('support.store') }}" method="POST" id="supportTicketForm">
             @csrf
@@ -86,9 +79,9 @@
               <!-- Phone -->
               <div>
                 <label for="phone" style="display:block; font-size:0.875rem; font-weight:600; color:#1e293b; margin-bottom:6px;">
-                  Phone Number (Optional)
+                  Phone Number <span style="color:#ef4444;">*</span>
                 </label>
-                <input type="text" id="phone" name="phone" value="{{ old('phone', auth()->user()?->phone) }}"
+                <input type="text" id="phone" name="phone" value="{{ old('phone', auth()->user()?->phone) }}" required
                        placeholder="e.g. 017XXXXXXXX"
                        style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9rem; outline:none; transition:border 0.2s;"
                        onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='#cbd5e1'">
@@ -129,10 +122,7 @@
                         placeholder="Please describe your facility problem, location details, error symptoms or questions in detail..."
                         style="width:100%; padding:12px 14px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9rem; outline:none; resize:vertical; font-family:inherit; transition:border 0.2s;"
                         onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='#cbd5e1'">{{ old('message') }}</textarea>
-              <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#64748b; margin-top:4px;">
-                <span>🔒 Secure text inquiry transmission</span>
-                <span style="color:#94a3b8;">Attachments/Images disabled for ticket security</span>
-              </div>
+
             </div>
 
             <button type="submit" class="btn btn-accent" style="width:100%; padding:13px; font-size:1rem; font-weight:700; border-radius:6px; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:8px;">
@@ -153,8 +143,8 @@
             <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; margin-bottom:14px;">
               Already have a support ticket number? Look up real-time responses and engineering notes.
             </p>
-            <a href="{{ route('support.track') }}" class="btn btn-outline-primary" style="display:block; text-align:center; padding:9px 14px; font-size:0.85rem; font-weight:600; border-radius:6px;">
-              Track Ticket Status →
+            <a href="{{ route('support.track') }}" class="btn btn-primary" style="display:block; text-align:center; padding:10px 16px; font-size:0.9rem; font-weight:700; border-radius:6px; color:#ffffff; background:var(--primary); text-decoration:none;">
+              Track Ticket
             </a>
           </div>
 

@@ -568,9 +568,13 @@ class AdminNavigationAndManagementTest extends TestCase
         $res = $this->actingAs($admin, 'admin')->get(route('admin.web.contents'));
         $res->assertStatus(200);
         $res->assertSee('Section Content');
+        $res->assertSee('Services');
+        $res->assertSee('AMC Packages');
+        $res->assertSee('Client Testimonials');
+        $res->assertSee('FAQs Knowledgebase');
         $res->assertSee('Edit Section');
 
-        // 2. Update a section
+        // 2. Update a section (Hero)
         $content = SiteContent::firstOrCreate(
             ['section_key' => 'hero'],
             ['title' => 'Original Hero Title', 'subtitle' => 'Original Subtitle']
@@ -587,5 +591,25 @@ class AdminNavigationAndManagementTest extends TestCase
 
         $content->refresh();
         $this->assertSame('Premier Facilities & Engineering Management in Bangladesh', $content->title);
+
+        // 3. Update Clients section partner names metadata
+        $clientsContent = SiteContent::firstOrCreate(
+            ['section_key' => 'clients'],
+            ['title' => 'Trusted by Leading Enterprises & Facilities']
+        );
+        $clientUpdate = $this->actingAs($admin, 'admin')->post(route('admin.web.contents.update', $clientsContent), [
+            'title' => 'Trusted by Leading Enterprises & Facilities',
+            'partner_names' => "Alpha Tech\nBeta Towers\nGamma Logistics",
+        ]);
+        $clientUpdate->assertRedirect();
+        $clientsContent->refresh();
+        $this->assertEquals(['Alpha Tech', 'Beta Towers', 'Gamma Logistics'], $clientsContent->meta_data['partner_names']);
+
+        // 4. Ensure live user homepage renders the dynamic client partners
+        $homeRes = $this->get('http://localhost/');
+        $homeRes->assertStatus(200);
+        $homeRes->assertSee('Alpha Tech');
+        $homeRes->assertSee('Beta Towers');
+        $homeRes->assertSee('Gamma Logistics');
     }
 }

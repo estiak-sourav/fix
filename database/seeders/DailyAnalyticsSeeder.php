@@ -72,7 +72,7 @@ class DailyAnalyticsSeeder extends Seeder
                     $cost = $isAmc ? ($amcPlan->price ?? 12000) : ($service->base_price ? ($service->base_price * rand(1, 3)) : 3500);
 
                     $booking = Booking::create([
-                        'booking_number' => sprintf('FIX-%s-%04d-%s', $date->format('Ymd'), rand(10, 99), strtoupper(bin2hex(random_bytes(2)))),
+                        'booking_number' => sprintf('FIX-%s-%04d-%s', $date->format('Ymd'), rand(1000, 9999), strtoupper(bin2hex(random_bytes(4)))),
                         'user_id' => $demoUser->id,
                         'service_id' => $isAmc ? null : $service->id,
                         'amc_plan_id' => $isAmc ? $amcPlan->id : null,

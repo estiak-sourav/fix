@@ -203,61 +203,119 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function initBookingForm() {
   const form = document.getElementById("serviceBookingForm");
-  const categorySelect = document.getElementById("bookCategory");
+  const categorySelect = document.getElementById("bookCategory") || document.getElementById("bookService");
   const specificServiceSelect = document.getElementById("bookSpecificService");
   const propertySelect = document.getElementById("bookProperty");
   const sidebarServiceName = document.getElementById("sidebarServiceName");
   const sidebarCategoryName = document.getElementById("sidebarCategoryName");
   const sidebarPropertyType = document.getElementById("sidebarPropertyType");
 
-  // Populate Categories
-  categorySelect.innerHTML = `<option value="">Select Service Category...</option>` +
-    Object.keys(SERVICE_CATALOG_MAPPING).map(cat => `<option value="${cat}">${cat}</option>`).join('');
+  // Fallback: If not already rendered with server options, populate from catalog mapping
+  if (categorySelect && categorySelect.options.length <= 1) {
+    categorySelect.innerHTML = `<option value="">-- Choose Required Service --</option>` +
+      Object.keys(SERVICE_CATALOG_MAPPING).map(cat => `<option value="${cat}" data-title="${cat}">${cat}</option>`).join('');
+  }
 
   // Read URL Params for pre-fill
   const urlParams = new URLSearchParams(window.location.search);
   const paramService = urlParams.get("service");
-  const paramProperty = urlParams.get("property");
+  const paramProperty = urlParams.get("property") || urlParams.get("property_type");
+  const paramSchedule = urlParams.get("schedule");
 
-  if (paramService && SERVICE_CATALOG_MAPPING[paramService]) {
-    categorySelect.value = paramService;
-    populateSpecificServices(paramService);
+  if (paramService && categorySelect) {
+    const cleanSearch = paramService.trim().toLowerCase();
+    let found = false;
+    for (let i = 0; i < categorySelect.options.length; i++) {
+      const opt = categorySelect.options[i];
+      const optText = (opt.dataset.title || opt.text || "").trim().toLowerCase();
+      const optSlug = (opt.dataset.slug || "").trim().toLowerCase();
+      const optVal = opt.value.trim().toLowerCase();
+      if (optVal === cleanSearch || optText === cleanSearch || optSlug === cleanSearch || optText.includes(cleanSearch) || cleanSearch.includes(optText)) {
+        categorySelect.selectedIndex = i;
+        found = true;
+        populateSpecificServices(opt.dataset.title || opt.text);
+        break;
+      }
+    }
+    if (!found) {
+      populateSpecificServices(paramService);
+    }
+  } else if (categorySelect && categorySelect.value) {
+    const opt = categorySelect.options[categorySelect.selectedIndex];
+    populateSpecificServices(opt ? (opt.dataset.title || opt.text) : categorySelect.value);
   }
 
   if (paramProperty && propertySelect) {
-    propertySelect.value = paramProperty;
-    if (sidebarPropertyType) sidebarPropertyType.textContent = paramProperty;
+    const cleanProp = paramProperty.trim().toLowerCase();
+    for (let i = 0; i < propertySelect.options.length; i++) {
+      const opt = propertySelect.options[i];
+      if (opt.value.toLowerCase().includes(cleanProp) || cleanProp.includes(opt.value.toLowerCase())) {
+        propertySelect.selectedIndex = i;
+        break;
+      }
+    }
   }
 
-  // Category Change Handler
-  categorySelect.addEventListener("change", () => {
-    const selected = categorySelect.value;
-    populateSpecificServices(selected);
+  if (paramSchedule) {
+    const timeSlotSelect = document.getElementById("bookTimeSlot");
+    const urgencySelect = document.getElementById("bookUrgency");
+    const cleanSched = paramSchedule.toLowerCase();
+    if (cleanSched.includes("emergency")) {
+      if (timeSlotSelect) timeSlotSelect.value = "Emergency (Immediate Dispatch ASAP)";
+      if (urgencySelect) urgencySelect.value = "emergency_1h";
+    } else if (cleanSched.includes("morning")) {
+      if (timeSlotSelect) timeSlotSelect.value = "Morning (9:00 AM - 12:00 PM)";
+    } else if (cleanSched.includes("afternoon")) {
+      if (timeSlotSelect) timeSlotSelect.value = "Afternoon (12:00 PM - 4:00 PM)";
+    } else if (cleanSched.includes("evening")) {
+      if (timeSlotSelect) timeSlotSelect.value = "Evening (4:00 PM - 8:00 PM)";
+    }
+  }
+
+  updateSidebarSummary();
+
+  // Service Change Handler
+  categorySelect?.addEventListener("change", () => {
+    const opt = categorySelect.options[categorySelect.selectedIndex];
+    const srvTitle = opt ? (opt.dataset.title || opt.text) : categorySelect.value;
+    populateSpecificServices(srvTitle);
     updateSidebarSummary();
   });
 
-  specificServiceSelect.addEventListener("change", updateSidebarSummary);
+  specificServiceSelect?.addEventListener("change", updateSidebarSummary);
   propertySelect?.addEventListener("change", updateSidebarSummary);
 
-  function populateSpecificServices(category) {
-    if (!category || !SERVICE_CATALOG_MAPPING[category]) {
-      specificServiceSelect.innerHTML = `<option value="">First choose a Category above</option>`;
-      specificServiceSelect.disabled = true;
+  function populateSpecificServices(serviceTitle) {
+    if (!specificServiceSelect) return;
+    if (!serviceTitle) {
+      specificServiceSelect.innerHTML = `<option value="">Comprehensive Inspection / General Service</option>`;
       return;
     }
 
-    const items = SERVICE_CATALOG_MAPPING[category];
-    specificServiceSelect.disabled = false;
-    specificServiceSelect.innerHTML = `<option value="">Select Specific Service (${category})...</option>` +
-      items.map(item => `<option value="${item}">${item}</option>`).join('');
+    let items = null;
+    const cleanTitle = (serviceTitle || "").trim().toLowerCase();
+    for (const [key, val] of Object.entries(SERVICE_CATALOG_MAPPING)) {
+      if (key.toLowerCase() === cleanTitle || key.toLowerCase().includes(cleanTitle) || cleanTitle.includes(key.toLowerCase())) {
+        items = val;
+        break;
+      }
+    }
+
+    if (items && items.length > 0) {
+      specificServiceSelect.innerHTML = `<option value="">Comprehensive Inspection / General Service</option>` +
+        items.map(item => `<option value="${item}">${item}</option>`).join('');
+    } else {
+      specificServiceSelect.innerHTML = `<option value="">Comprehensive Inspection / General Service</option>`;
+    }
   }
 
   function updateSidebarSummary() {
-    const cat = categorySelect.value || "Select a category";
-    const spec = specificServiceSelect.value || "General Service Request";
+    const selectedOpt = categorySelect ? categorySelect.options[categorySelect.selectedIndex] : null;
+    const srvTitle = selectedOpt && selectedOpt.value ? (selectedOpt.dataset.title || selectedOpt.text) : "Select a Service";
+    const spec = (specificServiceSelect && specificServiceSelect.value) ? specificServiceSelect.value : srvTitle;
     const prop = propertySelect?.value || "Standard Property";
 
-    if (sidebarCategoryName) sidebarCategoryName.textContent = cat;
+    if (sidebarCategoryName) sidebarCategoryName.textContent = "Service";
     if (sidebarServiceName) sidebarServiceName.textContent = spec;
     if (sidebarPropertyType) sidebarPropertyType.textContent = prop;
   }
@@ -269,8 +327,10 @@ function initBookingForm() {
     const fullName = document.getElementById("bookFullName").value.trim();
     const phone = document.getElementById("bookPhone").value.trim();
     const email = document.getElementById("bookEmail") ? document.getElementById("bookEmail").value.trim() : "";
-    const category = categorySelect.value;
-    const specificService = specificServiceSelect.value || category;
+    const selectedOpt = categorySelect ? categorySelect.options[categorySelect.selectedIndex] : null;
+    const serviceId = selectedOpt && selectedOpt.value ? selectedOpt.value : "";
+    const serviceTitle = selectedOpt && selectedOpt.value ? (selectedOpt.dataset.title || selectedOpt.text) : "";
+    const specificService = (specificServiceSelect && specificServiceSelect.value) ? specificServiceSelect.value : serviceTitle;
     const propertyType = propertySelect.value;
     const date = document.getElementById("bookDate").value;
     const timeSlot = document.getElementById("bookTimeSlot").value;
@@ -281,7 +341,7 @@ function initBookingForm() {
     const problemDesc = document.getElementById("bookProblemDesc").value.trim();
 
     // Basic Validation
-    if (!fullName || !phone || !category || !division || !district || !area || !address) {
+    if (!fullName || !phone || !serviceId || !division || !district || !area || !address) {
       alert("Please fill in all required fields marked with *");
       return;
     }
@@ -318,6 +378,7 @@ function initBookingForm() {
     const formData = new FormData(form);
     formData.set("customer_name", fullName);
     formData.set("customer_phone", cleanPhone);
+    formData.set("service_id", serviceId);
     formData.set("property_type", propertyType);
     formData.set("division", division);
     formData.set("district", district);
@@ -326,7 +387,7 @@ function initBookingForm() {
     formData.set("preferred_date", date);
     formData.set("preferred_time_slot", timeSlot);
     formData.set("urgency", document.getElementById("bookUrgency")?.value || "standard");
-    formData.set("problem_description", problemDesc || `Service request for ${specificService}`);
+    formData.set("problem_description", problemDesc || `Service request for ${serviceTitle}`);
     formData.set("service_type", "on_demand");
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") 
@@ -360,8 +421,8 @@ function initBookingForm() {
         fullName,
         phone,
         email,
-        category,
-        service: specificService,
+        category: "Service Request",
+        service: specificService || serviceTitle,
         propertyType,
         date,
         timeSlot,

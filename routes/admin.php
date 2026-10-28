@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminBookingController;
 use App\Http\Controllers\Admin\AdminCmsController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminNotificationController;
+use App\Http\Controllers\Admin\AdminOutreachTaskController;
 use App\Http\Controllers\Admin\AdminPartnerController;
 use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\AdminStaffController;
@@ -96,6 +97,15 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
     Route::post('/bookings/{booking}/log-call', [AdminBookingController::class, 'logCallStatus'])->name('bookings.log-call')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status')->middleware('admin.can:bookings.edit');
 
+    // Outreach Tasks Management (Automatic & Manual)
+    Route::prefix('outreach-tasks')->name('outreach-tasks.')->group(function () {
+        Route::get('/', [AdminOutreachTaskController::class, 'index'])->name('index')->middleware('admin.can:bookings.view');
+        Route::post('/', [AdminOutreachTaskController::class, 'store'])->name('store')->middleware('admin.can:bookings.edit');
+        Route::put('/{task}', [AdminOutreachTaskController::class, 'update'])->name('update')->middleware('admin.can:bookings.edit');
+        Route::post('/{task}/complete', [AdminOutreachTaskController::class, 'complete'])->name('complete')->middleware('admin.can:bookings.edit');
+        Route::delete('/{task}', [AdminOutreachTaskController::class, 'destroy'])->name('destroy')->middleware('admin.can:bookings.edit');
+    });
+
     // Support Tickets System
     Route::prefix('tickets')->name('tickets.')->group(function () {
         Route::get('/', [AdminSupportTicketController::class, 'index'])->name('index')->middleware('admin.can:tickets.view');
@@ -135,6 +145,7 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
         // Section Contents & Hero
         Route::get('/contents', [AdminCmsController::class, 'contents'])->name('contents')->middleware('admin.can:web_content.view');
         Route::post('/contents/{content}', [AdminCmsController::class, 'updateContent'])->name('contents.update')->middleware('admin.can:web_content.edit');
+        Route::post('/contents/{content}/toggle', [AdminCmsController::class, 'toggleContentStatus'])->name('contents.toggle')->middleware('admin.can:web_content.edit');
 
         // FAQs Knowledgebase
         Route::get('/faqs', [AdminCmsController::class, 'faqs'])->name('faqs')->middleware('admin.can:web_content.view');

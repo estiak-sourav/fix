@@ -119,7 +119,7 @@
 
         <div style="margin-bottom:16px;">
           <label class="form-label-paces">Default Service Address</label>
-          <textarea name="default_address" rows="3" class="form-control-paces" placeholder="House/Road/Block details..." {{ $canEditUser ? '' : 'disabled' }}>{{ old('default_address', $user->default_address) }}</textarea>
+          <textarea name="default_address" rows="5" class="form-control-paces" placeholder="House/Road/Block details..." {{ $canEditUser ? '' : 'disabled' }}>{{ old('default_address', $user->default_address) }}</textarea>
         </div>
 
         <div style="margin-bottom:16px;">

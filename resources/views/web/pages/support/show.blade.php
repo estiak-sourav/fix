@@ -1,48 +1,50 @@
 <x-layouts.app title="Support Ticket #{{ $ticket->ticket_number }} | FIX Helpdesk">
-  <section class="page-hero" style="padding-bottom:1.5rem;">
+  <section class="page-hero" style="padding-top:3rem; padding-bottom:2rem;">
     <div class="container">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
         <div>
           <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-            <a href="{{ route('support.create') }}" style="color:var(--primary); font-size:0.85rem; font-weight:600; text-decoration:none;">
+            <a href="{{ route('support.create') }}" style="color:#93c5fd; font-size:0.85rem; font-weight:600; text-decoration:none;">
               ← Back to Helpdesk
             </a>
             @auth
-              <span style="color:#cbd5e1;">|</span>
-              <a href="{{ route('customer.tickets.index') }}" style="color:var(--text-muted); font-size:0.85rem; text-decoration:none;">
+              <span style="color:#475569;">|</span>
+              <a href="{{ route('customer.tickets.index') }}" style="color:#94a3b8; font-size:0.85rem; text-decoration:none;">
                 My All Tickets
               </a>
             @endauth
           </div>
           <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-            <h1 style="font-size:1.85rem; font-weight:800; color:var(--text-main); margin:0;">
+            <h1 style="font-size:1.85rem; font-weight:800; color:#ffffff; margin:0;">
               Ticket #{{ $ticket->ticket_number }}
             </h1>
             <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:20px;
-              background:{{ $ticket->status === 'closed' ? '#f1f5f9' : ($ticket->status === 'in_progress' ? '#fef3c7' : '#e0f2fe') }};
-              color:{{ $ticket->status === 'closed' ? '#64748b' : ($ticket->status === 'in_progress' ? '#b45309' : '#0369a1') }};">
+              background:{{ $ticket->status === 'closed' ? 'rgba(241,245,249,0.15)' : ($ticket->status === 'in_progress' ? 'rgba(254,243,199,0.2)' : 'rgba(224,242,254,0.2)') }};
+              color:{{ $ticket->status === 'closed' ? '#94a3b8' : ($ticket->status === 'in_progress' ? '#fcd34d' : '#7dd3fc') }};
+              border:1px solid rgba(255,255,255,0.15);">
               ● {{ ucfirst(str_replace('_', ' ', $ticket->status)) }}
             </span>
             <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:20px;
-              background:{{ $ticket->priority === 'urgent' ? '#fee2e2' : ($ticket->priority === 'high' ? '#ffedd5' : '#f8fafc') }};
-              color:{{ $ticket->priority === 'urgent' ? '#dc2626' : ($ticket->priority === 'high' ? '#ea580c' : '#475569') }}; border:1px solid #e2e8f0;">
+              background:{{ $ticket->priority === 'urgent' ? 'rgba(254,226,226,0.2)' : ($ticket->priority === 'high' ? 'rgba(255,237,213,0.2)' : 'rgba(248,250,252,0.1)') }};
+              color:{{ $ticket->priority === 'urgent' ? '#fca5a5' : ($ticket->priority === 'high' ? '#fdba74' : '#94a3b8') }};
+              border:1px solid rgba(255,255,255,0.15);">
               Priority: {{ ucfirst($ticket->priority) }}
             </span>
           </div>
-          <p style="font-size:1.05rem; color:#475569; font-weight:600; margin-top:6px; margin-bottom:0;">
+          <p style="font-size:1.05rem; color:#cbd5e1; font-weight:500; margin-top:6px; margin-bottom:0;">
             {{ $ticket->subject }}
           </p>
         </div>
 
-        <div style="text-align:right; font-size:0.85rem; color:var(--text-muted);">
-          <div>Opened on <strong>{{ $ticket->created_at->format('M d, Y • h:i A') }}</strong></div>
-          <div style="margin-top:4px;">Requester: <strong>{{ $ticket->customer_name }}</strong> ({{ $ticket->customer_email }})</div>
+        <div style="text-align:right; font-size:0.85rem; color:#94a3b8;">
+          <div>Opened on <strong style="color:#e2e8f0;">{{ $ticket->created_at->format('M d, Y • h:i A') }}</strong></div>
+          <div style="margin-top:4px;">Requester: <strong style="color:#e2e8f0;">{{ $ticket->customer_name }}</strong> ({{ $ticket->customer_email }})</div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section" style="padding-top:0;">
+  <section class="section" style="padding-top:2.5rem;">
     <div class="container">
       
       @if(session('success'))
@@ -159,7 +161,7 @@
           Post a Follow-up Response
         </h3>
         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:18px;">
-          Send additional diagnostics or replies to our assigned engineering desk. (Strictly text input — image uploads are disabled).
+          Send additional details or questions to the assigned engineering desk.
         </p>
 
         @if($ticket->status === 'closed')
@@ -187,12 +189,7 @@
             @enderror
           </div>
 
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-            <div style="font-size:0.75rem; color:#94a3b8; display:flex; align-items:center; gap:6px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              <span>Image & attachment uploads disabled. Use text description only.</span>
-            </div>
-
+          <div style="display:flex; justify-content:flex-end; align-items:center;">
             <button type="submit" class="btn btn-accent" style="padding:10px 22px; font-size:0.92rem; font-weight:700; border-radius:6px; display:inline-flex; align-items:center; gap:8px;">
               <span>Send Step {{ $ticket->messages->count() + 1 }} Reply ➔</span>
             </button>

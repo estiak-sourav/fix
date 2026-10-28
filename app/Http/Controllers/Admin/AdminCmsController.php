@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\UpdateSiteSettingsRequest;
 use App\Mail\TestSmtpMail;
 use App\Models\AmcPlan;
 use App\Models\Faq;
+use App\Models\Sector;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\SiteContent;
@@ -297,9 +298,91 @@ class AdminCmsController extends Controller
      */
     public function contents(): View
     {
-        $contents = SiteContent::orderBy('section_key')->get();
+        $pageGroups = [
+            'homepage' => [
+                'name' => 'Homepage Sections',
+                'badge' => '🏠 Homepage',
+                'keys' => [
+                    'hero',
+                    'clients',
+                    'services',
+                    'amc_plans',
+                    'how_it_works',
+                    'video_portfolio',
+                    'why_fix',
+                    'who_we_serve',
+                    'testimonials',
+                    'faq',
+                    'contact',
+                ],
+            ],
+            'partner' => [
+                'name' => 'Become a Partner Page',
+                'badge' => '🤝 Become a Partner',
+                'keys' => [
+                    'vendor_hero',
+                    'vendor_benefits',
+                ],
+            ],
+            'legal' => [
+                'name' => 'Legal & Compliance Pages',
+                'badge' => '⚖️ Legal & Policies',
+                'keys' => [
+                    'legal_privacy',
+                    'legal_terms',
+                    'legal_sla',
+                ],
+            ],
+            'support' => [
+                'name' => 'Support Helpdesk Page',
+                'badge' => '🎫 Support Helpdesk',
+                'keys' => [
+                    'support_desk',
+                ],
+            ],
+            'about' => [
+                'name' => 'About Us Page',
+                'badge' => '🏢 About Us',
+                'keys' => [
+                    'about_hero',
+                    'about_overview',
+                ],
+            ],
+        ];
 
-        return view('admin.web.contents', compact('contents'));
+        $allKeys = [];
+        foreach ($pageGroups as $page => $group) {
+            foreach ($group['keys'] as $key) {
+                $allKeys[] = $key;
+            }
+        }
+
+        $allContents = SiteContent::all()->keyBy('section_key');
+
+        $contents = collect($allKeys)->map(function ($key) use ($allContents, $pageGroups) {
+            $content = $allContents->get($key) ?? SiteContent::firstOrCreate(
+                ['section_key' => $key],
+                [
+                    'title' => ucwords(str_replace('_', ' ', $key)),
+                    'subtitle' => null,
+                ]
+            );
+
+            foreach ($pageGroups as $page => $grp) {
+                if (in_array($key, $grp['keys'])) {
+                    $content->page_group = $page;
+                    $content->page_name = $grp['name'];
+                    $content->page_badge = $grp['badge'];
+                    break;
+                }
+            }
+
+            return $content;
+        });
+
+        $sectors = Sector::orderBy('order')->get();
+
+        return view('admin.web.contents', compact('contents', 'sectors', 'pageGroups'));
     }
 
     /**
@@ -311,6 +394,7 @@ class AdminCmsController extends Controller
             'title' => ['required', 'string', 'max:500'],
             'subtitle' => ['nullable', 'string'],
             'badge' => ['nullable', 'string', 'max:150'],
+            'is_active' => ['nullable', 'boolean'],
             'button_text' => ['nullable', 'string', 'max:100'],
             'button_url' => ['nullable', 'string', 'max:255'],
             'secondary_button_text' => ['nullable', 'string', 'max:100'],
@@ -322,9 +406,53 @@ class AdminCmsController extends Controller
             'floating_badge_title' => ['nullable', 'string', 'max:150'],
             'floating_badge_text' => ['nullable', 'string', 'max:255'],
             'trust_badges' => ['nullable', 'array'],
+            'partner_names' => ['nullable', 'string'],
+            'highlight_stats' => ['nullable', 'array'],
+            'steps' => ['nullable', 'array'],
+            'cards' => ['nullable', 'array'],
+            'current_video_title' => ['nullable', 'string', 'max:255'],
+            'current_video_meta' => ['nullable', 'string', 'max:255'],
+            'playlist' => ['nullable', 'array'],
+            'card_title' => ['nullable', 'string', 'max:255'],
+            'card_desc' => ['nullable', 'string'],
+            'operating_hours' => ['nullable', 'string'],
+            'coverage_text' => ['nullable', 'string'],
+            'sectors' => ['nullable', 'array'],
+            // Partner & Legal fields
+            'stat_partners' => ['nullable', 'string', 'max:50'],
+            'stat_partners_label' => ['nullable', 'string', 'max:100'],
+            'stat_payouts' => ['nullable', 'string', 'max:50'],
+            'stat_payouts_label' => ['nullable', 'string', 'max:100'],
+            'stat_verification' => ['nullable', 'string', 'max:50'],
+            'stat_verification_label' => ['nullable', 'string', 'max:100'],
+            'floating_badge_top_title' => ['nullable', 'string', 'max:150'],
+            'floating_badge_top_text' => ['nullable', 'string', 'max:255'],
+            'floating_badge_bottom_title' => ['nullable', 'string', 'max:150'],
+            'floating_badge_bottom_text' => ['nullable', 'string', 'max:255'],
+            'perks' => ['nullable', 'array'],
+            'legal_sections' => ['nullable', 'array'],
+            // About Us fields
+            'stat_experience' => ['nullable', 'string', 'max:50'],
+            'stat_experience_label' => ['nullable', 'string', 'max:100'],
+            'stat_clients' => ['nullable', 'string', 'max:50'],
+            'stat_clients_label' => ['nullable', 'string', 'max:100'],
+            'stat_technicians' => ['nullable', 'string', 'max:50'],
+            'stat_technicians_label' => ['nullable', 'string', 'max:100'],
+            'stat_satisfaction' => ['nullable', 'string', 'max:50'],
+            'stat_satisfaction_label' => ['nullable', 'string', 'max:100'],
+            'story_title' => ['nullable', 'string', 'max:255'],
+            'story_p1' => ['nullable', 'string'],
+            'story_p2' => ['nullable', 'string'],
+            'mission_title' => ['nullable', 'string', 'max:255'],
+            'mission_desc' => ['nullable', 'string'],
+            'vision_title' => ['nullable', 'string', 'max:255'],
+            'vision_desc' => ['nullable', 'string'],
+            'values' => ['nullable', 'array'],
+            'milestones' => ['nullable', 'array'],
         ]);
 
         $meta = $content->meta_data ?? [];
+        unset($meta['requires_login']);
 
         // 1. Multiple Hero Slides Upload & Remove
         if ($content->section_key === 'hero') {
@@ -361,7 +489,301 @@ class AdminCmsController extends Controller
             }
         }
 
-        // 2. Single Section Image File Upload
+        // 2. Clients section dynamic enterprise partners & logos
+        if ($content->section_key === 'clients') {
+            $existingClients = $meta['clients'] ?? [];
+            $clients = [];
+
+            if ($request->has('clients')) {
+                $rawClients = (array) $request->input('clients', []);
+                $uploadedLogos = $request->file('client_logos', []);
+                $removeLogos = (array) $request->input('remove_client_logos', []);
+
+                foreach ($rawClients as $idx => $clientData) {
+                    $name = trim($clientData['name'] ?? '');
+                    if ($name === '') {
+                        continue;
+                    }
+
+                    $currentLogo = $clientData['existing_logo'] ?? null;
+
+                    // If user requested to remove existing logo
+                    if (! empty($removeLogos[$idx])) {
+                        if ($currentLogo && file_exists(public_path($currentLogo)) && ! str_ends_with($currentLogo, '.svg')) {
+                            @unlink(public_path($currentLogo));
+                        }
+                        $currentLogo = null;
+                    }
+
+                    // Check if new logo file uploaded for this client index
+                    if (isset($uploadedLogos[$idx]) && $uploadedLogos[$idx]->isValid()) {
+                        $file = $uploadedLogos[$idx];
+                        $filename = 'client_'.time().'_'.Str::random(8).'.'.$file->getClientOriginalExtension();
+                        $file->move(public_path('uploads/clients'), $filename);
+
+                        if ($currentLogo && file_exists(public_path($currentLogo)) && ! str_ends_with($currentLogo, '.svg')) {
+                            @unlink(public_path($currentLogo));
+                        }
+                        $currentLogo = 'uploads/clients/'.$filename;
+                    }
+
+                    $clients[] = [
+                        'name' => $name,
+                        'logo' => $currentLogo,
+                    ];
+                }
+
+                // Check for newly appended client rows
+                if ($request->has('new_clients')) {
+                    $newClients = (array) $request->input('new_clients', []);
+                    $newLogos = $request->file('new_client_logos', []);
+
+                    foreach ($newClients as $nIdx => $nData) {
+                        $nName = trim($nData['name'] ?? '');
+                        if ($nName === '') {
+                            continue;
+                        }
+
+                        $nLogo = null;
+                        if (isset($newLogos[$nIdx]) && $newLogos[$nIdx]->isValid()) {
+                            $file = $newLogos[$nIdx];
+                            $filename = 'client_'.time().'_'.Str::random(8).'.'.$file->getClientOriginalExtension();
+                            $file->move(public_path('uploads/clients'), $filename);
+                            $nLogo = 'uploads/clients/'.$filename;
+                        }
+
+                        $clients[] = [
+                            'name' => $nName,
+                            'logo' => $nLogo,
+                        ];
+                    }
+                }
+
+                $meta['clients'] = $clients;
+                $meta['partner_names'] = array_column($clients, 'name');
+            } elseif ($request->has('partner_names')) {
+                $raw = (string) $request->input('partner_names');
+                $lines = array_map('trim', preg_split('/\r\n|\r|\n/', $raw));
+                $names = array_values(array_filter($lines, fn ($l) => $l !== ''));
+                $meta['partner_names'] = $names;
+
+                $syncedClients = [];
+                foreach ($names as $idx => $pName) {
+                    $syncedClients[] = [
+                        'name' => $pName,
+                        'logo' => $existingClients[$idx]['logo'] ?? null,
+                    ];
+                }
+                $meta['clients'] = $syncedClients;
+            }
+        }
+
+        // 3. AMC Plans highlight stats
+        if ($content->section_key === 'amc_plans') {
+            if ($request->has('highlight_stats')) {
+                $stats = [];
+                foreach ($request->input('highlight_stats', []) as $stat) {
+                    if (! empty($stat['val']) || ! empty($stat['lbl'])) {
+                        $stats[] = [
+                            'val' => trim($stat['val'] ?? ''),
+                            'lbl' => trim($stat['lbl'] ?? ''),
+                        ];
+                    }
+                }
+                $meta['highlight_stats'] = $stats;
+            }
+        }
+
+        // 4. How It Works steps
+        if ($content->section_key === 'how_it_works') {
+            if ($request->has('steps')) {
+                $steps = [];
+                foreach ($request->input('steps', []) as $k => $step) {
+                    $steps[$k] = [
+                        'title' => trim($step['title'] ?? ''),
+                        'desc' => trim($step['desc'] ?? ''),
+                    ];
+                }
+                $meta['steps'] = $steps;
+            }
+        }
+
+        // 5. Why FIX cards
+        if ($content->section_key === 'why_fix') {
+            if ($request->has('cards')) {
+                $cards = [];
+                foreach ($request->input('cards', []) as $k => $card) {
+                    $cards[$k] = [
+                        'title' => trim($card['title'] ?? ''),
+                        'desc' => trim($card['desc'] ?? ''),
+                    ];
+                }
+                $meta['cards'] = $cards;
+            }
+        }
+
+        // 6. Video Portfolio
+        if ($content->section_key === 'video_portfolio') {
+            if ($request->has('current_video_title')) {
+                $meta['current_video_title'] = $request->input('current_video_title');
+                $meta['default_title'] = $request->input('current_video_title');
+            }
+            if ($request->has('current_video_meta')) {
+                $meta['current_video_meta'] = $request->input('current_video_meta');
+                $meta['default_meta'] = $request->input('current_video_meta');
+            }
+            if ($request->has('playlist')) {
+                $playlist = [];
+                foreach ($request->input('playlist', []) as $k => $item) {
+                    $playlist[$k] = [
+                        'title' => trim($item['title'] ?? ''),
+                        'meta' => trim($item['meta'] ?? ''),
+                        'video_id' => trim($item['video_id'] ?? 'LXb3EKWsInQ'),
+                    ];
+                }
+                $meta['playlist'] = $playlist;
+            }
+        }
+
+        // 7. Who We Serve sectors inline update
+        if ($content->section_key === 'who_we_serve') {
+            if ($request->has('sectors')) {
+                foreach ($request->input('sectors', []) as $sectorId => $secData) {
+                    $sectorModel = Sector::find($sectorId);
+                    if ($sectorModel) {
+                        $sectorModel->update([
+                            'name' => trim($secData['name'] ?? $sectorModel->name),
+                            'short_desc' => trim($secData['short_desc'] ?? $sectorModel->short_desc),
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // 8. Contact section details
+        if ($content->section_key === 'contact') {
+            if ($request->has('card_title')) {
+                $meta['card_title'] = $request->input('card_title');
+            }
+            if ($request->has('card_desc')) {
+                $meta['card_desc'] = $request->input('card_desc');
+            }
+            if ($request->has('operating_hours')) {
+                $meta['operating_hours'] = $request->input('operating_hours');
+            }
+            if ($request->has('coverage_text')) {
+                $meta['coverage_text'] = $request->input('coverage_text');
+            }
+        }
+
+        // 9. Become a Partner - Hero & Statistics
+        if ($content->section_key === 'vendor_hero') {
+            foreach ([
+                'stat_partners',
+                'stat_partners_label',
+                'stat_payouts',
+                'stat_payouts_label',
+                'stat_verification',
+                'stat_verification_label',
+                'floating_badge_top_title',
+                'floating_badge_top_text',
+                'floating_badge_bottom_title',
+                'floating_badge_bottom_text',
+            ] as $field) {
+                if ($request->has($field)) {
+                    $meta[$field] = $request->input($field);
+                }
+            }
+        }
+
+        // 10. Become a Partner - Benefits & Contractor Perks
+        if ($content->section_key === 'vendor_benefits') {
+            if ($request->has('perks')) {
+                $perks = [];
+                foreach ($request->input('perks', []) as $p) {
+                    if (! empty($p['title']) || ! empty($p['description'])) {
+                        $perks[] = [
+                            'title' => trim($p['title'] ?? ''),
+                            'description' => trim($p['description'] ?? ''),
+                        ];
+                    }
+                }
+                $meta['perks'] = $perks;
+            }
+        }
+
+        // 11. Legal & Compliance Policies (Privacy, Terms, SLA)
+        if (in_array($content->section_key, ['legal_privacy', 'legal_terms', 'legal_sla'])) {
+            if ($request->has('legal_sections')) {
+                $sections = [];
+                foreach ($request->input('legal_sections', []) as $sec) {
+                    if (! empty($sec['heading']) || ! empty($sec['body'])) {
+                        $sections[] = [
+                            'heading' => trim($sec['heading'] ?? ''),
+                            'body' => trim($sec['body'] ?? ''),
+                        ];
+                    }
+                }
+                $meta['sections'] = $sections;
+            }
+        }
+
+        // 12. About Us - Hero & Stats
+        if ($content->section_key === 'about_hero') {
+            foreach ([
+                'stat_experience',
+                'stat_experience_label',
+                'stat_clients',
+                'stat_clients_label',
+                'stat_technicians',
+                'stat_technicians_label',
+                'stat_satisfaction',
+                'stat_satisfaction_label',
+                'story_title',
+                'story_p1',
+                'story_p2',
+            ] as $f) {
+                if ($request->has($f)) {
+                    $meta[$f] = $request->input($f);
+                }
+            }
+        }
+
+        // 13. About Us - Mission, Vision, Values & Milestones
+        if ($content->section_key === 'about_overview') {
+            foreach (['mission_title', 'mission_desc', 'vision_title', 'vision_desc'] as $f) {
+                if ($request->has($f)) {
+                    $meta[$f] = $request->input($f);
+                }
+            }
+            if ($request->has('values')) {
+                $values = [];
+                foreach ($request->input('values', []) as $val) {
+                    if (! empty($val['title']) || ! empty($val['desc'])) {
+                        $values[] = [
+                            'title' => trim($val['title'] ?? ''),
+                            'desc' => trim($val['desc'] ?? ''),
+                        ];
+                    }
+                }
+                $meta['values'] = $values;
+            }
+            if ($request->has('milestones')) {
+                $milestones = [];
+                foreach ($request->input('milestones', []) as $m) {
+                    if (! empty($m['year']) || ! empty($m['title'])) {
+                        $milestones[] = [
+                            'year' => trim($m['year'] ?? ''),
+                            'title' => trim($m['title'] ?? ''),
+                            'desc' => trim($m['desc'] ?? ''),
+                        ];
+                    }
+                }
+                $meta['milestones'] = $milestones;
+            }
+        }
+
+        // Single Section Image File Upload (if applicable)
         if ($request->hasFile('section_image')) {
             $file = $request->file('section_image');
             $filename = $content->section_key.'_'.time().'_'.Str::random(6).'.'.$file->getClientOriginalExtension();
@@ -373,6 +795,7 @@ class AdminCmsController extends Controller
             'title' => $validated['title'],
             'subtitle' => $validated['subtitle'] ?? null,
             'badge' => $validated['badge'] ?? null,
+            'is_active' => $request->has('is_active') ? $request->boolean('is_active') : true,
             'button_text' => $validated['button_text'] ?? null,
             'button_url' => $validated['button_url'] ?? null,
             'secondary_button_text' => $validated['secondary_button_text'] ?? null,
@@ -386,6 +809,21 @@ class AdminCmsController extends Controller
         ActivityLogService::logContent('web_content.update', "Updated website section '{$content->section_key}' ('{$content->title}').", $content);
 
         return redirect()->back()->with('success', "Section '{$content->section_key}' updated and activity logged successfully.");
+    }
+
+    /**
+     * Toggle Section Active / Inactive Status.
+     */
+    public function toggleContentStatus(SiteContent $content): RedirectResponse
+    {
+        $newStatus = ! ($content->is_active ?? true);
+        $content->update(['is_active' => $newStatus]);
+        Cache::forget("site_content:{$content->section_key}");
+
+        $statusText = $newStatus ? 'activated and is now visible on website' : 'deactivated and hidden from website';
+        ActivityLogService::logContent('web_content.toggle', "Section '{$content->section_key}' was {$statusText}.", $content);
+
+        return redirect()->back()->with('success', "Section '{$content->title}' was successfully {$statusText}.");
     }
 
     /**
