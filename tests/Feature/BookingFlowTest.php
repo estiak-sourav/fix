@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Admin;
+use App\Models\Booking;
 use App\Models\Service;
+use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -80,5 +83,49 @@ class BookingFlowTest extends TestCase
         $response->assertSee('1. Select Service');
         $response->assertSee('2. Property Type');
         $response->assertSee('3. Preferred Schedule');
+    }
+
+    public function test_assigning_crew_automatically_advances_status_to_in_progress(): void
+    {
+        $admin = Admin::first();
+        $user = User::first();
+        $service = Service::first();
+
+        $booking = Booking::create([
+            'booking_number' => Booking::generateBookingNumber(),
+            'user_id' => $user->id,
+            'service_type' => 'on_demand',
+            'service_id' => $service->id,
+            'customer_name' => 'Test Customer',
+            'customer_phone' => '01711223344',
+            'customer_email' => 'customer@example.com',
+            'property_type' => 'commercial',
+            'division' => 'Dhaka',
+            'district' => 'Dhaka',
+            'area' => 'Banani',
+            'street_address' => 'House 10, Road 5, Banani',
+            'preferred_date' => now()->toDateString(),
+            'preferred_time_slot' => 'Morning',
+            'urgency' => 'standard',
+            'problem_description' => 'Electrical wiring inspection and troubleshooting.',
+            'status' => 'pending_review',
+        ]);
+
+        // Accept and assign crew
+        $this->actingAs($admin, 'admin')->post(route('admin.bookings.accept', $booking), [
+            'assigned_team' => 'Delta HVAC Engineering & Industrial Solutions — Engr. Kamrul Hasan - 01711223344',
+            'pricing_mode' => 'price',
+            'cost_amount' => 5000,
+        ]);
+
+        $booking->refresh();
+        $this->assertEquals('in_progress', $booking->status);
+        $this->assertEquals('Delta HVAC Engineering & Industrial Solutions — Engr. Kamrul Hasan - 01711223344', $booking->assigned_team);
+
+        // Verify customer tracking page shows Assigned and In Progress
+        $trackerResponse = $this->actingAs($user, 'web')->get('http://localhost/my-bookings');
+        $trackerResponse->assertStatus(200);
+        $trackerResponse->assertSee('In Progress');
+        $trackerResponse->assertSee('Delta HVAC Engineering');
     }
 }

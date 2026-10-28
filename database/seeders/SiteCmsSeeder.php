@@ -13,7 +13,8 @@ class SiteCmsSeeder extends Seeder
         // 1. Site Settings
         $settings = [
             ['key' => 'site_name', 'value' => 'FIX Facility Management', 'group' => 'general', 'label' => 'Site Name'],
-            ['key' => 'site_tagline', 'value' => 'Certified Commercial & Residential Facility Engineering in Bangladesh', 'group' => 'general', 'label' => 'Tagline'],
+            ['key' => 'site_tagline', 'value' => 'Clean • Safe • Sustainable', 'group' => 'general', 'label' => 'Tagline'],
+            ['key' => 'site_description', 'value' => 'FIX is your trusted partner for complete building maintenance and facility management solutions in Bangladesh. We protect property value and enhance liveability through certified engineering.', 'group' => 'general', 'label' => 'Site Description'],
             ['key' => 'emergency_phone', 'value' => '+880 1700-000000', 'group' => 'contact', 'label' => 'Emergency Hotline'],
             ['key' => 'support_email', 'value' => 'support@fix.com.bd', 'group' => 'contact', 'label' => 'Support Email'],
             ['key' => 'head_office_address', 'value' => 'Plot 12, Road 11, Block D, Banani, Dhaka-1213, Bangladesh', 'group' => 'contact', 'label' => 'Head Office Address'],
@@ -23,10 +24,15 @@ class SiteCmsSeeder extends Seeder
             ['key' => 'meta_title', 'value' => 'FIX - Facility Management & Maintenance Services in Bangladesh', 'group' => 'seo', 'label' => 'Default SEO Title'],
             ['key' => 'meta_description', 'value' => 'Professional facility management, HVAC chillers, electrical, plumbing, fire safety & AMC services in Dhaka, Bangladesh.', 'group' => 'seo', 'label' => 'Default Meta Description'],
             ['key' => 'facebook_url', 'value' => 'https://facebook.com/fixfacility', 'group' => 'social', 'label' => 'Facebook Page URL'],
+            ['key' => 'facebook_active', 'value' => '1', 'group' => 'social', 'label' => 'Facebook Active'],
             ['key' => 'linkedin_url', 'value' => 'https://linkedin.com/company/fixfacility', 'group' => 'social', 'label' => 'LinkedIn Page URL'],
+            ['key' => 'linkedin_active', 'value' => '1', 'group' => 'social', 'label' => 'LinkedIn Active'],
             ['key' => 'instagram_url', 'value' => 'https://instagram.com/fixfacility', 'group' => 'social', 'label' => 'Instagram Profile URL'],
+            ['key' => 'instagram_active', 'value' => '1', 'group' => 'social', 'label' => 'Instagram Active'],
             ['key' => 'youtube_url', 'value' => 'https://youtube.com/@fixfacility', 'group' => 'social', 'label' => 'YouTube Channel URL'],
+            ['key' => 'youtube_active', 'value' => '1', 'group' => 'social', 'label' => 'YouTube Active'],
             ['key' => 'whatsapp_number', 'value' => '+8801700000000', 'group' => 'social', 'label' => 'WhatsApp Number'],
+            ['key' => 'whatsapp_active', 'value' => '1', 'group' => 'social', 'label' => 'WhatsApp Active'],
         ];
 
         foreach ($settings as $setting) {
@@ -392,7 +398,7 @@ class SiteCmsSeeder extends Seeder
                 'section_key' => 'about_hero',
                 'title' => 'Pioneering Modern Facility Engineering in Bangladesh',
                 'subtitle' => 'FIX is Bangladesh\'s premier technology-driven facility management company, delivering MEP engineering, HVAC solutions, and compliant operations for commercial towers, factories, and residences.',
-                'badge' => 'ABOUT FIX FACILITY MANAGEMENT',
+                'badge' => null,
                 'button_text' => 'Explore Our Services',
                 'button_url' => '/#services',
                 'secondary_button_text' => 'Get in Touch',
@@ -417,8 +423,8 @@ class SiteCmsSeeder extends Seeder
             [
                 'section_key' => 'about_overview',
                 'title' => 'Our Mission, Vision & Core Engineering Principles',
-                'subtitle' => 'Uncompromising safety, rapid technical response, and certified standards driving sustainable facility management.',
-                'badge' => 'PURPOSE & CORE VALUES',
+                'subtitle' => null,
+                'badge' => null,
                 'button_text' => 'Book a Facility Inspection',
                 'button_url' => '/booking',
                 'secondary_button_text' => 'Become a Service Partner',

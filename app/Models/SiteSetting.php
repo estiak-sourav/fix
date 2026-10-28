@@ -27,13 +27,15 @@ class SiteSetting extends Model
 
     public static function set(string $key, mixed $value, string $group = 'general', string $type = 'text', ?string $label = null): static
     {
+        $existing = static::where('key', $key)->first();
+
         $setting = static::updateOrCreate(
             ['key' => $key],
             [
                 'value' => $value,
-                'group' => $group,
-                'type' => $type,
-                'label' => $label ?? ucwords(str_replace('_', ' ', $key)),
+                'group' => $existing ? $existing->group : $group,
+                'type' => $existing ? $existing->type : $type,
+                'label' => $existing ? $existing->label : ($label ?? ucwords(str_replace('_', ' ', $key))),
             ]
         );
 

@@ -176,42 +176,105 @@
 
       <!-- Social Media & Messaging Channels -->
       <div class="card-paces" style="margin-bottom:1.5rem;">
-        <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.85rem; margin-bottom:1.25rem;">
-          <h3 class="card-title-paces" style="margin:0;">Social Media & Communication Channels</h3>
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+        <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.85rem; margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <label class="form-label-paces">Facebook Page URL</label>
-            <input type="url" name="facebook_url" value="{{ \App\Models\SiteSetting::get('facebook_url') }}" placeholder="https://facebook.com/yourpage" class="form-control-paces">
-            <span class="form-help-paces">Target URL for Facebook icon in footer.</span>
-          </div>
-
-          <div>
-            <label class="form-label-paces">LinkedIn Company URL</label>
-            <input type="url" name="linkedin_url" value="{{ \App\Models\SiteSetting::get('linkedin_url') }}" placeholder="https://linkedin.com/company/yourpage" class="form-control-paces">
-            <span class="form-help-paces">Target URL for LinkedIn icon in footer.</span>
+            <h3 class="card-title-paces" style="margin:0;">Social Media & Communication Channels</h3>
+            <span class="form-help-paces" style="margin:2px 0 0;">Manage official external communication links and toggle their visibility in the website footer.</span>
           </div>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
-          <div>
-            <label class="form-label-paces">Instagram Profile URL</label>
-            <input type="url" name="instagram_url" value="{{ \App\Models\SiteSetting::get('instagram_url') }}" placeholder="https://instagram.com/yourprofile" class="form-control-paces">
-            <span class="form-help-paces">Target URL for Instagram icon in footer.</span>
+          <!-- Facebook -->
+          <div style="background:var(--paces-bg, #f8fafc); border:1px solid var(--paces-border, #e2e8f0); border-radius:8px; padding:12px 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label class="form-label-paces" style="margin:0; font-weight:600;">Facebook Page URL</label>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <input type="hidden" name="facebook_active" value="0">
+                <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.8rem; font-weight:600; margin:0; user-select:none;">
+                  <input type="checkbox" name="facebook_active" value="1" {{ \App\Models\SiteSetting::get('facebook_active', '1') == '1' ? 'checked' : '' }} onchange="this.nextElementSibling.textContent = this.checked ? 'Active' : 'Inactive'; this.nextElementSibling.style.color = this.checked ? '#16a34a' : '#64748b';" style="width:16px; height:16px; accent-color:var(--paces-primary, #0284c7); cursor:pointer;">
+                  <span style="color:{{ \App\Models\SiteSetting::get('facebook_active', '1') == '1' ? '#16a34a' : '#64748b' }};">
+                    {{ \App\Models\SiteSetting::get('facebook_active', '1') == '1' ? 'Active' : 'Inactive' }}
+                  </span>
+                </label>
+              </div>
+            </div>
+            <input type="url" name="facebook_url" value="{{ \App\Models\SiteSetting::get('facebook_url') }}" placeholder="https://facebook.com/yourpage" class="form-control-paces" style="background:#ffffff;">
+            <span class="form-help-paces" style="margin-top:4px;">Target URL for Facebook icon in footer.</span>
           </div>
 
-          <div>
-            <label class="form-label-paces">YouTube Channel URL</label>
-            <input type="url" name="youtube_url" value="{{ \App\Models\SiteSetting::get('youtube_url') }}" placeholder="https://youtube.com/@yourchannel" class="form-control-paces">
-            <span class="form-help-paces">Target URL for YouTube video channels.</span>
+          <!-- LinkedIn -->
+          <div style="background:var(--paces-bg, #f8fafc); border:1px solid var(--paces-border, #e2e8f0); border-radius:8px; padding:12px 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label class="form-label-paces" style="margin:0; font-weight:600;">LinkedIn Company URL</label>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <input type="hidden" name="linkedin_active" value="0">
+                <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.8rem; font-weight:600; margin:0; user-select:none;">
+                  <input type="checkbox" name="linkedin_active" value="1" {{ \App\Models\SiteSetting::get('linkedin_active', '1') == '1' ? 'checked' : '' }} onchange="this.nextElementSibling.textContent = this.checked ? 'Active' : 'Inactive'; this.nextElementSibling.style.color = this.checked ? '#16a34a' : '#64748b';" style="width:16px; height:16px; accent-color:var(--paces-primary, #0284c7); cursor:pointer;">
+                  <span style="color:{{ \App\Models\SiteSetting::get('linkedin_active', '1') == '1' ? '#16a34a' : '#64748b' }};">
+                    {{ \App\Models\SiteSetting::get('linkedin_active', '1') == '1' ? 'Active' : 'Inactive' }}
+                  </span>
+                </label>
+              </div>
+            </div>
+            <input type="url" name="linkedin_url" value="{{ \App\Models\SiteSetting::get('linkedin_url') }}" placeholder="https://linkedin.com/company/yourpage" class="form-control-paces" style="background:#ffffff;">
+            <span class="form-help-paces" style="margin-top:4px;">Target URL for LinkedIn icon in footer.</span>
           </div>
         </div>
 
-        <div>
-          <label class="form-label-paces">WhatsApp Contact Number</label>
-          <input type="text" name="whatsapp_number" value="{{ \App\Models\SiteSetting::get('whatsapp_number') }}" placeholder="+8801700000000" class="form-control-paces">
-          <span class="form-help-paces">Direct WhatsApp helpline number (with international country code).</span>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+          <!-- Instagram -->
+          <div style="background:var(--paces-bg, #f8fafc); border:1px solid var(--paces-border, #e2e8f0); border-radius:8px; padding:12px 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label class="form-label-paces" style="margin:0; font-weight:600;">Instagram Profile URL</label>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <input type="hidden" name="instagram_active" value="0">
+                <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.8rem; font-weight:600; margin:0; user-select:none;">
+                  <input type="checkbox" name="instagram_active" value="1" {{ \App\Models\SiteSetting::get('instagram_active', '1') == '1' ? 'checked' : '' }} onchange="this.nextElementSibling.textContent = this.checked ? 'Active' : 'Inactive'; this.nextElementSibling.style.color = this.checked ? '#16a34a' : '#64748b';" style="width:16px; height:16px; accent-color:var(--paces-primary, #0284c7); cursor:pointer;">
+                  <span style="color:{{ \App\Models\SiteSetting::get('instagram_active', '1') == '1' ? '#16a34a' : '#64748b' }};">
+                    {{ \App\Models\SiteSetting::get('instagram_active', '1') == '1' ? 'Active' : 'Inactive' }}
+                  </span>
+                </label>
+              </div>
+            </div>
+            <input type="url" name="instagram_url" value="{{ \App\Models\SiteSetting::get('instagram_url') }}" placeholder="https://instagram.com/yourprofile" class="form-control-paces" style="background:#ffffff;">
+            <span class="form-help-paces" style="margin-top:4px;">Target URL for Instagram icon in footer.</span>
+          </div>
+
+          <!-- YouTube -->
+          <div style="background:var(--paces-bg, #f8fafc); border:1px solid var(--paces-border, #e2e8f0); border-radius:8px; padding:12px 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label class="form-label-paces" style="margin:0; font-weight:600;">YouTube Channel URL</label>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <input type="hidden" name="youtube_active" value="0">
+                <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.8rem; font-weight:600; margin:0; user-select:none;">
+                  <input type="checkbox" name="youtube_active" value="1" {{ \App\Models\SiteSetting::get('youtube_active', '1') == '1' ? 'checked' : '' }} onchange="this.nextElementSibling.textContent = this.checked ? 'Active' : 'Inactive'; this.nextElementSibling.style.color = this.checked ? '#16a34a' : '#64748b';" style="width:16px; height:16px; accent-color:var(--paces-primary, #0284c7); cursor:pointer;">
+                  <span style="color:{{ \App\Models\SiteSetting::get('youtube_active', '1') == '1' ? '#16a34a' : '#64748b' }};">
+                    {{ \App\Models\SiteSetting::get('youtube_active', '1') == '1' ? 'Active' : 'Inactive' }}
+                  </span>
+                </label>
+              </div>
+            </div>
+            <input type="url" name="youtube_url" value="{{ \App\Models\SiteSetting::get('youtube_url') }}" placeholder="https://youtube.com/@yourchannel" class="form-control-paces" style="background:#ffffff;">
+            <span class="form-help-paces" style="margin-top:4px;">Target URL for YouTube video channels.</span>
+          </div>
+        </div>
+
+        <!-- WhatsApp -->
+        <div style="background:var(--paces-bg, #f8fafc); border:1px solid var(--paces-border, #e2e8f0); border-radius:8px; padding:12px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label class="form-label-paces" style="margin:0; font-weight:600;">WhatsApp Contact Number</label>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <input type="hidden" name="whatsapp_active" value="0">
+              <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.8rem; font-weight:600; margin:0; user-select:none;">
+                <input type="checkbox" name="whatsapp_active" value="1" {{ \App\Models\SiteSetting::get('whatsapp_active', '1') == '1' ? 'checked' : '' }} onchange="this.nextElementSibling.textContent = this.checked ? 'Active' : 'Inactive'; this.nextElementSibling.style.color = this.checked ? '#16a34a' : '#64748b';" style="width:16px; height:16px; accent-color:var(--paces-primary, #0284c7); cursor:pointer;">
+                <span style="color:{{ \App\Models\SiteSetting::get('whatsapp_active', '1') == '1' ? '#16a34a' : '#64748b' }};">
+                  {{ \App\Models\SiteSetting::get('whatsapp_active', '1') == '1' ? 'Active' : 'Inactive' }}
+                </span>
+              </label>
+            </div>
+          </div>
+          <input type="text" name="whatsapp_number" value="{{ \App\Models\SiteSetting::get('whatsapp_number') }}" placeholder="+8801700000000" class="form-control-paces" style="background:#ffffff;">
+          <span class="form-help-paces" style="margin-top:4px;">Direct WhatsApp helpline number (with international country code).</span>
         </div>
       </div>
 

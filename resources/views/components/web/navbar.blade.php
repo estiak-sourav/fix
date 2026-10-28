@@ -2,8 +2,8 @@
 <header class="navbar">
   <div class="container nav-container">
     <a href="{{ route('home') }}" class="nav-brand">
-      <img src="{{ asset(\App\Models\SiteSetting::get('header_logo', 'assets/images/logo-dark-crop.png')) }}" alt="FIX Logo" class="nav-logo-img">
-      <span class="nav-brand-tagline">CLEAN • SAFE • SUSTAINABLE</span>
+      <img src="{{ asset(\App\Models\SiteSetting::get('header_logo', 'assets/images/logo-dark-crop.png')) }}" alt="{{ \App\Models\SiteSetting::get('site_name', 'FIX') }} Logo" class="nav-logo-img">
+      <span class="nav-brand-tagline">{{ strtoupper(\App\Models\SiteSetting::get('site_tagline', 'CLEAN • SAFE • SUSTAINABLE')) }}</span>
     </a>
 
     <nav class="desktop-nav" style="margin-left: clamp(1.75rem, 3.5vw, 3.25rem);">
@@ -77,8 +77,8 @@
 <div class="mobile-drawer">
   <div class="drawer-header">
     <div class="nav-brand">
-      <img src="{{ asset(\App\Models\SiteSetting::get('header_logo', 'assets/images/logo-dark-crop.png')) }}" alt="FIX Logo" style="height:36px;">
-      <span class="nav-brand-tagline">CLEAN • SAFE • SUSTAINABLE</span>
+      <img src="{{ asset(\App\Models\SiteSetting::get('header_logo', 'assets/images/logo-dark-crop.png')) }}" alt="{{ \App\Models\SiteSetting::get('site_name', 'FIX') }} Logo" style="height:36px;">
+      <span class="nav-brand-tagline">{{ strtoupper(\App\Models\SiteSetting::get('site_tagline', 'CLEAN • SAFE • SUSTAINABLE')) }}</span>
     </div>
     <button class="drawer-close" aria-label="Close Menu">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">

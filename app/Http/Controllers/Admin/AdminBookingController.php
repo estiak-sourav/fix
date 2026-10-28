@@ -300,9 +300,12 @@ class AdminBookingController extends Controller
             'completed_by_admin_id' => $admin?->id,
         ]);
 
+        $assignedTeam = ! empty($validated['assigned_team']) ? trim($validated['assigned_team']) : $booking->assigned_team;
+        $status = ! empty($assignedTeam) ? 'in_progress' : 'accepted';
+
         $payload = [
-            'status' => 'accepted',
-            'assigned_team' => $validated['assigned_team'] ?? $booking->assigned_team,
+            'status' => $status,
+            'assigned_team' => $assignedTeam,
             'comment' => $comment,
             'admin_notes' => "Order accepted by {$admin->name}. Pricing: ".($isPriceSet ? "৳ {$costAmount} ({$costType})" : 'Billed upon completion').'.',
         ];
@@ -431,9 +434,17 @@ class AdminBookingController extends Controller
             $booking->update($directUpdates);
         }
 
+        $newStatus = $validated['status'];
+        $assignedTeam = isset($validated['assigned_team']) ? trim($validated['assigned_team']) : $booking->assigned_team;
+
+        // Auto change status to in_progress if crew is assigned and order was pending, accepted or assigned
+        if (! empty($assignedTeam) && in_array($newStatus, ['pending_review', 'accepted', 'assigned'])) {
+            $newStatus = 'in_progress';
+        }
+
         $payload = [
-            'status' => $validated['status'],
-            'assigned_team' => $validated['assigned_team'] ?? $booking->assigned_team,
+            'status' => $newStatus,
+            'assigned_team' => $assignedTeam,
             'admin_notes' => $validated['admin_notes'] ?? $booking->admin_notes,
             'comment' => $validated['comment'] ?? 'Work Order details and status updated by operations lead.',
         ];

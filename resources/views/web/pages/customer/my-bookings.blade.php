@@ -100,6 +100,10 @@
                 $statusOrder = ['pending_review', 'accepted', 'assigned', 'in_progress', 'completed'];
                 $currentIdx = array_search($booking->status, $statusOrder);
                 if ($currentIdx === false && $booking->status === 'cancelled') $currentIdx = -1;
+                // When crew is assigned, advance both Assigned and In Progress together
+                if ($booking->status === 'assigned' || ($booking->assigned_team && in_array($booking->status, ['accepted', 'assigned']))) {
+                    $currentIdx = 3; // 'in_progress'
+                }
               @endphp
 
               <div style="margin:1.75rem 0 2rem; padding:0 0.5rem;">

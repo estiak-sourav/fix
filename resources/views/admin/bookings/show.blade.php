@@ -512,18 +512,58 @@
                 <label class="form-label-paces" style="font-weight:500; font-size:0.82rem;">
                   Assign Field Crew / Lead / Enlisted Partner
                 </label>
-                <input 
-                  list="fieldCrewList" 
-                  name="assigned_team" 
-                  class="form-control-paces" 
-                  placeholder="Select from registered crew/partner or type name..." 
-                  value="{{ old('assigned_team', $booking->assigned_team) }}"
-                >
-                <datalist id="fieldCrewList">
-                  @foreach($fieldCrews as $crew)
-                    <option value="{{ $crew->name }} ({{ $crew->company_name ?: $crew->role }}) - {{ $crew->phone }}">
-                  @endforeach
-                </datalist>
+                <div style="position:relative;" id="crewDropdownWrapper_accept">
+                  <div style="position:relative; display:flex; align-items:center;">
+                    <input 
+                      type="text" 
+                      id="crewInput_accept" 
+                      name="assigned_team" 
+                      class="form-control-paces" 
+                      placeholder="Click or search contractor, technician or lead..." 
+                      value="{{ old('assigned_team', $booking->assigned_team) }}"
+                      autocomplete="off"
+                      style="padding-right:55px;"
+                      onfocus="openCrewDropdown('accept')"
+                      oninput="filterCrewOptions('accept')"
+                    >
+                    <div style="position:absolute; right:8px; display:flex; align-items:center; gap:4px;">
+                      <button type="button" onclick="clearCrewSelection('accept')" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:1rem; padding:0 4px; display:{{ $booking->assigned_team ? 'inline' : 'none' }};" id="crewClearBtn_accept" title="Clear selection">✕</button>
+                      <button type="button" onclick="toggleCrewDropdown('accept')" style="background:none; border:none; color:#64748b; cursor:pointer; padding:2px;" title="View list">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Searchable Dropdown List -->
+                  <div id="crewDropdownMenu_accept" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; max-height:240px; overflow-y:auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.12); z-index:9999; padding:4px 0;">
+                    <div style="padding:6px 12px; background:#f8fafc; border-bottom:1px solid #f1f5f9; font-size:0.75rem; color:#64748b; font-weight:600; text-transform:uppercase;">
+                      Select Enlisted Partner or Field Technician ({{ $fieldCrews->count() }} available)
+                    </div>
+                    <div id="crewListItems_accept">
+                      @foreach($fieldCrews as $crew)
+                        @php
+                          $compOrRole = $crew->company_name ?: $crew->role;
+                          $crewFullVal = "{$crew->name} ({$compOrRole}) - {$crew->phone}";
+                        @endphp
+                        <div class="crew-option-item" 
+                             data-val="{{ strtolower($crewFullVal) }}"
+                             onclick="selectCrew('accept', '{{ addslashes($crewFullVal) }}', false)"
+                             style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f8fafc; transition:background 0.15s ease;"
+                             onmouseover="this.style.background='#eff6ff'" 
+                             onmouseout="this.style.background='transparent'">
+                          <div style="font-weight:600; font-size:0.85rem; color:#1e293b;">{{ $crew->name }}</div>
+                          <div style="font-size:0.75rem; color:#64748b; display:flex; justify-content:space-between; margin-top:2px;">
+                            <span>{{ $crew->role }}</span>
+                            <span style="color:#0284c7; font-weight:500;">📞 {{ $crew->phone }}</span>
+                          </div>
+                        </div>
+                      @endforeach
+                    </div>
+                    <div id="crewNoResults_accept" style="display:none; padding:12px; text-align:center; font-size:0.8rem; color:#94a3b8;">
+                      No matching crew found. Custom text will be saved.
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Optional Customer Timeline Comment -->
@@ -716,8 +756,11 @@
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.25rem;">
                   <div>
-                    <label class="form-label-paces" style="font-weight:500;">Work Order Status</label>
-                    <select name="status" class="form-control-paces" required>
+                    <label class="form-label-paces" style="font-weight:500;">
+                      Work Order Status
+                      <span id="statusAutoBadge" style="display:none; font-size:0.7rem; color:#10b981; font-weight:700; margin-left:6px;">✓ Auto Changed to In Progress</span>
+                    </label>
+                    <select name="status" class="form-control-paces" id="workOrderStatusSelect" required style="transition:border-color 0.25s, box-shadow 0.25s;">
                       @foreach(['pending_review' => 'Pending', 'accepted' => 'Accepted', 'assigned' => 'Assigned', 'in_progress' => 'In Progress', 'completed' => 'Completed', 'cancelled' => 'Cancelled'] as $stKey => $stLbl)
                         <option value="{{ $stKey }}" {{ $booking->status === $stKey ? 'selected' : '' }}>
                           {{ $stLbl }}
@@ -728,18 +771,58 @@
 
                   <div>
                     <label class="form-label-paces" style="font-weight:500;">Assigned Field Crew / Lead</label>
-                    <input 
-                      list="fieldCrewListEdit" 
-                      name="assigned_team" 
-                      class="form-control-paces" 
-                      value="{{ old('assigned_team', $booking->assigned_team) }}" 
-                      placeholder="Assign contractor or lead..."
-                    >
-                    <datalist id="fieldCrewListEdit">
-                      @foreach($fieldCrews as $crew)
-                        <option value="{{ $crew->name }} ({{ $crew->company_name ?: $crew->role }}) - {{ $crew->phone }}">
-                      @endforeach
-                    </datalist>
+                    <div style="position:relative;" id="crewDropdownWrapper_edit">
+                      <div style="position:relative; display:flex; align-items:center;">
+                        <input 
+                          type="text" 
+                          id="crewInput_edit" 
+                          name="assigned_team" 
+                          class="form-control-paces" 
+                          value="{{ old('assigned_team', $booking->assigned_team) }}" 
+                          placeholder="Search contractor, technician or lead..."
+                          autocomplete="off"
+                          style="padding-right:55px;"
+                          onfocus="openCrewDropdown('edit')"
+                          oninput="filterCrewOptions('edit')"
+                        >
+                        <div style="position:absolute; right:8px; display:flex; align-items:center; gap:4px;">
+                          <button type="button" onclick="clearCrewSelection('edit')" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:1rem; padding:0 4px; display:{{ $booking->assigned_team ? 'inline' : 'none' }};" id="crewClearBtn_edit" title="Clear selection">✕</button>
+                          <button type="button" onclick="toggleCrewDropdown('edit')" style="background:none; border:none; color:#64748b; cursor:pointer; padding:2px;" title="View list">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Searchable Dropdown List -->
+                      <div id="crewDropdownMenu_edit" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; max-height:260px; overflow-y:auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.12); z-index:9999; padding:4px 0;">
+                        <div style="padding:6px 12px; background:#f8fafc; border-bottom:1px solid #f1f5f9; font-size:0.75rem; color:#64748b; font-weight:600; text-transform:uppercase;">
+                          Select Enlisted Partner or Field Technician ({{ $fieldCrews->count() }} available)
+                        </div>
+                        <div id="crewListItems_edit">
+                          @foreach($fieldCrews as $crew)
+                            @php
+                              $compOrRole = $crew->company_name ?: $crew->role;
+                              $crewFullVal = "{$crew->name} ({$compOrRole}) - {$crew->phone}";
+                            @endphp
+                            <div class="crew-option-item" 
+                                 data-val="{{ strtolower($crewFullVal) }}"
+                                 onclick="selectCrew('edit', '{{ addslashes($crewFullVal) }}', true)"
+                                 style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f8fafc; transition:background 0.15s ease;"
+                                 onmouseover="this.style.background='#eff6ff'" 
+                                 onmouseout="this.style.background='transparent'">
+                              <div style="font-weight:600; font-size:0.85rem; color:#1e293b;">{{ $crew->name }}</div>
+                              <div style="font-size:0.75rem; color:#64748b; display:flex; justify-content:space-between; margin-top:2px;">
+                                <span>{{ $crew->role }}</span>
+                                <span style="color:#0284c7; font-weight:500;">📞 {{ $crew->phone }}</span>
+                              </div>
+                            </div>
+                          @endforeach
+                        </div>
+                        <div id="crewNoResults_edit" style="display:none; padding:12px; text-align:center; font-size:0.8rem; color:#94a3b8;">
+                          No matching crew found. Custom text will be saved.
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -912,5 +995,114 @@
         }
       }
     }
+
+    // Searchable Crew Selection & Auto Status Change
+    function selectCrew(prefix, value, autoChangeStatus) {
+      const input = document.getElementById('crewInput_' + prefix);
+      const clearBtn = document.getElementById('crewClearBtn_' + prefix);
+      if (input) {
+        input.value = value;
+      }
+      if (clearBtn) {
+        clearBtn.style.display = value ? 'inline' : 'none';
+      }
+      closeCrewDropdown(prefix);
+
+      // Work Order Status automatic change
+      if (autoChangeStatus && value) {
+        const statusSelect = document.getElementById('workOrderStatusSelect');
+        const badge = document.getElementById('statusAutoBadge');
+        if (statusSelect) {
+          statusSelect.value = 'in_progress';
+          statusSelect.style.borderColor = '#10b981';
+          statusSelect.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.25)';
+          if (badge) {
+            badge.style.display = 'inline';
+          }
+          setTimeout(() => {
+            statusSelect.style.borderColor = '';
+            statusSelect.style.boxShadow = '';
+          }, 2000);
+        }
+      }
+    }
+
+    function clearCrewSelection(prefix) {
+      const input = document.getElementById('crewInput_' + prefix);
+      const clearBtn = document.getElementById('crewClearBtn_' + prefix);
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+      if (clearBtn) {
+        clearBtn.style.display = 'none';
+      }
+      openCrewDropdown(prefix);
+      filterCrewOptions(prefix);
+    }
+
+    function openCrewDropdown(prefix) {
+      const menu = document.getElementById('crewDropdownMenu_' + prefix);
+      if (menu) {
+        menu.style.display = 'block';
+        filterCrewOptions(prefix);
+      }
+    }
+
+    function closeCrewDropdown(prefix) {
+      const menu = document.getElementById('crewDropdownMenu_' + prefix);
+      if (menu) menu.style.display = 'none';
+    }
+
+    function toggleCrewDropdown(prefix) {
+      const menu = document.getElementById('crewDropdownMenu_' + prefix);
+      if (menu) {
+        if (menu.style.display === 'block') {
+          menu.style.display = 'none';
+        } else {
+          openCrewDropdown(prefix);
+          document.getElementById('crewInput_' + prefix)?.focus();
+        }
+      }
+    }
+
+    function filterCrewOptions(prefix) {
+      const input = document.getElementById('crewInput_' + prefix);
+      const filter = (input ? input.value : '').toLowerCase().trim();
+      const container = document.getElementById('crewListItems_' + prefix);
+      const noResults = document.getElementById('crewNoResults_' + prefix);
+      const clearBtn = document.getElementById('crewClearBtn_' + prefix);
+
+      if (clearBtn) {
+        clearBtn.style.display = filter ? 'inline' : 'none';
+      }
+
+      if (!container) return;
+      const items = container.getElementsByClassName('crew-option-item');
+      let visibleCount = 0;
+
+      for (let i = 0; i < items.length; i++) {
+        const text = items[i].getAttribute('data-val').toLowerCase();
+        if (!filter || text.includes(filter)) {
+          items[i].style.display = 'block';
+          visibleCount++;
+        } else {
+          items[i].style.display = 'none';
+        }
+      }
+
+      if (noResults) {
+        noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+      }
+    }
+
+    document.addEventListener('click', function(e) {
+      ['edit', 'accept'].forEach(function(prefix) {
+        const wrapper = document.getElementById('crewDropdownWrapper_' + prefix);
+        if (wrapper && !wrapper.contains(e.target)) {
+          closeCrewDropdown(prefix);
+        }
+      });
+    });
   </script>
 </x-layouts.admin>

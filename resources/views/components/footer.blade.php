@@ -6,65 +6,84 @@
       <div class="footer-brand">
         <div class="nav-brand" style="align-items:flex-start;">
           <a href="{{ route('home') }}" style="display:inline-block; line-height:1;">
-            <img src="{{ asset(\App\Models\SiteSetting::get('footer_logo', 'assets/images/logo-white-crop.png')) }}" alt="{{ \App\Models\SiteSetting::get('site_name', 'FIX') }} Logo" style="height:44px;">
+            <img src="{{ asset(\App\Models\SiteSetting::get('footer_logo', 'assets/images/logo-white-crop.png')) }}" alt="{{ \App\Models\SiteSetting::get('site_name', 'FIX') }} Logo" class="nav-logo-img" style="height:44px;">
           </a>
           <span class="nav-brand-tagline">{{ strtoupper(\App\Models\SiteSetting::get('site_tagline', 'CLEAN • SAFE • SUSTAINABLE')) }}</span>
         </div>
-        <p>
-          {{ \App\Models\SiteSetting::get('site_description', 'FIX is your trusted partner for complete building maintenance and facility management solutions in Bangladesh. We protect property value and enhance liveability through certified engineering.') }}
-        </p>
+        @php
+          $siteDesc = \App\Models\SiteSetting::get('site_description', 'FIX is your trusted partner for complete building maintenance and facility management solutions in Bangladesh. We protect property value and enhance liveability through certified engineering.');
+          $taglineVal = \App\Models\SiteSetting::get('site_tagline', 'CLEAN • SAFE • SUSTAINABLE');
+          $cleanDesc = strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', '', (string)$siteDesc)));
+          $cleanTagline = strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', '', (string)$taglineVal)));
+        @endphp
+        @if(!empty($siteDesc) && $cleanDesc !== $cleanTagline)
+          <p>
+            {{ $siteDesc }}
+          </p>
+        @endif
 
         @php
           $facebookUrl = \App\Models\SiteSetting::get('facebook_url');
+          $facebookActive = (string) \App\Models\SiteSetting::get('facebook_active', '1') === '1';
+
           $linkedinUrl = \App\Models\SiteSetting::get('linkedin_url');
+          $linkedinActive = (string) \App\Models\SiteSetting::get('linkedin_active', '1') === '1';
+
           $instagramUrl = \App\Models\SiteSetting::get('instagram_url');
+          $instagramActive = (string) \App\Models\SiteSetting::get('instagram_active', '1') === '1';
+
           $youtubeUrl = \App\Models\SiteSetting::get('youtube_url');
+          $youtubeActive = (string) \App\Models\SiteSetting::get('youtube_active', '1') === '1';
+
           $whatsappNumber = \App\Models\SiteSetting::get('whatsapp_number');
-          $whatsappUrl = $whatsappNumber ? 'https://wa.me/' . preg_replace('/[^0-9]/', '', $whatsappNumber) : null;
+          $whatsappActive = (string) \App\Models\SiteSetting::get('whatsapp_active', '1') === '1';
+          $whatsappUrl = ($whatsappNumber && $whatsappActive) ? 'https://wa.me/' . preg_replace('/[^0-9]/', '', $whatsappNumber) : null;
         @endphp
 
-        <div class="footer-socials">
-          @if($facebookUrl)
-            <a href="{{ $facebookUrl }}" class="social-btn" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-              </svg>
-            </a>
-          @endif
-          @if($linkedinUrl)
-            <a href="{{ $linkedinUrl }}" class="social-btn" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                <rect x="2" y="9" width="4" height="12"></rect>
-                <circle cx="4" cy="4" r="2"></circle>
-              </svg>
-            </a>
-          @endif
-          @if($instagramUrl)
-            <a href="{{ $instagramUrl }}" class="social-btn" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-              </svg>
-            </a>
-          @endif
-          @if($youtubeUrl)
-            <a href="{{ $youtubeUrl }}" class="social-btn" aria-label="YouTube" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path>
-                <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
-              </svg>
-            </a>
-          @endif
-          @if($whatsappUrl)
-            <a href="{{ $whatsappUrl }}" class="social-btn" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-              </svg>
-            </a>
-          @endif
-        </div>
+        @if(($facebookUrl && $facebookActive) || ($linkedinUrl && $linkedinActive) || ($instagramUrl && $instagramActive) || ($youtubeUrl && $youtubeActive) || $whatsappUrl)
+          <div class="footer-socials">
+            @if($facebookUrl && $facebookActive)
+              <a href="{{ $facebookUrl }}" class="social-btn" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                </svg>
+              </a>
+            @endif
+            @if($linkedinUrl && $linkedinActive)
+              <a href="{{ $linkedinUrl }}" class="social-btn" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                  <rect x="2" y="9" width="4" height="12"></rect>
+                  <circle cx="4" cy="4" r="2"></circle>
+                </svg>
+              </a>
+            @endif
+            @if($instagramUrl && $instagramActive)
+              <a href="{{ $instagramUrl }}" class="social-btn" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+              </a>
+            @endif
+            @if($youtubeUrl && $youtubeActive)
+              <a href="{{ $youtubeUrl }}" class="social-btn" aria-label="YouTube" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path>
+                  <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+                </svg>
+              </a>
+            @endif
+            @if($whatsappUrl)
+              <a href="{{ $whatsappUrl }}" class="social-btn" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                </svg>
+              </a>
+            @endif
+          </div>
+        @endif
       </div>
 
       <!-- 2. Quick Links -->

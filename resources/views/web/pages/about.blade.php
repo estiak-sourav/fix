@@ -3,7 +3,6 @@
   <x-page-hero 
     :title="$heroContent->title ?? 'Pioneering Modern Facility Engineering in Bangladesh'"
     :subtitle="$heroContent->subtitle ?? 'FIX is Bangladesh\'s premier technology-driven facility management company, delivering MEP engineering, HVAC solutions, and compliant operations.'"
-    :badge="$heroContent->badge ?? 'ABOUT FIX FACILITY MANAGEMENT'"
     maxWidth="900px"
   />
 
@@ -30,9 +29,6 @@
     <div class="container">
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:3.5rem; align-items:center;">
         <div>
-          <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(62,96,213,0.08); border:1px solid rgba(62,96,213,0.25); color:var(--paces-primary, #3e60d5); font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:4px 12px; border-radius:20px; margin-bottom:1rem;">
-            <span>🏢 Who We Are</span>
-          </div>
           <h2 style="font-size:2.2rem; font-weight:800; color:var(--text-main, #0f172a); line-height:1.25; margin-bottom:1.25rem;">
             {{ $heroMeta['story_title'] ?? 'Building Bangladesh\'s Most Trusted Facility Infrastructure' }}
           </h2>
@@ -101,17 +97,9 @@
   <section class="section section-alt" style="padding:4.5rem 0; background:#f1f5f9;">
     <div class="container">
       <div class="section-header" style="text-align:center; max-width:720px; margin:0 auto 3rem;">
-        <span style="display:inline-block; font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--paces-primary, #3e60d5); letter-spacing:0.08em; margin-bottom:8px;">
-          {{ $overviewContent->badge ?? 'PURPOSE & CORE VALUES' }}
-        </span>
         <h2 class="section-title" style="font-size:2.1rem; font-weight:800; color:var(--text-main, #0f172a); margin-bottom:0.75rem;">
           {{ $overviewContent->title ?? 'Our Mission, Vision & Core Engineering Principles' }}
         </h2>
-        @if(!empty($overviewContent?->subtitle))
-          <p class="section-subtitle" style="font-size:1rem; color:var(--text-muted, #64748b);">
-            {{ $overviewContent->subtitle }}
-          </p>
-        @endif
       </div>
 
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:2rem; margin-bottom:3rem;">
@@ -167,15 +155,9 @@
   <section class="section" style="padding:4.5rem 0; background:#ffffff;">
     <div class="container">
       <div class="section-header" style="text-align:center; max-width:680px; margin:0 auto 3rem;">
-        <span style="display:inline-block; font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#0d9488; letter-spacing:0.08em; margin-bottom:8px;">
-          OUR TRACK RECORD
-        </span>
         <h2 class="section-title" style="font-size:2rem; font-weight:800; color:var(--text-main, #0f172a); margin-bottom:0.5rem;">
           Milestones in Facility Engineering
         </h2>
-        <p class="section-subtitle" style="font-size:0.95rem; color:var(--text-muted, #64748b);">
-          A decade of continuous innovation, safety certification, and enterprise-scale operations in Bangladesh.
-        </p>
       </div>
 
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:1.5rem;">
