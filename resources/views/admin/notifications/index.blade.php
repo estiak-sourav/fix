@@ -1,4 +1,4 @@
-<x-layouts.admin title="Notifications & Dispatch Alerts | FIX Operations">
+<x-layouts.admin title="Notifications | FIX Operations">
   <div class="page-header-box">
     <div>
       <h1 class="page-header-title">Operations Notifications & Dispatch Alerts</h1>

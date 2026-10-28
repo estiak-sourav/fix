@@ -1,4 +1,4 @@
-<x-layouts.admin title="Outreach Tasks | FIX Admin">
+<x-layouts.admin title="Tasks | FIX Admin">
   <style>
     .task-interactive-row {
       background: #ffffff;

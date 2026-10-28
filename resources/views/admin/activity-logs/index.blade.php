@@ -1,4 +1,4 @@
-<x-layouts.admin title="Administrative Activity Logs & Audit Trail | FIX Operations">
+<x-layouts.admin title="Activity Logs | FIX Admin">
   <div class="page-header-box" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
     <div>
       <h1 class="page-header-title">Administrative Activity Logs</h1>

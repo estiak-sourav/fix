@@ -34,7 +34,9 @@ class StoreBookingRequest extends FormRequest
             'preferred_time_slot' => ['required', 'string', 'max:50'],
             'urgency' => ['required', 'string', 'in:emergency_1h,urgent_4h,standard,scheduled'],
             'problem_description' => ['required', 'string', 'min:10'],
-            'problem_photo' => ['nullable', 'image', 'max:5120'],
+            'problem_photo' => ['nullable', 'image', 'max:10240'],
+            'problem_photos' => ['nullable', 'array'],
+            'problem_photos.*' => ['nullable', 'file', 'image', 'max:10240'],
         ];
     }
 }

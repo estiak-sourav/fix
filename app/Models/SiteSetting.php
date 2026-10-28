@@ -44,6 +44,39 @@ class SiteSetting extends Model
         return $setting;
     }
 
+    /**
+     * Resolve the canonical public user website URL, stripping any admin subdomain.
+     */
+    public static function mainSiteUrl(string $path = ''): string
+    {
+        $scheme = request()->getScheme() ?: 'http';
+        $port = request()->getPort();
+        $host = request()->getHost();
+
+        if (str_starts_with($host, 'admin.')) {
+            $cleanHost = substr($host, 6);
+            if ($cleanHost === 'localhost') {
+                $cleanHost = '127.0.0.1';
+            }
+        } else {
+            $cleanHost = $host ?: '127.0.0.1';
+        }
+
+        $portStr = ($port && ! in_array($port, [80, 443])) ? ":{$port}" : '';
+        $baseUrl = "{$scheme}://{$cleanHost}{$portStr}";
+
+        $cleanPath = ltrim($path, '/');
+        if ($cleanPath === '') {
+            return $baseUrl.'/';
+        }
+
+        if (str_starts_with($cleanPath, '#')) {
+            return $baseUrl.'/'.$cleanPath;
+        }
+
+        return $baseUrl.'/'.$cleanPath;
+    }
+
     protected static function booted(): void
     {
         static::saved(function ($model) {

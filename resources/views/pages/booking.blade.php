@@ -1,11 +1,9 @@
 <x-layouts.app title="Book a Service | FIX Facility Management">
   <!-- Page Header -->
-  <section class="page-hero">
-    <div class="container">
-      <h1>Book a Building & Facility Service</h1>
-      <p>Submit your maintenance or inspection request. Our certified technical teams are ready to resolve any issue across your property.</p>
-    </div>
-  </section>
+  <x-page-hero 
+    title="Book a Building & Facility Service"
+    subtitle="Submit your maintenance or inspection request. Our certified technical teams are ready to resolve any issue across your property."
+  />
 
   <!-- Main Booking Form Layout -->
   <section class="section" style="padding-top:0;">
@@ -87,18 +85,89 @@
               </div>
 
               <div class="form-row">
-                <div class="form-group">
-                  <label for="bookCategory">Service Category <span class="required">*</span></label>
-                  <select id="bookCategory" name="service_category" class="form-control" required>
-                    <option value="">Select Service Category...</option>
-                    <!-- Populated dynamically via booking.js -->
+                <div class="form-group" style="position:relative;" id="serviceSearchableGroup">
+                  <label for="bookCategory">Select Service Required <span class="required">*</span></label>
+                  
+                  <!-- Native fallback select (kept for form submission & automated binding) -->
+                  <select id="bookCategory" name="service_id" class="form-control" required style="display:none;">
+                    <option value="">-- Choose Required Service --</option>
+                    @foreach($services as $srv)
+                      <option value="{{ $srv->id }}"
+                        data-title="{{ $srv->title }}"
+                        data-slug="{{ $srv->slug }}"
+                        data-thumbnail="{{ $srv->thumbnail_url }}"
+                        data-subtitle="{{ $srv->subtitle }}"
+                        data-price="{{ $srv->price_starting }}"
+                        data-unit="{{ $srv->pricing_unit }}"
+                        data-sla="{{ $srv->sla_hours }}"
+                        {{ (old('service_id') == $srv->id || (isset($selectedService) && (strtolower(trim($selectedService)) == strtolower(trim($srv->title)) || strtolower(trim($selectedService)) == strtolower(trim($srv->slug)) || $selectedService == $srv->id))) ? 'selected' : '' }}>
+                        {{ $srv->title }}
+                      </option>
+                    @endforeach
                   </select>
+
+                  <!-- Custom Searchable Trigger & Dropdown -->
+                  <div id="serviceSearchTrigger" class="form-control" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1rem; background:#fff; min-height:48px;" onclick="toggleServiceDropdown()">
+                    <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
+                      <div id="selectedServiceThumb" style="width:28px; height:28px; border-radius:6px; overflow:hidden; background:#f1f5f9; display:none; flex-shrink:0;">
+                        <img id="selectedServiceThumbImg" src="" style="width:100%; height:100%; object-fit:cover;">
+                      </div>
+                      <span id="selectedServiceText" style="font-weight:500; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        -- Choose Required Service --
+                      </span>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; color:#64748b;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
+
+                  <!-- Dropdown Menu with Live Search Filter -->
+                  <div id="serviceDropdownMenu" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:#ffffff; border:1px solid var(--border); border-radius:10px; box-shadow:0 15px 35px rgba(0,0,0,0.12); z-index:9999; padding:8px 0; max-height:320px; overflow-y:auto;">
+                    <!-- Live Search Input -->
+                    <div style="padding:4px 12px 10px; border-bottom:1px solid #f1f5f9;">
+                      <div style="position:relative;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" style="position:absolute; left:10px; top:50%; transform:translateY(-50%);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="serviceSearchInput" placeholder="Search service name (e.g. HVAC, Electrical, Plumbing)..." 
+                          oninput="filterServicesInDropdown(this.value)" 
+                          style="width:100%; box-sizing:border-box; padding:8px 12px 8px 32px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.85rem; outline:none;" 
+                          onclick="event.stopPropagation()">
+                      </div>
+                    </div>
+
+                    <!-- Options List -->
+                    <div id="serviceOptionsList">
+                      @foreach($services as $srv)
+                        <div class="service-search-option" 
+                             data-id="{{ $srv->id }}"
+                             data-title="{{ $srv->title }}"
+                             data-search="{{ strtolower($srv->title . ' ' . $srv->subtitle . ' ' . ($srv->category?->name ?? '')) }}"
+                             onclick="selectServiceFromDropdown('{{ $srv->id }}')"
+                             style="display:flex; align-items:center; gap:12px; padding:10px 14px; cursor:pointer; border-bottom:1px solid #f8fafc; transition:background 0.15s ease;"
+                             onmouseover="this.style.background='#eff6ff'" 
+                             onmouseout="this.style.background='transparent'">
+                          <img src="{{ $srv->thumbnail_url }}" alt="{{ $srv->title }}" style="width:40px; height:40px; border-radius:8px; object-fit:cover; border:1px solid #e2e8f0; flex-shrink:0;">
+                          <div style="flex:1; min-width:0;">
+                            <div style="font-weight:600; font-size:0.9rem; color:#0f172a;">{{ $srv->title }}</div>
+                            <div style="font-size:0.75rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                              {{ $srv->subtitle ?: ($srv->category?->name ?? 'Commercial & Residential Engineering') }}
+                            </div>
+                          </div>
+                          @if($srv->price_starting > 0)
+                            <div style="font-size:0.75rem; font-weight:700; color:var(--accent); white-space:nowrap; flex-shrink:0;">
+                              ৳{{ number_format($srv->price_starting) }}
+                            </div>
+                          @endif
+                        </div>
+                      @endforeach
+                    </div>
+                    <div id="noServicesFound" style="display:none; padding:16px; text-align:center; color:#64748b; font-size:0.85rem;">
+                      No services match your search query.
+                    </div>
+                  </div>
                 </div>
 
                 <div class="form-group">
-                  <label for="bookSpecificService">Specific Service Required <span class="required">*</span></label>
-                  <select id="bookSpecificService" name="specific_service" class="form-control" disabled required>
-                    <option value="">First choose a Category above</option>
+                  <label for="bookSpecificService">Specific Task / Scope</label>
+                  <select id="bookSpecificService" name="specific_service" class="form-control">
+                    <option value="">Comprehensive Inspection / General Service</option>
                   </select>
                 </div>
               </div>
@@ -217,14 +286,15 @@
               </div>
 
               <div class="form-group">
-                <label>Upload Problem Photo (Optional)</label>
-                <label class="file-upload-zone" for="problemPhotoInput">
+                <label>Upload Problem Photo (Optional) - <span style="font-weight:400; color:var(--text-muted);">Multiple photos supported</span></label>
+                <div class="file-upload-zone" id="problemPhotoDropzone" onclick="document.getElementById('problemPhotoInput').click()" style="cursor:pointer;">
                   <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                  <div style="font-weight:600; color:var(--primary);">Click or Drag & Drop photo here</div>
-                  <div style="font-size:0.775rem; color:var(--text-muted); margin-top:0.25rem;">Supports PNG, JPG up to 5MB</div>
-                  <input type="file" id="problemPhotoInput" name="problem_photo" accept="image/*" style="display:none;">
-                </label>
-                <div id="photoPreviewBox" class="image-preview-bar" style="display:none;"></div>
+                  <div style="font-weight:600; color:var(--primary);">Click or Drag & Drop photos here</div>
+                  <div style="font-size:0.775rem; color:var(--text-muted); margin-top:0.25rem;">Supports multiple PNG, JPG photos up to 10MB each</div>
+                  <input type="file" id="problemPhotoInput" name="problem_photos[]" accept="image/*" multiple style="display:none;" onclick="event.stopPropagation()">
+                </div>
+                <!-- Multiple Photos Preview Grid -->
+                <div id="photoPreviewContainer" style="display:none; margin-top:12px; grid-template-columns:repeat(auto-fill, minmax(90px, 1fr)); gap:10px;"></div>
               </div>
             </div>
 
@@ -245,15 +315,29 @@
           <div class="booking-sidebar-card">
             <h3 style="font-size:1.25rem; margin-bottom:1rem;">Booking Summary</h3>
 
+            <!-- Dynamic Service Thumbnail / Header Photo -->
+            <div id="sidebarServiceImageWrapper" style="display:none; margin-bottom:1rem; border-radius:10px; overflow:hidden; border:1px solid var(--border); max-height:160px; background:#f1f5f9; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+              <img id="sidebarServiceImage" src="" alt="Service preview" style="width:100%; height:160px; object-fit:cover; display:block;">
+            </div>
+
             <div class="sidebar-service-preview">
               <div class="sidebar-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
               </div>
               <div>
-                <span id="sidebarCategoryName" style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--accent);">Select Category</span>
+                <span id="sidebarCategoryName" style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--accent);">Service</span>
                 <h4 id="sidebarServiceName" style="font-size:1.05rem; margin:0.15rem 0;">General Service</h4>
                 <span id="sidebarPropertyType" style="font-size:0.8rem; color:var(--text-muted);">Corporate Office</span>
               </div>
+            </div>
+
+            <!-- Service Details / Brief Description -->
+            <p id="sidebarServiceDescription" style="display:none; font-size:0.82rem; color:var(--text-muted); line-height:1.45; margin:0.4rem 0 0.85rem; padding:0 2px;"></p>
+
+            <!-- Dynamic Service SLA & Pricing -->
+            <div id="sidebarServiceMetaBox" style="display:none; background:rgba(2,132,199,0.06); border:1px solid rgba(2,132,199,0.18); border-radius:8px; padding:8px 12px; margin-bottom:1rem; font-size:0.82rem; justify-content:space-between; align-items:center;">
+              <div>⚡ Response SLA: <strong id="sidebarServiceSla">4 Hours</strong></div>
+              <div>Starting: <strong id="sidebarServicePrice" style="color:var(--accent);">Quote</strong></div>
             </div>
 
             <div style="font-size:0.875rem; color:var(--text-main); margin-bottom:1.5rem;">
@@ -353,6 +437,20 @@
     <script>
       window.FIX_AUTH_USER = @json(auth()->user());
       window.IS_LOGGED_IN = {{ auth()->check() ? 'true' : 'false' }};
+      window.FIX_SERVICES_DATA = {
+        @foreach($services as $srv)
+          "{{ $srv->id }}": {
+            id: "{{ $srv->id }}",
+            title: @json($srv->title),
+            subtitle: @json($srv->subtitle),
+            description: @json($srv->description),
+            thumbnail_url: @json($srv->thumbnail_url),
+            price_starting: @json($srv->price_starting),
+            pricing_unit: @json($srv->pricing_unit),
+            sla_hours: @json($srv->sla_hours)
+          },
+        @endforeach
+      };
       @if(session('trigger_auth_modal'))
         document.addEventListener('DOMContentLoaded', () => {
           openAuthModal();

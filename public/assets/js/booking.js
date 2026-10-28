@@ -311,13 +311,81 @@ function initBookingForm() {
 
   function updateSidebarSummary() {
     const selectedOpt = categorySelect ? categorySelect.options[categorySelect.selectedIndex] : null;
+    const serviceId = selectedOpt && selectedOpt.value ? selectedOpt.value : "";
     const srvTitle = selectedOpt && selectedOpt.value ? (selectedOpt.dataset.title || selectedOpt.text) : "Select a Service";
     const spec = (specificServiceSelect && specificServiceSelect.value) ? specificServiceSelect.value : srvTitle;
     const prop = propertySelect?.value || "Standard Property";
 
+    // 1. Sidebar core text
     if (sidebarCategoryName) sidebarCategoryName.textContent = "Service";
     if (sidebarServiceName) sidebarServiceName.textContent = spec;
     if (sidebarPropertyType) sidebarPropertyType.textContent = prop;
+
+    // 2. Searchable Dropdown Trigger UI
+    const triggerText = document.getElementById("selectedServiceText");
+    const triggerThumb = document.getElementById("selectedServiceThumb");
+    const triggerThumbImg = document.getElementById("selectedServiceThumbImg");
+
+    if (triggerText) {
+      triggerText.textContent = (serviceId && srvTitle !== "Select a Service") ? srvTitle : "-- Choose Required Service --";
+    }
+
+    const srvData = (window.FIX_SERVICES_DATA && serviceId) ? window.FIX_SERVICES_DATA[serviceId] : null;
+    const thumbUrl = srvData?.thumbnail_url || selectedOpt?.dataset?.thumbnail;
+
+    if (triggerThumb && triggerThumbImg) {
+      if (thumbUrl && serviceId) {
+        triggerThumbImg.src = thumbUrl;
+        triggerThumb.style.display = "block";
+      } else {
+        triggerThumb.style.display = "none";
+      }
+    }
+
+    // 3. Dynamic Service Details in Sidebar Summary
+    const sidebarImgWrapper = document.getElementById("sidebarServiceImageWrapper");
+    const sidebarImg = document.getElementById("sidebarServiceImage");
+    const sidebarDesc = document.getElementById("sidebarServiceDescription");
+    const sidebarMetaBox = document.getElementById("sidebarServiceMetaBox");
+    const sidebarSla = document.getElementById("sidebarServiceSla");
+    const sidebarPrice = document.getElementById("sidebarServicePrice");
+
+    if (srvData && serviceId) {
+      if (sidebarImgWrapper && sidebarImg && srvData.thumbnail_url) {
+        sidebarImg.src = srvData.thumbnail_url;
+        sidebarImgWrapper.style.display = "block";
+      } else if (sidebarImgWrapper) {
+        sidebarImgWrapper.style.display = "none";
+      }
+
+      if (sidebarDesc) {
+        const descText = srvData.subtitle || srvData.description || "";
+        if (descText) {
+          sidebarDesc.textContent = descText;
+          sidebarDesc.style.display = "block";
+        } else {
+          sidebarDesc.style.display = "none";
+        }
+      }
+
+      if (sidebarMetaBox) {
+        sidebarMetaBox.style.display = "flex";
+        if (sidebarSla) {
+          sidebarSla.textContent = (srvData.sla_hours || 4) + " Hours";
+        }
+        if (sidebarPrice) {
+          if (srvData.price_starting && Number(srvData.price_starting) > 0) {
+            sidebarPrice.textContent = "৳" + Number(srvData.price_starting).toLocaleString();
+          } else {
+            sidebarPrice.textContent = srvData.pricing_unit || "Quote";
+          }
+        }
+      }
+    } else {
+      if (sidebarImgWrapper) sidebarImgWrapper.style.display = "none";
+      if (sidebarDesc) sidebarDesc.style.display = "none";
+      if (sidebarMetaBox) sidebarMetaBox.style.display = "none";
+    }
   }
 
   // Form Submission
@@ -389,6 +457,17 @@ function initBookingForm() {
     formData.set("urgency", document.getElementById("bookUrgency")?.value || "standard");
     formData.set("problem_description", problemDesc || `Service request for ${serviceTitle}`);
     formData.set("service_type", "on_demand");
+
+    // Clean up automatic file fields and attach our tracked multiple files
+    formData.delete("problem_photos[]");
+    formData.delete("problem_photos");
+    formData.delete("problem_photo");
+
+    if (window.FIX_UPLOADED_PROBLEM_FILES && window.FIX_UPLOADED_PROBLEM_FILES.length > 0) {
+      window.FIX_UPLOADED_PROBLEM_FILES.forEach(file => {
+        formData.append("problem_photos[]", file);
+      });
+    }
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") 
       || document.querySelector('input[name="_token"]')?.value;
@@ -513,49 +592,191 @@ function initLocationCascading() {
   }
 }
 
-function initPhotoUpload() {
-  const uploadInput = document.getElementById("problemPhotoInput");
-  const previewContainer = document.getElementById("photoPreviewBox");
-
-  if (!uploadInput || !previewContainer) return;
-
-  uploadInput.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert("File size exceeds 5MB limit. Please choose a smaller photo.");
-        uploadInput.value = "";
-        return;
+// Global Searchable Dropdown Helpers
+window.toggleServiceDropdown = function() {
+  const menu = document.getElementById("serviceDropdownMenu");
+  if (!menu) return;
+  const isHidden = menu.style.display === "none" || !menu.style.display;
+  menu.style.display = isHidden ? "block" : "none";
+  if (isHidden) {
+    const searchInput = document.getElementById("serviceSearchInput");
+    if (searchInput) {
+      searchInput.value = "";
+      searchInput.focus();
+      if (typeof window.filterServicesInDropdown === "function") {
+        window.filterServicesInDropdown("");
       }
+    }
+  }
+};
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        previewContainer.style.display = "flex";
-        previewContainer.innerHTML = `
-          <img src="${event.target.result}" alt="Preview" class="preview-thumb">
-          <div style="flex:1;">
-            <div style="font-weight:600;font-size:0.875rem;">${file.name}</div>
-            <div style="font-size:0.75rem;color:var(--text-muted);">${(file.size / 1024).toFixed(1)} KB</div>
-          </div>
-          <button type="button" id="removePhotoBtn" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:0.85rem;font-weight:600;">
-            Remove
-          </button>
-        `;
-
-        document.getElementById("removePhotoBtn").addEventListener("click", clearPhotoPreview);
-      };
-      reader.readAsDataURL(file);
+window.filterServicesInDropdown = function(query) {
+  const cleanQuery = (query || "").trim().toLowerCase();
+  const options = document.querySelectorAll(".service-search-option");
+  let visibleCount = 0;
+  options.forEach(opt => {
+    const searchData = (opt.dataset.search || opt.dataset.title || "").toLowerCase();
+    if (!cleanQuery || searchData.includes(cleanQuery)) {
+      opt.style.display = "flex";
+      visibleCount++;
+    } else {
+      opt.style.display = "none";
     }
   });
+  const noResults = document.getElementById("noServicesFound");
+  if (noResults) {
+    noResults.style.display = visibleCount === 0 ? "block" : "none";
+  }
+};
+
+window.selectServiceFromDropdown = function(serviceId) {
+  const nativeSelect = document.getElementById("bookCategory") || document.getElementById("bookService");
+  if (nativeSelect) {
+    nativeSelect.value = serviceId;
+    nativeSelect.dispatchEvent(new Event("change"));
+  }
+  const menu = document.getElementById("serviceDropdownMenu");
+  if (menu) menu.style.display = "none";
+};
+
+// Close searchable service dropdown on outside click
+document.addEventListener("click", (e) => {
+  const group = document.getElementById("serviceSearchableGroup");
+  const menu = document.getElementById("serviceDropdownMenu");
+  if (menu && menu.style.display === "block") {
+    if (group && !group.contains(e.target)) {
+      menu.style.display = "none";
+    }
+  }
+});
+
+// Track multiple problem photo files
+window.FIX_UPLOADED_PROBLEM_FILES = [];
+
+function initPhotoUpload() {
+  const uploadInput = document.getElementById("problemPhotoInput");
+  const dropzone = document.getElementById("problemPhotoDropzone");
+  const previewGrid = document.getElementById("photoPreviewContainer") || document.getElementById("photoPreviewBox");
+
+  if (!uploadInput || !previewGrid) return;
+
+  function renderPreviews() {
+    if (!window.FIX_UPLOADED_PROBLEM_FILES || window.FIX_UPLOADED_PROBLEM_FILES.length === 0) {
+      previewGrid.innerHTML = "";
+      previewGrid.style.display = "none";
+      return;
+    }
+
+    previewGrid.style.display = "grid";
+    previewGrid.innerHTML = "";
+
+    window.FIX_UPLOADED_PROBLEM_FILES.forEach((file, idx) => {
+      const card = document.createElement("div");
+      card.style.cssText = "position:relative; border-radius:8px; overflow:hidden; border:1px solid #cbd5e1; background:#f8fafc; aspect-ratio:1; box-shadow:0 1px 3px rgba(0,0,0,0.08);";
+
+      const img = document.createElement("img");
+      img.style.cssText = "width:100%; height:100%; object-fit:cover; display:block;";
+      img.alt = file.name;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.innerHTML = "×";
+      removeBtn.title = "Remove photo";
+      removeBtn.style.cssText = "position:absolute; top:4px; right:4px; width:22px; height:22px; background:rgba(220,38,38,0.85); color:#fff; border:none; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; line-height:1; transition:background 0.2s;";
+      removeBtn.onmouseover = () => { removeBtn.style.background = "#dc2626"; };
+      removeBtn.onmouseout = () => { removeBtn.style.background = "rgba(220,38,38,0.85)"; };
+      removeBtn.onclick = (e) => {
+        e.stopPropagation();
+        removePhotoAtIndex(idx);
+      };
+
+      const nameBadge = document.createElement("div");
+      nameBadge.style.cssText = "position:absolute; bottom:0; left:0; right:0; background:rgba(15,23,42,0.75); color:#fff; font-size:0.65rem; padding:2px 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center;";
+      nameBadge.textContent = file.name;
+
+      card.appendChild(img);
+      card.appendChild(removeBtn);
+      card.appendChild(nameBadge);
+      previewGrid.appendChild(card);
+    });
+  }
+
+  function handleFiles(files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!file.type.startsWith("image/")) {
+        alert(`File "${file.name}" is not an image.`);
+        continue;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        alert(`File "${file.name}" exceeds 10MB limit.`);
+        continue;
+      }
+      const exists = window.FIX_UPLOADED_PROBLEM_FILES.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified);
+      if (!exists) {
+        window.FIX_UPLOADED_PROBLEM_FILES.push(file);
+      }
+    }
+    renderPreviews();
+  }
+
+  function removePhotoAtIndex(idx) {
+    window.FIX_UPLOADED_PROBLEM_FILES.splice(idx, 1);
+    renderPreviews();
+  }
+
+  window.clearPhotoPreview = function() {
+    window.FIX_UPLOADED_PROBLEM_FILES = [];
+    if (uploadInput) uploadInput.value = "";
+    if (previewGrid) {
+      previewGrid.innerHTML = "";
+      previewGrid.style.display = "none";
+    }
+  };
+
+  uploadInput.addEventListener("change", (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFiles(e.target.files);
+    }
+  });
+
+  if (dropzone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.style.borderColor = "var(--primary)";
+        dropzone.style.background = "rgba(14, 116, 144, 0.05)";
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.style.borderColor = "";
+        dropzone.style.background = "";
+      }, false);
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length > 0) {
+        handleFiles(dt.files);
+      }
+    });
+  }
 }
 
 function clearPhotoPreview() {
-  const uploadInput = document.getElementById("problemPhotoInput");
-  const previewContainer = document.getElementById("photoPreviewBox");
-  if (uploadInput) uploadInput.value = "";
-  if (previewContainer) {
-    previewContainer.innerHTML = "";
-    previewContainer.style.display = "none";
+  if (typeof window.clearPhotoPreview === "function") {
+    window.clearPhotoPreview();
   }
 }
 

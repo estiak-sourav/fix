@@ -1,4 +1,4 @@
-<x-layouts.admin title="Web Content Management | FIX Admin">
+<x-layouts.admin title="Content Management | FIX Admin">
   <style>
     :root {
       --cms-brand: var(--paces-primary, #3e60d5);
@@ -109,7 +109,7 @@
       <p class="page-header-subtitle">Manage homepage sections, partner recruitment, legal compliance, and customer helpdesk</p>
     </div>
     <div style="display:flex; gap:10px; align-items:center;">
-      <a href="/" target="_blank" class="btn-paces btn-paces-outline btn-paces-sm" style="display:inline-flex; align-items:center; gap:6px;">
+      <a href="{{ \App\Models\SiteSetting::mainSiteUrl('') }}" target="_blank" class="btn-paces btn-paces-outline btn-paces-sm" style="display:inline-flex; align-items:center; gap:6px;">
         <span>View Live Website</span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
       </a>

@@ -1,4 +1,4 @@
-<x-layouts.admin title="Administrator Profile & DP | FIX Admin">
+<x-layouts.admin title="Profile | FIX Admin">
   <div class="page-header-box" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
     <div>
       <div style="margin-bottom:6px;">

@@ -3,7 +3,7 @@
     <div>
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
         <a href="{{ route('admin.partners.index') }}" style="color:var(--paces-primary); text-decoration:none; font-size:0.85rem; font-weight:500;">
-          ← Back to Enlisted Partners
+          ← Back to Partners
         </a>
       </div>
       <h1 class="page-header-title">{{ $partner->company_name }}</h1>

@@ -1,4 +1,4 @@
-<x-layouts.admin title="Enlisted Partners & Field Crews | FIX Admin">
+<x-layouts.admin title="Partners & Field Crews | FIX Admin">
   <div class="page-header-box" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
     <div>
       <h1 class="page-header-title">Enlisted Partners & Field Crew Network</h1>

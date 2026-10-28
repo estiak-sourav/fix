@@ -21,6 +21,7 @@ use App\Services\MailConfigService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -143,6 +144,90 @@ class AdminCmsController extends Controller
         $services = Service::with('category')->orderBy('order')->paginate(20);
 
         return view('admin.cms.services.index', compact('services'));
+    }
+
+    /**
+     * Create service form.
+     */
+    public function createService(): View
+    {
+        $categories = ServiceCategory::where('is_active', true)->orderBy('order')->get();
+
+        return view('admin.cms.services.create', compact('categories'));
+    }
+
+    /**
+     * Store a newly created service.
+     */
+    public function storeService(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'category_id' => ['nullable', 'exists:service_categories,id'],
+            'subtitle' => ['nullable', 'string', 'max:255'],
+            'description' => ['required', 'string'],
+            'price_starting' => ['nullable', 'numeric', 'min:0'],
+            'pricing_unit' => ['nullable', 'string', 'max:100'],
+            'sla_hours' => ['nullable', 'integer', 'min:1'],
+            'scope_included' => ['nullable', 'string'],
+            'is_emergency' => ['nullable', 'boolean'],
+            'is_active' => ['nullable', 'boolean'],
+            'thumbnail_file' => ['nullable', 'image', 'max:10240'],
+            'service_photos' => ['nullable', 'array'],
+            'service_photos.*' => ['nullable', 'image', 'max:10240'],
+        ]);
+
+        $slugBase = Str::slug($validated['title']);
+        $slug = $slugBase;
+        $counter = 1;
+        while (Service::where('slug', $slug)->exists()) {
+            $slug = $slugBase.'-'.$counter++;
+        }
+
+        $thumbnailPath = 'assets/images/services/facility-default.jpg';
+        if ($request->hasFile('thumbnail_file')) {
+            $file = $request->file('thumbnail_file');
+            $filename = 'service_'.time().'_'.Str::slug($validated['title']).'.'.$file->getClientOriginalExtension();
+            $file->move(public_path('uploads/services'), $filename);
+            $thumbnailPath = 'uploads/services/'.$filename;
+        }
+
+        $galleryImages = [];
+        if ($request->hasFile('service_photos')) {
+            foreach (array_slice($request->file('service_photos'), 0, 5) as $photo) {
+                if ($photo instanceof UploadedFile) {
+                    $photoName = 'gallery_'.time().'_'.Str::random(6).'.'.$photo->getClientOriginalExtension();
+                    $photo->move(public_path('uploads/services'), $photoName);
+                    $galleryImages[] = 'uploads/services/'.$photoName;
+                }
+            }
+        }
+
+        $scopeItems = [];
+        if (! empty($validated['scope_included'])) {
+            $scopeItems = array_values(array_filter(array_map('trim', explode("\n", (string) $validated['scope_included']))));
+        }
+
+        $service = Service::create([
+            'title' => $validated['title'],
+            'slug' => $slug,
+            'category_id' => $validated['category_id'] ?? null,
+            'subtitle' => $validated['subtitle'] ?? null,
+            'description' => $validated['description'],
+            'price_starting' => ! empty($validated['price_starting']) ? $validated['price_starting'] : 0,
+            'pricing_unit' => $validated['pricing_unit'] ?? 'Per Task / Inspection Quote',
+            'sla_hours' => $validated['sla_hours'] ?? 4,
+            'scope_included' => $scopeItems,
+            'is_emergency' => ! empty($validated['is_emergency']),
+            'is_active' => $request->has('is_active') ? (bool) $request->input('is_active') : true,
+            'thumbnail_path' => $thumbnailPath,
+            'gallery_images' => $galleryImages,
+            'order' => (Service::max('order') ?? 0) + 1,
+        ]);
+
+        ActivityLogService::logService('service.create', "Created new service '{$service->title}'.", $service);
+
+        return redirect()->route('admin.web.services')->with('success', "New service '{$service->title}' created successfully.");
     }
 
     /**

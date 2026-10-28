@@ -1,4 +1,4 @@
-<x-layouts.admin title="SMTP Gateway Setup | FIX Admin">
+<x-layouts.admin title="SMTP Setup | FIX Admin">
   <div class="page-header-box" style="margin-bottom:1.25rem;">
     <div>
       <h1 class="page-header-title">Web Settings</h1>

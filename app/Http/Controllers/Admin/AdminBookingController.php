@@ -275,6 +275,14 @@ class AdminBookingController extends Controller
         }
 
         $pricingMode = $request->input('pricing_mode', 'price'); // 'price' or 'later'
+        if ($pricingMode === 'price') {
+            $request->validate([
+                'cost_amount' => ['required', 'numeric', 'min:0.01'],
+            ], [
+                'cost_amount.required' => 'Service price amount is required when Price agreement is selected.',
+            ]);
+        }
+
         $isEstimated = (bool) $request->input('is_estimated', false);
         $costAmount = isset($validated['cost_amount']) && $validated['cost_amount'] !== '' ? (float) $validated['cost_amount'] : null;
         $isPriceSet = ($pricingMode === 'price') && $costAmount !== null && $costAmount > 0;
@@ -336,14 +344,21 @@ class AdminBookingController extends Controller
      */
     public function complete(Request $request, Booking $booking, UpdateBookingStatusAction $action): RedirectResponse
     {
+        if (empty($booking->assigned_team)) {
+            return redirect()->back()->with('error', 'Cannot complete work order: A field crew or technician team must be assigned before marking as completed.');
+        }
+
         $validated = $request->validate([
-            'completion_feedback' => ['required', 'string', 'max:2000'],
+            'completion_feedback' => ['nullable', 'string', 'max:2000'],
+            'completion_remarks' => ['nullable', 'string', 'max:2000'],
             'final_cost' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        $feedback = $validated['completion_remarks'] ?? ($validated['completion_feedback'] ?? 'Work completed successfully.');
+
         $admin = Auth::guard('admin')->user();
 
-        $booking->completion_feedback = $validated['completion_feedback'];
+        $booking->completion_feedback = $feedback;
         if (! empty($validated['final_cost'])) {
             $booking->final_cost = (float) $validated['final_cost'];
         }
@@ -351,8 +366,8 @@ class AdminBookingController extends Controller
 
         $payload = [
             'status' => 'completed',
-            'comment' => 'Work completed: '.$validated['completion_feedback'],
-            'admin_notes' => 'Completed by '.$admin->name.'. Feedback for client: '.$validated['completion_feedback'],
+            'comment' => 'Work completed: '.$feedback,
+            'admin_notes' => 'Completed by '.$admin->name.'. Feedback for client: '.$feedback,
         ];
         if (! empty($validated['final_cost'])) {
             $payload['final_cost'] = (float) $validated['final_cost'];

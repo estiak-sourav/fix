@@ -1,4 +1,4 @@
-<x-layouts.admin title="Admin Staff & Permissions Management | FIX Admin">
+<x-layouts.admin title="Admin Staff & Permissions | FIX Admin">
   <div class="page-header-box" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
     <div>
       <h1 class="page-header-title">Admin Staff & Role Permissions</h1>

@@ -1,11 +1,11 @@
-<x-layouts.admin title="Web Control Center | FIX Admin">
+<x-layouts.admin title="Web Control | FIX Admin">
   <div class="page-header-box">
     <div>
       <h1 class="page-header-title">🌐 Web Control Center</h1>
       <p class="page-header-subtitle">Manage all frontend website content, customer portal modules, branding, and SMTP communications</p>
     </div>
     <div style="display:flex; gap:10px;">
-      <a href="/" target="_blank" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:8px;">
+      <a href="{{ \App\Models\SiteSetting::mainSiteUrl('') }}" target="_blank" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:8px;">
         <span>View Live Website</span>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
       </a>

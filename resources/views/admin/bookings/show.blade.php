@@ -166,6 +166,28 @@
           <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:6px; padding:8px 10px; font-size:0.8rem; color:var(--paces-text-dark); line-height:1.45; margin-top:6px; white-space:pre-line;">
             {{ $booking->problem_description }}
           </div>
+
+          @php
+            $attachedImages = $booking->attached_images ?? [];
+          @endphp
+          @if(!empty($attachedImages))
+            <div style="margin-top:10px; border-top:1px dashed var(--paces-border); padding-top:10px;">
+              <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>Uploaded Problem Photos ({{ count($attachedImages) }})</span>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(70px, 1fr)); gap:8px;">
+                @foreach($attachedImages as $imgIndex => $imgUrl)
+                  <div style="position:relative; aspect-ratio:1; border-radius:8px; overflow:hidden; border:1px solid var(--paces-border); cursor:pointer; background:#0f172a;" 
+                       onclick="openImageLightbox('{{ asset($imgUrl) }}', 'Problem Photo #{{ $imgIndex + 1 }} - #{{ $booking->booking_number }}')" 
+                       title="Click to view & zoom">
+                    <img src="{{ asset($imgUrl) }}" alt="Problem Photo" style="width:100%; height:100%; object-fit:cover; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="position:absolute; bottom:3px; right:4px; font-size:0.65rem; background:rgba(0,0,0,0.65); color:#fff; padding:1px 4px; border-radius:4px; pointer-events:none;">🔍 Zoom</div>
+                  </div>
+                @endforeach
+              </div>
+            </div>
+          @endif
         </div>
 
         <!-- Phone Contact Status (if logged) -->
@@ -457,7 +479,7 @@
                 <!-- Amount Input Row with Estimated Checkbox on the right -->
                 <div id="priceAmountRow" style="display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap; padding-top:8px; border-top:1px dashed var(--paces-border);">
                   <div>
-                    <label class="form-label-paces" for="costAmountInput" style="font-weight:500; font-size:0.82rem;">Service Amount (৳)</label>
+                    <label class="form-label-paces" for="costAmountInput" style="font-weight:500; font-size:0.82rem;">Service Amount (৳) <span style="color:#ef4444;">*</span></label>
                     <input 
                       type="number" 
                       step="0.01" 
@@ -467,6 +489,7 @@
                       placeholder="e.g. 3500.00" 
                       value="{{ $booking->final_cost > 0 ? $booking->final_cost : ($booking->estimated_cost > 0 ? $booking->estimated_cost : '') }}"
                       style="width:200px;"
+                      required
                     >
                   </div>
 
@@ -618,7 +641,8 @@
             <div style="display:flex; gap:8px;">
               @if(auth('admin')->user()?->hasPermission('bookings.edit'))
                 <button type="button" onclick="toggleEditOrderModal()" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:500; display:inline-flex; align-items:center; gap:6px;">
-                  ✏️ Edit Order
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  <span>Edit Order</span>
                 </button>
               @endif
             </div>
@@ -693,51 +717,66 @@
                 </div>
               @endif
 
-            <!-- Complete Order Action Box (If in progress, assigned, or accepted) -->
+            <!-- Complete Order Action Box (Only if assigned team is present) -->
             @elseif(in_array($booking->status, ['accepted', 'assigned', 'in_progress']) && auth('admin')->user()?->hasPermission('bookings.edit'))
-              <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:1.25rem; margin-bottom:1rem;">
-                <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin:0 0 8px;">
-                  Mark Work Order as Completed
-                </h4>
-                <p style="font-size:0.8rem; color:var(--paces-text-muted); margin-bottom:12px;">
-                  Provide final completion feedback / remarks for the customer. The customer will then be invited to submit their service rating and review.
-                </p>
+              @if(!empty($booking->assigned_team))
+                <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:1.25rem; margin-bottom:1rem;">
+                  <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin:0 0 8px;">
+                    Mark Work Order as Completed
+                  </h4>
+                  <p style="font-size:0.8rem; color:var(--paces-text-muted); margin-bottom:12px;">
+                    Provide final completion feedback / remarks for the customer. The customer will then be invited to submit their service rating and review.
+                  </p>
 
-                <form action="{{ route('admin.bookings.complete', $booking) }}" method="POST">
-                  @csrf
-                  <div style="margin-bottom:12px;">
-                    <label class="form-label-paces" style="font-size:0.82rem; font-weight:500;">
-                      Completion Remarks / Feedback for Client <span style="color:#ef4444;">*</span>
-                    </label>
-                    <textarea 
-                      name="completion_feedback" 
-                      class="form-control-paces" 
-                      rows="2" 
-                      placeholder="e.g. Servicing complete. Substation capacitors tested and operational. 90-day maintenance warranty issued." 
-                      required
-                    ></textarea>
-                  </div>
-
-                  <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
-                    <div>
-                      <label class="form-label-paces" style="font-size:0.82rem; font-weight:500;">Final Invoiced Bill (৳)</label>
-                      <input 
-                        type="number" 
-                        step="0.01" 
-                        name="final_cost" 
+                  <form action="{{ route('admin.bookings.complete', $booking) }}" method="POST">
+                    @csrf
+                    <div style="margin-bottom:12px;">
+                      <label class="form-label-paces" style="font-size:0.82rem; font-weight:500;">
+                        Completion Remarks / Feedback for Client <span style="color:#ef4444;">*</span>
+                      </label>
+                      <textarea 
+                        name="completion_feedback" 
                         class="form-control-paces" 
-                        value="{{ $booking->final_cost > 0 ? $booking->final_cost : ($booking->estimated_cost > 0 ? $booking->estimated_cost : '') }}" 
-                        placeholder="e.g. 4500.00" 
-                        style="width:180px;"
-                      >
+                        rows="2" 
+                        placeholder="e.g. Servicing complete. Substation capacitors tested and operational. 90-day maintenance warranty issued." 
+                        required
+                      ></textarea>
+                    </div>
+
+                    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
+                      <div>
+                        <label class="form-label-paces" style="font-size:0.82rem; font-weight:500;">Final Invoiced Bill (৳)</label>
+                        <input 
+                          type="number" 
+                          step="0.01" 
+                          name="final_cost" 
+                          class="form-control-paces" 
+                          value="{{ $booking->final_cost > 0 ? $booking->final_cost : ($booking->estimated_cost > 0 ? $booking->estimated_cost : '') }}" 
+                          placeholder="e.g. 4500.00" 
+                          style="width:180px;"
+                        >
+                      </div>
+                    </div>
+
+                    <button type="submit" class="btn-paces" style="background:#16a34a; color:#fff; font-weight:500; font-size:0.85rem; padding:8px 18px; border:none; border-radius:6px; cursor:pointer;">
+                      ✓ Mark Completed
+                    </button>
+                  </form>
+                </div>
+              @else
+                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:1.25rem; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.4rem;">⚠️</span>
+                    <div>
+                      <div style="font-weight:600; font-size:0.88rem; color:#92400e;">Team Assignment Required Before Completion</div>
+                      <div style="font-size:0.8rem; color:#b45309; margin-top:2px;">You must assign a field crew or lead technician before marking this work order as completed.</div>
                     </div>
                   </div>
-
-                  <button type="submit" class="btn-paces" style="background:#16a34a; color:#fff; font-weight:500; font-size:0.85rem; padding:8px 18px; border:none; border-radius:6px; cursor:pointer;">
-                    ✓ Mark Completed & Send Feedback to Client
+                  <button type="button" onclick="toggleEditOrderModal()" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:600;">
+                    Assign Crew Now
                   </button>
-                </form>
-              </div>
+                </div>
+              @endif
             @endif
           </div>
         </div>
@@ -944,12 +983,18 @@
     function togglePricingInput(mode) {
       const row = document.getElementById('priceAmountRow');
       const note = document.getElementById('priceLaterNote');
+      const input = document.getElementById('costAmountInput');
       if (mode === 'price') {
         row.style.display = 'flex';
         note.style.display = 'none';
+        if (input) input.required = true;
       } else {
         row.style.display = 'none';
         note.style.display = 'block';
+        if (input) {
+          input.required = false;
+          input.value = '';
+        }
       }
     }
 
@@ -1104,5 +1149,117 @@
         }
       });
     });
+
+    // Image Lightbox & Zoom Functions
+    let currentZoom = 1;
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let translateX = 0, translateY = 0;
+
+    function openImageLightbox(src, caption) {
+      const modal = document.getElementById('imageLightboxModal');
+      const img = document.getElementById('lightboxImage');
+      const cap = document.getElementById('lightboxCaption');
+      if (!modal || !img) return;
+
+      img.src = src;
+      if (cap) cap.textContent = caption || 'Problem Photo';
+      resetLightboxZoom();
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeImageLightbox() {
+      const modal = document.getElementById('imageLightboxModal');
+      if (modal) modal.style.display = 'none';
+      document.body.style.overflow = '';
+      resetLightboxZoom();
+    }
+
+    function closeLightboxOnBackdrop(e) {
+      if (e.target.id === 'imageLightboxModal' || e.target.id === 'lightboxViewport') {
+        closeImageLightbox();
+      }
+    }
+
+    function zoomLightbox(delta) {
+      currentZoom = Math.max(0.5, Math.min(4, currentZoom + delta));
+      updateLightboxTransform();
+    }
+
+    function resetLightboxZoom() {
+      currentZoom = 1;
+      translateX = 0;
+      translateY = 0;
+      updateLightboxTransform();
+    }
+
+    function updateLightboxTransform() {
+      const img = document.getElementById('lightboxImage');
+      const level = document.getElementById('lightboxZoomLevel');
+      if (img) {
+        img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
+      }
+      if (level) {
+        level.textContent = Math.round(currentZoom * 100) + '%';
+      }
+    }
+
+    function wheelZoomLightbox(e) {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.2 : -0.2;
+      zoomLightbox(delta);
+    }
+
+    function startDragLightbox(e) {
+      if (currentZoom <= 1) return;
+      isDragging = true;
+      startX = e.clientX - translateX;
+      startY = e.clientY - translateY;
+      const vp = document.getElementById('lightboxViewport');
+      if (vp) vp.style.cursor = 'grabbing';
+    }
+
+    function doDragLightbox(e) {
+      if (!isDragging) return;
+      translateX = e.clientX - startX;
+      translateY = e.clientY - startY;
+      updateLightboxTransform();
+    }
+
+    function stopDragLightbox() {
+      isDragging = false;
+      const vp = document.getElementById('lightboxViewport');
+      if (vp) vp.style.cursor = 'grab';
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeImageLightbox();
+      }
+    });
   </script>
+
+  <!-- Interactive Image Lightbox Modal with Zoom & Pan -->
+  <div id="imageLightboxModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.92); z-index:99999; backdrop-filter:blur(6px); align-items:center; justify-content:center; flex-direction:column; padding:20px;" onclick="closeLightboxOnBackdrop(event)">
+    <!-- Lightbox Toolbar -->
+    <div style="position:absolute; top:18px; right:20px; display:flex; align-items:center; gap:10px; z-index:100000;">
+      <div style="background:rgba(255,255,255,0.15); border-radius:8px; padding:4px 8px; display:flex; align-items:center; gap:8px; color:#fff; font-size:0.85rem;">
+        <button type="button" onclick="zoomLightbox(-0.25)" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem; font-weight:700; padding:2px 8px;" title="Zoom Out">−</button>
+        <span id="lightboxZoomLevel" style="font-weight:600; min-width:44px; text-align:center;">100%</span>
+        <button type="button" onclick="zoomLightbox(0.25)" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem; font-weight:700; padding:2px 8px;" title="Zoom In">+</button>
+        <button type="button" onclick="resetLightboxZoom()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:0.8rem; padding:2px 6px;" title="Reset Zoom">Reset</button>
+      </div>
+      <button type="button" onclick="closeImageLightbox()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Close (Esc)">✕</button>
+    </div>
+
+    <div style="position:absolute; top:20px; left:24px; color:#f8fafc; font-weight:600; font-size:0.95rem; z-index:100000;" id="lightboxCaption">
+      Problem Photo
+    </div>
+
+    <!-- Image Container with smooth transform and drag -->
+    <div style="width:100%; height:100%; max-width:92vw; max-height:86vh; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; cursor:grab;" id="lightboxViewport" onmousedown="startDragLightbox(event)" onmousemove="doDragLightbox(event)" onmouseup="stopDragLightbox()" onmouseleave="stopDragLightbox()" onwheel="wheelZoomLightbox(event)">
+      <img id="lightboxImage" src="" alt="Zoomable View" style="max-width:100%; max-height:100%; object-fit:contain; transform-origin:center center; transition:transform 0.15s ease-out; user-select:none; pointer-events:none;">
+    </div>
+  </div>
 </x-layouts.admin>

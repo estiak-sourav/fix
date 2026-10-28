@@ -1,11 +1,11 @@
-<x-layouts.admin title="FAQs Knowledgebase | FIX Admin">
+<x-layouts.admin title="FAQ's | FIX Admin">
   <div class="page-header-box" style="margin-bottom:1.25rem;">
     <div>
       <h1 class="page-header-title">Web Content</h1>
       <p class="page-header-subtitle">Manage customer frequently asked questions, answers, and category classifications</p>
     </div>
     <div style="display:flex; gap:10px; align-items:center;">
-      <a href="/" target="_blank" class="btn-paces btn-paces-outline btn-paces-sm" style="display:inline-flex; align-items:center; gap:6px;">
+      <a href="{{ \App\Models\SiteSetting::mainSiteUrl('#faq') }}" target="_blank" class="btn-paces btn-paces-outline btn-paces-sm" style="display:inline-flex; align-items:center; gap:6px;">
         <span>View Live Website</span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
       </a>

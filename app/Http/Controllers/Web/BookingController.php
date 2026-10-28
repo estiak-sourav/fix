@@ -50,10 +50,15 @@ class BookingController extends Controller
                 ->with('trigger_auth_modal', true);
         }
 
+        $photos = $request->file('problem_photos', []);
+        if ($request->hasFile('problem_photo')) {
+            $photos = array_merge((array) $photos, [$request->file('problem_photo')]);
+        }
+
         $booking = $action->execute(
             $request->validated(),
             $request->user('web'),
-            $request->file('problem_photo')
+            $photos
         );
 
         if ($request->expectsJson() || $request->ajax()) {

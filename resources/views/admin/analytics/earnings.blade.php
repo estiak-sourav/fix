@@ -1,4 +1,4 @@
-<x-layouts.admin title="Revenue & Earning | FIX Admin">
+<x-layouts.admin title="Revenue & Earnings | FIX Admin">
   <div class="page-header-box" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
     <div>
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">

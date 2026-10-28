@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Staff Login | Fix</title>
+  <title>Admin Login | FIX</title>
   <link rel="icon" type="image/png" href="{{ asset(\App\Models\SiteSetting::get('favicon', 'assets/images/favicon-white.png')) }}?v=white">
   <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=white">
   <link rel="apple-touch-icon" href="{{ asset('assets/images/favicon-white.png') }}">
