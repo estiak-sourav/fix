@@ -86,9 +86,9 @@
           <input type="hidden" name="category" value="{{ request('category') }}">
         @endif
 
-        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <div class="activity-filter-form" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; width:100%;">
           <!-- Staff Actor Filter -->
-          <select name="admin_id" class="form-control-paces" style="padding:6px 12px; font-size:0.85rem; width:200px;" onchange="this.form.submit()">
+          <select name="admin_id" class="form-control-paces" style="padding:6px 12px; font-size:0.85rem; width:200px; max-width:100%;" onchange="this.form.submit()">
             <option value="">All Staff Members</option>
             @foreach($adminUsers as $u)
               <option value="{{ $u->id }}" {{ request('admin_id') == $u->id ? 'selected' : '' }}>
@@ -98,7 +98,7 @@
           </select>
 
           <!-- Timeframe Filter -->
-          <select name="timeframe" class="form-control-paces" style="padding:6px 12px; font-size:0.85rem; width:160px;" onchange="this.form.submit()">
+          <select name="timeframe" class="form-control-paces" style="padding:6px 12px; font-size:0.85rem; width:160px; max-width:100%;" onchange="this.form.submit()">
             <option value="">Any Time</option>
             <option value="today" {{ request('timeframe') === 'today' ? 'selected' : '' }}>Today</option>
             <option value="yesterday" {{ request('timeframe') === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
@@ -113,7 +113,7 @@
             placeholder="Search action, description, IP..." 
             value="{{ request('search') }}" 
             class="form-control-paces" 
-            style="padding:6px 12px; font-size:0.85rem; width:240px;"
+            style="padding:6px 12px; font-size:0.85rem; width:240px; max-width:100%;"
           >
 
           <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm">Filter</button>

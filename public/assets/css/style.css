@@ -3984,13 +3984,95 @@ textarea.form-control {
 @media (max-width: 1024px) {
   .video-portfolio-grid {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .video-playlist-wrapper {
+    max-height: 380px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-row,
+  .form-row-3col,
+  .form-row[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+  .booking-layout-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem;
+    margin-top: 0;
+  }
+  .form-card {
+    padding: 1.25rem 1rem !important;
+  }
+  .customer-booking-card,
+  .customer-ticket-card,
+  .customer-profile-card {
+    padding: 1.25rem 1rem !important;
+  }
+  .booking-header-meta {
+    text-align: left !important;
+    width: 100%;
+    margin-top: 6px;
+  }
+  .customer-stepper-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+  }
+  .customer-stepper-wrap::-webkit-scrollbar {
+    height: 4px;
+  }
+  .customer-stepper-wrap::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  .table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    display: block !important;
   }
 }
 
 @media (max-width: 640px) {
+  .video-portfolio-title {
+    font-size: 1.5rem !important;
+    line-height: 1.3;
+    white-space: normal !important;
+  }
   .video-player-info {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
+    padding: 1rem 1.25rem;
+  }
+  .video-player-info .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-brand-tagline {
+    display: none;
+  }
+  .nav-logo-img {
+    height: 32px;
+  }
+  .hero-content h1 {
+    font-size: 1.85rem !important;
+  }
+  .section-header h2 {
+    font-size: 1.6rem !important;
+  }
+  .btn-block-mobile {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
   }
 }
 

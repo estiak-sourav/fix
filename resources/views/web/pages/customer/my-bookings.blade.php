@@ -59,7 +59,7 @@
       @else
         <div style="display:flex; flex-direction:column; gap:20px;">
           @foreach($bookings as $booking)
-            <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:1.75rem 2rem; box-shadow:0 2px 6px rgba(0,0,0,0.03); transition:all 0.2s ease;" onmouseover="this.style.boxShadow='0 6px 18px rgba(0,0,0,0.06)'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.boxShadow='0 2px 6px rgba(0,0,0,0.03)'; this.style.borderColor='#e2e8f0';">
+            <div class="customer-booking-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:1.75rem 2rem; box-shadow:0 2px 6px rgba(0,0,0,0.03); transition:all 0.2s ease;" onmouseover="this.style.boxShadow='0 6px 18px rgba(0,0,0,0.06)'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.boxShadow='0 2px 6px rgba(0,0,0,0.03)'; this.style.borderColor='#e2e8f0';">
               <!-- Booking Card Header -->
               <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:1.5rem; border-bottom:1px solid #f1f5f9; padding-bottom:1.25rem;">
                 <div>
@@ -85,7 +85,7 @@
                   </div>
                 </div>
 
-                <div style="text-align:right;">
+                <div class="booking-header-meta" style="text-align:right;">
                   <div style="font-size:1.15rem; font-weight:800; color:var(--text-main);">
                     {{ $booking->service?->title ?? ($booking->amcPlan?->name ?? 'Custom Service') }}
                   </div>
@@ -106,8 +106,8 @@
                 }
               @endphp
 
-              <div style="margin:1.75rem 0 2rem; padding:0 0.5rem;">
-                <div style="display:flex; justify-content:space-between; position:relative;">
+              <div class="customer-stepper-wrap" style="margin:1.75rem 0 2rem; padding:0 0.5rem; overflow-x:auto; -webkit-overflow-scrolling:touch;">
+                <div style="display:flex; justify-content:space-between; position:relative; min-width:320px;">
                   <div style="position:absolute; top:14px; left:16px; right:16px; height:3px; background:#e2e8f0; z-index:1;"></div>
                   @if($currentIdx >= 0)
                     <div style="position:absolute; top:14px; left:16px; width:{{ ($currentIdx / (count($statusOrder) - 1)) * 100 }}%; height:3px; background:#10b981; z-index:2; transition:width 0.4s ease;"></div>

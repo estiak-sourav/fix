@@ -46,8 +46,7 @@ class AdminAuthController extends Controller
         ActivityLogService::logAuth('auth.login', "Staff member '{$admin->name}' ({$admin->email}) logged into Command Center.", $admin);
 
         if ($admin && $admin->must_change_password) {
-            return redirect()->route('admin.password.change')
-                ->with('warning', 'Please update your temporary password before accessing the system.');
+            return redirect()->route('admin.password.change');
         }
 
         $intended = $request->session()->get('url.intended');
@@ -87,13 +86,20 @@ class AdminAuthController extends Controller
             return redirect()->route('admin.login');
         }
 
+        $isFirstLogin = (bool) $admin->must_change_password;
+
         $request->validate([
             'current_password' => ['required', 'string', 'current_password:admin'],
             'password' => ['required', 'string', 'min:8', 'confirmed', 'different:current_password'],
             'password_confirmation' => ['required', 'string'],
         ], [
-            'current_password.current_password' => 'The provided current password does not match our records.',
-            'password.different' => 'The new password must be different from your current default password.',
+            'current_password.required' => 'Please enter your current password.',
+            'current_password.current_password' => 'The current password you entered is incorrect.',
+            'password.required' => 'Please enter a new password.',
+            'password.min' => 'The new password must be at least 8 characters long.',
+            'password.confirmed' => 'The password confirmation does not match.',
+            'password.different' => 'The new password must be different from your current password.',
+            'password_confirmation.required' => 'Please confirm your new password.',
         ]);
 
         $admin->password = Hash::make($request->password);
@@ -103,7 +109,7 @@ class AdminAuthController extends Controller
         ActivityLogService::logAuth('auth.password_update', "Staff member '{$admin->name}' updated their password.", $admin);
 
         return redirect()->route('admin.dashboard')
-            ->with('success', 'Your password has been successfully updated. Welcome to the Command Center!');
+            ->with('success', 'Your password has been updated successfully.');
     }
 
     /**

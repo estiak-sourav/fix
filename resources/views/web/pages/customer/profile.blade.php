@@ -29,7 +29,7 @@
       @endif
 
       {{-- ===================== AVATAR CARD ===================== --}}
-      <div style="background:#ffffff; border:1px solid var(--border); border-radius:14px; padding:1.75rem 2rem; margin-bottom:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+      <div class="customer-profile-card" style="background:#ffffff; border:1px solid var(--border); border-radius:14px; padding:1.75rem 2rem; margin-bottom:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
         <div style="margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--border);">
           <h3 style="font-size:1.1rem; font-weight:700; margin:0; color:var(--text-main);">Profile Picture</h3>
         </div>
@@ -46,7 +46,7 @@
           </div>
 
           {{-- Standalone avatar upload form --}}
-          <div style="flex:1; min-width:260px;">
+          <div style="flex:1; min-width:0;">
             <form id="avatarUploadForm" action="{{ route('customer.profile.avatar') }}" method="POST" enctype="multipart/form-data">
               @csrf
               <label style="display:block; font-size:0.875rem; font-weight:600; color:var(--text-main); margin-bottom:8px;">
@@ -90,7 +90,7 @@
         @method('PUT')
 
         {{-- Contact Info --}}
-        <div style="background:#ffffff; border:1px solid var(--border); border-radius:14px; padding:1.75rem 2rem; margin-bottom:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <div class="customer-profile-card" style="background:#ffffff; border:1px solid var(--border); border-radius:14px; padding:1.75rem 2rem; margin-bottom:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
           <div style="margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--border);">
             <h3 style="font-size:1.1rem; font-weight:700; margin:0; color:var(--text-main);">Primary Contact Information</h3>
           </div>
@@ -130,12 +130,12 @@
         </div>
 
         {{-- Address Section (with dynamic Division, District, Thana/Area Dropdowns) --}}
-        <div style="background:#ffffff; border:1px solid var(--border); border-radius:14px; padding:1.75rem 2rem; margin-bottom:1.75rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <div class="customer-profile-card" style="background:#ffffff; border:1px solid var(--border); border-radius:14px; padding:1.75rem 2rem; margin-bottom:1.75rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
           <div style="margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--border);">
             <h3 style="font-size:1.1rem; font-weight:700; margin:0; color:var(--text-main);">Address</h3>
           </div>
 
-          <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;">
+          <div class="form-row form-row-3col" style="grid-template-columns:1fr 1fr 1fr;">
             {{-- 1. Division Dropdown --}}
             <div class="form-group">
               <label for="profDivision">Division</label>

@@ -59,9 +59,9 @@
       @else
         <div style="display:flex; flex-direction:column; gap:16px;">
           @foreach($tickets as $ticket)
-            <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:1.5rem 1.75rem; box-shadow:0 2px 6px rgba(0,0,0,0.03); transition:all 0.2s ease;" onmouseover="this.style.boxShadow='0 6px 18px rgba(0,0,0,0.06)'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.boxShadow='0 2px 6px rgba(0,0,0,0.03)'; this.style.borderColor='#e2e8f0';">
+            <div class="customer-ticket-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:1.5rem 1.75rem; box-shadow:0 2px 6px rgba(0,0,0,0.03); transition:all 0.2s ease;" onmouseover="this.style.boxShadow='0 6px 18px rgba(0,0,0,0.06)'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.boxShadow='0 2px 6px rgba(0,0,0,0.03)'; this.style.borderColor='#e2e8f0';">
               <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
-                <div style="flex:1; min-width:280px;">
+                <div style="flex:1; min-width:0;">
                   <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
                     <span style="font-size:0.875rem; font-weight:800; color:var(--primary); font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; background:rgba(67,97,238,0.08); padding:3px 8px; border-radius:6px; letter-spacing:0.02em;">
                       #{{ $ticket->ticket_number }}

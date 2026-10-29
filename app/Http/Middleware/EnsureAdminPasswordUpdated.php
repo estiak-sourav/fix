@@ -31,8 +31,7 @@ class EnsureAdminPasswordUpdated
                     ], 403);
                 }
 
-                return redirect()->route('admin.password.change')
-                    ->with('warning', 'Please update your temporary password before accessing the system.');
+                return redirect()->route('admin.password.change');
             }
         }
 

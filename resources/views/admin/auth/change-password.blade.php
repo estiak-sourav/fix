@@ -263,53 +263,77 @@
 </head>
 <body>
 
+  @php
+    $admin = auth('admin')->user();
+    $isFirstLogin = (bool) ($admin?->must_change_password);
+  @endphp
+
   <div class="container-box">
     <div class="card-box">
       <div class="brand-header">
         <div class="brand-logo-wrap">
           <img src="{{ asset('assets/images/logo-dark-crop.png') }}" alt="FIX Logo">
         </div>
-        <h2>Security Setup: New Password</h2>
+        <h2>{{ $isFirstLogin ? 'Security Setup: New Password' : 'Change Password' }}</h2>
         <div>
-          <span class="status-pill">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            </svg>
-            First-Login Password Reset Required
-          </span>
+          @if($isFirstLogin)
+            <span class="status-pill">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              First-Login Password Reset Required
+            </span>
+          @else
+            <span class="status-pill" style="background:#e0f2fe; border-color:#bae6fd; color:#0369a1;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              Account Security &amp; Credentials
+            </span>
+          @endif
         </div>
       </div>
 
-      <div class="notice-banner">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="16" x2="12" y2="12"></line>
-          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-        </svg>
-        <div>
-          <strong>Hello, {{ auth('admin')->user()?->name ?? 'Staff Member' }}!</strong><br>
-          Your administrator account was created with a temporary default password. To protect client data and operations, you must choose a secure permanent password before entering the system.
+      @if($isFirstLogin)
+        <div class="notice-banner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <div>
+            <strong>Hello, {{ $admin?->name ?? 'Staff Member' }}!</strong><br>
+            Your administrator account was created with a temporary default password. To protect client data and operations, you must choose a secure permanent password before entering the system.
+          </div>
         </div>
-      </div>
+      @else
+        <div class="notice-banner" style="background:#f8fafc; border-color:#e2e8f0; color:#334155;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <div>
+            <strong>Update Your Password</strong><br>
+            Choose a strong, unique password of at least 8 characters to keep your administrator account secure.
+          </div>
+        </div>
+      @endif
 
       @if($errors->any())
-        <div data-alert class="alert-error" style="display:flex; align-items:center; justify-content:space-between;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px; flex-shrink:0;">
+        <div data-alert class="alert-error" style="display:flex; align-items:flex-start; justify-content:space-between;">
+          <div style="display:flex; align-items:flex-start; gap:8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px; flex-shrink:0; margin-top:2px;">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="8" x2="12" y2="12"></line>
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
-            <span>{{ $errors->first() }}</span>
+            <div style="display:flex; flex-direction:column; gap:3px;">
+              @foreach($errors->all() as $error)
+                <span>{{ $error }}</span>
+              @endforeach
+            </div>
           </div>
           <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
-        </div>
-      @endif
-
-      @if(session('warning'))
-        <div data-alert style="background:#fffbeb; border:1px solid #fef3c7; color:#b45309; padding:0.85rem 1rem; border-radius:10px; margin-bottom:1.25rem; font-size:0.83rem; display:flex; align-items:center; justify-content:space-between;">
-          <span>{{ session('warning') }}</span>
-          <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#b45309; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
         </div>
       @endif
 
@@ -318,7 +342,7 @@
 
         <div class="form-group">
           <label for="current_password" class="form-label">
-            <span>Current Default Password</span>
+            <span>{{ $isFirstLogin ? 'Current Default Password' : 'Current Password' }}</span>
             <span class="badge-req">Required</span>
           </label>
           <div class="input-wrapper">
@@ -333,7 +357,7 @@
               id="current_password" 
               name="current_password" 
               class="form-control" 
-              placeholder="Enter current / default password" 
+              placeholder="{{ $isFirstLogin ? 'Enter temporary / default password' : 'Enter your current password' }}" 
               required
               autofocus
             >
@@ -342,7 +366,7 @@
 
         <div class="form-group">
           <label for="password" class="form-label">
-            <span>New Permanent Password</span>
+            <span>{{ $isFirstLogin ? 'New Permanent Password' : 'New Password' }}</span>
             <span class="badge-req">Min 8 characters</span>
           </label>
           <div class="input-wrapper">
@@ -386,7 +410,7 @@
         </div>
 
         <button type="submit" class="btn-submit">
-          <span>Set Password & Access Dashboard</span>
+          <span>{{ $isFirstLogin ? 'Set Password & Access Dashboard' : 'Update Password' }}</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px;">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
@@ -394,8 +418,15 @@
         </button>
       </form>
 
-      <div class="logout-bar">
-        <form action="{{ route('admin.logout') }}" method="POST" style="display:inline;">
+      <div class="logout-bar" style="display:flex; justify-content:{{ $isFirstLogin ? 'center' : 'space-between' }}; align-items:center; flex-wrap:wrap; gap:10px;">
+        @if(! $isFirstLogin)
+          <a href="{{ route('admin.dashboard') }}" style="color:#64748b; font-size:0.82rem; text-decoration:none; display:inline-flex; align-items:center; gap:4px; font-weight:500;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Cancel &amp; Back to Dashboard</span>
+          </a>
+        @endif
+
+        <form action="{{ route('admin.logout') }}" method="POST" style="display:inline; margin:0;">
           @csrf
           <button type="submit" class="logout-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;">

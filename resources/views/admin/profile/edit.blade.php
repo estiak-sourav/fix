@@ -224,47 +224,6 @@
         </div>
       </div>
 
-      <!-- Feature Permissions Transparency Card (Read Only) -->
-      <div class="card-paces">
-        <div class="card-header-paces" style="display:flex; justify-content:space-between; align-items:center;">
-          <h2 style="font-size:1.05rem; font-weight:500; margin:0; color:var(--paces-text); display:flex; align-items:center; gap:8px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-            Assigned Modular Access Permissions
-          </h2>
-          <span style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:400;">Read-only privilege overview</span>
-        </div>
-
-        <div class="card-body-paces" style="padding:1.5rem;">
-          @if($admin->isSuperAdmin())
-            <div style="background:#eef2ff; border:1px solid #c7d2fe; color:#3730a3; padding:12px 16px; border-radius:var(--paces-radius-sm); font-size:0.85rem; font-weight:500;">
-              ✨ As a <strong>Super Admin</strong>, you have unconditional full read and write access across all operational modules, settings, tickets, and user accounts.
-            </div>
-          @else
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px;">
-              @foreach($modules as $key => $module)
-                @php
-                  $hasView = $admin->canView($key);
-                  $hasEdit = $admin->canEdit($key);
-                @endphp
-                <div style="padding:10px 14px; border:1px solid {{ ($hasView || $hasEdit) ? '#cbd5e1' : '#f1f5f9' }}; border-radius:var(--paces-radius-sm); background:{{ ($hasView || $hasEdit) ? '#ffffff' : '#f8fafc' }};">
-                  <div style="font-weight:500; font-size:0.85rem; color:var(--paces-text); margin-bottom:4px;">
-                    {{ $module['name'] }}
-                  </div>
-                  <div style="display:flex; gap:6px; font-size:0.72rem; font-weight:500;">
-                    <span style="padding:2px 6px; border-radius:4px; {{ $hasView ? 'background:#dcfce7; color:#15803d;' : 'background:#e2e8f0; color:#94a3b8;' }}">
-                      {{ $hasView ? '✓ View' : '✕ View' }}
-                    </span>
-                    <span style="padding:2px 6px; border-radius:4px; {{ $hasEdit ? 'background:#e0e7ff; color:#4338ca;' : 'background:#e2e8f0; color:#94a3b8;' }}">
-                      {{ $hasEdit ? '✓ Manage / Edit' : '✕ Edit' }}
-                    </span>
-                  </div>
-                </div>
-              @endforeach
-            </div>
-          @endif
-        </div>
-      </div>
-
       <!-- Action Buttons -->
       <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:0.5rem; margin-bottom:2rem;">
         <a href="{{ route('admin.dashboard') }}" class="btn-paces" style="background:#e2e8f0; color:#334155; font-weight:500; text-decoration:none; display:inline-flex; align-items:center; padding:10px 20px; border-radius:var(--paces-radius-sm);">

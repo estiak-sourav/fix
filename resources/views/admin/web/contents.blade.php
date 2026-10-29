@@ -174,7 +174,7 @@
       </div>
 
       <!-- Quick Search Box -->
-      <div style="position:relative; width:260px;">
+      <div style="position:relative; width:260px; max-width:100%;">
         <input type="text" id="sectionSearchInput" placeholder="Quick search sections..." oninput="filterSections()" 
           style="width:100%; font-size:0.825rem; padding:7px 12px 7px 32px; border-radius:8px; border:1px solid #cbd5e1; outline:none; transition:border-color 0.15s ease;"
           onfocus="this.style.borderColor='var(--paces-primary, #3e60d5)'" onblur="this.style.borderColor='#cbd5e1'">

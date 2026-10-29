@@ -1129,6 +1129,7 @@
       color: #ffffff;
     }
 
+    /* ---------------- Comprehensive Mobile & Tablet Responsive Rules ---------------- */
     @media (max-width: 992px) {
       .app-sidebar {
         position: fixed;
@@ -1146,6 +1147,119 @@
       }
       .topbar-search-box {
         display: none;
+      }
+      .app-content {
+        padding: 1.25rem 1rem;
+      }
+      .earnings-analytics-grid,
+      .analytics-barchart-grid,
+      .workorder-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .app-topbar {
+        height: 64px;
+        padding: 0 1rem;
+      }
+      .app-content {
+        padding: 1rem 0.75rem;
+      }
+      .page-header-box {
+        margin-bottom: 1.25rem;
+      }
+      .page-header-title {
+        font-size: 1.2rem;
+      }
+      .card-paces {
+        padding: 1.15rem 1rem;
+        margin-bottom: 1.15rem;
+      }
+      .card-header-paces {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .metrics-grid-paces {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      /* Collapse multi-column form and layout grids to single column on mobile */
+      div[style*="grid-template-columns: 1fr 1fr"],
+      div[style*="grid-template-columns:1fr 1fr"],
+      div[style*="grid-template-columns: 1fr 1fr 1fr"],
+      div[style*="grid-template-columns:1fr 1fr 1fr"],
+      div[style*="grid-template-columns: 2fr 1fr 1fr"],
+      div[style*="grid-template-columns:2fr 1fr 1fr"],
+      div[style*="grid-template-columns: 1fr 2fr"],
+      div[style*="grid-template-columns:1fr 2fr"],
+      div[style*="grid-template-columns: 360px 1fr"],
+      div[style*="grid-template-columns:360px 1fr"],
+      div[style*="grid-template-columns: 340px 1fr"],
+      div[style*="grid-template-columns:340px 1fr"],
+      div[style*="grid-template-columns: 2fr 1fr"],
+      div[style*="grid-template-columns:2fr 1fr"],
+      .grid-2-col,
+      .form-grid-paces {
+        grid-template-columns: 1fr !important;
+      }
+      /* Modals responsive fit */
+      .modal-backdrop-paces {
+        padding: 0.5rem;
+      }
+      .modal-dialog-paces {
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 94vh !important;
+        border-radius: 12px;
+        margin: 0 auto;
+      }
+      .modal-header-paces {
+        padding: 1rem;
+      }
+      .modal-body-paces {
+        padding: 1rem !important;
+        max-height: calc(88vh - 120px) !important;
+      }
+      .modal-footer-paces {
+        padding: 0.85rem 1rem !important;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      /* Tables mobile touch horizontal scroll */
+      .card-paces:has(table),
+      .table-responsive,
+      .table-responsive-paces {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        width: 100% !important;
+        display: block !important;
+      }
+      table.table-paces,
+      table.admin-table {
+        min-width: 580px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .topbar-user-info {
+        display: none !important;
+      }
+      .app-topbar {
+        padding: 0 0.75rem;
+        height: 60px;
+      }
+      .topbar-right {
+        gap: 8px;
+      }
+      .metrics-grid-paces {
+        grid-template-columns: 1fr !important;
+      }
+      .btn-paces {
+        font-size: 0.8rem;
+      }
+      .topbar-user-menu {
+        width: calc(100vw - 24px);
+        right: -10px;
       }
     }
     /* ---------------- Paces Modern Modals ---------------- */

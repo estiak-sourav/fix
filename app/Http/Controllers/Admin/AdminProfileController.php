@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Services\ActivityLogService;
-use App\Services\AdminPermissionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,9 +22,8 @@ class AdminProfileController extends Controller
     {
         /** @var Admin $admin */
         $admin = Auth::guard('admin')->user();
-        $modules = AdminPermissionService::allModules();
 
-        return view('admin.profile.edit', compact('admin', 'modules'));
+        return view('admin.profile.edit', compact('admin'));
     }
 
     /**
@@ -42,12 +40,17 @@ class AdminProfileController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'remove_avatar' => ['nullable', 'boolean'],
-            'current_password' => ['nullable', 'string', 'current_password:admin'],
+            'current_password' => ['nullable', 'string', 'current_password:admin', 'required_with:password'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed', 'different:current_password', 'required_with:current_password'],
             'password_confirmation' => ['nullable', 'string', 'required_with:password'],
         ], [
-            'current_password.current_password' => 'The provided current password does not match your account password.',
+            'current_password.required_with' => 'Please enter your current password to set a new password.',
+            'current_password.current_password' => 'The current password you entered is incorrect.',
+            'password.required_with' => 'Please enter a new password if you provided your current password.',
+            'password.min' => 'The new password must be at least 8 characters long.',
+            'password.confirmed' => 'The password confirmation does not match.',
             'password.different' => 'The new password must be different from your current password.',
+            'password_confirmation.required_with' => 'Please confirm your new password.',
         ]);
 
         // Handle Avatar (DP) upload

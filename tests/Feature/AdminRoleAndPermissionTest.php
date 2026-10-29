@@ -90,7 +90,7 @@ class AdminRoleAndPermissionTest extends TestCase
         ]);
 
         $loginResponse->assertRedirect(route('admin.password.change'));
-        $loginResponse->assertSessionHas('warning');
+        $loginResponse->assertSessionMissing('warning');
 
         $this->assertAuthenticatedAs($staff, 'admin');
     }
@@ -145,6 +145,16 @@ class AdminRoleAndPermissionTest extends TestCase
             'password_confirmation' => 'password123',
         ]);
         $failResponse->assertSessionHasErrors(['password']);
+        $this->assertEquals('The new password must be different from your current password.', session('errors')->first('password'));
+
+        // Failed attempt: Incorrect current password
+        $wrongCurrResponse = $this->actingAs($staff, 'admin')->post(route('admin.password.update'), [
+            'current_password' => 'wrong_password',
+            'password' => 'SecureNewPassword2026!',
+            'password_confirmation' => 'SecureNewPassword2026!',
+        ]);
+        $wrongCurrResponse->assertSessionHasErrors(['current_password']);
+        $this->assertEquals('The current password you entered is incorrect.', session('errors')->first('current_password'));
 
         // Successful password update
         $successResponse = $this->actingAs($staff, 'admin')->post(route('admin.password.update'), [
@@ -159,6 +169,13 @@ class AdminRoleAndPermissionTest extends TestCase
         $staff->refresh();
         $this->assertFalse($staff->must_change_password);
         $this->assertTrue(Hash::check('SecureNewPassword2026!', $staff->password));
+
+        // Now visiting password change as an active admin shows clean "Change Password" form without temporary password text
+        $changeAgainResponse = $this->actingAs($staff, 'admin')->get(route('admin.password.change'));
+        $changeAgainResponse->assertOk();
+        $changeAgainResponse->assertSee('Change Password');
+        $changeAgainResponse->assertSee('Current Password');
+        $changeAgainResponse->assertDontSee('First-Login Password Reset Required');
 
         // Now dashboard is accessible
         $dashResponse = $this->actingAs($staff, 'admin')->get(route('admin.dashboard'));

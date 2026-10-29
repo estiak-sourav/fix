@@ -237,7 +237,7 @@
                 <h3>Location Details (Bangladesh)</h3>
               </div>
 
-              <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr;">
+              <div class="form-row form-row-3col" style="grid-template-columns: 1fr 1fr 1fr;">
                 <div class="form-group">
                   <label for="bookDivision">Division <span class="required">*</span></label>
                   <select id="bookDivision" name="division" class="form-control" required>
