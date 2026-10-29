@@ -20,9 +20,34 @@
     }
     @media (max-width: 768px) {
       .dashboard-sticky-bar {
-        margin-left: -1rem;
-        margin-right: -1rem;
-        padding: 0.75rem 1rem;
+        top: 60px;
+        margin-left: -0.65rem;
+        margin-right: -0.65rem;
+        padding: 0.75rem 0.65rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      .date-pills-scroll-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        max-width: 100%;
+        display: flex;
+        padding-bottom: 2px;
+      }
+      .date-pills-scroll-container::-webkit-scrollbar {
+        display: none;
+      }
+      .date-pills-wrapper {
+        display: inline-flex !important;
+        flex-wrap: nowrap !important;
+        white-space: nowrap !important;
+      }
+      .date-pills-wrapper a,
+      .date-pills-wrapper button {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
       }
     }
     .earnings-analytics-grid {
@@ -30,12 +55,14 @@
       grid-template-columns: 2fr 1fr;
       gap: 1.5rem;
       margin-bottom: 1.5rem;
+      min-width: 0;
     }
     .earning-card-body {
       display: grid;
       grid-template-columns: 230px 1fr;
       gap: 1.5rem;
       align-items: center;
+      min-width: 0;
     }
     @media (max-width: 992px) {
       .earnings-analytics-grid {
@@ -50,6 +77,7 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 1.5rem;
       margin-bottom: 1.5rem;
+      min-width: 0;
     }
     @media (max-width: 1200px) {
       .top-tasks-chat-grid {
@@ -63,9 +91,10 @@
     }
     .analytics-barchart-grid {
       display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 24px;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 20px;
       align-items: stretch;
+      min-width: 0;
     }
     .analytics-counters-panel {
       display: grid;
@@ -76,6 +105,7 @@
       border: 1px solid #edf2f7;
       border-radius: 12px;
       padding: 12px;
+      min-width: 0;
     }
     .analytics-counter-item {
       background: #ffffff;
@@ -84,18 +114,58 @@
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.02);
       transition: transform 0.15s ease, box-shadow 0.15s ease;
+      min-width: 0;
     }
     .analytics-counter-item:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
-    @media (max-width: 1199px) {
+    @media (max-width: 1280px) {
       .analytics-barchart-grid {
         grid-template-columns: 1fr !important;
-        gap: 20px;
+        gap: 18px;
       }
       .analytics-counters-panel {
         grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+      }
+    }
+    @media (max-width: 768px) {
+      .card-paces-analytics {
+        padding: 16px 14px !important;
+      }
+      .analytics-canvas-wrapper {
+        min-height: 270px !important;
+        height: 270px !important;
+      }
+      .analytics-counters-panel {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        padding: 8px !important;
+      }
+      .analytics-counter-item {
+        padding: 8px !important;
+      }
+    }
+    .operational-insights-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      min-width: 0;
+    }
+    @media (max-width: 992px) {
+      .operational-insights-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+    .hotspots-area-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 640px) {
+      .hotspots-area-grid {
+        grid-template-columns: 1fr !important;
       }
     }
     .top-kpi-card {
@@ -158,41 +228,41 @@
     </div>
 
     <!-- Date Range Action Pills (Global Dashboard Filter: Yesterday, Today, Week, Month, Year & Date to Date) -->
-    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-      <div style="display:flex; align-items:center; background:#ffffff; border:1px solid #eaedf1; border-radius:8px; padding:3px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+    <div class="date-pills-scroll-container">
+      <div class="date-pills-wrapper" style="display:inline-flex; align-items:center; background:#ffffff; border:1px solid #eaedf1; border-radius:8px; padding:3px; box-shadow:0 1px 3px rgba(0,0,0,0.03); white-space:nowrap;">
         <!-- Yesterday -->
         <a href="{{ route('admin.dashboard', ['range' => 'yesterday']) }}" 
-          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'yesterday' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
+          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; white-space:nowrap; {{ $stats['range'] === 'yesterday' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
           Yesterday
         </a>
 
         <!-- Today -->
         <a href="{{ route('admin.dashboard', ['range' => 'today']) }}" 
-          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'today' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
+          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; white-space:nowrap; {{ $stats['range'] === 'today' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
           Today
         </a>
 
         <!-- Week -->
         <a href="{{ route('admin.dashboard', ['range' => 'week']) }}" 
-          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'week' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
+          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; white-space:nowrap; {{ $stats['range'] === 'week' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
           Week
         </a>
 
         <!-- Month -->
         <a href="{{ route('admin.dashboard', ['range' => 'month']) }}" 
-          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'month' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
+          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; white-space:nowrap; {{ $stats['range'] === 'month' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
           Month
         </a>
 
         <!-- Year -->
         <a href="{{ route('admin.dashboard', ['range' => 'year']) }}" 
-          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ $stats['range'] === 'year' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
+          style="text-decoration:none; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; white-space:nowrap; {{ $stats['range'] === 'year' ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'color:#64748b;' }}">
           Year
         </a>
 
         <!-- Date to Date (Clean popup trigger, no icon) -->
         <button type="button" onclick="openDateModal()" 
-          style="border:none; cursor:pointer; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; {{ in_array($stats['range'], ['custom', 'date']) ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'background:transparent; color:#64748b;' }}">
+          style="border:none; cursor:pointer; font-size:0.825rem; font-weight:500; padding:6px 14px; border-radius:6px; transition:all 0.15s ease; white-space:nowrap; flex-shrink:0; {{ in_array($stats['range'], ['custom', 'date']) ? 'background:#3e60d5; color:#ffffff; box-shadow:0 2px 6px rgba(62,96,213,0.3);' : 'background:transparent; color:#64748b;' }}">
           Date to Date
         </button>
       </div>
@@ -200,7 +270,7 @@
   </div>
 
   <!-- Top Operational KPI Stat Cards: Orders, Subscriptions, Emergency, Processing, Pending -->
-  <div class="metrics-grid-paces" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+  <div class="metrics-grid-paces" style="margin-bottom: 1.5rem;">
     <!-- 1. Orders -->
     <div class="top-kpi-card">
       <div class="metric-icon-badge bg-primary-subtle">
@@ -260,7 +330,7 @@
   <!-- =========================================================================
        CLEAN BARCHART SECTION (SCREENSHOT DESIGN PATTERN - 10 DEDICATED METRIC BARS)
        ========================================================================= -->
-  <div class="card-paces" style="padding: 24px 28px; margin-bottom: 1.75rem; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+  <div class="card-paces card-paces-analytics" style="padding: 24px 28px; margin-bottom: 1.75rem; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
     <!-- Header with Title -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 22px;">
       <h2 style="font-size: 1.25rem; font-weight: 500; color: #1e293b; margin: 0; font-family: 'Poppins', sans-serif;">
@@ -271,7 +341,7 @@
   <!-- Main Analytics Body: BarChart on Left (Compact Width) and 10 Counters on Right -->
   <div class="analytics-barchart-grid">
     <!-- Left: Clean BarChart Canvas (Width reduced so bars are closer together) -->
-    <div style="position:relative; min-height: 380px; width: 100%;">
+    <div class="analytics-canvas-wrapper" style="position:relative; min-height: 380px; width: 100%; min-width: 0;">
       <canvas id="unifiedCleanBarChart"></canvas>
     </div>
 
@@ -279,61 +349,61 @@
     <div class="analytics-counters-panel">
         <!-- 1. Total visitor -->
         <div class="analytics-counter-item" style="border-top:3px solid #4e73df;">
-          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Total visitor</div>
+          <div style="font-size:0.72rem; font-weight:500; color:#64748b; line-height:1.25; word-break:break-word;">Total visitor</div>
           <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['total_visitors']) }}</div>
         </div>
 
         <!-- 2. New visitor -->
         <div class="analytics-counter-item" style="border-top:3px solid #60a5fa;">
-          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">New visitor</div>
+          <div style="font-size:0.72rem; font-weight:500; color:#64748b; line-height:1.25; word-break:break-word;">New visitor</div>
           <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['new_visitors']) }}</div>
         </div>
 
         <!-- 3. Login -->
         <div class="analytics-counter-item" style="border-top:3px solid #8b5cf6;">
-          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Login</div>
+          <div style="font-size:0.72rem; font-weight:500; color:#64748b; line-height:1.25; word-break:break-word;">Login</div>
           <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['logins']) }}</div>
         </div>
 
         <!-- 4. Registration -->
         <div class="analytics-counter-item" style="border-top:3px solid #a855f7;">
-          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Registration</div>
+          <div style="font-size:0.72rem; font-weight:500; color:#64748b; line-height:1.25; word-break:break-word;">Registration</div>
           <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['registrations']) }}</div>
         </div>
 
         <!-- 5. Service visitor -->
         <div class="analytics-counter-item" style="border-top:3px solid #f6b749;">
-          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Service visitor</div>
+          <div style="font-size:0.72rem; font-weight:500; color:#64748b; line-height:1.25; word-break:break-word;">Service visitor</div>
           <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['service_visitors']) }}</div>
         </div>
 
         <!-- 6. AMC visitor -->
         <div class="analytics-counter-item" style="border-top:3px solid #f59e0b;">
-          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">AMC visitor</div>
+          <div style="font-size:0.72rem; font-weight:500; color:#64748b; line-height:1.25; word-break:break-word;">AMC visitor</div>
           <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['amc_visitors']) }}</div>
         </div>
 
         <!-- 7. Service Request (Under Service visitor) -->
         <div class="analytics-counter-item" style="border-top:3px solid #06b6d4;">
-          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Service Request</div>
+          <div style="font-size:0.72rem; font-weight:500; color:#64748b; line-height:1.25; word-break:break-word;">Service Request</div>
           <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['service_requests']) }}</div>
         </div>
 
         <!-- 8. AMC Request (Under AMC visitor) -->
         <div class="analytics-counter-item" style="border-top:3px solid #ec4899;">
-          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">AMC Request</div>
+          <div style="font-size:0.72rem; font-weight:500; color:#64748b; line-height:1.25; word-break:break-word;">AMC Request</div>
           <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['amc_requests']) }}</div>
         </div>
 
         <!-- 9. Service Book (Under Service Request) -->
         <div class="analytics-counter-item" style="border-top:3px solid #20c997;">
-          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Service Book</div>
+          <div style="font-size:0.72rem; font-weight:500; color:#64748b; line-height:1.25; word-break:break-word;">Service Book</div>
           <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['service_book']) }}</div>
         </div>
 
         <!-- 10. AMC Book (Under AMC Request) -->
         <div class="analytics-counter-item" style="border-top:3px solid #10b981;">
-          <div style="font-size:0.68rem; font-weight:500; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">AMC Book</div>
+          <div style="font-size:0.72rem; font-weight:500; color:#64748b; line-height:1.25; word-break:break-word;">AMC Book</div>
           <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['amc_book']) }}</div>
         </div>
       </div>
@@ -655,7 +725,7 @@
   </div>
 
   <!-- Operational Insights: Category Demand & Dhaka Hotspots -->
-  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+  <div class="operational-insights-grid" style="margin-bottom:1.5rem;">
     <!-- Service Category Demand -->
     <div class="card-paces" style="margin-bottom:0;">
       <div class="card-header-paces">
@@ -729,7 +799,7 @@
           No hotspot records for {{ ($selectedHotspotDivision ?? 'all') === 'all' ? 'the selected date period' : $selectedHotspotDivision }}.
         </div>
       @else
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div class="hotspots-area-grid">
           @foreach($areaHotspots->take(8) as $hotspot)
             @php
               $areaName = is_array($hotspot) ? ($hotspot['area'] ?? $hotspot['name'] ?? '') : (is_object($hotspot) ? ($hotspot->area ?? $hotspot->name ?? '') : (string)$hotspot);
@@ -831,17 +901,17 @@
       </div>
 
       <!-- Bottom Legends (dynamic matching category slices) -->
-      <div style="display:grid; grid-template-columns:repeat({{ max(1, count($salesAnalytics['categories'])) }}, 1fr); gap:8px; margin-top:1rem; text-align:center; border-top:1px solid #f1f5f9; padding-top:1rem;">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-around; gap:10px; margin-top:1rem; text-align:center; border-top:1px solid #f1f5f9; padding-top:1rem;">
         @forelse($salesAnalytics['categories'] as $cat)
-          <div>
+          <div style="flex:1 1 90px; max-width:130px; min-width:80px;">
             <div style="display:inline-flex; align-items:center; justify-content:center; gap:5px; font-size:0.78rem; font-weight:500; color:#64748b; margin-bottom:3px; max-width:100%;" title="{{ $cat['name'] }}">
               <span style="width:8px; height:8px; border-radius:50%; background:{{ $cat['color'] }}; display:inline-block; flex-shrink:0;"></span>
-              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:110px;">{{ $cat['name'] }}</span>
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100px;">{{ $cat['name'] }}</span>
             </div>
-            <div style="font-size:0.95rem; font-weight:500; color:#1e293b;">{{ $cat['amount_formatted'] }}</div>
+            <div style="font-size:0.92rem; font-weight:500; color:#1e293b; white-space:nowrap;">{{ $cat['amount_formatted'] }}</div>
           </div>
         @empty
-          <div style="grid-column:1 / -1; color:#94a3b8; font-size:0.82rem;">No sales data available</div>
+          <div style="width:100%; color:#94a3b8; font-size:0.82rem;">No sales data available</div>
         @endforelse
       </div>
     </div>
@@ -1257,10 +1327,13 @@
             x: {
               grid: { display: false },
               ticks: {
-                font: { family: 'Poppins', size: 10.5, weight: '500' },
+                font: function() {
+                  return { family: 'Poppins', size: window.innerWidth < 576 ? 8.5 : 10.5, weight: '500' };
+                },
                 color: '#475569',
-                maxRotation: 30,
-                minRotation: 0
+                maxRotation: 45,
+                minRotation: 0,
+                autoSkip: false
               },
               border: { display: false }
             },

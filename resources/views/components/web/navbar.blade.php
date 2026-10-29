@@ -94,7 +94,7 @@
   </div>
   <ul class="drawer-links">
     <li><a href="{{ route('home') }}" class="drawer-link {{ request()->routeIs('home') ? 'active' : '' }}">Home</a></li>
-    <li><a href="{{ route('home') }}#services" class="drawer-link">Services Portfolio</a></li>
+    <li><a href="{{ route('home') }}#services" class="drawer-link">Services</a></li>
     <li><a href="{{ route('home') }}#amc" class="drawer-link">Packages</a></li>
     <li class="drawer-dropdown-item">
       <button class="drawer-dropdown-toggle" type="button">

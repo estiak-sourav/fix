@@ -187,7 +187,7 @@
     $sectionNames = [
       'hero' => '1. Hero & Service Booking Banner',
       'clients' => '2. Corporate Partners (Clients Marquee)',
-      'services' => '3. Facility Services Portfolio',
+      'services' => '3. Facility Services',
       'amc_plans' => '4. Annual Maintenance Contracts (AMC)',
       'how_it_works' => '5. How It Works',
       'video_portfolio' => '6. Operations Video Portfolio & Playlist',

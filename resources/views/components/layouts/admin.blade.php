@@ -72,7 +72,10 @@
       color: var(--paces-text-dark);
       display: flex;
       min-height: 100vh;
-      overflow-x: clip;
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      position: relative;
     }
 
     /* ==========================================================================
@@ -152,8 +155,9 @@
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
-      transition: all 0.25s ease;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 1050;
+      overflow: visible;
     }
 
     .sidebar-brand {
@@ -415,6 +419,10 @@
       min-width: 0;
       margin-left: 260px;
       width: calc(100% - 260px);
+      max-width: calc(100% - 260px);
+      transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-sizing: border-box;
+      overflow-x: hidden;
     }
 
     /* ---------------- Topbar (Paces Style) ---------------- */
@@ -706,6 +714,9 @@
     .app-content {
       padding: 1.75rem 2rem;
       flex: 1;
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
     }
     .page-header-box {
       margin-bottom: 1.75rem;
@@ -1079,15 +1090,98 @@
       gap: 12px;
     }
 
-    /* Desktop Sidebar Collapsed State */
+    /* Desktop Sidebar Collapsed State (Mini Sidebar: Icons Only) */
     @media (min-width: 993px) {
       body.sidebar-collapsed .app-sidebar {
-        transform: translateX(-100%);
-        left: 0;
+        width: 72px !important;
+        transform: none !important;
+        overflow: visible !important;
       }
       body.sidebar-collapsed .app-main {
-        margin-left: 0;
-        width: 100%;
+        margin-left: 72px !important;
+        width: calc(100% - 72px) !important;
+        max-width: calc(100% - 72px) !important;
+      }
+      body.sidebar-collapsed .brand-text {
+        display: none !important;
+      }
+      body.sidebar-collapsed .sidebar-brand {
+        padding: 0 !important;
+        justify-content: center !important;
+      }
+      body.sidebar-collapsed .brand-link {
+        justify-content: center !important;
+      }
+      body.sidebar-collapsed .brand-logo {
+        height: 28px !important;
+        margin: 0 auto !important;
+      }
+      body.sidebar-collapsed .nav-header {
+        height: 1px !important;
+        padding: 0 !important;
+        margin: 10px 14px !important;
+        background: var(--paces-sidebar-border) !important;
+        font-size: 0 !important;
+        overflow: hidden !important;
+      }
+      body.sidebar-collapsed .nav-item {
+        padding: 0.7rem 0 !important;
+        justify-content: center !important;
+        position: relative !important;
+        margin: 4px 8px !important;
+        border-radius: var(--paces-radius-sm) !important;
+      }
+      body.sidebar-collapsed .nav-item .nav-icon {
+        margin: 0 auto !important;
+        width: 22px !important;
+        height: 22px !important;
+      }
+      body.sidebar-collapsed .nav-item .nav-text,
+      body.sidebar-collapsed .nav-item .nav-arrow {
+        display: none !important;
+      }
+      body.sidebar-collapsed .nav-badge {
+        position: absolute !important;
+        top: 2px !important;
+        right: 4px !important;
+        font-size: 0.6rem !important;
+        padding: 1px 4px !important;
+        border-radius: 10px !important;
+        line-height: 1.2 !important;
+      }
+      body.sidebar-collapsed .nav-submenu {
+        display: none !important;
+      }
+      /* Clean floating tooltip on hover for collapsed mini-sidebar */
+      body.sidebar-collapsed .nav-item[data-tooltip]:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: calc(100% + 12px);
+        top: 50%;
+        transform: translateY(-50%);
+        background: #0f172a;
+        color: #ffffff;
+        font-size: 0.78rem;
+        font-weight: 500;
+        padding: 6px 12px;
+        border-radius: 6px;
+        white-space: nowrap;
+        z-index: 2000;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+        pointer-events: none;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        animation: fadeInPaces 0.15s ease-out;
+      }
+      body.sidebar-collapsed .sidebar-user-footer {
+        padding: 0.75rem 0 !important;
+        justify-content: center !important;
+      }
+      body.sidebar-collapsed .sidebar-user-footer .user-meta,
+      body.sidebar-collapsed .sidebar-user-footer .sidebar-logout-btn {
+        display: none !important;
+      }
+      body.sidebar-collapsed .sidebar-user-footer .user-avatar-sm {
+        margin: 0 auto !important;
       }
     }
 
@@ -1136,52 +1230,61 @@
         left: -260px;
         top: 0;
         bottom: 0;
+        width: 260px !important;
         z-index: 1050;
+        transition: left 0.25s ease;
       }
       .app-sidebar.show {
         left: 0;
       }
       .app-main {
-        margin-left: 0;
-        width: 100%;
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
       }
       .topbar-search-box {
         display: none;
       }
       .app-content {
-        padding: 1.25rem 1rem;
+        padding: 1rem 0.85rem;
       }
       .earnings-analytics-grid,
       .analytics-barchart-grid,
-      .workorder-grid {
+      .workorder-grid,
+      .operational-insights-grid {
         grid-template-columns: 1fr !important;
       }
     }
 
     @media (max-width: 768px) {
       .app-topbar {
-        height: 64px;
-        padding: 0 1rem;
+        height: 60px;
+        padding: 0 0.85rem;
       }
       .app-content {
-        padding: 1rem 0.75rem;
+        padding: 0.85rem 0.65rem;
       }
       .page-header-box {
-        margin-bottom: 1.25rem;
+        margin-bottom: 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
       }
       .page-header-title {
-        font-size: 1.2rem;
+        font-size: 1.15rem;
       }
       .card-paces {
-        padding: 1.15rem 1rem;
-        margin-bottom: 1.15rem;
+        padding: 1rem 0.85rem;
+        margin-bottom: 1rem;
+        border-radius: 10px;
       }
       .card-header-paces {
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 8px;
       }
       .metrics-grid-paces {
         grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
       }
       /* Collapse multi-column form and layout grids to single column on mobile */
       div[style*="grid-template-columns: 1fr 1fr"],
@@ -1214,14 +1317,14 @@
         margin: 0 auto;
       }
       .modal-header-paces {
-        padding: 1rem;
+        padding: 0.85rem 1rem;
       }
       .modal-body-paces {
-        padding: 1rem !important;
-        max-height: calc(88vh - 120px) !important;
+        padding: 0.85rem 1rem !important;
+        max-height: calc(88vh - 110px) !important;
       }
       .modal-footer-paces {
-        padding: 0.85rem 1rem !important;
+        padding: 0.75rem 1rem !important;
         flex-wrap: wrap;
         gap: 8px;
       }
@@ -1236,7 +1339,7 @@
       }
       table.table-paces,
       table.admin-table {
-        min-width: 580px;
+        min-width: 540px;
       }
     }
 
@@ -1245,21 +1348,41 @@
         display: none !important;
       }
       .app-topbar {
-        padding: 0 0.75rem;
-        height: 60px;
+        padding: 0 0.65rem;
+        height: 56px;
       }
-      .topbar-right {
+      .topbar-left {
         gap: 8px;
       }
+      .topbar-right {
+        gap: 6px;
+      }
       .metrics-grid-paces {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px !important;
+      }
+      .top-kpi-card {
+        padding: 0.75rem 0.85rem !important;
+        gap: 8px !important;
+      }
+      .top-kpi-card .metric-icon-badge {
+        width: 36px !important;
+        height: 36px !important;
+      }
+      .top-kpi-card .metric-icon-badge svg {
+        width: 18px !important;
+        height: 18px !important;
+      }
+      .top-kpi-value {
+        font-size: 1.35rem !important;
       }
       .btn-paces {
-        font-size: 0.8rem;
+        font-size: 0.78rem;
+        padding: 0.4rem 0.75rem;
       }
       .topbar-user-menu {
-        width: calc(100vw - 24px);
-        right: -10px;
+        width: calc(100vw - 20px);
+        right: -6px;
       }
     }
     /* ---------------- Paces Modern Modals ---------------- */
@@ -1458,6 +1581,9 @@
         try {
           localStorage.setItem('admin_sidebar_collapsed', isCollapsed ? '1' : '0');
         } catch (e) {}
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+        }, 260);
       }
     }
 
