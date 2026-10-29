@@ -36,6 +36,8 @@ class HomeController extends Controller
             ->get();
 
         $services = Service::with('category')
+            ->withCount(['reviews as reviews_count'])
+            ->withAvg('reviews as avg_rating', 'review_rating')
             ->where('is_active', true)
             ->orderBy('order')
             ->get();

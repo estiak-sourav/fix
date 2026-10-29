@@ -176,7 +176,8 @@ class AdminOutreachTaskTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin, 'admin')->post(
-            route('admin.bookings.accept', $booking)
+            route('admin.bookings.accept', $booking),
+            ['pricing_mode' => 'later']
         );
 
         $response->assertRedirect();

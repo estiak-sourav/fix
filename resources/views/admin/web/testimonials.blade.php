@@ -11,7 +11,7 @@
       </a>
       <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddTestimonialModal()" style="display:inline-flex; align-items:center; gap:6px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        <span>+ Add Testimonial</span>
+        <span>Add Testimonial</span>
       </button>
     </div>
   </div>
@@ -53,10 +53,6 @@
           All published client endorsements with client profile photos and ratings
         </p>
       </div>
-      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddTestimonialModal()" style="display:inline-flex; align-items:center; gap:6px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        <span>+ Add Testimonial</span>
-      </button>
     </div>
 
     <div class="table-responsive-paces">
@@ -157,7 +153,7 @@
                 <div style="font-weight:500;">No testimonials added yet.</div>
                 <p style="margin:4px 0 12px; font-size:0.82rem;">Add your first client review to show on the website.</p>
                 <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddTestimonialModal()">
-                  + Add Testimonial
+                  Add Testimonial
                 </button>
               </td>
             </tr>
@@ -179,13 +175,13 @@
   <div id="addTestimonialModal" class="modal-backdrop-paces" style="display:none;">
     <div class="modal-dialog-paces" style="max-width:620px;">
       <div class="modal-header-paces">
-        <h3 class="modal-title-paces">+ Add New Testimonial</h3>
+        <h3 class="modal-title-paces">Add New Testimonial</h3>
         <button type="button" class="modal-close-btn" onclick="closeAddTestimonialModal()">✕</button>
       </div>
 
-      <form action="{{ route('admin.web.testimonials.store') }}" method="POST" enctype="multipart/form-data">
+      <form action="{{ route('admin.web.testimonials.store') }}" method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; min-height:0; overflow:hidden; margin:0;">
         @csrf
-        <div class="modal-body-paces">
+        <div class="modal-body-paces" style="overflow-y:auto; flex:1; max-height:calc(85vh - 140px); padding:1.25rem 1.5rem;">
           <!-- Client Photo Upload -->
           <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:10px; padding:1rem; margin-bottom:1.25rem;">
             <label class="form-label-paces" style="font-weight:600; margin-bottom:4px;">
@@ -247,7 +243,7 @@
           </div>
         </div>
 
-        <div class="modal-footer-paces">
+        <div class="modal-footer-paces" style="padding:1.25rem 1.5rem; flex-shrink:0;">
           <button type="button" class="btn-paces btn-paces-outline" onclick="closeAddTestimonialModal()">
             Cancel
           </button>
@@ -269,11 +265,11 @@
         <button type="button" class="modal-close-btn" onclick="closeEditTestimonialModal()">✕</button>
       </div>
 
-      <form id="editTestimonialForm" method="POST" action="" enctype="multipart/form-data">
+      <form id="editTestimonialForm" method="POST" action="" enctype="multipart/form-data" style="display:flex; flex-direction:column; min-height:0; overflow:hidden; margin:0;">
         @csrf
         @method('PUT')
 
-        <div class="modal-body-paces">
+        <div class="modal-body-paces" style="overflow-y:auto; flex:1; max-height:calc(85vh - 140px); padding:1.25rem 1.5rem;">
           <!-- Client Photo Upload & Management -->
           <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:10px; padding:1rem; margin-bottom:1.25rem;">
             <label class="form-label-paces" style="font-weight:600; margin-bottom:4px;">
@@ -341,7 +337,7 @@
           </div>
         </div>
 
-        <div class="modal-footer-paces" style="justify-content:space-between;">
+        <div class="modal-footer-paces" style="justify-content:space-between; padding:1.25rem 1.5rem; flex-shrink:0;">
           <button type="button" class="btn-paces btn-paces-danger" onclick="triggerDeleteTestimonial()" style="display:inline-flex; align-items:center; gap:6px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             <span>Delete Review</span>

@@ -105,7 +105,7 @@ class SiteCmsSeeder extends Seeder
             [
                 'section_key' => 'services',
                 'title' => 'Our Core Maintenance Capabilities',
-                'subtitle' => 'Comprehensive engineering and facility maintenance solutions delivered across Bangladesh.',
+                'subtitle' => null,
                 'badge' => 'SERVICES & SOLUTIONS',
                 'button_text' => 'Explore All Services',
                 'button_url' => '#services',

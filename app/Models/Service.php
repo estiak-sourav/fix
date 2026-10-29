@@ -63,11 +63,23 @@ class Service extends Model
 
     public function averageRating(): float
     {
+        if (isset($this->attributes['avg_rating']) && $this->attributes['avg_rating'] !== null) {
+            return round((float) $this->attributes['avg_rating'], 1);
+        }
+
+        if (isset($this->attributes['reviews_count']) && (int) $this->attributes['reviews_count'] === 0) {
+            return 5.0;
+        }
+
         return round((float) ($this->bookings()->whereNotNull('review_rating')->avg('review_rating') ?: 5.0), 1);
     }
 
     public function reviewsCount(): int
     {
+        if (isset($this->attributes['reviews_count'])) {
+            return (int) $this->attributes['reviews_count'];
+        }
+
         return $this->bookings()->whereNotNull('review_rating')->count();
     }
 

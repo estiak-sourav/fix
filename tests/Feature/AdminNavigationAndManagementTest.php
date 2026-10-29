@@ -465,7 +465,7 @@ class AdminNavigationAndManagementTest extends TestCase
         $res = $this->actingAs($admin, 'admin')->get(route('admin.web.testimonials'));
         $res->assertStatus(200);
         $res->assertSee('Client Testimonials List');
-        $res->assertSee('+ Add Testimonial');
+        $res->assertSee('Add Testimonial');
         $res->assertSee('Section Content');
 
         // 2. Add new testimonial with avatar upload
@@ -522,7 +522,7 @@ class AdminNavigationAndManagementTest extends TestCase
         $res = $this->actingAs($admin, 'admin')->get(route('admin.web.faqs'));
         $res->assertStatus(200);
         $res->assertSee('FAQs Knowledgebase List');
-        $res->assertSee('+ Add New FAQ');
+        $res->assertSee('Add New FAQ');
         $res->assertSee('Section Content');
 
         // 2. Store new FAQ

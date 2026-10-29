@@ -1081,12 +1081,13 @@
     }
 
     .modal-footer-paces {
-      padding: 1rem 1.5rem;
+      padding: 1.25rem 1.5rem;
       border-top: 1px solid var(--paces-border);
       display: flex;
       justify-content: flex-end;
       gap: 10px;
       background: #f8fafc;
+      flex-shrink: 0;
     }
 
     @keyframes fadeInPaces {

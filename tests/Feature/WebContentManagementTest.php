@@ -468,4 +468,67 @@ class WebContentManagementTest extends TestCase
         $home->assertStatus(200);
         $home->assertDontSee('id="why-fix"', false);
     }
+
+    /**
+     * Test homepage service cards display rating, review count, and exclude removed subtitle.
+     */
+    public function test_homepage_service_cards_display_ratings_and_exclude_service_subtitle(): void
+    {
+        $response = $this->get(route('home'));
+        $response->assertStatus(200);
+
+        // Verify rating and review count badges are displayed on cards
+        $response->assertSee('service-rating-wrap', false);
+        $response->assertSee('reviews');
+
+        // Verify the removed text is NOT displayed anywhere
+        $response->assertDontSee('Comprehensive engineering and facility maintenance solutions delivered across Bangladesh.');
+    }
+
+    /**
+     * Test CMS FAQ category is a dropdown and modal headers/buttons are clean without duplicates.
+     */
+    public function test_cms_faq_category_dropdown_and_clean_buttons(): void
+    {
+        $response = $this->actingAs($this->admin, 'admin')->get(route('admin.web.faqs'));
+        $response->assertStatus(200);
+
+        // Verify Category select dropdown exists
+        $response->assertSee('<select name="category"', false);
+        $response->assertSee('<option value="services"', false);
+
+        // Verify clean Add button text (no duplicated "+ +")
+        $response->assertSee('<span>Add New FAQ</span>', false);
+        $response->assertDontSee('<span>+ Add New FAQ</span>', false);
+    }
+
+    /**
+     * Test CMS Testimonials has clean buttons and edit modal footer has padding.
+     */
+    public function test_cms_testimonials_buttons_and_edit_modal(): void
+    {
+        $response = $this->actingAs($this->admin, 'admin')->get(route('admin.web.testimonials'));
+        $response->assertStatus(200);
+
+        // Verify clean Add button text
+        $response->assertSee('<span>Add Testimonial</span>', false);
+        $response->assertDontSee('<span>+ Add Testimonial</span>', false);
+
+        // Verify edit modal has proper padding on footer
+        $response->assertSee('modal-footer-paces', false);
+        $response->assertSee('padding:1.25rem 1.5rem', false);
+    }
+
+    /**
+     * Test CMS content edit modals have "View on Website" button and no raw Live Preview text.
+     */
+    public function test_cms_content_edit_modals_have_view_on_website_button(): void
+    {
+        $response = $this->actingAs($this->admin, 'admin')->get(route('admin.web.contents'));
+        $response->assertStatus(200);
+
+        // Modals must feature View on Website button
+        $response->assertSee('View on Website');
+        $response->assertDontSee('Live Preview:');
+    }
 }

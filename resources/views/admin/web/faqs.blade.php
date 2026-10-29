@@ -11,7 +11,7 @@
       </a>
       <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddFaqModal()" style="display:inline-flex; align-items:center; gap:6px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        <span>+ Add New FAQ</span>
+        <span>Add New FAQ</span>
       </button>
     </div>
   </div>
@@ -53,10 +53,6 @@
           All published questions, answers, and category groupings for the public help center
         </p>
       </div>
-      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddFaqModal()" style="display:inline-flex; align-items:center; gap:6px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        <span>+ Add New FAQ</span>
-      </button>
     </div>
 
     <div class="table-responsive-paces">
@@ -130,7 +126,7 @@
                 <div style="font-weight:500;">No FAQs found.</div>
                 <p style="margin:4px 0 12px; font-size:0.82rem;">Add answers to common customer questions.</p>
                 <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddFaqModal()">
-                  + Add New FAQ
+                  Add New FAQ
                 </button>
               </td>
             </tr>
@@ -152,7 +148,7 @@
   <div id="addFaqModal" class="modal-backdrop-paces" style="display:none;">
     <div class="modal-dialog-paces" style="max-width:620px;">
       <div class="modal-header-paces">
-        <h3 class="modal-title-paces">+ Add New FAQ</h3>
+        <h3 class="modal-title-paces">Add New FAQ</h3>
         <button type="button" class="modal-close-btn" onclick="closeAddFaqModal()">✕</button>
       </div>
 
@@ -162,7 +158,13 @@
           <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:1rem;">
             <div>
               <label class="form-label-paces">Category *</label>
-              <input type="text" name="category" required placeholder="e.g. General, Booking, AMC, Billing" class="form-control-paces" value="General">
+              <select name="category" required class="form-control-paces">
+                <option value="services" selected>Services & Booking</option>
+                <option value="amc">AMC & Corporate</option>
+                <option value="safety">Technicians & Safety</option>
+                <option value="billing">Billing & Partners</option>
+                <option value="general">General Inquiries</option>
+              </select>
             </div>
             <div>
               <label class="form-label-paces">Display Order</label>
@@ -218,7 +220,13 @@
           <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:1rem;">
             <div>
               <label class="form-label-paces">Category *</label>
-              <input type="text" name="category" id="editFaqCategory" required class="form-control-paces">
+              <select name="category" id="editFaqCategory" required class="form-control-paces">
+                <option value="services">Services & Booking</option>
+                <option value="amc">AMC & Corporate</option>
+                <option value="safety">Technicians & Safety</option>
+                <option value="billing">Billing & Partners</option>
+                <option value="general">General Inquiries</option>
+              </select>
             </div>
             <div>
               <label class="form-label-paces">Display Order</label>
@@ -288,7 +296,11 @@
       activeFaqDeleteUrl = data.delete_url;
 
       document.getElementById('editFaqModalHeaderTitle').textContent = 'Edit FAQ: ' + data.question.substring(0, 35) + '...';
-      document.getElementById('editFaqCategory').value = data.category || '';
+      const catSelect = document.getElementById('editFaqCategory');
+      if (data.category && !Array.from(catSelect.options).some(o => o.value === data.category)) {
+        catSelect.add(new Option(data.category, data.category, true, true));
+      }
+      catSelect.value = data.category || 'services';
       document.getElementById('editFaqOrder').value = data.order || 1;
       document.getElementById('editFaqQuestion').value = data.question || '';
       document.getElementById('editFaqAnswer').value = data.answer || '';

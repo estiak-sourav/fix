@@ -53,17 +53,18 @@ class SiteSetting extends Model
         $port = request()->getPort();
         $host = request()->getHost();
 
+        // If currently on an admin subdomain (e.g. admin.localhost or admin.fix.com.bd), strip 'admin.'
         if (str_starts_with($host, 'admin.')) {
             $cleanHost = substr($host, 6);
-            if ($cleanHost === 'localhost') {
-                $cleanHost = '127.0.0.1';
-            }
+            $portStr = ($port && ! in_array($port, [80, 443])) ? ":{$port}" : '';
+            $baseUrl = "{$scheme}://{$cleanHost}{$portStr}";
+        } elseif (config('app.url')) {
+            $baseUrl = rtrim(config('app.url'), '/');
         } else {
-            $cleanHost = $host ?: '127.0.0.1';
+            $cleanHost = $host ?: 'localhost';
+            $portStr = ($port && ! in_array($port, [80, 443])) ? ":{$port}" : '';
+            $baseUrl = "{$scheme}://{$cleanHost}{$portStr}";
         }
-
-        $portStr = ($port && ! in_array($port, [80, 443])) ? ":{$port}" : '';
-        $baseUrl = "{$scheme}://{$cleanHost}{$portStr}";
 
         $cleanPath = ltrim($path, '/');
         if ($cleanPath === '') {

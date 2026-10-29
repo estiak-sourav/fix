@@ -207,25 +207,25 @@
     ];
 
     $liveUrls = [
-      'hero' => url('/#hero'),
-      'clients' => url('/#clients'),
-      'services' => url('/#services'),
-      'amc_plans' => url('/#amc-plans'),
-      'how_it_works' => url('/#how-it-works'),
-      'video_portfolio' => url('/#video-portfolio'),
-      'why_fix' => url('/#why-fix'),
-      'who_we_serve' => url('/#who-we-serve'),
-      'testimonials' => url('/#testimonials'),
-      'faq' => url('/#faq'),
-      'contact' => url('/#contact'),
-      'vendor_hero' => url('/vendor#vendor-hero'),
-      'vendor_benefits' => url('/vendor#vendor-benefits'),
-      'legal_privacy' => url('/privacy#legal-content'),
-      'legal_terms' => url('/terms#legal-content'),
-      'legal_sla' => url('/sla#legal-content'),
-      'support_desk' => url('/support#support-portal'),
-      'about_hero' => url('/about#overview'),
-      'about_overview' => url('/about#overview'),
+      'hero' => \App\Models\SiteSetting::mainSiteUrl('#hero'),
+      'clients' => \App\Models\SiteSetting::mainSiteUrl('#clients'),
+      'services' => \App\Models\SiteSetting::mainSiteUrl('#services'),
+      'amc_plans' => \App\Models\SiteSetting::mainSiteUrl('#amc-plans'),
+      'how_it_works' => \App\Models\SiteSetting::mainSiteUrl('#how-it-works'),
+      'video_portfolio' => \App\Models\SiteSetting::mainSiteUrl('#video-portfolio'),
+      'why_fix' => \App\Models\SiteSetting::mainSiteUrl('#why-fix'),
+      'who_we_serve' => \App\Models\SiteSetting::mainSiteUrl('#who-we-serve'),
+      'testimonials' => \App\Models\SiteSetting::mainSiteUrl('#testimonials'),
+      'faq' => \App\Models\SiteSetting::mainSiteUrl('#faq'),
+      'contact' => \App\Models\SiteSetting::mainSiteUrl('#contact'),
+      'vendor_hero' => \App\Models\SiteSetting::mainSiteUrl('vendor#vendor-hero'),
+      'vendor_benefits' => \App\Models\SiteSetting::mainSiteUrl('vendor#vendor-benefits'),
+      'legal_privacy' => \App\Models\SiteSetting::mainSiteUrl('privacy#legal-content'),
+      'legal_terms' => \App\Models\SiteSetting::mainSiteUrl('terms#legal-content'),
+      'legal_sla' => \App\Models\SiteSetting::mainSiteUrl('sla#legal-content'),
+      'support_desk' => \App\Models\SiteSetting::mainSiteUrl('support#support-portal'),
+      'about_hero' => \App\Models\SiteSetting::mainSiteUrl('about#overview'),
+      'about_overview' => \App\Models\SiteSetting::mainSiteUrl('about#overview'),
     ];
 
     $currentGroup = null;
@@ -240,7 +240,7 @@
         $meta = $content->meta_data ?? [];
         $pageGroup = $content->page_group ?? 'homepage';
         $pageBadge = $content->page_badge ?? '🏠 Homepage';
-        $liveUrl = $liveUrls[$content->section_key] ?? url('/');
+        $liveUrl = $liveUrls[$content->section_key] ?? \App\Models\SiteSetting::mainSiteUrl('');
       @endphp
 
       @if($currentGroup !== $pageGroup)
@@ -589,18 +589,20 @@
       <!-- ============================================== -->
       <div id="editSectionModal_{{ $content->id }}" class="modal-backdrop-paces" style="display:none;">
         <div class="modal-dialog-paces" style="max-width:{{ in_array($content->section_key, ['hero', 'video_portfolio', 'how_it_works', 'why_fix', 'who_we_serve', 'amc_plans', 'vendor_hero', 'vendor_benefits', 'legal_privacy', 'legal_terms', 'legal_sla']) ? '780px' : '680px' }};">
-          <div class="modal-header-paces" style="border-bottom:1px solid var(--paces-border);">
+          <div class="modal-header-paces" style="border-bottom:1px solid var(--paces-border); display:flex; justify-content:space-between; align-items:center; gap:12px;">
             <div>
               <h3 class="modal-title-paces" style="margin:0; font-size:1.15rem; color:#1e293b;">Edit: {{ $displayTitle }}</h3>
-              <p style="margin:4px 0 0; font-size:0.78rem; color:var(--paces-text-muted); display:flex; align-items:center; gap:8px;">
-                <span>Page: <strong>{{ $pageBadge }}</strong></span>
-                <span>•</span>
-                <a href="{{ $liveUrl }}" target="_blank" style="color:var(--paces-primary, #3e60d5); text-decoration:none; font-weight:600;">
-                  Live Preview: {{ $liveUrl }} ↗
-                </a>
+              <p style="margin:4px 0 0; font-size:0.78rem; color:var(--paces-text-muted);">
+                Page: <strong>{{ $pageBadge }}</strong>
               </p>
             </div>
-            <button type="button" class="modal-close-btn" onclick="closeSectionModal({{ $content->id }})">✕</button>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <a href="{{ $liveUrl }}" target="_blank" class="btn-paces btn-paces-outline btn-paces-sm" style="display:inline-flex; align-items:center; gap:5px; text-decoration:none; font-size:0.78rem; padding:0.35rem 0.65rem; border-radius:6px;" title="View section on live website">
+                <span>View on Website</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              </a>
+              <button type="button" class="modal-close-btn" onclick="closeSectionModal({{ $content->id }})">✕</button>
+            </div>
           </div>
 
           <form action="{{ route('admin.web.contents.update', $content) }}" method="POST" enctype="multipart/form-data">
