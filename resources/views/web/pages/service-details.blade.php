@@ -174,13 +174,13 @@
           <div class="booking-sidebar-card">
             <h3 style="font-size:1.2rem; margin-bottom:1rem;">Service Quick Info</h3>
             <div style="font-size:0.9rem; margin-bottom:1rem;">
-              <span style="color:var(--text-muted); display:block;">Starting Price:</span>
-              <strong style="font-size:1.25rem; color:var(--primary);">৳ {{ number_format($service->price_starting ?? 0, 2) }}</strong>
-              <span style="font-size:0.8rem; color:var(--text-muted);">/ {{ $service->pricing_unit }}</span>
+              <span style="color:var(--text-muted); display:block;">Pricing:</span>
+              <strong style="font-size:1.15rem; color:var(--primary);">Custom Quote on Inspection</strong>
+              <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-top:2px;">Assessed & set post-inspection / upon service</span>
             </div>
             <div style="font-size:0.9rem; margin-bottom:1rem;">
-              <span style="color:var(--text-muted); display:block;">Emergency SLA Dispatch:</span>
-              <strong style="color:#10b981;">Within {{ $service->sla_hours }} Hours</strong>
+              <span style="color:var(--text-muted); display:block;">Service Dispatch:</span>
+              <strong style="color:#10b981;">Direct Engineering Team Coordination</strong>
             </div>
             <hr style="border:none; border-top:1px solid var(--border); margin:1.25rem 0;">
             <a href="{{ route('booking.create', ['service' => $service->title]) }}" class="btn btn-accent btn-block">

@@ -152,23 +152,23 @@
           <span style="font-size:0.7rem; padding:1px 6px; border-radius:10px; background:rgba(255,255,255,0.25); color:inherit;">{{ $contents->count() }}</span>
         </button>
         <button type="button" class="page-filter-btn" onclick="setPageFilter('homepage', this)">
-          <span>🏠 Homepage</span>
+          <span>Homepage</span>
           <span style="font-size:0.7rem; padding:1px 6px; border-radius:10px; background:#f1f5f9; color:#64748b;">11</span>
         </button>
         <button type="button" class="page-filter-btn" onclick="setPageFilter('partner', this)">
-          <span>🤝 Become a Partner</span>
+          <span>Become a Partner</span>
           <span style="font-size:0.7rem; padding:1px 6px; border-radius:10px; background:#f1f5f9; color:#64748b;">2</span>
         </button>
         <button type="button" class="page-filter-btn" onclick="setPageFilter('legal', this)">
-          <span>⚖️ Legal & Policies</span>
+          <span>Legal & Policies</span>
           <span style="font-size:0.7rem; padding:1px 6px; border-radius:10px; background:#f1f5f9; color:#64748b;">3</span>
         </button>
         <button type="button" class="page-filter-btn" onclick="setPageFilter('support', this)">
-          <span>🎫 Support Helpdesk</span>
+          <span>Support Helpdesk</span>
           <span style="font-size:0.7rem; padding:1px 6px; border-radius:10px; background:#f1f5f9; color:#64748b;">1</span>
         </button>
         <button type="button" class="page-filter-btn" onclick="setPageFilter('about', this)">
-          <span>🏢 About Us</span>
+          <span>About Us</span>
           <span style="font-size:0.7rem; padding:1px 6px; border-radius:10px; background:#f1f5f9; color:#64748b;">2</span>
         </button>
       </div>
@@ -189,9 +189,9 @@
       'clients' => '2. Corporate Partners (Clients Marquee)',
       'services' => '3. Facility Services Portfolio',
       'amc_plans' => '4. Annual Maintenance Contracts (AMC)',
-      'how_it_works' => '5. How It Works (4-Step Process)',
+      'how_it_works' => '5. How It Works',
       'video_portfolio' => '6. Operations Video Portfolio & Playlist',
-      'why_fix' => '7. Why Choose FIX (6 Core Value Pillars)',
+      'why_fix' => '7. Why Choose FIX',
       'who_we_serve' => '8. Who We Serve (Industry Sectors)',
       'testimonials' => '9. Client Testimonials & Reviews',
       'faq' => '10. Frequently Asked Questions (FAQ)',
@@ -239,7 +239,7 @@
         $slides = $content->meta_data['slides'] ?? ($content->media_path ? [$content->media_path] : []);
         $meta = $content->meta_data ?? [];
         $pageGroup = $content->page_group ?? 'homepage';
-        $pageBadge = $content->page_badge ?? '🏠 Homepage';
+        $pageBadge = $content->page_badge ?? 'Homepage';
         $liveUrl = $liveUrls[$content->section_key] ?? \App\Models\SiteSetting::mainSiteUrl('');
       @endphp
 
@@ -267,13 +267,11 @@
               </span>
 
               @if($content->is_active ?? true)
-                <span class="badge-pill-paces" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:0.75rem; font-weight:600; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">
-                  <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block;"></span>
+                <span class="badge-pill-paces" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:0.75rem; font-weight:600; padding:2px 8px; border-radius:12px;">
                   Active on Website
                 </span>
               @else
-                <span class="badge-pill-paces" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-size:0.75rem; font-weight:600; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">
-                  <span style="width:6px; height:6px; border-radius:50%; background:#ef4444; display:inline-block;"></span>
+                <span class="badge-pill-paces" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-size:0.75rem; font-weight:600; padding:2px 8px; border-radius:12px;">
                   Hidden / Inactive
                 </span>
               @endif
@@ -360,7 +358,7 @@
                 <span style="font-size:0.75rem; font-weight:600; color:var(--paces-text-muted); text-transform:uppercase;">Trust Badges:</span>
                 <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
                   @foreach($meta['trust_badges'] ?? ['Verified & Certified Providers', 'Quick Service Request & Dispatch', 'Multiple Building Solutions', '24/7 Dedicated Operations Support'] as $tb)
-                    <span class="badge-pill-paces" style="background:rgba(0,168,150,0.08); color:rgb(0,168,150); border:1px solid rgba(0,168,150,0.2); font-size:0.75rem;">✓ {{ $tb }}</span>
+                    <span class="badge-pill-paces" style="background:rgba(0,168,150,0.08); color:rgb(0,168,150); border:1px solid rgba(0,168,150,0.2); font-size:0.75rem;">{{ $tb }}</span>
                   @endforeach
                 </div>
               </div>
@@ -456,15 +454,33 @@
 
             <!-- 5. Video Portfolio Preview -->
             @if($content->section_key === 'video_portfolio')
+              @php
+                $pvList = $meta['playlist'] ?? [
+                  ['title' => 'Commercial Central HVAC & Chillers', 'meta' => 'Cooling Tower AMC • Dhaka Metro', 'video_id' => 'LXb3EKWsInQ'],
+                  ['title' => 'High-Altitude Glass Facade Cleaning', 'meta' => 'Certified Abseiling Team • Gulshan', 'video_id' => 'LXb3EKWsInQ'],
+                  ['title' => 'Industrial Substation & ATS Switchgear', 'meta' => 'High-Voltage Audit • Savar EPZ', 'video_id' => 'LXb3EKWsInQ'],
+                ];
+              @endphp
               <div style="border-top:1px dashed var(--paces-border); padding-top:10px; font-size:0.84rem;">
-                <div>YouTube Embed: <code style="color:var(--paces-primary, #3e60d5);">{{ $content->media_path ?? 'https://www.youtube.com/embed/LXb3EKWsInQ?rel=0' }}</code></div>
+                <div style="font-size:0.75rem; font-weight:600; color:var(--paces-text-muted); text-transform:uppercase; margin-bottom:6px;">Video Portfolio Playlist ({{ count($pvList) }} {{ count($pvList) === 1 ? 'Video' : 'Videos' }}):</div>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                  @foreach($pvList as $pvItem)
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#ffffff; border:1px solid var(--paces-border); border-radius:6px; padding:6px 10px; font-size:0.8rem;">
+                      <div>
+                        <strong style="color:#1e293b;">{{ $pvItem['title'] ?? '' }}</strong>
+                        <span style="color:#64748b; font-size:0.75rem;"> • {{ $pvItem['meta'] ?? '' }}</span>
+                      </div>
+                      <code style="font-size:0.75rem; color:var(--paces-primary, #3e60d5);">{{ $pvItem['video_id'] ?? '' }}</code>
+                    </div>
+                  @endforeach
+                </div>
               </div>
             @endif
 
             <!-- 6. Why Choose FIX Preview -->
             @if($content->section_key === 'why_fix')
               <div style="border-top:1px dashed var(--paces-border); padding-top:10px;">
-                <span style="font-size:0.75rem; font-weight:600; color:var(--paces-text-muted); text-transform:uppercase;">6 Core Value Pillars:</span>
+                <span style="font-size:0.75rem; font-weight:600; color:var(--paces-text-muted); text-transform:uppercase;">Core Value Pillars:</span>
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; margin-top:8px;">
                   @foreach($meta['cards'] ?? [
                     ['title' => 'Certified Technical Teams', 'desc' => 'Every technician undergoes vetting, background checks, and standard safety training.'],
@@ -475,7 +491,7 @@
                     ['title' => 'Cost-Predictable AMC Plans', 'desc' => 'Prevent costly failures with scheduled preventive maintenance and transparent pricing.']
                   ] as $cIdx => $c)
                     <div style="background:#ffffff; border:1px solid var(--paces-border); padding:8px 10px; border-radius:6px; font-size:0.78rem;">
-                      <strong style="color:#1e293b; display:block;">✓ {{ $c['title'] ?? '' }}</strong>
+                      <strong style="color:#1e293b; display:block;">{{ $c['title'] ?? '' }}</strong>
                       <span style="color:#64748b;">{{ $c['desc'] ?? '' }}</span>
                     </div>
                   @endforeach
@@ -615,9 +631,6 @@
                   <div style="font-weight:600; font-size:0.92rem; color:#1e293b; display:flex; align-items:center; gap:6px;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     <span>Section Display Status</span>
-                  </div>
-                  <div style="font-size:0.78rem; color:#64748b; margin-top:2px;">
-                    Turn off to hide this section from visitors on the live website. All section data remains saved.
                   </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
@@ -857,12 +870,57 @@
                 </div>
               @endif
 
-              <!-- 6. Video Portfolio Controls -->
+              <!-- 6. Video Portfolio Controls (Dynamic Playlist) -->
               @if($content->section_key === 'video_portfolio')
-                <div style="border-top:1px dashed var(--paces-border); padding-top:1rem; margin-bottom:1rem;">
-                  <strong style="display:block; font-size:0.875rem; margin-bottom:0.75rem; color:#1e293b;">YouTube Video Player Link</strong>
-                  <label class="form-label-paces">YouTube Embed URL *</label>
-                  <input type="text" name="media_path" value="{{ $content->media_path ?? 'https://www.youtube.com/embed/LXb3EKWsInQ?rel=0' }}" class="form-control-paces" placeholder="https://www.youtube.com/embed/VIDEO_ID">
+                @php
+                  $playlistItems = $meta['playlist'] ?? [
+                    ['title' => 'Commercial Central HVAC & Chillers', 'meta' => 'Cooling Tower AMC • Dhaka Metro', 'video_id' => 'LXb3EKWsInQ', 'thumb' => 'uploads/hero/slide_2.jpg'],
+                    ['title' => 'High-Altitude Glass Facade Cleaning', 'meta' => 'Certified Abseiling Team • Gulshan', 'video_id' => 'LXb3EKWsInQ', 'thumb' => 'uploads/hero/slide_1.jpg'],
+                    ['title' => 'Industrial Substation & ATS Switchgear', 'meta' => 'High-Voltage Audit • Savar EPZ', 'video_id' => 'LXb3EKWsInQ', 'thumb' => 'uploads/hero/slide_3.jpg'],
+                  ];
+                @endphp
+                <div style="border-top:1px dashed var(--paces-border); padding-top:1.25rem; margin-bottom:1.25rem;">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.85rem; flex-wrap:wrap; gap:10px;">
+                    <div>
+                      <strong style="display:block; font-size:0.92rem; color:#1e293b;">Operations Video Playlist</strong>
+                      <span style="font-size:0.78rem; color:#64748b;">If 1 video is in the playlist, the right-side list hides and the player expands full-width. If multiple videos are added, the right list displays and scrolls smoothly within the video player's height.</span>
+                    </div>
+                    <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="addVideoPlaylistItem({{ $content->id }})" style="font-size:0.8rem; display:inline-flex; align-items:center; gap:5px;">
+                      <span>+ Add Video to Playlist</span>
+                    </button>
+                  </div>
+
+                  <div id="videoPlaylistContainer_{{ $content->id }}" style="display:flex; flex-direction:column; gap:12px;">
+                    @foreach($playlistItems as $vIdx => $vItem)
+                      <div class="video-playlist-item-row" data-vidx="{{ $vIdx }}" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px; position:relative;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
+                          <strong style="font-size:0.82rem; color:#334155;">Video #<span class="video-item-number">{{ $loop->iteration }}</span></strong>
+                          <button type="button" onclick="removeVideoPlaylistItem(this)" style="background:none; border:none; color:#ef4444; font-size:0.75rem; font-weight:600; cursor:pointer;" title="Remove this video">✕ Remove</button>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                          <div>
+                            <label class="form-label-paces" style="font-size:0.75rem;">Video Title *</label>
+                            <input type="text" name="playlist[{{ $vIdx }}][title]" value="{{ $vItem['title'] ?? '' }}" class="form-control-paces" placeholder="e.g. Commercial Central HVAC & Chillers" required>
+                          </div>
+                          <div>
+                            <label class="form-label-paces" style="font-size:0.75rem;">Location / Scope Meta</label>
+                            <input type="text" name="playlist[{{ $vIdx }}][meta]" value="{{ $vItem['meta'] ?? '' }}" class="form-control-paces" placeholder="e.g. Cooling Tower AMC • Dhaka Metro">
+                          </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                          <div>
+                            <label class="form-label-paces" style="font-size:0.75rem;">YouTube URL or Video ID *</label>
+                            <input type="text" name="playlist[{{ $vIdx }}][video_id]" value="{{ $vItem['video_id'] ?? '' }}" class="form-control-paces" placeholder="e.g. https://www.youtube.com/watch?v=LXb3EKWsInQ or LXb3EKWsInQ" required>
+                          </div>
+                          <div>
+                            <label class="form-label-paces" style="font-size:0.75rem;">Custom Thumbnail (Optional)</label>
+                            <input type="file" name="playlist[{{ $vIdx }}][thumb_file]" accept="image/*" class="form-control-paces" style="font-size:0.75rem;">
+                            <input type="hidden" name="playlist[{{ $vIdx }}][thumb]" value="{{ $vItem['thumb'] ?? '' }}">
+                          </div>
+                        </div>
+                      </div>
+                    @endforeach
+                  </div>
                 </div>
               @endif
 
@@ -1152,6 +1210,60 @@
       `;
       container.appendChild(div);
       container.scrollTop = container.scrollHeight;
+    }
+
+    function addVideoPlaylistItem(contentId) {
+      const container = document.getElementById('videoPlaylistContainer_' + contentId);
+      if (!container) return;
+      const count = container.querySelectorAll('.video-playlist-item-row').length;
+      const newIdx = 'new_' + Date.now();
+      const div = document.createElement('div');
+      div.className = 'video-playlist-item-row';
+      div.setAttribute('data-vidx', newIdx);
+      div.style.cssText = 'background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:12px; position:relative;';
+      div.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #bbf7d0; padding-bottom:6px;">
+          <strong style="font-size:0.82rem; color:#166534;">Video #<span class="video-item-number">${count + 1}</span></strong>
+          <button type="button" onclick="removeVideoPlaylistItem(this)" style="background:none; border:none; color:#ef4444; font-size:0.75rem; font-weight:600; cursor:pointer;" title="Remove this video">✕ Remove</button>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+          <div>
+            <label class="form-label-paces" style="font-size:0.75rem;">Video Title *</label>
+            <input type="text" name="playlist[${newIdx}][title]" class="form-control-paces" placeholder="e.g. Substation Transformer Servicing" required>
+          </div>
+          <div>
+            <label class="form-label-paces" style="font-size:0.75rem;">Location / Scope Meta</label>
+            <input type="text" name="playlist[${newIdx}][meta]" class="form-control-paces" placeholder="e.g. High-Voltage Audit • Savar EPZ">
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div>
+            <label class="form-label-paces" style="font-size:0.75rem;">YouTube URL or Video ID *</label>
+            <input type="text" name="playlist[${newIdx}][video_id]" class="form-control-paces" placeholder="e.g. https://www.youtube.com/watch?v=LXb3EKWsInQ or LXb3EKWsInQ" required>
+          </div>
+          <div>
+            <label class="form-label-paces" style="font-size:0.75rem;">Custom Thumbnail (Optional)</label>
+            <input type="file" name="playlist[${newIdx}][thumb_file]" accept="image/*" class="form-control-paces" style="font-size:0.75rem;">
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
+      renumberVideoItems(container);
+    }
+
+    function removeVideoPlaylistItem(btn) {
+      const row = btn.closest('.video-playlist-item-row');
+      const container = row.parentElement;
+      row.remove();
+      if (container) renumberVideoItems(container);
+    }
+
+    function renumberVideoItems(container) {
+      const rows = container.querySelectorAll('.video-playlist-item-row');
+      rows.forEach((r, idx) => {
+        const numSpan = r.querySelector('.video-item-number');
+        if (numSpan) numSpan.textContent = idx + 1;
+      });
     }
 
     window.addEventListener('click', function(e) {

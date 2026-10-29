@@ -88,7 +88,7 @@
 
         <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
           <!-- Staff Actor Filter -->
-          <select name="admin_id" class="form-control-paces" style="padding:6px 12px; font-size:0.85rem; width:200px;">
+          <select name="admin_id" class="form-control-paces" style="padding:6px 12px; font-size:0.85rem; width:200px;" onchange="this.form.submit()">
             <option value="">All Staff Members</option>
             @foreach($adminUsers as $u)
               <option value="{{ $u->id }}" {{ request('admin_id') == $u->id ? 'selected' : '' }}>
@@ -98,7 +98,7 @@
           </select>
 
           <!-- Timeframe Filter -->
-          <select name="timeframe" class="form-control-paces" style="padding:6px 12px; font-size:0.85rem; width:160px;">
+          <select name="timeframe" class="form-control-paces" style="padding:6px 12px; font-size:0.85rem; width:160px;" onchange="this.form.submit()">
             <option value="">Any Time</option>
             <option value="today" {{ request('timeframe') === 'today' ? 'selected' : '' }}>Today</option>
             <option value="yesterday" {{ request('timeframe') === 'yesterday' ? 'selected' : '' }}>Yesterday</option>
@@ -211,8 +211,8 @@
                   {{ $log->ip_address ?: '127.0.0.1' }}
                 </div>
                 @if($log->user_agent)
-                  <div style="font-size:0.72rem; color:var(--paces-text-muted); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ $log->user_agent }}">
-                    {{ \Illuminate\Support\Str::limit($log->user_agent, 45) }}
+                  <div style="font-size:0.72rem; color:var(--paces-text-muted); margin-top:3px; word-break:break-word; line-height:1.35;" title="{{ $log->user_agent }}">
+                    {{ $log->user_agent }}
                   </div>
                 @endif
               </td>

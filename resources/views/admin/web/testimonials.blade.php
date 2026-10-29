@@ -194,7 +194,7 @@
               </div>
               <div style="flex:1;">
                 <input type="file" name="avatar" accept="image/*" class="form-control-paces" style="background:#ffffff;" onchange="previewAvatar(this, 'addAvatarImg', 'addAvatarPlaceholder')">
-                <span class="form-help-paces">Supported: JPG, PNG, WEBP (Max: 5MB). Photo will be displayed beside the client name.</span>
+                <span class="form-help-paces">Supported: JPG, PNG, WEBP (Max: 1MB). Images of any dimensions are accepted and automatically center-cropped.</span>
               </div>
             </div>
           </div>
@@ -288,7 +288,7 @@
                     <span>Remove current photo</span>
                   </label>
                 </div>
-                <span class="form-help-paces">Upload a new file to replace the existing photo.</span>
+                <span class="form-help-paces">Upload a new file to replace the existing photo (Max: 1MB, automatically center-cropped).</span>
               </div>
             </div>
           </div>

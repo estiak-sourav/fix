@@ -386,7 +386,7 @@ class AdminCmsController extends Controller
         $pageGroups = [
             'homepage' => [
                 'name' => 'Homepage Sections',
-                'badge' => '🏠 Homepage',
+                'badge' => 'Homepage',
                 'keys' => [
                     'hero',
                     'clients',
@@ -403,7 +403,7 @@ class AdminCmsController extends Controller
             ],
             'partner' => [
                 'name' => 'Become a Partner Page',
-                'badge' => '🤝 Become a Partner',
+                'badge' => 'Become a Partner',
                 'keys' => [
                     'vendor_hero',
                     'vendor_benefits',
@@ -411,7 +411,7 @@ class AdminCmsController extends Controller
             ],
             'legal' => [
                 'name' => 'Legal & Compliance Pages',
-                'badge' => '⚖️ Legal & Policies',
+                'badge' => 'Legal & Policies',
                 'keys' => [
                     'legal_privacy',
                     'legal_terms',
@@ -420,14 +420,14 @@ class AdminCmsController extends Controller
             ],
             'support' => [
                 'name' => 'Support Helpdesk Page',
-                'badge' => '🎫 Support Helpdesk',
+                'badge' => 'Support Helpdesk',
                 'keys' => [
                     'support_desk',
                 ],
             ],
             'about' => [
                 'name' => 'About Us Page',
-                'badge' => '🏢 About Us',
+                'badge' => 'About Us',
                 'keys' => [
                     'about_hero',
                     'about_overview',
@@ -707,7 +707,7 @@ class AdminCmsController extends Controller
             }
         }
 
-        // 6. Video Portfolio
+        // 6. Video Portfolio (Dynamic Playlist)
         if ($content->section_key === 'video_portfolio') {
             if ($request->has('current_video_title')) {
                 $meta['current_video_title'] = $request->input('current_video_title');
@@ -719,14 +719,46 @@ class AdminCmsController extends Controller
             }
             if ($request->has('playlist')) {
                 $playlist = [];
+                $existingPlaylist = $meta['playlist'] ?? [];
                 foreach ($request->input('playlist', []) as $k => $item) {
-                    $playlist[$k] = [
-                        'title' => trim($item['title'] ?? ''),
-                        'meta' => trim($item['meta'] ?? ''),
-                        'video_id' => trim($item['video_id'] ?? 'LXb3EKWsInQ'),
+                    $vidRaw = trim($item['video_id'] ?? 'LXb3EKWsInQ');
+                    if (empty($vidRaw) && empty($item['title'])) {
+                        continue;
+                    }
+
+                    // Extract 11-char YouTube ID if full YouTube URL was pasted
+                    $vidId = $vidRaw;
+                    if (preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/\s]{11})%i', $vidRaw, $match)) {
+                        $vidId = $match[1];
+                    }
+
+                    $thumb = $item['thumb'] ?? ($existingPlaylist[$k]['thumb'] ?? null);
+                    if ($request->hasFile("playlist.{$k}.thumb_file")) {
+                        $tFile = $request->file("playlist.{$k}.thumb_file");
+                        $tName = 'vid_'.time().'_'.Str::random(6).'.'.$tFile->getClientOriginalExtension();
+                        $tFile->move(public_path('uploads/videos'), $tName);
+                        $thumb = 'uploads/videos/'.$tName;
+                    }
+
+                    if (! $thumb && $vidId) {
+                        $thumb = "https://img.youtube.com/vi/{$vidId}/hqdefault.jpg";
+                    }
+
+                    $playlist[] = [
+                        'title' => trim($item['title'] ?? 'Operations Video'),
+                        'meta' => trim($item['meta'] ?? 'Site Project'),
+                        'video_id' => $vidId ?: 'LXb3EKWsInQ',
+                        'thumb' => $thumb ?: 'uploads/hero/slide_1.jpg',
                     ];
                 }
-                $meta['playlist'] = $playlist;
+
+                $meta['playlist'] = array_values($playlist);
+
+                if (! empty($playlist[0])) {
+                    $validated['media_path'] = "https://www.youtube.com/embed/{$playlist[0]['video_id']}?rel=0";
+                    $meta['current_video_title'] = $playlist[0]['title'];
+                    $meta['current_video_meta'] = $playlist[0]['meta'];
+                }
             }
         }
 
@@ -997,7 +1029,7 @@ class AdminCmsController extends Controller
             'company_name' => ['nullable', 'string', 'max:255'],
             'rating' => ['required', 'integer', 'between:1,5'],
             'quote' => ['required', 'string'],
-            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:1024'],
             'is_featured' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -1007,7 +1039,7 @@ class AdminCmsController extends Controller
         $validated['order'] = Testimonial::max('order') + 1;
 
         if ($request->hasFile('avatar')) {
-            $validated['avatar_path'] = $request->file('avatar')->store('testimonials', 'public');
+            $validated['avatar_path'] = $this->cropAndStoreAvatar($request->file('avatar'));
         }
 
         $testimonial = Testimonial::create($validated);
@@ -1027,7 +1059,7 @@ class AdminCmsController extends Controller
             'company_name' => ['nullable', 'string', 'max:255'],
             'rating' => ['required', 'integer', 'between:1,5'],
             'quote' => ['required', 'string'],
-            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:1024'],
             'remove_avatar' => ['nullable', 'boolean'],
             'is_featured' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
@@ -1047,13 +1079,73 @@ class AdminCmsController extends Controller
             if ($testimonial->avatar_path && ! str_starts_with($testimonial->avatar_path, 'http://') && ! str_starts_with($testimonial->avatar_path, 'https://')) {
                 Storage::disk('public')->delete($testimonial->avatar_path);
             }
-            $validated['avatar_path'] = $request->file('avatar')->store('testimonials', 'public');
+            $validated['avatar_path'] = $this->cropAndStoreAvatar($request->file('avatar'));
         }
 
         $testimonial->update($validated);
         ActivityLogService::logContent('testimonial.update', "Updated testimonial for '{$testimonial->client_name}'.", $testimonial);
 
         return redirect()->back()->with('success', 'Testimonial updated successfully.');
+    }
+
+    /**
+     * Center-crop avatar image to square and save.
+     */
+    protected function cropAndStoreAvatar(UploadedFile $file): string
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+        $filename = 'avatar_'.time().'_'.Str::random(8).'.'.$extension;
+        $relPath = 'testimonials/'.$filename;
+
+        $sourcePath = $file->getRealPath();
+        $image = null;
+
+        if (in_array($extension, ['jpg', 'jpeg'])) {
+            $image = @imagecreatefromjpeg($sourcePath);
+        } elseif ($extension === 'png') {
+            $image = @imagecreatefrompng($sourcePath);
+        } elseif ($extension === 'webp') {
+            $image = @imagecreatefromwebp($sourcePath);
+        }
+
+        if ($image) {
+            $width = imagesx($image);
+            $height = imagesy($image);
+            $minSide = min($width, $height);
+            $x = (int) (($width - $minSide) / 2);
+            $y = (int) (($height - $minSide) / 2);
+
+            $cropped = imagecrop($image, [
+                'x' => $x,
+                'y' => $y,
+                'width' => $minSide,
+                'height' => $minSide,
+            ]);
+
+            if ($cropped) {
+                ob_start();
+                if (in_array($extension, ['jpg', 'jpeg'])) {
+                    imagejpeg($cropped, null, 90);
+                } elseif ($extension === 'png') {
+                    imagepng($cropped, null, 8);
+                } elseif ($extension === 'webp') {
+                    imagewebp($cropped, null, 90);
+                }
+                $imageBytes = ob_get_clean();
+                imagedestroy($cropped);
+                imagedestroy($image);
+
+                if (! empty($imageBytes)) {
+                    Storage::disk('public')->put($relPath, $imageBytes);
+
+                    return $relPath;
+                }
+            } else {
+                imagedestroy($image);
+            }
+        }
+
+        return $file->store('testimonials', 'public');
     }
 
     /**

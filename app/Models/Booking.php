@@ -44,6 +44,11 @@ class Booking extends Model
         'accepted_at',
         'completed_at',
         'cancelled_at',
+        'contract_start_date',
+        'contract_end_date',
+        'agreement_document_path',
+        'amc_package_notes',
+        'contract_status',
     ];
 
     protected function casts(): array
@@ -51,6 +56,8 @@ class Booking extends Model
         return [
             'attached_images' => 'array',
             'preferred_date' => 'date',
+            'contract_start_date' => 'date',
+            'contract_end_date' => 'date',
             'estimated_sqft' => 'integer',
             'estimated_cost' => 'decimal:2',
             'final_cost' => 'decimal:2',
@@ -141,6 +148,19 @@ class Booking extends Model
             'cancelled' => 'Cancelled',
             default => ucfirst(str_replace('_', ' ', $this->status)),
         };
+    }
+
+    public function getAgreementUrlAttribute(): ?string
+    {
+        if (! $this->agreement_document_path) {
+            return null;
+        }
+
+        if (str_starts_with($this->agreement_document_path, 'http://') || str_starts_with($this->agreement_document_path, 'https://')) {
+            return $this->agreement_document_path;
+        }
+
+        return asset('storage/'.$this->agreement_document_path);
     }
 
     public function getStatusBadgeColorAttribute(): string

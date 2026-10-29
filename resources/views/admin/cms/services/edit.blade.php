@@ -54,8 +54,8 @@
             <div style="display:flex; align-items:flex-start; gap:8px; margin-top:10px; padding:8px 12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; font-size:0.8rem; color:#1e40af;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
               <div>
-                <strong>সুপারিশকৃত সাইজ (Recommended):</strong> ৮০০ × ৫০০ পিক্সেল (১৬:১০ বা ১৬:৯ রেশিও, JPG/PNG/WebP)।<br>
-                <span style="color:#2563eb; font-size:0.75rem;">💡 যেকোনো সাইজ বা রেশিওর ছবি আপলোড করা যাবে (কোনো সাইজ লিমিট বা বাধ্যবাধকতা নেই)। ওয়েবসাইটে ইমেজগুলো স্বয়ংক্রিয়ভাবে ফিক্সড হাইট ও উইথে প্রফেশনালভাবে ক্রপ হয়ে প্রদর্শিত হবে।</span>
+                <strong>Recommended Dimensions:</strong> 800 × 500 px (16:10 or 16:9 ratio, JPG/PNG/WebP).<br>
+                <span style="color:#2563eb; font-size:0.75rem;">💡 Images of any resolution or aspect ratio can be uploaded. On the website, images are automatically centered and presented with professional fixed-ratio cropping.</span>
               </div>
             </div>
           </div>
@@ -96,8 +96,8 @@
           <div style="display:flex; align-items:flex-start; gap:8px; margin-top:10px; padding:8px 12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; font-size:0.8rem; color:#1e40af;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
             <div>
-              <strong>সুপারিশকৃত গ্যালারি সাইজ (Recommended):</strong> ৮০০ × ৬০০ পিক্সেল (৪:৩ বা ১৬:৯ রেশিও)।<br>
-              <span style="color:#2563eb; font-size:0.75rem;">💡 যেকোনো রেজোলিউশনের ইমেজ আপলোড করতে পারেন (কোনো সাইজ চেক নেই)। সার্ভিস ডিটেইলস পেজের ফটো গ্যালারিতে এটি স্বয়ংক্রিয়ভাবে ফিক্সড সাইজ থাম্বনেইল ও প্রিভিউ হিসেবে সুন্দরভাবে দেখাবে।</span>
+              <strong>Recommended Gallery Dimensions:</strong> 800 × 600 px (4:3 or 16:9 ratio).<br>
+              <span style="color:#2563eb; font-size:0.75rem;">💡 You can upload images of any resolution. They will be displayed with professional fixed-ratio thumbnails and preview modals on the service details page.</span>
             </div>
           </div>
         </div>

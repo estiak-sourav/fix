@@ -43,7 +43,7 @@ class WebContentManagementTest extends TestCase
         // Homepage sections
         $response->assertSee('Hero &amp; Service Booking Banner', false);
         $response->assertSee('Corporate Partners (Clients Marquee)');
-        $response->assertSee('Why Choose FIX (6 Core Value Pillars)');
+        $response->assertSee('Why Choose FIX');
 
         // Partner sections
         $response->assertSee('Partner Enlistment Hero &amp; Metrics', false);
@@ -327,9 +327,9 @@ class WebContentManagementTest extends TestCase
 
         $response = $this->actingAs($this->admin, 'admin')->get(route('admin.cms.services.edit', $service));
         $response->assertStatus(200);
-        $response->assertSee('সুপারিশকৃত সাইজ');
-        $response->assertSee('৮০০ × ৫০০ পিক্সেল');
-        $response->assertSee('৮০০ × ৬০০ পিক্সেল');
+        $response->assertSee('Recommended Dimensions:');
+        $response->assertSee('800 × 500 px');
+        $response->assertSee('800 × 600 px');
     }
 
     /**

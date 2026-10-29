@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Actions\Booking\UpdateBookingStatusAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateBookingStatusRequest;
+use App\Models\AmcPlan;
 use App\Models\Booking;
 use App\Models\OutreachTask;
 use App\Models\Partner;
@@ -136,9 +137,12 @@ class AdminBookingController extends Controller
             ]);
         }
 
+        $amcPlans = AmcPlan::where('is_active', true)->orderBy('order')->get();
+
         return view('admin.bookings.show', [
             'booking' => $booking,
             'fieldCrews' => $crewOptions,
+            'amcPlans' => $amcPlans,
         ]);
     }
 
@@ -482,6 +486,66 @@ class AdminBookingController extends Controller
         ]);
 
         return redirect()->back()->with('success', "Work Order #{$booking->booking_number} updated successfully.");
+    }
+
+    /**
+     * Activate AMC Annual Contract with client agreement details and document copy.
+     */
+    public function activateAmcContract(Request $request, Booking $booking, UpdateBookingStatusAction $action): RedirectResponse
+    {
+        $validated = $request->validate([
+            'amc_plan_id' => ['required', 'exists:amc_plans,id'],
+            'contract_start_date' => ['required', 'date'],
+            'contract_end_date' => ['required', 'date', 'after_or_equal:contract_start_date'],
+            'contract_cost' => ['nullable', 'numeric', 'min:0'],
+            'amc_package_notes' => ['nullable', 'string', 'max:2000'],
+            'agreement_file' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:10240'],
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+
+        $updates = [
+            'amc_plan_id' => $validated['amc_plan_id'],
+            'service_type' => 'amc_contract',
+            'contract_start_date' => $validated['contract_start_date'],
+            'contract_end_date' => $validated['contract_end_date'],
+            'contract_status' => 'active',
+            'amc_package_notes' => $validated['amc_package_notes'] ?? null,
+        ];
+
+        if (isset($validated['contract_cost']) && $validated['contract_cost'] !== '') {
+            $updates['final_cost'] = (float) $validated['contract_cost'];
+        }
+
+        if ($request->hasFile('agreement_file')) {
+            $path = $request->file('agreement_file')->store('agreements', 'public');
+            $updates['agreement_document_path'] = $path;
+        }
+
+        $booking->update($updates);
+
+        $plan = AmcPlan::find($validated['amc_plan_id']);
+        $planName = $plan ? $plan->name : 'AMC Plan';
+
+        // Update status to accepted or in_progress
+        $newStatus = in_array($booking->status, ['assigned', 'in_progress', 'completed']) ? $booking->status : 'accepted';
+        if ($booking->status === 'pending_review' || $booking->status === 'accepted') {
+            $action->execute($booking, [
+                'status' => $newStatus,
+                'comment' => "Annual Maintenance Contract ({$planName}) finalized and activated after site inspection. Agreement document securely filed.",
+                'admin_notes' => "AMC Contract activated by {$admin->name}.",
+            ], $admin);
+        }
+
+        ActivityLogService::logBooking('amc.contract.activated', "Activated AMC Contract ({$planName}) for Work Order #{$booking->booking_number}.", $booking, [
+            'booking_number' => $booking->booking_number,
+            'amc_plan' => $planName,
+            'start_date' => $validated['contract_start_date'],
+            'end_date' => $validated['contract_end_date'],
+            'has_agreement_file' => ! empty($updates['agreement_document_path']),
+        ]);
+
+        return redirect()->back()->with('success', "AMC Contract ({$planName}) has been successfully ACTIVATED for Work Order #{$booking->booking_number}.");
     }
 
     /**

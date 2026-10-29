@@ -260,6 +260,150 @@
         </div>
       @endif
 
+      <!-- Annual Maintenance Contract (AMC) & Agreement Management -->
+      <div class="card-paces" style="margin-bottom:1.5rem; border:1px solid {{ $booking->contract_status === 'active' ? '#10b981' : 'var(--paces-border)' }};">
+        <div class="card-header-paces" style="background:{{ $booking->contract_status === 'active' ? '#f0fdf4' : '#f8fafc' }}; border-bottom:1px solid {{ $booking->contract_status === 'active' ? '#bbf7d0' : 'var(--paces-border)' }}; display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.1rem;">📑</span>
+            <div>
+              <h3 class="card-title-paces" style="margin:0; font-size:0.98rem; color:{{ $booking->contract_status === 'active' ? '#166534' : 'var(--paces-text-dark)' }};">
+                Annual Maintenance Contract (AMC) & Agreement
+              </h3>
+              <div style="font-size:0.75rem; color:var(--paces-text-muted);">Post-inspection agreement and package activation</div>
+            </div>
+          </div>
+          @if($booking->contract_status === 'active')
+            <span class="badge-pill-paces" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-weight:600; font-size:0.75rem;">
+              Active Contract
+            </span>
+          @else
+            <span class="badge-pill-paces" style="background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; font-size:0.75rem;">
+              Contract Not Activated
+            </span>
+          @endif
+        </div>
+
+        <div class="card-body-paces" style="padding:1.25rem;">
+          @if($booking->contract_status === 'active')
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:1rem;">
+              <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:10px 12px;">
+                <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase;">AMC Package</div>
+                <strong style="font-size:0.95rem; color:var(--paces-text-dark); display:block; margin-top:2px;">
+                  {{ $booking->amcPlan?->name ?? 'Custom AMC Package' }}
+                </strong>
+                @if($booking->amcPlan?->tier)
+                  <span style="font-size:0.7rem; color:var(--paces-primary);">{{ $booking->amcPlan->tier }} Tier</span>
+                @endif
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:10px 12px;">
+                <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase;">Contract Period</div>
+                <strong style="font-size:0.95rem; color:var(--paces-text-dark); display:block; margin-top:2px;">
+                  {{ $booking->contract_start_date?->format('M d, Y') }} — {{ $booking->contract_end_date?->format('M d, Y') }}
+                </strong>
+                <span style="font-size:0.7rem; color:#10b981;">Valid & Active</span>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:10px 12px;">
+                <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase;">Agreed Contract Cost</div>
+                <strong style="font-size:1.1rem; color:var(--paces-success); display:block; margin-top:2px;">
+                  ৳ {{ number_format($booking->final_cost ?? 0, 2) }}
+                </strong>
+              </div>
+            </div>
+
+            @if($booking->amc_package_notes)
+              <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:10px 12px; margin-bottom:1rem; font-size:0.82rem; color:var(--paces-text-dark);">
+                <strong style="display:block; margin-bottom:4px; font-size:0.78rem; text-transform:uppercase; color:var(--paces-text-muted);">Agreement Terms & Scope Notes:</strong>
+                {{ $booking->amc_package_notes }}
+              </div>
+            @endif
+
+            <!-- Signed Agreement Document Preview / Download -->
+            @if($booking->agreement_document_path)
+              <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:1rem;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="width:42px; height:42px; border-radius:6px; background:#dcfce7; display:flex; align-items:center; justify-content:center; color:#166534; font-size:1.25rem;">
+                    📄
+                  </div>
+                  <div>
+                    <div style="font-weight:600; font-size:0.88rem; color:#166534;">Signed Agreement Document Uploaded</div>
+                    <div style="font-size:0.75rem; color:#14532d;">Stored copy of verified contract document</div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <a href="{{ $booking->agreement_url }}" target="_blank" class="btn-paces btn-paces-primary btn-paces-sm" style="display:inline-flex; align-items:center; gap:4px; font-size:0.8rem;">
+                    <span>View Agreement Copy ↗</span>
+                  </a>
+                </div>
+              </div>
+            @endif
+
+            <div style="text-align:right;">
+              <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" onclick="const f = document.getElementById('amcActivationForm'); if(f) f.style.display = f.style.display === 'none' ? 'block' : 'none';" style="font-size:0.8rem;">
+                Update Contract Details / Re-upload Agreement
+              </button>
+            </div>
+          @endif
+
+          <!-- AMC Activation / Update Form -->
+          <div id="amcActivationForm" style="display:{{ $booking->contract_status === 'active' ? 'none' : 'block' }}; {{ $booking->contract_status === 'active' ? 'margin-top:1rem; border-top:1px dashed var(--paces-border); padding-top:1rem;' : '' }}">
+            @if($booking->contract_status !== 'active')
+              <p style="font-size:0.825rem; color:var(--paces-text-muted); margin-bottom:1rem;">
+                Once the initial facility inspection is complete and terms are agreed with the client, activate the AMC contract and upload a scan or photo of the signed agreement.
+              </p>
+            @endif
+
+            <form action="{{ route('admin.bookings.activate-amc', $booking) }}" method="POST" enctype="multipart/form-data">
+              @csrf
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                <div>
+                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Select AMC Package *</label>
+                  <select name="amc_plan_id" class="form-control-paces" required>
+                    <option value="">-- Choose AMC Package --</option>
+                    @foreach($amcPlans as $plan)
+                      <option value="{{ $plan->id }}" {{ (old('amc_plan_id', $booking->amc_plan_id) == $plan->id) ? 'selected' : '' }}>
+                        {{ $plan->name }} ({{ $plan->tier }} - {{ $plan->price_period }})
+                      </option>
+                    @endforeach
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Agreed Contract Cost (৳)</label>
+                  <input type="number" step="0.01" name="contract_cost" value="{{ old('contract_cost', $booking->final_cost) }}" placeholder="e.g. 50000.00" class="form-control-paces">
+                </div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                <div>
+                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Contract Start Date *</label>
+                  <input type="date" name="contract_start_date" value="{{ old('contract_start_date', $booking->contract_start_date?->format('Y-m-d') ?: date('Y-m-d')) }}" class="form-control-paces" required>
+                </div>
+                <div>
+                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Contract End Date *</label>
+                  <input type="date" name="contract_end_date" value="{{ old('contract_end_date', $booking->contract_end_date?->format('Y-m-d') ?: date('Y-m-d', strtotime('+1 year'))) }}" class="form-control-paces" required>
+                </div>
+              </div>
+
+              <div style="margin-bottom:12px;">
+                <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Upload Signed Agreement Copy (Image or PDF)</label>
+                <input type="file" name="agreement_file" accept="image/*,.pdf" class="form-control-paces">
+                <span class="form-help-paces">Upload scan/photo of the signed agreement or contract PDF (Max: 10MB).</span>
+              </div>
+
+              <div style="margin-bottom:12px;">
+                <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Agreement Notes / Scope Summary</label>
+                <textarea name="amc_package_notes" class="form-control-paces" rows="3" placeholder="Key service scope deliverables, quarterly visit frequency, assigned lead team...">{{ old('amc_package_notes', $booking->amc_package_notes) }}</textarea>
+              </div>
+
+              <button type="submit" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:6px;">
+                <span>✓ {{ $booking->contract_status === 'active' ? 'Save & Update Contract Details' : 'Activate AMC Contract' }}</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
       <!-- ============================================== -->
       <!-- SECTION 1: IF STATUS IS PENDING REVIEW         -->
       <!-- ============================================== -->

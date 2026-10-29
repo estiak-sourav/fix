@@ -92,20 +92,10 @@
         <textarea name="description" class="form-control-paces" rows="4" placeholder="Comprehensive breakdown of diagnostics, equipment maintenance, and technician qualifications..." required>{{ old('description') }}</textarea>
       </div>
 
-      <!-- Pricing & SLA Info -->
-      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
-        <div>
-          <label class="form-label-paces">Starting Price (৳)</label>
-          <input type="number" step="0.01" name="price_starting" value="{{ old('price_starting') }}" placeholder="e.g. 2500" class="form-control-paces">
-        </div>
-        <div>
-          <label class="form-label-paces">Pricing Unit / Model</label>
-          <input type="text" name="pricing_unit" value="{{ old('pricing_unit', 'Per Inspection Quote') }}" class="form-control-paces">
-        </div>
-        <div>
-          <label class="form-label-paces">Target SLA (Hours)</label>
-          <input type="number" name="sla_hours" value="{{ old('sla_hours', 4) }}" class="form-control-paces" min="1">
-        </div>
+      <!-- Dynamic Pricing & Post-Inspection Assessment Notice -->
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-bottom:1.25rem; font-size:0.82rem; color:#475569; display:flex; align-items:center; gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <span>Pricing is tailored on-demand: clients submit issues, and operations sets or invoices the exact price after engineering assessment or service delivery.</span>
       </div>
 
       <!-- Included Scope Breakdown (One per line) -->

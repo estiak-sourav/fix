@@ -95,6 +95,7 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
     Route::post('/bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->name('bookings.cancel')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/complete', [AdminBookingController::class, 'complete'])->name('bookings.complete')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/log-call', [AdminBookingController::class, 'logCallStatus'])->name('bookings.log-call')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/activate-amc', [AdminBookingController::class, 'activateAmcContract'])->name('bookings.activate-amc')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status')->middleware('admin.can:bookings.edit');
 
     // Outreach Tasks Management (Automatic & Manual)

@@ -63,6 +63,35 @@
           <p style="margin:0; color:var(--text-muted); line-height:1.5;">{{ $booking->problem_description }}</p>
         </div>
 
+        @if($booking->contract_status === 'active' || $booking->amcPlan)
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:1.25rem; margin-bottom:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+              <strong style="color:#166534; font-size:1rem;">
+                ✓ Active Annual Maintenance Contract (AMC): {{ $booking->amcPlan?->name ?? 'Annual Enterprise AMC' }}
+              </strong>
+              @if($booking->contract_start_date && $booking->contract_end_date)
+                <span style="font-size:0.8rem; background:#dcfce7; color:#166534; padding:3px 10px; border-radius:12px; font-weight:600;">
+                  Period: {{ $booking->contract_start_date->format('M d, Y') }} — {{ $booking->contract_end_date->format('M d, Y') }}
+                </span>
+              @endif
+            </div>
+
+            @if($booking->amc_package_notes)
+              <p style="margin:0 0 10px 0; font-size:0.88rem; color:#14532d; line-height:1.5;">
+                {{ $booking->amc_package_notes }}
+              </p>
+            @endif
+
+            @if($booking->agreement_document_path)
+              <div style="margin-top:8px;">
+                <a href="{{ $booking->agreement_url }}" target="_blank" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; background:#fff;">
+                  <span>📄 View Signed Agreement Document ↗</span>
+                </a>
+              </div>
+            @endif
+          </div>
+        @endif
+
         @if($booking->assigned_team)
           <div style="background:rgba(30,58,138,0.06); border:1px solid rgba(30,58,138,0.15); border-radius:10px; padding:1rem; margin-bottom:1.5rem; color:var(--primary); font-size:0.9rem;">
             <strong>Assigned Field Team:</strong> {{ $booking->assigned_team }}

@@ -150,11 +150,6 @@
                               {{ $srv->subtitle ?: ($srv->category?->name ?? 'Commercial & Residential Engineering') }}
                             </div>
                           </div>
-                          @if($srv->price_starting > 0)
-                            <div style="font-size:0.75rem; font-weight:700; color:var(--accent); white-space:nowrap; flex-shrink:0;">
-                              ৳{{ number_format($srv->price_starting) }}
-                            </div>
-                          @endif
                         </div>
                       @endforeach
                     </div>
@@ -336,8 +331,8 @@
 
             <!-- Dynamic Service SLA & Pricing -->
             <div id="sidebarServiceMetaBox" style="display:none; background:rgba(2,132,199,0.06); border:1px solid rgba(2,132,199,0.18); border-radius:8px; padding:8px 12px; margin-bottom:1rem; font-size:0.82rem; justify-content:space-between; align-items:center;">
-              <div>⚡ Response SLA: <strong id="sidebarServiceSla">4 Hours</strong></div>
-              <div>Starting: <strong id="sidebarServicePrice" style="color:var(--accent);">Quote</strong></div>
+              <div>📋 Pricing: <strong style="color:var(--accent);">Custom Inspection Quote</strong></div>
+              <div>⚡ Coordination: <strong style="color:#0284c7;">Direct Dispatch</strong></div>
             </div>
 
             <div style="font-size:0.875rem; color:var(--text-main); margin-bottom:1.5rem;">
