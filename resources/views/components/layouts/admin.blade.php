@@ -574,11 +574,98 @@
       color: #000;
     }
 
+    .topbar-user-wrapper {
+      position: relative;
+    }
     .topbar-user-profile {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding-left: 6px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: transparent;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .topbar-user-profile:hover,
+    .topbar-user-wrapper.open .topbar-user-profile {
+      background: #ffffff;
+      border-color: var(--paces-border);
+      box-shadow: var(--paces-shadow);
+    }
+    .topbar-user-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 250px;
+      background: #ffffff;
+      border: 1px solid var(--paces-border);
+      border-radius: 10px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      z-index: 1060;
+      display: none;
+      animation: fadeInPaces 0.15s ease-out;
+      overflow: hidden;
+    }
+    .topbar-user-wrapper.open .topbar-user-menu {
+      display: block;
+    }
+    .topbar-user-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--paces-border);
+      background: #f8fafc;
+    }
+    .topbar-user-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      color: var(--paces-text-dark);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+    }
+    .topbar-user-link:hover {
+      background: #f1f5f9;
+      color: var(--paces-primary);
+    }
+    .topbar-user-link svg {
+      width: 16px;
+      height: 16px;
+      color: var(--paces-text-muted);
+    }
+    .topbar-user-link:hover svg {
+      color: var(--paces-primary);
+    }
+    .topbar-user-divider {
+      height: 1px;
+      background: var(--paces-border);
+      margin: 4px 0;
+    }
+    .topbar-logout-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      color: #dc2626;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s;
+    }
+    .topbar-logout-btn:hover {
+      background: #fef2f2;
+    }
+    .topbar-logout-btn svg {
+      width: 16px;
+      height: 16px;
     }
     .topbar-avatar {
       width: 38px;
@@ -992,12 +1079,63 @@
       gap: 12px;
     }
 
+    /* Desktop Sidebar Collapsed State */
+    @media (min-width: 993px) {
+      body.sidebar-collapsed .app-sidebar {
+        transform: translateX(-100%);
+        left: 0;
+      }
+      body.sidebar-collapsed .app-main {
+        margin-left: 0;
+        width: 100%;
+      }
+    }
+
+    /* Mobile Sidebar & Drawer Backdrop */
+    .sidebar-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(2px);
+      z-index: 1040;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    .sidebar-backdrop.show {
+      display: block;
+      opacity: 1;
+    }
+
+    .btn-sidebar-collapse {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      color: #94a3b8;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-left: auto;
+    }
+    .btn-sidebar-collapse:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+    }
+
     @media (max-width: 992px) {
       .app-sidebar {
         position: fixed;
         left: -260px;
         top: 0;
         bottom: 0;
+        z-index: 1050;
       }
       .app-sidebar.show {
         left: 0;
@@ -1117,6 +1255,26 @@
     </main>
   </div>
 
+  <!-- Sidebar Drawer Backdrop for Mobile View -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="closeMobileSidebar()"></div>
+
+  <!-- Global Reusable Confirmation Dialog for Logout & Sensitive Admin Actions -->
+  <div id="adminConfirmModal" class="modal-backdrop-paces" style="display:none; z-index:100000;">
+    <div class="modal-dialog-paces" style="max-width:440px; border-radius:14px; overflow:hidden; border:none; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+      <div style="padding:1.75rem 1.5rem 1.25rem; text-align:center;">
+        <div id="adminConfirmIcon" style="width:58px; height:58px; border-radius:50%; background:#fee2e2; color:#ef4444; display:inline-flex; align-items:center; justify-content:center; margin-bottom:1rem; box-shadow:0 4px 12px rgba(239,68,68,0.15);">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </div>
+        <h3 id="adminConfirmTitle" style="font-size:1.15rem; font-weight:600; color:#1e293b; margin:0 0 8px;">Confirm Action</h3>
+        <p id="adminConfirmMessage" style="font-size:0.875rem; color:#64748b; margin:0; line-height:1.5;">Are you sure you want to perform this sensitive action?</p>
+      </div>
+      <div style="display:flex; gap:10px; padding:1rem 1.5rem 1.5rem; background:#f8fafc; border-top:1px solid var(--paces-border); justify-content:flex-end;">
+        <button type="button" id="adminConfirmCancelBtn" onclick="closeAdminConfirmModal()" class="btn-paces btn-paces-outline btn-paces-sm" style="padding:0.5rem 1.25rem; font-weight:500;">Cancel</button>
+        <button type="button" id="adminConfirmProceedBtn" class="btn-paces btn-paces-primary btn-paces-sm" style="padding:0.5rem 1.25rem; background:#dc2626; border-color:#dc2626; font-weight:500;">Proceed</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Real-time Admin Alert Notification Container -->
   <div id="adminNotificationToast"></div>
 
@@ -1168,11 +1326,165 @@
       }
     }
 
-    // Toggle sidebar on mobile
+    // Toggle sidebar on mobile and desktop
     function toggleAdminSidebar() {
+      const isMobile = window.innerWidth <= 992;
       const sidebar = document.getElementById('appSidebar');
-      if (sidebar) sidebar.classList.toggle('show');
+      const backdrop = document.getElementById('sidebarBackdrop');
+
+      if (isMobile) {
+        if (sidebar) {
+          const isOpen = sidebar.classList.toggle('show');
+          if (backdrop) {
+            backdrop.classList.toggle('show', isOpen);
+          }
+        }
+      } else {
+        const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+        try {
+          localStorage.setItem('admin_sidebar_collapsed', isCollapsed ? '1' : '0');
+        } catch (e) {}
+      }
     }
+
+    function closeMobileSidebar() {
+      const sidebar = document.getElementById('appSidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      if (sidebar) sidebar.classList.remove('show');
+      if (backdrop) backdrop.classList.remove('show');
+    }
+
+    // Initialize sidebar collapse state preference on desktop
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        if (window.innerWidth > 992 && localStorage.getItem('admin_sidebar_collapsed') === '1') {
+          document.body.classList.add('sidebar-collapsed');
+        }
+      } catch (e) {}
+    });
+
+    // Reusable Confirmation Modal Helper
+    let confirmProceedCallback = null;
+
+    function openAdminConfirmModal({
+      title = 'Confirm Action',
+      message = 'Are you sure you want to proceed?',
+      confirmText = 'Proceed',
+      confirmColor = '#dc2626',
+      iconType = 'danger',
+      onConfirm = null
+    }) {
+      const modal = document.getElementById('adminConfirmModal');
+      const titleEl = document.getElementById('adminConfirmTitle');
+      const msgEl = document.getElementById('adminConfirmMessage');
+      const btnEl = document.getElementById('adminConfirmProceedBtn');
+      const iconEl = document.getElementById('adminConfirmIcon');
+
+      if (!modal) {
+        if (window.confirm(`${title}\n\n${message}`)) {
+          if (typeof onConfirm === 'function') onConfirm();
+        }
+        return;
+      }
+
+      if (titleEl) titleEl.innerText = title;
+      if (msgEl) msgEl.innerText = message;
+      if (btnEl) {
+        btnEl.innerText = confirmText;
+        btnEl.style.background = confirmColor;
+        btnEl.style.borderColor = confirmColor;
+      }
+
+      if (iconEl) {
+        if (iconType === 'warning') {
+          iconEl.style.background = '#fef3c7';
+          iconEl.style.color = '#d97706';
+          iconEl.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
+        } else {
+          iconEl.style.background = '#fee2e2';
+          iconEl.style.color = '#ef4444';
+          iconEl.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+        }
+      }
+
+      confirmProceedCallback = onConfirm;
+      modal.style.display = 'flex';
+    }
+
+    function closeAdminConfirmModal() {
+      const modal = document.getElementById('adminConfirmModal');
+      if (modal) modal.style.display = 'none';
+      confirmProceedCallback = null;
+    }
+
+    document.getElementById('adminConfirmProceedBtn')?.addEventListener('click', function() {
+      if (typeof confirmProceedCallback === 'function') {
+        const cb = confirmProceedCallback;
+        closeAdminConfirmModal();
+        cb();
+      } else {
+        closeAdminConfirmModal();
+      }
+    });
+
+    // Close on backdrop click
+    document.getElementById('adminConfirmModal')?.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeAdminConfirmModal();
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeAdminConfirmModal();
+        closeMobileSidebar();
+      }
+    });
+
+    // Confirmation for Administrator Logout
+    function confirmAdminLogout(formOrEvent) {
+      if (formOrEvent && formOrEvent.preventDefault) {
+        formOrEvent.preventDefault();
+      }
+      const form = (formOrEvent && formOrEvent.target && formOrEvent.target.tagName === 'FORM') ? formOrEvent.target : (formOrEvent?.tagName === 'FORM' ? formOrEvent : document.getElementById('adminLogoutForm') || document.querySelector('form[action*="logout"]'));
+
+      openAdminConfirmModal({
+        title: 'Sign Out of Admin Console?',
+        message: 'Are you sure you want to sign out? You will need your administrator credentials to access the command center again.',
+        confirmText: 'Sign Out',
+        confirmColor: '#dc2626',
+        iconType: 'warning',
+        onConfirm: () => {
+          if (form) {
+            form.submit();
+          }
+        }
+      });
+      return false;
+    }
+
+    // Intercept forms with data-confirm
+    document.addEventListener('submit', function(e) {
+      const form = e.target;
+      if (form && form.hasAttribute('data-confirm')) {
+        e.preventDefault();
+        const msg = form.getAttribute('data-confirm');
+        const title = form.getAttribute('data-confirm-title') || 'Confirm Action';
+        const btnText = form.getAttribute('data-confirm-btn') || 'Proceed';
+        openAdminConfirmModal({
+          title: title,
+          message: msg,
+          confirmText: btnText,
+          confirmColor: '#dc2626',
+          iconType: 'danger',
+          onConfirm: () => {
+            form.removeAttribute('data-confirm');
+            form.submit();
+          }
+        });
+      }
+    });
 
     // Toggle collapsible submenu group
     function toggleNavGroup(btn) {

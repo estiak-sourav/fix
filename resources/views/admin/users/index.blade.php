@@ -171,7 +171,7 @@
 
                     <!-- Toggle Status Form -->
                     @if(auth('admin')->user()?->hasPermission('users.edit'))
-                      <form action="{{ route('admin.users.toggle-status', $u) }}" method="POST" onsubmit="return confirm('Are you sure you want to {{ $u->is_active ? 'deactivate' : 'activate' }} client {{ $u->name }}?');" style="margin:0;">
+                      <form action="{{ route('admin.users.toggle-status', $u) }}" method="POST" data-confirm="Are you sure you want to {{ $u->is_active ? 'deactivate' : 'activate' }} client {{ $u->name }}?" data-confirm-title="{{ $u->is_active ? 'Deactivate' : 'Activate' }} Client Account?" data-confirm-btn="{{ $u->is_active ? 'Deactivate' : 'Activate' }}" style="margin:0;">
                         @csrf
                         @if($u->is_active)
                           <button type="submit" class="btn-paces btn-paces-sm" style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626;" title="Deactivate Account">

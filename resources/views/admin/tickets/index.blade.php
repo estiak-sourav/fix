@@ -9,12 +9,14 @@
       <h1 class="page-header-title">Support Tickets Command Center</h1>
     </div>
     
-    <div style="display:flex; gap:10px;">
-      <a href="{{ route('admin.tickets.create') }}" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:6px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        <span>New Support Ticket</span>
-      </a>
-    </div>
+    @if(auth('admin')->user()?->hasPermission('tickets.edit'))
+      <div style="display:flex; gap:10px;">
+        <a href="{{ route('admin.tickets.create') }}" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>New Support Ticket</span>
+        </a>
+      </div>
+    @endif
   </div>
 
   @if(session('success'))
@@ -120,9 +122,11 @@
         <div style="font-size:2.5rem; margin-bottom:10px;">🎫</div>
         <h3 style="font-size:1.15rem; font-weight:500; color:#1e293b; margin-bottom:4px;">No Support Tickets Found</h3>
         <p style="font-size:0.875rem; margin:0 auto 1.25rem; max-width:380px;">No tickets matched your selected status or filter parameters.</p>
-        <a href="{{ route('admin.tickets.create') }}" class="btn-paces btn-paces-primary btn-paces-sm">
-          + Create New Support Ticket
-        </a>
+        @if(auth('admin')->user()?->hasPermission('tickets.edit'))
+          <a href="{{ route('admin.tickets.create') }}" class="btn-paces btn-paces-primary btn-paces-sm">
+            + Create New Support Ticket
+          </a>
+        @endif
       </div>
     @else
       <div style="overflow-x:auto;">

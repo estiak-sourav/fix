@@ -225,19 +225,25 @@
           </div>
 
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-            <button type="submit" class="btn-paces btn-paces-primary" style="padding:10px 24px;">
-              {{ $partner->status === 'approved' ? '✓ Update Partner & Payout Details' : '✓ Approve & Enlist in Dispatch Network' }}
-            </button>
+            @if(auth('admin')->user()?->hasPermission('users.edit'))
+              <button type="submit" class="btn-paces btn-paces-primary" style="padding:10px 24px;">
+                {{ $partner->status === 'approved' ? '✓ Update Partner & Payout Details' : '✓ Approve & Enlist in Dispatch Network' }}
+              </button>
 
-            @if($partner->status !== 'rejected')
-              <form action="{{ route('admin.partners.status', $partner) }}" method="POST" style="margin:0; display:inline;">
-                @csrf
-                @method('PUT')
-                <input type="hidden" name="status" value="rejected">
-                <button type="submit" onclick="return confirm('Reject this contractor application?');" class="btn-paces btn-paces-outline" style="color:#dc2626; border-color:#fca5a5;">
-                  ✕ Reject Application
-                </button>
-              </form>
+              @if($partner->status !== 'rejected')
+                <form action="{{ route('admin.partners.status', $partner) }}" method="POST" style="margin:0; display:inline;" data-confirm="Reject this contractor application?" data-confirm-title="Reject Partner Application?" data-confirm-btn="Reject Application">
+                  @csrf
+                  @method('PUT')
+                  <input type="hidden" name="status" value="rejected">
+                  <button type="submit" class="btn-paces btn-paces-outline" style="color:#dc2626; border-color:#fca5a5;">
+                    ✕ Reject Application
+                  </button>
+                </form>
+              @endif
+            @else
+              <span style="font-size:0.825rem; color:var(--paces-text-muted);">
+                View-only access. Account approval requires edit permission.
+              </span>
             @endif
           </div>
         </form>

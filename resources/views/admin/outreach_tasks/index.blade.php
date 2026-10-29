@@ -78,12 +78,14 @@
       <h1 class="page-header-title">Outreach Tasks</h1>
       <p class="page-header-subtitle">Manage customer outreaches, follow-up calls, booking confirmations, and action items</p>
     </div>
-    <div style="display:flex; gap:10px; align-items:center;">
-      <button type="button" onclick="openCreateTaskModal()" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:6px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        <span>New Task</span>
-      </button>
-    </div>
+    @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button type="button" onclick="openCreateTaskModal()" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>New Task</span>
+        </button>
+      </div>
+    @endif
   </div>
 
   @if(session('success'))
@@ -287,9 +289,11 @@
         </div>
         <h4 style="font-size:1.05rem; font-weight:600; color:#1e293b; margin:0 0 6px;">No Outreach Tasks Found</h4>
         <p style="font-size:0.825rem; color:#64748b; margin:0 0 16px;">There are no tasks matching your current filter or search criteria.</p>
-        <button type="button" onclick="openCreateTaskModal()" class="btn-paces btn-paces-primary btn-paces-sm">
-          <span>Create First Task</span>
-        </button>
+        @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+          <button type="button" onclick="openCreateTaskModal()" class="btn-paces btn-paces-primary btn-paces-sm">
+            <span>Create First Task</span>
+          </button>
+        @endif
       </div>
     @endforelse
   </div>
@@ -355,22 +359,24 @@
       </div>
 
       <!-- Modal Actions -->
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-        <form id="modalDeleteForm" method="POST" style="margin:0;" onsubmit="return confirm('Delete this task?');">
-          @csrf
-          @method('DELETE')
-          <button type="submit" class="btn-paces btn-paces-sm" style="color:#ef4444; border:1px solid #fecaca; background:#fff; height:36px; padding:0 12px;">Delete</button>
-        </form>
-
-        <div style="display:flex; gap:8px;">
-          <button type="button" id="modalEditBtn" class="btn-paces btn-paces-outline btn-paces-sm" style="height:36px; padding:0 14px;">Edit Task</button>
-          
-          <form id="modalCompleteForm" method="POST" style="margin:0;">
+      @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <form id="modalDeleteForm" method="POST" style="margin:0;" data-confirm="Are you sure you want to delete this outreach task?" data-confirm-title="Delete Outreach Task?" data-confirm-btn="Delete Task">
             @csrf
-            <button type="submit" id="modalCompleteBtn" class="btn-paces btn-paces-primary btn-paces-sm" style="height:36px; padding:0 16px;">Mark Completed</button>
+            @method('DELETE')
+            <button type="submit" class="btn-paces btn-paces-sm" style="color:#ef4444; border:1px solid #fecaca; background:#fff; height:36px; padding:0 12px;">Delete</button>
           </form>
+
+          <div style="display:flex; gap:8px;">
+            <button type="button" id="modalEditBtn" class="btn-paces btn-paces-outline btn-paces-sm" style="height:36px; padding:0 14px;">Edit Task</button>
+            
+            <form id="modalCompleteForm" method="POST" style="margin:0;">
+              @csrf
+              <button type="submit" id="modalCompleteBtn" class="btn-paces btn-paces-primary btn-paces-sm" style="height:36px; padding:0 16px;">Mark Completed</button>
+            </form>
+          </div>
         </div>
-      </div>
+      @endif
     </div>
   </div>
 

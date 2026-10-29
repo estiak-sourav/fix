@@ -258,7 +258,7 @@
                     </a>
 
                     <!-- Quick Password Reset to default -->
-                    <form action="{{ route('admin.staff.reset-password', $member) }}" method="POST" onsubmit="return confirm('Reset password for {{ $member->name }} to default (password123)? They will be forced to change it on next login.')" style="display:inline;">
+                    <form action="{{ route('admin.staff.reset-password', $member) }}" method="POST" data-confirm="Reset password for {{ $member->name }} to default (password123)? They will be forced to change it on next login." data-confirm-title="Reset Staff Password?" data-confirm-btn="Reset Password" style="display:inline;">
                       @csrf
                       <button type="submit" class="btn-paces btn-paces-outline btn-paces-sm" title="Reset to default password" style="color:#d97706; border-color:#fde68a;">
                         Reset Pwd
@@ -267,7 +267,7 @@
 
                     <!-- Toggle Status -->
                     @if($member->id !== auth('admin')->id())
-                      <form action="{{ route('admin.staff.toggle-status', $member) }}" method="POST" style="display:inline;">
+                      <form action="{{ route('admin.staff.toggle-status', $member) }}" method="POST" data-confirm="Are you sure you want to {{ $member->is_active ? 'deactivate' : 'activate' }} staff account {{ $member->name }}?" data-confirm-title="{{ $member->is_active ? 'Deactivate' : 'Activate' }} Staff?" data-confirm-btn="{{ $member->is_active ? 'Deactivate' : 'Activate' }}" style="display:inline;">
                         @csrf
                         <button type="submit" class="btn-paces btn-paces-outline btn-paces-sm" style="color:{{ $member->is_active ? '#dc2626' : '#16a34a' }};">
                           {{ $member->is_active ? 'Deactivate' : 'Activate' }}
@@ -275,7 +275,7 @@
                       </form>
 
                       <!-- Delete -->
-                      <form action="{{ route('admin.staff.destroy', $member) }}" method="POST" onsubmit="return confirm('Permanently delete staff account {{ $member->name }}?')" style="display:inline;">
+                      <form action="{{ route('admin.staff.destroy', $member) }}" method="POST" data-confirm="Permanently delete staff account {{ $member->name }}? This action cannot be reversed." data-confirm-title="Delete Staff Member?" data-confirm-btn="Delete Staff" style="display:inline;">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn-paces btn-paces-outline btn-paces-sm" style="color:#dc2626; border-color:#fecaca;">

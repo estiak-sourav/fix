@@ -13,7 +13,7 @@
         </form>
       @endif
 
-      <form action="{{ route('admin.notifications.clear-read') }}" method="POST" onsubmit="return confirm('Clear all resolved/read notifications?');" style="margin:0;">
+      <form action="{{ route('admin.notifications.clear-read') }}" method="POST" data-confirm="Are you sure you want to clear all read notifications from your history?" data-confirm-title="Clear Read History?" data-confirm-btn="Clear Notifications" style="margin:0;">
         @csrf
         <button type="submit" class="btn-paces btn-paces-outline btn-paces-sm">
           Clear Read History
@@ -194,7 +194,7 @@
                 </form>
               @endif
 
-              <form action="{{ route('admin.notifications.destroy', $n) }}" method="POST" onsubmit="return confirm('Delete this notification?');" style="margin:0;">
+              <form action="{{ route('admin.notifications.destroy', $n) }}" method="POST" data-confirm="Are you sure you want to permanently delete this notification?" data-confirm-title="Delete Notification?" data-confirm-btn="Delete" style="margin:0;">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn-paces btn-paces-outline btn-paces-sm" title="Delete notification" style="color:#ef4444;">

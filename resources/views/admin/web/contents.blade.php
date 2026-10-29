@@ -292,34 +292,36 @@
 
           <!-- Quick Actions: Toggle Status & Edit -->
           <div style="display:flex; align-items:center; gap:8px;">
-            <form action="{{ route('admin.web.contents.toggle', $content) }}" method="POST" style="margin:0;">
-              @csrf
-              @if($content->is_active ?? true)
-                <button type="submit" 
-                        class="btn-paces btn-paces-sm" 
-                        title="Click to hide this section from the live website"
-                        style="background:#ffffff; border:1px solid #cbd5e1; color:#64748b; font-size:0.8rem; font-weight:500; display:inline-flex; align-items:center; gap:5px; padding:6px 11px; border-radius:6px;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                  <span>Hide Section</span>
-                </button>
-              @else
-                <button type="submit" 
-                        class="btn-paces btn-paces-sm" 
-                        title="Click to show this section on the live website"
-                        style="background:#ecfdf5; border:1px solid #a7f3d0; color:#059669; font-size:0.8rem; font-weight:600; display:inline-flex; align-items:center; gap:5px; padding:6px 11px; border-radius:6px;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                  <span>Show Section</span>
-                </button>
-              @endif
-            </form>
+            @if(auth('admin')->user()?->hasPermission('web_content.edit'))
+              <form action="{{ route('admin.web.contents.toggle', $content) }}" method="POST" style="margin:0;">
+                @csrf
+                @if($content->is_active ?? true)
+                  <button type="submit" 
+                          class="btn-paces btn-paces-sm" 
+                          title="Click to hide this section from the live website"
+                          style="background:#ffffff; border:1px solid #cbd5e1; color:#64748b; font-size:0.8rem; font-weight:500; display:inline-flex; align-items:center; gap:5px; padding:6px 11px; border-radius:6px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                    <span>Hide Section</span>
+                  </button>
+                @else
+                  <button type="submit" 
+                          class="btn-paces btn-paces-sm" 
+                          title="Click to show this section on the live website"
+                          style="background:#ecfdf5; border:1px solid #a7f3d0; color:#059669; font-size:0.8rem; font-weight:600; display:inline-flex; align-items:center; gap:5px; padding:6px 11px; border-radius:6px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    <span>Show Section</span>
+                  </button>
+                @endif
+              </form>
 
-            <button type="button" 
-                    class="btn-paces cms-brand-btn btn-paces-sm" 
-                    onclick="openSectionModal({{ $content->id }})"
-                    style="display:inline-flex; align-items:center; gap:6px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-              <span>Edit Section</span>
-            </button>
+              <button type="button" 
+                      class="btn-paces cms-brand-btn btn-paces-sm" 
+                      onclick="openSectionModal({{ $content->id }})"
+                      style="display:inline-flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                <span>Edit Section</span>
+              </button>
+            @endif
           </div>
         </div>
 

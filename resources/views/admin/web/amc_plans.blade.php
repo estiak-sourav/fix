@@ -9,9 +9,11 @@
         <span>View Live Website</span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
       </a>
-      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddPlanModal()">
-        + Add New Package
-      </button>
+      @if(auth('admin')->user()?->hasPermission('amc_plans.edit'))
+        <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddPlanModal()">
+          + Add New Package
+        </button>
+      @endif
     </div>
   </div>
 
@@ -125,43 +127,48 @@
                     Details
                   </button>
 
-                  <!-- Direct Edit Button -->
-                  <button type="button" 
-                          class="btn-paces btn-paces-primary btn-paces-sm" 
-                          onclick="openEditPlanModal({{ $plan->id }})" 
-                          title="Edit Package">
-                    Edit
-                  </button>
-
-                  <!-- Status Toggle Form -->
-                  <form action="{{ route('admin.web.amc-plans.toggle-status', $plan) }}" method="POST" style="margin:0;">
-                    @csrf
-                    @if($plan->is_active)
-                      <button type="submit" class="btn-paces btn-paces-sm" style="background:#fef3c7; border:1px solid #fde68a; color:#b45309;" title="Deactivate">
-                        Disable
-                      </button>
-                    @else
-                      <button type="submit" class="btn-paces btn-paces-sm" style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a;" title="Activate">
-                        Enable
-                      </button>
-                    @endif
-                  </form>
-
-                  <!-- Delete Form -->
-                  <form action="{{ route('admin.web.amc-plans.destroy', $plan) }}" method="POST" onsubmit="return confirm('Permanently delete AMC package \'{{ $plan->name }}\'?');" style="margin:0;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn-paces btn-paces-sm" style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626;" title="Delete">
-                      ✕
+                  @if(auth('admin')->user()?->hasPermission('amc_plans.edit'))
+                    <!-- Direct Edit Button -->
+                    <button type="button" 
+                            class="btn-paces btn-paces-primary btn-paces-sm" 
+                            onclick="openEditPlanModal({{ $plan->id }})" 
+                            title="Edit Package">
+                      Edit
                     </button>
-                  </form>
+
+                    <!-- Status Toggle Form -->
+                    <form action="{{ route('admin.web.amc-plans.toggle-status', $plan) }}" method="POST" style="margin:0;">
+                      @csrf
+                      @if($plan->is_active)
+                        <button type="submit" class="btn-paces btn-paces-sm" style="background:#fef3c7; border:1px solid #fde68a; color:#b45309;" title="Deactivate">
+                          Disable
+                        </button>
+                      @else
+                        <button type="submit" class="btn-paces btn-paces-sm" style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a;" title="Activate">
+                          Enable
+                        </button>
+                      @endif
+                    </form>
+
+                    <!-- Delete Form -->
+                    <form action="{{ route('admin.web.amc-plans.destroy', $plan) }}" method="POST" data-confirm="Permanently delete AMC package '{{ $plan->name }}'?" data-confirm-title="Delete AMC Package?" data-confirm-btn="Delete Package" style="margin:0;">
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" class="btn-paces btn-paces-sm" style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626;" title="Delete">
+                        ✕
+                      </button>
+                    </form>
+                  @endif
                 </div>
               </td>
             </tr>
           @empty
             <tr>
               <td colspan="6" style="text-align:center; padding:2rem; color:var(--paces-text-muted);">
-                No AMC maintenance packages configured yet. Click "+ Add New Package" to get started.
+                No AMC maintenance packages configured yet.
+                @if(auth('admin')->user()?->hasPermission('amc_plans.edit'))
+                  Click "+ Add New Package" to get started.
+                @endif
               </td>
             </tr>
           @endforelse

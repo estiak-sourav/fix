@@ -262,4 +262,110 @@ class AdminRoleAndPermissionTest extends TestCase
         $this->assertTrue($staff->must_change_password);
         $this->assertTrue(Hash::check('password123', $staff->password));
     }
+
+    /**
+     * 9. View-only staff user does not see edit or management buttons in CMS and Services.
+     */
+    public function test_view_only_staff_does_not_see_edit_buttons(): void
+    {
+        $viewerStaff = Admin::create([
+            'name' => 'Read Only Officer',
+            'email' => 'viewer@fix.com.bd',
+            'password' => Hash::make('password123!'),
+            'role' => 'admin',
+            'is_active' => true,
+            'must_change_password' => false,
+            'permissions' => [
+                'dashboard.view',
+                'web_content.view',
+                'services.view',
+                'amc_plans.view',
+                'settings.view',
+            ],
+        ]);
+
+        // 1. Web contents page: Should see content but NOT 'Edit Section'
+        $contentsRes = $this->actingAs($viewerStaff, 'admin')->get(route('admin.web.contents'));
+        $contentsRes->assertOk();
+        $contentsRes->assertDontSee('Edit Section');
+        $contentsRes->assertDontSee('Hide Section');
+
+        // 2. FAQs page: Should NOT see edit modal trigger button
+        $faqsRes = $this->actingAs($viewerStaff, 'admin')->get(route('admin.web.faqs'));
+        $faqsRes->assertOk();
+        $faqsRes->assertDontSee('onclick="openEditFaqModal');
+        $faqsRes->assertSee('View Only');
+
+        // 3. Testimonials page: Should NOT see edit modal trigger button
+        $testimonialsRes = $this->actingAs($viewerStaff, 'admin')->get(route('admin.web.testimonials'));
+        $testimonialsRes->assertOk();
+        $testimonialsRes->assertDontSee('onclick="openEditTestimonialModal');
+        $testimonialsRes->assertSee('View Only');
+
+        // 4. Services list: Should NOT see 'Add New Service'
+        $servicesRes = $this->actingAs($viewerStaff, 'admin')->get(route('admin.web.services'));
+        $servicesRes->assertOk();
+        $servicesRes->assertDontSee('Add New Service');
+        $servicesRes->assertSee('View Only');
+
+        // 5. AMC Plans page: Should NOT see '+ Add New Package'
+        $amcRes = $this->actingAs($viewerStaff, 'admin')->get(route('admin.web.amc-plans'));
+        $amcRes->assertOk();
+        $amcRes->assertDontSee('+ Add New Package');
+
+        // 6. Settings page: Should NOT see 'Save Site Settings' submit button
+        $settingsRes = $this->actingAs($viewerStaff, 'admin')->get(route('admin.web.settings'));
+        $settingsRes->assertOk();
+        $settingsRes->assertDontSee('Save Site Settings');
+    }
+
+    /**
+     * 10. Staff with edit permissions or Super Admin sees all edit buttons, My Profile link, and modal markup.
+     */
+    public function test_editor_staff_and_super_admin_sees_edit_buttons_and_profile(): void
+    {
+        $editorStaff = Admin::create([
+            'name' => 'Editor Officer',
+            'email' => 'editor@fix.com.bd',
+            'password' => Hash::make('password123!'),
+            'role' => 'admin',
+            'is_active' => true,
+            'must_change_password' => false,
+            'permissions' => [
+                'web_content.edit',
+                'services.edit',
+                'amc_plans.edit',
+                'settings.edit',
+            ],
+        ]);
+
+        $contentsRes = $this->actingAs($editorStaff, 'admin')->get(route('admin.web.contents'));
+        $contentsRes->assertOk();
+        $contentsRes->assertSee('Edit Section');
+
+        $faqsRes = $this->actingAs($editorStaff, 'admin')->get(route('admin.web.faqs'));
+        $faqsRes->assertOk();
+        $faqsRes->assertSee('onclick="openEditFaqModal', false);
+
+        $testimonialsRes = $this->actingAs($editorStaff, 'admin')->get(route('admin.web.testimonials'));
+        $testimonialsRes->assertOk();
+        $testimonialsRes->assertSee('onclick="openEditTestimonialModal', false);
+
+        $servicesRes = $this->actingAs($editorStaff, 'admin')->get(route('admin.web.services'));
+        $servicesRes->assertOk();
+        $servicesRes->assertSee('Add New Service');
+
+        $amcRes = $this->actingAs($editorStaff, 'admin')->get(route('admin.web.amc-plans'));
+        $amcRes->assertOk();
+        $amcRes->assertSee('+ Add New Package');
+
+        // Check Profile Page is accessible and layout has confirmation modal & burger toggle
+        $profileRes = $this->actingAs($editorStaff, 'admin')->get(route('admin.profile'));
+        $profileRes->assertOk();
+        $profileRes->assertSee('My Profile');
+        $profileRes->assertSee('Update DP');
+        $profileRes->assertSee('adminConfirmModal');
+        $profileRes->assertSee('btn-topbar-toggle');
+        $profileRes->assertSee('btn-sidebar-collapse');
+    }
 }

@@ -339,68 +339,76 @@
               </div>
             @endif
 
-            <div style="text-align:right;">
-              <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" onclick="const f = document.getElementById('amcActivationForm'); if(f) f.style.display = f.style.display === 'none' ? 'block' : 'none';" style="font-size:0.8rem;">
-                Update Contract Details / Re-upload Agreement
-              </button>
-            </div>
+            @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+              <div style="text-align:right;">
+                <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" onclick="const f = document.getElementById('amcActivationForm'); if(f) f.style.display = f.style.display === 'none' ? 'block' : 'none';" style="font-size:0.8rem;">
+                  Update Contract Details / Re-upload Agreement
+                </button>
+              </div>
+            @endif
           @endif
 
-          <!-- AMC Activation / Update Form -->
-          <div id="amcActivationForm" style="display:{{ $booking->contract_status === 'active' ? 'none' : 'block' }}; {{ $booking->contract_status === 'active' ? 'margin-top:1rem; border-top:1px dashed var(--paces-border); padding-top:1rem;' : '' }}">
-            @if($booking->contract_status !== 'active')
-              <p style="font-size:0.825rem; color:var(--paces-text-muted); margin-bottom:1rem;">
-                Once the initial facility inspection is complete and terms are agreed with the client, activate the AMC contract and upload a scan or photo of the signed agreement.
-              </p>
-            @endif
+          @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+            <!-- AMC Activation / Update Form -->
+            <div id="amcActivationForm" style="display:{{ $booking->contract_status === 'active' ? 'none' : 'block' }}; {{ $booking->contract_status === 'active' ? 'margin-top:1rem; border-top:1px dashed var(--paces-border); padding-top:1rem;' : '' }}">
+              @if($booking->contract_status !== 'active')
+                <p style="font-size:0.825rem; color:var(--paces-text-muted); margin-bottom:1rem;">
+                  Once the initial facility inspection is complete and terms are agreed with the client, activate the AMC contract and upload a scan or photo of the signed agreement.
+                </p>
+              @endif
 
-            <form action="{{ route('admin.bookings.activate-amc', $booking) }}" method="POST" enctype="multipart/form-data">
-              @csrf
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-                <div>
-                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Select AMC Package *</label>
-                  <select name="amc_plan_id" class="form-control-paces" required>
-                    <option value="">-- Choose AMC Package --</option>
-                    @foreach($amcPlans as $plan)
-                      <option value="{{ $plan->id }}" {{ (old('amc_plan_id', $booking->amc_plan_id) == $plan->id) ? 'selected' : '' }}>
-                        {{ $plan->name }} ({{ $plan->tier }} - {{ $plan->price_period }})
-                      </option>
-                    @endforeach
-                  </select>
+              <form action="{{ route('admin.bookings.activate-amc', $booking) }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                  <div>
+                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Select AMC Package *</label>
+                    <select name="amc_plan_id" class="form-control-paces" required>
+                      <option value="">-- Choose AMC Package --</option>
+                      @foreach($amcPlans as $plan)
+                        <option value="{{ $plan->id }}" {{ (old('amc_plan_id', $booking->amc_plan_id) == $plan->id) ? 'selected' : '' }}>
+                          {{ $plan->name }} ({{ $plan->tier }} - {{ $plan->price_period }})
+                        </option>
+                      @endforeach
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Agreed Contract Cost (৳)</label>
+                    <input type="number" step="0.01" name="contract_cost" value="{{ old('contract_cost', $booking->final_cost) }}" placeholder="e.g. 50000.00" class="form-control-paces">
+                  </div>
                 </div>
-                <div>
-                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Agreed Contract Cost (৳)</label>
-                  <input type="number" step="0.01" name="contract_cost" value="{{ old('contract_cost', $booking->final_cost) }}" placeholder="e.g. 50000.00" class="form-control-paces">
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                  <div>
+                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Contract Start Date *</label>
+                    <input type="date" name="contract_start_date" value="{{ old('contract_start_date', $booking->contract_start_date?->format('Y-m-d') ?: date('Y-m-d')) }}" class="form-control-paces" required>
+                  </div>
+                  <div>
+                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Contract End Date *</label>
+                    <input type="date" name="contract_end_date" value="{{ old('contract_end_date', $booking->contract_end_date?->format('Y-m-d') ?: date('Y-m-d', strtotime('+1 year'))) }}" class="form-control-paces" required>
+                  </div>
                 </div>
-              </div>
 
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-                <div>
-                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Contract Start Date *</label>
-                  <input type="date" name="contract_start_date" value="{{ old('contract_start_date', $booking->contract_start_date?->format('Y-m-d') ?: date('Y-m-d')) }}" class="form-control-paces" required>
+                <div style="margin-bottom:12px;">
+                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Upload Signed Agreement Copy (Image or PDF)</label>
+                  <input type="file" name="agreement_file" accept="image/*,.pdf" class="form-control-paces">
+                  <span class="form-help-paces">Upload scan/photo of the signed agreement or contract PDF (Max: 10MB).</span>
                 </div>
-                <div>
-                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Contract End Date *</label>
-                  <input type="date" name="contract_end_date" value="{{ old('contract_end_date', $booking->contract_end_date?->format('Y-m-d') ?: date('Y-m-d', strtotime('+1 year'))) }}" class="form-control-paces" required>
+
+                <div style="margin-bottom:12px;">
+                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Agreement Notes / Scope Summary</label>
+                  <textarea name="amc_package_notes" class="form-control-paces" rows="3" placeholder="Key service scope deliverables, quarterly visit frequency, assigned lead team...">{{ old('amc_package_notes', $booking->amc_package_notes) }}</textarea>
                 </div>
-              </div>
 
-              <div style="margin-bottom:12px;">
-                <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Upload Signed Agreement Copy (Image or PDF)</label>
-                <input type="file" name="agreement_file" accept="image/*,.pdf" class="form-control-paces">
-                <span class="form-help-paces">Upload scan/photo of the signed agreement or contract PDF (Max: 10MB).</span>
-              </div>
-
-              <div style="margin-bottom:12px;">
-                <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Agreement Notes / Scope Summary</label>
-                <textarea name="amc_package_notes" class="form-control-paces" rows="3" placeholder="Key service scope deliverables, quarterly visit frequency, assigned lead team...">{{ old('amc_package_notes', $booking->amc_package_notes) }}</textarea>
-              </div>
-
-              <button type="submit" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:6px;">
-                <span>✓ {{ $booking->contract_status === 'active' ? 'Save & Update Contract Details' : 'Activate AMC Contract' }}</span>
-              </button>
-            </form>
-          </div>
+                <button type="submit" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:6px;">
+                  <span>✓ {{ $booking->contract_status === 'active' ? 'Save & Update Contract Details' : 'Activate AMC Contract' }}</span>
+                </button>
+              </form>
+            </div>
+          @elseif($booking->contract_status !== 'active')
+            <div style="font-size:0.825rem; color:var(--paces-text-muted); font-style:italic;">
+              AMC contract activation requires edit permission.
+            </div>
+          @endif
         </div>
       </div>
 

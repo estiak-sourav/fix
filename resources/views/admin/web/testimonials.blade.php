@@ -9,10 +9,12 @@
         <span>View Live Website</span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
       </a>
-      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddTestimonialModal()" style="display:inline-flex; align-items:center; gap:6px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        <span>Add Testimonial</span>
-      </button>
+      @if(auth('admin')->user()?->hasPermission('web_content.edit'))
+        <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddTestimonialModal()" style="display:inline-flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Add Testimonial</span>
+        </button>
+      @endif
     </div>
   </div>
 
@@ -137,13 +139,17 @@
                 </div>
               </td>
               <td style="text-align:right;">
-                <button type="button" 
-                        class="btn-paces btn-paces-primary btn-paces-sm" 
-                        onclick="openEditTestimonialModal({{ json_encode($testimonialData) }})"
-                        style="display:inline-flex; align-items:center; gap:5px; padding:0.35rem 0.75rem;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                  <span>Edit</span>
-                </button>
+                @if(auth('admin')->user()?->hasPermission('web_content.edit'))
+                  <button type="button" 
+                          class="btn-paces btn-paces-primary btn-paces-sm" 
+                          onclick="openEditTestimonialModal({{ json_encode($testimonialData) }})"
+                          style="display:inline-flex; align-items:center; gap:5px; padding:0.35rem 0.75rem;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    <span>Edit</span>
+                  </button>
+                @else
+                  <span style="font-size:0.75rem; color:var(--paces-text-muted);">View Only</span>
+                @endif
               </td>
             </tr>
           @empty
@@ -152,9 +158,11 @@
                 <div style="font-size:1.8rem; margin-bottom:8px;">💬</div>
                 <div style="font-weight:500;">No testimonials added yet.</div>
                 <p style="margin:4px 0 12px; font-size:0.82rem;">Add your first client review to show on the website.</p>
-                <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddTestimonialModal()">
-                  Add Testimonial
-                </button>
+                @if(auth('admin')->user()?->hasPermission('web_content.edit'))
+                  <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddTestimonialModal()">
+                    Add Testimonial
+                  </button>
+                @endif
               </td>
             </tr>
           @endforelse
@@ -413,12 +421,18 @@
     }
 
     function triggerDeleteTestimonial() {
-      if (!confirm('Are you sure you want to permanently delete this testimonial?')) {
-        return;
-      }
-      const delForm = document.getElementById('deleteTestimonialForm');
-      delForm.action = activeDeleteUrl;
-      delForm.submit();
+      openAdminConfirmModal({
+        title: 'Delete Testimonial?',
+        message: 'Are you sure you want to permanently delete this testimonial? This action cannot be undone.',
+        confirmText: 'Delete Testimonial',
+        confirmColor: '#dc2626',
+        iconType: 'danger',
+        onConfirm: () => {
+          const delForm = document.getElementById('deleteTestimonialForm');
+          delForm.action = activeDeleteUrl;
+          delForm.submit();
+        }
+      });
     }
 
     function previewAvatar(input, imgId, placeholderId) {

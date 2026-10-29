@@ -18,11 +18,11 @@ class AdminPermissionService
             ],
         ],
         'bookings' => [
-            'name' => 'Work Orders & Bookings',
-            'description' => 'Customer work orders, field technician dispatching, urgency SLA, and billing.',
+            'name' => 'Work Orders, AMC Contracts & Outreach',
+            'description' => 'Customer work orders, field technician dispatching, AMC contract activation, urgency SLA, and billing.',
             'permissions' => [
                 'bookings.view' => 'View Work Orders & Details',
-                'bookings.edit' => 'Update Status, Assign Staff & Add Logs',
+                'bookings.edit' => 'Update Status, Activate AMC, Assign Staff & Add Logs',
             ],
         ],
         'tickets' => [
@@ -34,11 +34,11 @@ class AdminPermissionService
             ],
         ],
         'users' => [
-            'name' => 'Client Users Directory',
-            'description' => 'Registered customer accounts, corporate metadata, location history, and access toggle.',
+            'name' => 'Client Users & Partner Crews',
+            'description' => 'Registered customer accounts, partner applications, crew approvals, and access toggles.',
             'permissions' => [
-                'users.view' => 'View Client Profiles & Orders',
-                'users.edit' => 'Edit Client Info & Activate / Deactivate Accounts',
+                'users.view' => 'View Client Profiles & Partner Crews',
+                'users.edit' => 'Edit Clients, Approve Partners & Manage Access',
             ],
         ],
         'services' => [

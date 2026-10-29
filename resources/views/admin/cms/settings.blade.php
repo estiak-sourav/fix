@@ -391,9 +391,16 @@
 
       <!-- Action Button -->
       <div style="margin-top:1.5rem; margin-bottom:2rem;">
-        <button type="submit" class="btn-paces btn-paces-primary" style="padding:0.75rem 2rem; font-size:0.95rem; font-weight:500;">
-          Save Site Settings
-        </button>
+        @if(auth('admin')->user()?->hasPermission('settings.edit'))
+          <button type="submit" class="btn-paces btn-paces-primary" style="padding:0.75rem 2rem; font-size:0.95rem; font-weight:500;">
+            Save Site Settings
+          </button>
+        @else
+          <div style="padding:0.75rem 1.25rem; background:#f1f5f9; border-radius:8px; color:var(--paces-text-muted); font-size:0.875rem; display:inline-flex; align-items:center; gap:6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <span>You have view-only access to Site Settings.</span>
+          </div>
+        @endif
       </div>
 
     </form>
