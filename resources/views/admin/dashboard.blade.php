@@ -52,17 +52,19 @@
     }
     .earnings-analytics-grid {
       display: grid;
-      grid-template-columns: 2fr 1fr;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
       gap: 1.5rem;
       margin-bottom: 1.5rem;
       min-width: 0;
+      width: 100%;
     }
     .earning-card-body {
       display: grid;
-      grid-template-columns: 230px 1fr;
+      grid-template-columns: 230px minmax(0, 1fr);
       gap: 1.5rem;
       align-items: center;
       min-width: 0;
+      width: 100%;
     }
     @media (max-width: 992px) {
       .earnings-analytics-grid {
@@ -74,10 +76,11 @@
     }
     .top-tasks-chat-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 1.5rem;
       margin-bottom: 1.5rem;
       min-width: 0;
+      width: 100%;
     }
     @media (max-width: 1200px) {
       .top-tasks-chat-grid {
@@ -95,6 +98,13 @@
       gap: 20px;
       align-items: stretch;
       min-width: 0;
+      width: 100%;
+    }
+    .analytics-canvas-wrapper {
+      position: relative;
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
     }
     .analytics-counters-panel {
       display: grid;
@@ -148,10 +158,11 @@
     }
     .operational-insights-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 1.5rem;
       margin-bottom: 1.5rem;
       min-width: 0;
+      width: 100%;
     }
     @media (max-width: 992px) {
       .operational-insights-grid {
@@ -160,8 +171,10 @@
     }
     .hotspots-area-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 10px;
+      min-width: 0;
+      width: 100%;
     }
     @media (max-width: 640px) {
       .hotspots-area-grid {
@@ -330,7 +343,7 @@
   <!-- =========================================================================
        CLEAN BARCHART SECTION (SCREENSHOT DESIGN PATTERN - 10 DEDICATED METRIC BARS)
        ========================================================================= -->
-  <div class="card-paces card-paces-analytics" style="padding: 24px 28px; margin-bottom: 1.75rem; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+  <div class="card-paces card-paces-analytics" style="padding: 24px 28px; margin-bottom: 1.75rem; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); min-width: 0; max-width: 100%;">
     <!-- Header with Title -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 22px;">
       <h2 style="font-size: 1.25rem; font-weight: 500; color: #1e293b; margin: 0; font-family: 'Poppins', sans-serif;">
@@ -341,8 +354,8 @@
   <!-- Main Analytics Body: BarChart on Left (Compact Width) and 10 Counters on Right -->
   <div class="analytics-barchart-grid">
     <!-- Left: Clean BarChart Canvas (Width reduced so bars are closer together) -->
-    <div class="analytics-canvas-wrapper" style="position:relative; min-height: 380px; width: 100%; min-width: 0;">
-      <canvas id="unifiedCleanBarChart"></canvas>
+    <div class="analytics-canvas-wrapper" style="position:relative; min-height: 380px; width: 100%; min-width: 0; overflow: hidden;">
+      <canvas id="unifiedCleanBarChart" style="max-width: 100% !important;"></canvas>
     </div>
 
     <!-- Right: 10 Metric Counter Cards (Organized in 2 columns of 5) -->
@@ -881,8 +894,8 @@
         </div>
 
         <!-- Spline Line Chart -->
-        <div style="position:relative; width:100%; height:200px;">
-          <canvas id="earningSplineChart"></canvas>
+        <div style="position:relative; width:100%; height:200px; min-width:0; overflow:hidden;">
+          <canvas id="earningSplineChart" style="max-width: 100% !important;"></canvas>
         </div>
       </div>
     </div>
@@ -896,8 +909,8 @@
       </div>
 
       <!-- Donut Chart Canvas with in-slice percentage rendering -->
-      <div style="position:relative; width:100%; height:180px; display:flex; align-items:center; justify-content:center;">
-        <canvas id="salesAnalyticsDonutChart"></canvas>
+      <div style="position:relative; width:100%; height:180px; min-width:0; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+        <canvas id="salesAnalyticsDonutChart" style="max-width: 100% !important;"></canvas>
       </div>
 
       <!-- Bottom Legends (dynamic matching category slices) -->
@@ -1371,6 +1384,7 @@
           }
         }
       });
+      window.cleanBarChart = cleanBarChart;
     }
 
     // Modal Handlers for Date to Date
@@ -1490,6 +1504,7 @@
           }
         }
       });
+      window.earningSplineChart = earningSplineChart;
     }
 
     function switchEarningMonth(val) {
@@ -1587,6 +1602,7 @@
           }
         }
       });
+      window.salesAnalyticsDonut = salesAnalyticsDonut;
     }
 
     // Outreach Tasks Management & Searchable Dropdowns

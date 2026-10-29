@@ -716,7 +716,13 @@
       flex: 1;
       min-width: 0;
       width: 100%;
+      max-width: 100%;
       box-sizing: border-box;
+    }
+
+    /* Prevent charts and canvases from overflowing flex/grid containers */
+    canvas {
+      max-width: 100% !important;
     }
     .page-header-box {
       margin-bottom: 1.75rem;
@@ -747,6 +753,9 @@
       padding: 1.5rem;
       margin-bottom: 1.5rem;
       position: relative;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
     }
     .card-header-paces {
       display: flex;
@@ -1563,6 +1572,20 @@
       }
     }
 
+    function triggerLayoutResize() {
+      window.dispatchEvent(new Event('resize'));
+      if (typeof Chart !== 'undefined' && Chart.instances) {
+        Object.values(Chart.instances).forEach(chart => {
+          try {
+            if (typeof chart?.resize === 'function') chart.resize();
+          } catch (e) {}
+        });
+      }
+      if (typeof window.cleanBarChart?.resize === 'function') window.cleanBarChart.resize();
+      if (typeof window.earningSplineChart?.resize === 'function') window.earningSplineChart.resize();
+      if (typeof window.salesAnalyticsDonut?.resize === 'function') window.salesAnalyticsDonut.resize();
+    }
+
     // Toggle sidebar on mobile and desktop
     function toggleAdminSidebar() {
       const isMobile = window.innerWidth <= 992;
@@ -1581,9 +1604,11 @@
         try {
           localStorage.setItem('admin_sidebar_collapsed', isCollapsed ? '1' : '0');
         } catch (e) {}
-        setTimeout(() => {
-          window.dispatchEvent(new Event('resize'));
-        }, 260);
+
+        // Multi-frame resize trigger to guarantee charts fit during and after animation
+        [50, 150, 260, 320].forEach(delay => {
+          setTimeout(triggerLayoutResize, delay);
+        });
       }
     }
 
@@ -1596,6 +1621,14 @@
 
     // Initialize sidebar collapse state preference on desktop
     document.addEventListener('DOMContentLoaded', () => {
+      const appMain = document.querySelector('.app-main');
+      if (appMain) {
+        appMain.addEventListener('transitionend', (e) => {
+          if (e.propertyName === 'margin-left' || e.propertyName === 'width' || e.propertyName === 'max-width') {
+            triggerLayoutResize();
+          }
+        });
+      }
       try {
         if (window.innerWidth > 992 && localStorage.getItem('admin_sidebar_collapsed') === '1') {
           document.body.classList.add('sidebar-collapsed');
