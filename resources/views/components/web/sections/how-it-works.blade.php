@@ -3,9 +3,6 @@
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">How It Works</h2>
-      <p class="section-subtitle">
-        Getting professional maintenance for your facility is straightforward, transparent, and hassle-free in just 4 simple steps.
-      </p>
     </div>
 
     <div class="how-it-works-grid">

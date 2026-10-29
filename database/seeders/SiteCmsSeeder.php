@@ -118,7 +118,7 @@ class SiteCmsSeeder extends Seeder
             [
                 'section_key' => 'amc_plans',
                 'title' => 'Annual Maintenance Contracts <span>(AMC)</span>',
-                'subtitle' => 'Predictable operational expenditure and scheduled preventive checkups that minimize costly equipment breakdowns.',
+                'subtitle' => null,
                 'badge' => 'PREVENTIVE CARE',
                 'button_text' => 'Choose AMC Package',
                 'button_url' => '#amc',
@@ -131,7 +131,7 @@ class SiteCmsSeeder extends Seeder
             [
                 'section_key' => 'how_it_works',
                 'title' => 'How It Works',
-                'subtitle' => 'Getting professional maintenance for your facility is straightforward, transparent, and hassle-free in just 4 simple steps.',
+                'subtitle' => null,
                 'badge' => 'STREAMLINED PROCESS',
                 'button_text' => 'Book Service Now',
                 'button_url' => '/booking',
@@ -160,7 +160,7 @@ class SiteCmsSeeder extends Seeder
             [
                 'section_key' => 'why_fix',
                 'title' => 'Why Choose FIX?',
-                'subtitle' => 'We combine skilled engineering, vetted vendor networks, and institutional-grade accountability to protect property value and enhance liveability.',
+                'subtitle' => null,
                 'badge' => 'OUR VALUE PROPOSITION',
                 'button_text' => null,
                 'button_url' => null,
@@ -173,7 +173,7 @@ class SiteCmsSeeder extends Seeder
             [
                 'section_key' => 'who_we_serve',
                 'title' => 'Who We Serve',
-                'subtitle' => 'Tailored engineering and facility maintenance protocols across diverse industries and property classes.',
+                'subtitle' => null,
                 'badge' => 'DEDICATED CLIENTELE',
                 'button_text' => null,
                 'button_url' => null,
@@ -186,7 +186,7 @@ class SiteCmsSeeder extends Seeder
             [
                 'section_key' => 'testimonials',
                 'title' => 'What Our Clients Say',
-                'subtitle' => 'Hear from building managers, facility heads, and property owners who trust FIX.',
+                'subtitle' => null,
                 'badge' => 'CLIENT REVIEWS',
                 'button_text' => null,
                 'button_url' => null,
@@ -199,7 +199,7 @@ class SiteCmsSeeder extends Seeder
             [
                 'section_key' => 'faq',
                 'title' => 'Frequently Asked Questions',
-                'subtitle' => 'Common questions regarding service booking, emergency dispatch, AMC contracts, and billing.',
+                'subtitle' => null,
                 'badge' => 'HELP & SUPPORT',
                 'button_text' => null,
                 'button_url' => null,
@@ -212,7 +212,7 @@ class SiteCmsSeeder extends Seeder
             [
                 'section_key' => 'contact',
                 'title' => 'Get in Touch with Our Operations Command',
-                'subtitle' => 'Have an urgent facility breakdown or need an on-site engineering audit for your commercial property?',
+                'subtitle' => null,
                 'badge' => 'OPERATIONS COMMAND',
                 'button_text' => 'Send Message',
                 'button_url' => '#contact',

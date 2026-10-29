@@ -36,9 +36,9 @@
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">{!! $content->title ?? 'How It Works' !!}</h2>
-      <p class="section-subtitle">
-        {{ $content->subtitle ?? 'Getting professional maintenance for your facility is straightforward, transparent, and hassle-free in just 4 simple steps.' }}
-      </p>
+      @if(!empty($content?->subtitle) && trim($content->subtitle) !== 'Getting professional maintenance for your facility is straightforward, transparent, and hassle-free in just 4 simple steps.')
+        <p class="section-subtitle">{{ $content->subtitle }}</p>
+      @endif
     </div>
 
     <div class="how-it-works-grid">

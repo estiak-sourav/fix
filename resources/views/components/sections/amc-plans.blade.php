@@ -38,7 +38,7 @@
   <div class="container">
     <div class="section-header">
       <h2 class="amc-section-title">{!! $content->title ?? 'Annual Maintenance Contracts <span>(AMC)</span>' !!}</h2>
-      @if(!empty($content?->subtitle))
+      @if(!empty($content?->subtitle) && trim($content->subtitle) !== 'Predictable operational expenditure and scheduled preventive checkups that minimize costly equipment breakdowns.')
         <p class="section-subtitle" style="text-align:center; margin-bottom:2rem; color:var(--text-muted);">{{ $content->subtitle }}</p>
       @endif
     </div>

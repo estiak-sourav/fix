@@ -483,6 +483,13 @@ class WebContentManagementTest extends TestCase
 
         // Verify the removed text is NOT displayed anywhere
         $response->assertDontSee('Comprehensive engineering and facility maintenance solutions delivered across Bangladesh.');
+        $response->assertDontSee('Common questions regarding service booking, emergency dispatch, AMC contracts, and billing.');
+        $response->assertDontSee('Predictable operational expenditure and scheduled preventive checkups that minimize costly equipment breakdowns.');
+        $response->assertDontSee('Getting professional maintenance for your facility is straightforward, transparent, and hassle-free in just 4 simple steps.');
+        $response->assertDontSee('We combine skilled engineering, vetted vendor networks, and institutional-grade accountability to protect property value and enhance liveability.');
+        $response->assertDontSee('Tailored engineering and facility maintenance protocols across diverse industries and property classes.');
+        $response->assertDontSee('Hear from building managers, facility heads, and property owners who trust FIX.');
+        $response->assertDontSee('Have an urgent facility breakdown or need an on-site engineering audit for your commercial property?');
     }
 
     /**

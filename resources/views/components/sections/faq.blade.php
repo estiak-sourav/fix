@@ -9,7 +9,7 @@
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">{!! $content->title ?? 'Frequently Asked Questions' !!}</h2>
-      @if(!empty($content?->subtitle))
+      @if(!empty($content?->subtitle) && trim($content->subtitle) !== 'Common questions regarding service booking, emergency dispatch, AMC contracts, and billing.')
         <p class="section-subtitle">{{ $content->subtitle }}</p>
       @endif
     </div>

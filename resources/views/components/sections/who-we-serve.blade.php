@@ -10,7 +10,7 @@
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">{!! $content->title ?? 'Who We Serve' !!}</h2>
-      @if(!empty($content?->subtitle))
+      @if(!empty($content?->subtitle) && trim($content->subtitle) !== 'Tailored engineering and facility maintenance protocols across diverse industries and property classes.')
         <p class="section-subtitle">{{ $content->subtitle }}</p>
       @endif
     </div>

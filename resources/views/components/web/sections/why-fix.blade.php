@@ -3,9 +3,6 @@
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">Why Choose FIX?</h2>
-      <p class="section-subtitle">
-        We combine skilled engineering, vetted vendor networks, and institutional-grade accountability to protect property value and enhance liveability.
-      </p>
     </div>
 
     <div class="why-fix-grid">
@@ -63,7 +60,7 @@
           </svg>
         </div>
         <h4>Annual Maintenance Contracts (AMC)</h4>
-        <p>Predictable operational expenditure and scheduled preventive checkups that minimize costly equipment breakdowns.</p>
+        <p>Scheduled preventive checkups and tailored annual service agreements to ensure seamless facility operations.</p>
       </div>
 
       <div class="why-card">

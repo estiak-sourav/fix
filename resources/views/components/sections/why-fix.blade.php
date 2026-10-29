@@ -26,7 +26,7 @@
     ],
     5 => [
       'title' => 'Annual Maintenance Contracts (AMC)',
-      'desc' => 'Predictable operational expenditure and scheduled preventive checkups that minimize costly equipment breakdowns.',
+      'desc' => 'Scheduled preventive checkups and tailored annual service agreements to ensure seamless facility operations.',
       'svg' => '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>',
     ],
     6 => [
@@ -47,9 +47,9 @@
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">{!! $content->title ?? 'Why Choose FIX?' !!}</h2>
-      <p class="section-subtitle">
-        {{ $content->subtitle ?? 'We combine skilled engineering, vetted vendor networks, and institutional-grade accountability to protect property value and enhance liveability.' }}
-      </p>
+      @if(!empty($content?->subtitle) && trim($content->subtitle) !== 'We combine skilled engineering, vetted vendor networks, and institutional-grade accountability to protect property value and enhance liveability.')
+        <p class="section-subtitle">{{ $content->subtitle }}</p>
+      @endif
     </div>
 
     <div class="why-fix-grid">

@@ -7,9 +7,9 @@
   <div class="container">
     <div class="section-header" style="text-align:center; margin-bottom: 3rem;">
       <h2 class="section-title">{!! $content->title ?? 'Get in Touch with Our Operations Command' !!}</h2>
-      <p class="section-subtitle">
-        {{ $content->subtitle ?? 'Have an urgent facility breakdown or need an on-site engineering audit for your commercial property?' }}
-      </p>
+      @if(!empty($content?->subtitle) && trim($content->subtitle) !== 'Have an urgent facility breakdown or need an on-site engineering audit for your commercial property?')
+        <p class="section-subtitle">{{ $content->subtitle }}</p>
+      @endif
     </div>
 
     <div class="contact-grid">
