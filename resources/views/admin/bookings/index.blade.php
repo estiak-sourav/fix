@@ -150,23 +150,23 @@
         <table class="table-paces">
           <thead>
             <tr>
-              <th>Order ID</th>
-              <th>Customer</th>
-              <th>Service Scope</th>
-              <th>Schedule</th>
-              <th>Location</th>
-              <th>Status</th>
+              <th style="white-space:nowrap;">Order ID</th>
+              <th style="white-space:nowrap;">Customer</th>
+              <th style="white-space:nowrap;">Service Scope</th>
+              <th style="white-space:nowrap;">Schedule</th>
+              <th style="white-space:nowrap;">Location</th>
+              <th style="white-space:nowrap;">Status</th>
               <th style="text-align:right; white-space:nowrap;">Actions</th>
             </tr>
           </thead>
           <tbody>
             @foreach($bookings as $b)
               <tr>
-                <td>
-                  <strong style="color:var(--paces-primary); font-family:monospace; font-size:0.95rem; font-weight:500;">
+                <td style="white-space:nowrap;">
+                  <strong style="color:var(--paces-primary); font-family:monospace; font-size:0.95rem; font-weight:500; white-space:nowrap;">
                     {{ $b->booking_number }}
                   </strong>
-                  <div style="font-size:0.72rem; color:var(--paces-text-muted); margin-top:2px; font-weight:400;">
+                  <div style="font-size:0.72rem; color:var(--paces-text-muted); margin-top:2px; font-weight:400; white-space:nowrap;">
                     {{ $b->created_at->format('M d, Y • h:i A') }}
                   </div>
                 </td>

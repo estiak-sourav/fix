@@ -76,7 +76,6 @@
   <div class="page-header-box" style="margin-bottom:1.5rem;">
     <div>
       <h1 class="page-header-title">Outreach Tasks</h1>
-      <p class="page-header-subtitle">Manage customer outreaches, follow-up calls, booking confirmations, and action items</p>
     </div>
     @if(auth('admin')->user()?->hasPermission('bookings.edit'))
       <div style="display:flex; gap:10px; align-items:center;">

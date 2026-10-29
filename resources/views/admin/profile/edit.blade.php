@@ -7,7 +7,6 @@
         </a>
       </div>
       <h1 class="page-header-title">My Profile & Display Picture</h1>
-      <p class="page-header-subtitle">Manage your administrator identity, upload your avatar/DP, and update security credentials</p>
     </div>
   </div>
 
