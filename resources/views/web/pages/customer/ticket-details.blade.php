@@ -4,12 +4,12 @@
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
         <div>
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-            <a href="{{ route('customer.tickets.index') }}" style="color:var(--primary); font-size:0.85rem; font-weight:600; text-decoration:none;">
+            <a href="{{ route('customer.tickets.index') }}" style="color:#38bdf8; font-size:0.875rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
               ← Back to My Support Tickets
             </a>
           </div>
           <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-            <h1 style="font-size:1.85rem; font-weight:800; color:var(--text-main); margin:0;">
+            <h1 style="font-size:1.85rem; font-weight:800; color:#ffffff; margin:0;">
               Ticket #{{ $ticket->ticket_number }}
             </h1>
             <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:20px;
@@ -23,14 +23,14 @@
               Priority: {{ ucfirst($ticket->priority) }}
             </span>
           </div>
-          <p style="font-size:1.05rem; color:#475569; font-weight:600; margin-top:6px; margin-bottom:0;">
+          <p style="font-size:1.05rem; color:#f1f5f9; font-weight:500; margin-top:6px; margin-bottom:0;">
             {{ $ticket->subject }}
           </p>
         </div>
 
-        <div style="text-align:right; font-size:0.85rem; color:var(--text-muted);">
-          <div>Registered on <strong>{{ $ticket->created_at->format('M d, Y • h:i A') }}</strong></div>
-          <div style="margin-top:4px;">Last Activity: <strong>{{ $ticket->updated_at->diffForHumans() }}</strong></div>
+        <div style="text-align:right; font-size:0.875rem; color:#cbd5e1;">
+          <div>Registered on <strong style="color:#ffffff; font-weight:600;">{{ $ticket->created_at->format('M d, Y • h:i A') }}</strong></div>
+          <div style="margin-top:4px;">Last Activity: <strong style="color:#ffffff; font-weight:600;">{{ $ticket->updated_at->diffForHumans() }}</strong></div>
         </div>
       </div>
     </div>

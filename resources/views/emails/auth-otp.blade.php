@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Your Verification Code - FIX Facility Operations</title>
+  <title>Your Verification Code - {{ \App\Models\SiteSetting::get('site_name', 'FIX Facility Operations') }}</title>
   <style>
     body {
       margin: 0;
@@ -36,7 +36,7 @@
     }
     .header p {
       color: #94a3b8;
-      margin: 4px 0 0 0;
+      margin: 6px 0 0 0;
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -103,16 +103,45 @@
   </style>
 </head>
 <body>
+  @php
+    $siteName = \App\Models\SiteSetting::get('site_name', 'FIX Facility Management');
+    $siteTagline = \App\Models\SiteSetting::get('site_tagline', 'Clean • Safe • Sustainable Engineering');
+    $logoRelative = \App\Models\SiteSetting::get('header_logo_dark', \App\Models\SiteSetting::get('footer_logo', 'assets/images/logo-white-crop.png'));
+    $logoPath = $logoRelative ? public_path($logoRelative) : null;
+    if (isset($message) && is_object($message) && method_exists($message, 'embed') && $logoPath && file_exists($logoPath)) {
+        $logoSrc = $message->embed($logoPath);
+    } elseif ($logoRelative) {
+        $logoSrc = url(asset($logoRelative));
+    } else {
+        $logoSrc = null;
+    }
+    $securityNotice = \App\Models\SiteSetting::get('otp_security_notice', 'This code is valid for 10 minutes. Never share your OTP with anyone, including FIX representatives.');
+    $disclaimerText = \App\Models\SiteSetting::get('otp_disclaimer_text', 'If you did not request this verification code, please ignore this email or contact our 24/7 emergency dispatch immediately.');
+    $emergencyPhone = \App\Models\SiteSetting::get('emergency_phone', '+880 1700-000000');
+    $supportEmail = \App\Models\SiteSetting::get('support_email', 'support@fix.com.bd');
+  @endphp
+
   <div class="wrapper">
     <div class="header">
-      <h2>FIX FACILITY MANAGEMENT</h2>
-      <p>Clean • Safe • Sustainable Engineering</p>
+      @if($logoSrc)
+        <div style="margin-bottom: 6px;">
+          <a href="{{ url('/') }}" target="_blank" style="text-decoration: none; display: inline-block;">
+            <img src="{{ $logoSrc }}" alt="{{ $siteName }}" style="height: 44px; max-width: 220px; object-fit: contain; vertical-align: middle; border: 0;">
+          </a>
+        </div>
+      @else
+        <h2>{{ $siteName }}</h2>
+      @endif
+
+      @if(!empty($siteTagline))
+        <p>{{ $siteTagline }}</p>
+      @endif
     </div>
 
     <div class="content">
       <div class="greeting">Hello {{ $name }},</div>
       <div class="description">
-        You requested a verification code to <strong>{{ $purpose === 'register' ? 'register a new customer account' : 'sign in to your customer portal' }}</strong> on FIX Facility Management.
+        You requested a verification code to <strong>{{ $purpose === 'register' ? 'register a new customer account' : 'sign in to your customer portal' }}</strong> on {{ $siteName }}.
       </div>
 
       <div class="otp-card">
@@ -121,18 +150,18 @@
       </div>
 
       <div class="meta-box">
-        <strong>Security Notice:</strong> This code is valid for <strong>10 minutes</strong>. Never share your OTP with anyone, including FIX representatives.
+        <strong>Security Notice:</strong> {{ $securityNotice }}
       </div>
 
       <div style="font-size: 13px; color: #64748b; line-height: 1.5;">
-        If you did not request this verification code, please ignore this email or contact our 24/7 emergency dispatch immediately.
+        {{ $disclaimerText }}
       </div>
     </div>
 
     <div class="footer">
-      <div>© {{ date('Y') }} FIX Facility Management. All rights reserved.</div>
+      <div>© {{ date('Y') }} {{ $siteName }}. All rights reserved.</div>
       <div style="margin-top: 6px;">
-        Emergency Hotline: <strong>{{ \App\Models\SiteSetting::get('emergency_phone', '+880 1700-000000') }}</strong> | Support: <a href="mailto:{{ \App\Models\SiteSetting::get('support_email', 'support@fix.com.bd') }}">{{ \App\Models\SiteSetting::get('support_email', 'support@fix.com.bd') }}</a>
+        Emergency Hotline: <strong>{{ $emergencyPhone }}</strong> | Support: <a href="mailto:{{ $supportEmail }}">{{ $supportEmail }}</a>
       </div>
     </div>
   </div>

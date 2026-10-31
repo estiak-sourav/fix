@@ -67,9 +67,25 @@
                     <span style="font-size:1.1rem; font-weight:800; color:var(--primary); font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; background:rgba(67,97,238,0.08); padding:3px 10px; border-radius:6px; letter-spacing:0.02em;">
                       #{{ $booking->booking_number }}
                     </span>
-                    <span style="font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:{{ $booking->status_badge_color }}22; color:{{ $booking->status_badge_color }}; border:1px solid {{ $booking->status_badge_color }}44;">
-                      ● {{ $booking->status_label }}
-                    </span>
+                    @if($booking->is_amc)
+                      <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:#f5f3ff; color:#7c3aed; border:1px solid #ddd6fe;">
+                        🏢 AMC Contract
+                      </span>
+                      @if($booking->is_running_contract)
+                        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; display:inline-flex; align-items:center; gap:4px;">
+                          <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
+                          Running Contract
+                        </span>
+                      @else
+                        <span style="font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:{{ $booking->status_badge_color }}22; color:{{ $booking->status_badge_color }}; border:1px solid {{ $booking->status_badge_color }}44;">
+                          ● {{ $booking->status_label }}
+                        </span>
+                      @endif
+                    @else
+                      <span style="font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:{{ $booking->status_badge_color }}22; color:{{ $booking->status_badge_color }}; border:1px solid {{ $booking->status_badge_color }}44;">
+                        ● {{ $booking->status_label }}
+                      </span>
+                    @endif
                     @if($booking->urgency === 'emergency_1h')
                       <span style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; padding:2px 8px; border-radius:10px; background:#fef2f2; color:#dc2626; border:1px solid #fecaca;">
                         🚨 Critical Emergency
@@ -79,9 +95,15 @@
                   <div style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                     <span>Created on {{ $booking->created_at->format('M d, Y • h:i A') }}</span>
                     <span>•</span>
-                    <span style="color:#0f172a; font-weight:600;">
-                      📅 Scheduled: {{ $booking->preferred_date ? $booking->preferred_date->format('M d, Y') : 'N/A' }} ({{ $booking->preferred_time_slot }})
-                    </span>
+                    @if($booking->is_amc && $booking->contract_start_date)
+                      <span style="color:#0f172a; font-weight:600;">
+                        📋 Active Period: {{ $booking->contract_start_date->format('M d, Y') }} — {{ $booking->contract_end_date?->format('M d, Y') }}
+                      </span>
+                    @else
+                      <span style="color:#0f172a; font-weight:600;">
+                        📅 Scheduled: {{ $booking->preferred_date ? $booking->preferred_date->format('M d, Y') : 'N/A' }} ({{ $booking->preferred_time_slot }})
+                      </span>
+                    @endif
                   </div>
                 </div>
 
@@ -95,55 +117,90 @@
                 </div>
               </div>
 
-              <!-- Live Progress Stepper -->
-              @php
-                $statusOrder = ['pending_review', 'accepted', 'assigned', 'in_progress', 'completed'];
-                $currentIdx = array_search($booking->status, $statusOrder);
-                if ($currentIdx === false && $booking->status === 'cancelled') $currentIdx = -1;
-                // When crew is assigned, advance both Assigned and In Progress together
-                if ($booking->status === 'assigned' || ($booking->assigned_team && in_array($booking->status, ['accepted', 'assigned']))) {
-                    $currentIdx = 3; // 'in_progress'
-                }
-              @endphp
-
-              <div class="customer-stepper-wrap" style="margin:1.75rem 0 2rem; padding:0 0.5rem; overflow-x:auto; -webkit-overflow-scrolling:touch;">
-                <div style="display:flex; justify-content:space-between; position:relative; min-width:320px;">
-                  <div style="position:absolute; top:14px; left:16px; right:16px; height:3px; background:#e2e8f0; z-index:1;"></div>
-                  @if($currentIdx >= 0)
-                    <div style="position:absolute; top:14px; left:16px; width:{{ ($currentIdx / (count($statusOrder) - 1)) * 100 }}%; height:3px; background:#10b981; z-index:2; transition:width 0.4s ease;"></div>
-                  @endif
-
-                  @foreach([
-                    'pending_review' => 'Pending',
-                    'accepted' => 'Accepted',
-                    'assigned' => 'Assigned',
-                    'in_progress' => 'In Progress',
-                    'completed' => 'Completed'
-                  ] as $stepKey => $stepLabel)
-                    @php
-                      $stepIdx = array_search($stepKey, $statusOrder);
-                      $isPassed = $currentIdx !== false && $currentIdx >= $stepIdx;
-                      $isCurrent = $currentIdx === $stepIdx;
-                    @endphp
-                    <div style="position:relative; z-index:3; text-align:center; min-width:64px;">
-                      <div style="width:30px; height:30px; border-radius:50%; margin:0 auto 8px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700;
-                        background: {{ $isPassed ? '#10b981' : '#f1f5f9' }}; 
-                        color: {{ $isPassed ? '#ffffff' : '#64748b' }};
-                        border: 2px solid {{ $isPassed ? '#10b981' : '#cbd5e1' }};
-                        box-shadow: {{ $isCurrent ? '0 0 0 4px rgba(16,185,129,0.2)' : 'none' }};">
-                        @if($isPassed && !$isCurrent)
-                          ✓
-                        @else
-                          {{ $stepIdx + 1 }}
-                        @endif
-                      </div>
-                      <div style="font-size:0.75rem; font-weight:{{ $isCurrent ? '800' : '500' }}; color:{{ $isCurrent ? 'var(--primary)' : 'var(--text-muted)' }}; line-height:1.2;">
-                        {{ $stepLabel }}
-                      </div>
+              @if($booking->is_amc)
+                <!-- AMC Active Contract Status & Billing Overview -->
+                <div style="background:#fcfaff; border:1px solid #e9d5ff; border-radius:10px; padding:1.25rem 1.5rem; margin:1.5rem 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+                  <div>
+                    <span style="font-size:0.72rem; text-transform:uppercase; color:#6b21a8; font-weight:700; letter-spacing:0.04em;">Contract Plan</span>
+                    <strong style="display:block; font-size:1.05rem; color:#1e1b4b; margin-top:3px;">
+                      {{ $booking->amcPlan?->name ?? 'Standard AMC' }}
+                    </strong>
+                    <span style="font-size:0.75rem; color:#7c3aed;">Annual Maintenance Agreement</span>
+                  </div>
+                  <div>
+                    <span style="font-size:0.72rem; text-transform:uppercase; color:#6b21a8; font-weight:700; letter-spacing:0.04em;">Contract Tenure</span>
+                    <strong style="display:block; font-size:0.95rem; color:#1e1b4b; margin-top:3px;">
+                      {{ $booking->contract_start_date?->format('M d, Y') ?: 'Active' }} — {{ $booking->contract_end_date?->format('M d, Y') ?: '1 Year' }}
+                    </strong>
+                    <span style="font-size:0.75rem; color:#10b981; font-weight:600;">{{ $booking->days_remaining_in_contract ? $booking->days_remaining_in_contract . ' days remaining' : 'Active Service' }}</span>
+                  </div>
+                  <div>
+                    <span style="font-size:0.72rem; text-transform:uppercase; color:#6b21a8; font-weight:700; letter-spacing:0.04em;">Recurring Billing</span>
+                    <strong style="display:block; font-size:1.1rem; color:#6d28d9; margin-top:3px;">
+                      ৳ {{ number_format($booking->recurring_amount ?: $booking->final_cost, 2) }}
+                      <span style="font-size:0.75rem; color:#7c3aed; font-weight:500;">/ {{ $booking->billing_cycle_label }}</span>
+                    </strong>
+                    <span style="font-size:0.75rem; color:#64748b;">Next Due: {{ $booking->next_billing_date ? $booking->next_billing_date->format('M d, Y') : 'Active' }}</span>
+                  </div>
+                  @if($booking->agreement_document_path)
+                    <div style="display:flex; align-items:flex-end;">
+                      <a href="{{ $booking->agreement_url }}" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.78rem; padding:6px 12px; background:#ffffff; color:#7c3aed; border-color:#d8b4fe; display:inline-flex; align-items:center; gap:5px;">
+                        <span>📄 View Agreement Copy ↗</span>
+                      </a>
                     </div>
-                  @endforeach
+                  @endif
                 </div>
-              </div>
+              @else
+                <!-- Live Progress Stepper for One-Off Services -->
+                @php
+                  $statusOrder = ['pending_review', 'accepted', 'assigned', 'in_progress', 'completed'];
+                  $currentIdx = array_search($booking->status, $statusOrder);
+                  if ($currentIdx === false && $booking->status === 'cancelled') $currentIdx = -1;
+                  // When crew is assigned, advance both Assigned and In Progress together
+                  if ($booking->status === 'assigned' || ($booking->assigned_team && in_array($booking->status, ['accepted', 'assigned']))) {
+                      $currentIdx = 3; // 'in_progress'
+                  }
+                @endphp
+
+                <div class="customer-stepper-wrap" style="margin:1.75rem 0 2rem; padding:0 0.5rem; overflow-x:auto; -webkit-overflow-scrolling:touch;">
+                  <div style="display:flex; justify-content:space-between; position:relative; min-width:320px;">
+                    <div style="position:absolute; top:14px; left:16px; right:16px; height:3px; background:#e2e8f0; z-index:1;"></div>
+                    @if($currentIdx >= 0)
+                      <div style="position:absolute; top:14px; left:16px; width:{{ ($currentIdx / (count($statusOrder) - 1)) * 100 }}%; height:3px; background:#10b981; z-index:2; transition:width 0.4s ease;"></div>
+                    @endif
+
+                    @foreach([
+                      'pending_review' => 'Pending',
+                      'accepted' => 'Accepted',
+                      'assigned' => 'Assigned',
+                      'in_progress' => 'In Progress',
+                      'completed' => 'Completed'
+                    ] as $stepKey => $stepLabel)
+                      @php
+                        $stepIdx = array_search($stepKey, $statusOrder);
+                        $isPassed = $currentIdx !== false && $currentIdx >= $stepIdx;
+                        $isCurrent = $currentIdx === $stepIdx;
+                      @endphp
+                      <div style="position:relative; z-index:3; text-align:center; min-width:64px;">
+                        <div style="width:30px; height:30px; border-radius:50%; margin:0 auto 8px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700;
+                          background: {{ $isPassed ? '#10b981' : '#f1f5f9' }}; 
+                          color: {{ $isPassed ? '#ffffff' : '#64748b' }};
+                          border: 2px solid {{ $isPassed ? '#10b981' : '#cbd5e1' }};
+                          box-shadow: {{ $isCurrent ? '0 0 0 4px rgba(16,185,129,0.2)' : 'none' }};">
+                          @if($isPassed && !$isCurrent)
+                            ✓
+                          @else
+                            {{ $stepIdx + 1 }}
+                          @endif
+                        </div>
+                        <div style="font-size:0.75rem; font-weight:{{ $isCurrent ? '800' : '500' }}; color:{{ $isCurrent ? 'var(--primary)' : 'var(--text-muted)' }}; line-height:1.2;">
+                          {{ $stepLabel }}
+                        </div>
+                      </div>
+                    @endforeach
+                  </div>
+                </div>
+              @endif
 
               <!-- Details & Timeline Logs -->
               <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1.25rem 1.5rem; font-size:0.875rem; margin-bottom:1.25rem;">
@@ -179,7 +236,7 @@
                 </div>
                 <div style="display:flex; gap:10px; align-items:center;">
                   <a href="{{ route('customer.bookings.show', $booking->booking_number) }}" class="btn btn-outline" style="padding:8px 16px; font-size:0.85rem; font-weight:700; border-radius:8px; display:inline-flex; align-items:center; gap:6px; color:var(--primary); border-color:#cbd5e1; background:#ffffff;">
-                    <span>View Live Timeline & Details</span>
+                    <span>View Details & Review</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </a>
                 </div>

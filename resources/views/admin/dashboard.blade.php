@@ -190,11 +190,15 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
     .top-kpi-card:hover {
       transform: translateY(-2px);
       box-shadow: var(--paces-shadow-md, 0 4px 12px rgba(0,0,0,0.06));
+      border-color: var(--paces-primary, #0d9488);
     }
     .top-kpi-card .metric-icon-badge {
       width: 44px;
@@ -282,10 +286,36 @@
     </div>
   </div>
 
-  <!-- Top Operational KPI Stat Cards: Orders, Subscriptions, Emergency, Processing, Pending -->
+  <!-- AMC Bill Collection Warning Alert Banner -->
+  @if(!empty($amcCollectionAlert['has_due']))
+    <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #fcd34d; border-left: 5px solid #d97706; border-radius: 12px; padding: 14px 20px; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; box-shadow: 0 2px 6px rgba(217, 119, 6, 0.08);">
+      <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+        <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(217, 119, 6, 0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #b45309;">
+          <svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <div style="min-width: 0;">
+          <div style="font-weight: 700; color: #92400e; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span>⚠️ AMC Recurring Bill Collection Warning</span>
+            <span style="background: #dc2626; color: #ffffff; font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">{{ $amcCollectionAlert['count'] }} Due/Overdue</span>
+          </div>
+          <div style="font-size: 0.83rem; color: #b45309; margin-top: 3px;">
+            Total <strong>৳ {{ number_format($amcCollectionAlert['total_amount'], 2) }}</strong> recurring maintenance contract billing pending collection. Collect pending invoices to ensure uninterrupted field facility engineering.
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center; flex-shrink: 0;">
+        <a href="{{ route('admin.bookings.index', ['service_type' => 'amc_contract', 'amc_status' => 'running']) }}" class="btn-paces" style="background: #d97706; color: #ffffff; font-weight: 600; font-size: 0.82rem; padding: 8px 16px; border-radius: 8px; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 6px;">
+          <span>Collect Bills &amp; Manage Contracts</span>
+          <svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </a>
+      </div>
+    </div>
+  @endif
+
+  <!-- Top Operational KPI Stat Cards: Orders, Subscriptions, Emergency, Processing, Pending (Clickable Filter Shortcuts) -->
   <div class="metrics-grid-paces" style="margin-bottom: 1.5rem;">
     <!-- 1. Orders -->
-    <div class="top-kpi-card">
+    <a href="{{ route('admin.bookings.index', ['service_type' => 'service']) }}" class="top-kpi-card" title="View all one-off Service Orders">
       <div class="metric-icon-badge bg-primary-subtle">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
       </div>
@@ -293,21 +323,26 @@
         <div class="top-kpi-label">Orders</div>
         <div class="top-kpi-value">{{ number_format($stats['service_requests']) }}</div>
       </div>
-    </div>
+    </a>
 
-    <!-- 2. Subscriptions -->
-    <div class="top-kpi-card">
+    <!-- 2. Subscriptions / Running AMC Contracts -->
+    <a href="{{ route('admin.bookings.index', ['service_type' => 'amc_contract', 'amc_status' => 'running']) }}" class="top-kpi-card" title="View Active Running AMC Maintenance Contracts">
       <div class="metric-icon-badge bg-info-subtle">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
       </div>
       <div class="top-kpi-info">
-        <div class="top-kpi-label">Subscriptions</div>
-        <div class="top-kpi-value" style="color:var(--paces-info, #3e60d5);">{{ number_format($stats['amc_requests']) }}</div>
+        <div class="top-kpi-label" style="display:flex; align-items:center; gap:5px;">
+          <span>Subscriptions</span>
+          @if(($stats['running_amc_contracts'] ?? 0) > 0)
+            <span style="font-size:0.68rem; padding:1px 6px; border-radius:8px; background:#ecfdf5; color:#059669; font-weight:700;">{{ $stats['running_amc_contracts'] }} RUNNING</span>
+          @endif
+        </div>
+        <div class="top-kpi-value" style="color:var(--paces-info, #3e60d5);">{{ number_format($stats['running_amc_contracts'] ?? $stats['amc_requests']) }}</div>
       </div>
-    </div>
+    </a>
 
     <!-- 3. Urgent -->
-    <div class="top-kpi-card">
+    <a href="{{ route('admin.bookings.index', ['urgency' => 'emergency_1h']) }}" class="top-kpi-card" title="View Urgent & 1-Hour Emergency Callouts">
       <div class="metric-icon-badge bg-danger-subtle">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
       </div>
@@ -315,10 +350,10 @@
         <div class="top-kpi-label">Urgent</div>
         <div class="top-kpi-value" style="color:var(--paces-danger, #ef4444);">{{ number_format($stats['emergency_orders']) }}</div>
       </div>
-    </div>
+    </a>
 
     <!-- 4. Processing -->
-    <div class="top-kpi-card">
+    <a href="{{ route('admin.bookings.index', ['status' => 'in_progress']) }}" class="top-kpi-card" title="View In-Progress & Active Dispatch Orders">
       <div class="metric-icon-badge bg-warning-subtle">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
       </div>
@@ -326,10 +361,10 @@
         <div class="top-kpi-label">Processing</div>
         <div class="top-kpi-value" style="color:var(--paces-warning, #f59e0b);">{{ number_format($stats['active_in_progress']) }}</div>
       </div>
-    </div>
+    </a>
 
     <!-- 5. Pending -->
-    <div class="top-kpi-card">
+    <a href="{{ route('admin.bookings.index', ['status' => 'pending']) }}" class="top-kpi-card" title="View Pending Review Orders">
       <div class="metric-icon-badge" style="background:rgba(239, 68, 68, 0.1); color:#dc2626;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
       </div>
@@ -337,7 +372,7 @@
         <div class="top-kpi-label">Pending</div>
         <div class="top-kpi-value" style="color:#e11d48;">{{ number_format($stats['pending_review']) }}</div>
       </div>
-    </div>
+    </a>
   </div>
 
   <!-- Operations & Traffic Analytics BarChart Section -->
@@ -912,14 +947,14 @@
       </div>
 
       <!-- Bottom Legends (dynamic matching category slices) -->
-      <div style="display:flex; flex-wrap:wrap; justify-content:space-around; gap:10px; margin-top:1rem; text-align:center; border-top:1px solid #f1f5f9; padding-top:1rem;">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-around; gap:12px; margin-top:1rem; text-align:center; border-top:1px solid #f1f5f9; padding-top:1rem;">
         @forelse($salesAnalytics['categories'] as $cat)
-          <div style="flex:1 1 90px; max-width:130px; min-width:80px;">
-            <div style="display:inline-flex; align-items:center; justify-content:center; gap:5px; font-size:0.78rem; font-weight:500; color:#64748b; margin-bottom:3px; max-width:100%;" title="{{ $cat['name'] }}">
-              <span style="width:8px; height:8px; border-radius:50%; background:{{ $cat['color'] }}; display:inline-block; flex-shrink:0;"></span>
-              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100px;">{{ $cat['name'] }}</span>
+          <div style="flex:1 1 160px; max-width:260px; min-width:130px; padding: 4px 6px;">
+            <div style="display:inline-flex; align-items:center; justify-content:center; gap:6px; font-size:0.8rem; font-weight:500; color:#475569; margin-bottom:3px; max-width:100%;" title="{{ $cat['name'] }}">
+              <span style="width:9px; height:9px; border-radius:50%; background:{{ $cat['color'] }}; display:inline-block; flex-shrink:0;"></span>
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:220px;">{{ $cat['name'] }}</span>
             </div>
-            <div style="font-size:0.92rem; font-weight:500; color:#1e293b; white-space:nowrap;">{{ $cat['amount_formatted'] }}</div>
+            <div style="font-size:0.92rem; font-weight:600; color:#1e293b; white-space:nowrap;">{{ $cat['amount_formatted'] }}</div>
           </div>
         @empty
           <div style="width:100%; color:#94a3b8; font-size:0.82rem;">No sales data available</div>
@@ -1037,79 +1072,172 @@
                 'delete_url' => route('admin.outreach-tasks.destroy', $task),
               ];
             @endphp
-            <div class="task-interactive-row" onclick="openTaskDetailsModal({{ json_encode($taskData) }})" style="display:flex; align-items:center; justify-content:space-between; padding:9px 12px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; gap:10px; cursor:pointer; transition:all 0.15s ease;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#ffffff'; this.style.borderColor='#e2e8f0';">
-              <!-- Left: Checkbox + Title & Meta -->
-              <div style="display:flex; align-items:center; gap:10px; min-width:0; flex:1;">
-                <form action="{{ route('admin.outreach-tasks.complete', $task) }}" method="POST" style="margin:0; flex-shrink:0;" onclick="event.stopPropagation()">
-                  @csrf
-                  <button type="submit" title="Mark as Done" style="width:20px; height:20px; border-radius:50%; border:2px solid #cbd5e1; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; color:transparent; transition:all 0.15s ease;" onmouseover="this.style.borderColor='#10b981'; this.style.color='#10b981';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='transparent';">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </button>
-                </form>
+            @php
+              $cleanTitle = trim(preg_replace('/\s*\(#[A-Za-z0-9-]+\)\s*$/', '', $task->title));
+              $taskData['title'] = $cleanTitle;
+            @endphp
 
-                <div style="min-width:0; flex:1;">
-                  <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                    <span style="font-size:0.86rem; font-weight:600; color:#1e293b; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:240px;" title="{{ $task->title }}">
-                      {{ $task->title }}
+            @if($task->booking)
+              <!-- Case 1: Task linked with an Order (Full 3-row layout) -->
+              <div class="task-interactive-row" onclick="openTaskDetailsModal({{ json_encode($taskData) }})" style="display:flex; flex-direction:column; padding:10px 12px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; gap:6px; cursor:pointer; transition:all 0.15s ease;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#ffffff'; this.style.borderColor='#e2e8f0';">
+                <!-- Top Row: Full Width Title (1 line) + Priority Badge on right (only if urgent/high) -->
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0;">
+                  <span style="font-size:0.86rem; font-weight:600; color:#1e293b; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0;" title="{{ $cleanTitle }}">
+                    {{ $cleanTitle }}
+                  </span>
+                  @if($task->priority === 'urgent')
+                    <span style="font-size:0.65rem; font-weight:700; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; padding:1px 6px; border-radius:6px; text-transform:uppercase; flex-shrink:0;">Urgent</span>
+                  @elseif($task->priority === 'high')
+                    <span style="font-size:0.65rem; font-weight:700; background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; padding:1px 6px; border-radius:6px; text-transform:uppercase; flex-shrink:0;">High</span>
+                  @endif
+                </div>
+
+                <!-- Second Row: Reason & Note (small text, max 2 lines) -->
+                @if(!empty($task->notes))
+                  <div style="font-size:0.74rem; color:#64748b; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; word-break:break-word;">
+                    {{ $task->notes }}
+                  </div>
+                @endif
+
+                <!-- Bottom Row: Left has Time/Date & Order ID underneath | Right has Action Icon Buttons -->
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:2px;">
+                  <!-- Left: Time/Date and Order ID underneath -->
+                  <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+                    @if($task->due_at)
+                      <span style="font-size:0.73rem; color:{{ $task->due_at->isPast() ? '#dc2626' : '#64748b' }}; font-weight:{{ $task->due_at->isPast() ? '600' : '400' }}; display:inline-flex; align-items:center; gap:4px;">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <span>{{ $task->due_at->isPast() ? 'Overdue: '.$task->due_at->diffForHumans() : $task->due_at->format('M d, h:i A') }}</span>
+                      </span>
+                    @endif
+
+                    <span onclick="event.stopPropagation()">
+                      <a href="{{ route('admin.bookings.show', $task->booking) }}" style="color:var(--paces-primary, #3e60d5); text-decoration:none; font-size:0.74rem; font-weight:600; font-family:monospace;" title="Linked Booking">
+                        #{{ $task->booking->booking_number }}
+                      </a>
+                    </span>
+                  </div>
+
+                  <!-- Right: Action Icon Buttons -->
+                  <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;" onclick="event.stopPropagation()">
+                    <!-- Edit Icon Button -->
+                    <button type="button" onclick="openEditTaskModal({{ json_encode($taskData) }})" style="width:28px; height:28px; border-radius:6px; border:1px solid #e2e8f0; background:#ffffff; color:#64748b; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.background='#ffffff'; this.style.color='#64748b';" title="Edit Task">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+
+                    <!-- Done Icon Button -->
+                    <form action="{{ route('admin.outreach-tasks.complete', $task) }}" method="POST" style="margin:0;">
+                      @csrf
+                      <button type="submit" style="width:28px; height:28px; border-radius:6px; border:1px solid #a7f3d0; background:#ecfdf5; color:#059669; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#d1fae5'; this.style.color='#047857';" onmouseout="this.style.background='#ecfdf5'; this.style.color='#059669';" title="Mark as Done">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      </button>
+                    </form>
+
+                    <!-- Delete Icon Button -->
+                    <form action="{{ route('admin.outreach-tasks.destroy', $task) }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete this task?');">
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" style="width:28px; height:28px; border-radius:6px; border:1px solid #fee2e2; background:#ffffff; color:#ef4444; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='#ffffff';" title="Delete Task">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            @elseif(!empty($task->notes))
+              <!-- Case 2: No Order Tagged, BUT has Note (Left: Title & niche Note, Right: Buttons) -->
+              <div class="task-interactive-row" onclick="openTaskDetailsModal({{ json_encode($taskData) }})" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; gap:12px; cursor:pointer; transition:all 0.15s ease;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#ffffff'; this.style.borderColor='#e2e8f0';">
+                <!-- Left Column: Title & Niche Note -->
+                <div style="display:flex; flex-direction:column; gap:3px; min-width:0; flex:1;">
+                  <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                    <span style="font-size:0.86rem; font-weight:600; color:#1e293b; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0;" title="{{ $cleanTitle }}">
+                      {{ $cleanTitle }}
                     </span>
                     @if($task->priority === 'urgent')
-                      <span style="font-size:0.65rem; font-weight:700; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; padding:1px 5px; border-radius:6px; text-transform:uppercase;">Urgent</span>
+                      <span style="font-size:0.65rem; font-weight:700; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; padding:1px 6px; border-radius:6px; text-transform:uppercase; flex-shrink:0;">Urgent</span>
                     @elseif($task->priority === 'high')
-                      <span style="font-size:0.65rem; font-weight:700; background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; padding:1px 5px; border-radius:6px; text-transform:uppercase;">High</span>
+                      <span style="font-size:0.65rem; font-weight:700; background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; padding:1px 6px; border-radius:6px; text-transform:uppercase; flex-shrink:0;">High</span>
                     @endif
                   </div>
 
-                  @if($task->due_at || $task->booking || $task->user)
-                    <div style="font-size:0.73rem; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                      @if($task->due_at)
-                        <span style="color:{{ $task->due_at->isPast() ? '#dc2626' : '#64748b' }}; font-weight:{{ $task->due_at->isPast() ? '600' : '400' }}; display:inline-flex; align-items:center; gap:3px;">
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                          <span>{{ $task->due_at->isPast() ? 'Overdue: '.$task->due_at->diffForHumans() : $task->due_at->format('M d, h:i A') }}</span>
-                        </span>
-                      @endif
+                  <div style="font-size:0.74rem; color:#64748b; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; word-break:break-word;">
+                    {{ $task->notes }}
+                  </div>
 
-                      @if($task->booking)
-                        <span style="display:inline-flex; align-items:center; gap:3px;" onclick="event.stopPropagation()">
-                          <a href="{{ route('admin.bookings.show', $task->booking) }}" style="color:var(--paces-primary, #3e60d5); text-decoration:none; font-size:0.72rem; font-weight:600; font-family:monospace;" title="Linked Booking">
-                            #{{ $task->booking->booking_number }}
-                          </a>
-                        </span>
-                      @elseif($task->user)
-                        <span style="font-size:0.72rem; color:#475569; display:inline-flex; align-items:center; gap:3px;" onclick="event.stopPropagation()">
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                          <span>{{ $task->user->name }}</span>
-                        </span>
-                      @endif
+                  @if($task->due_at)
+                    <div style="font-size:0.72rem; color:{{ $task->due_at->isPast() ? '#dc2626' : '#64748b' }}; font-weight:{{ $task->due_at->isPast() ? '600' : '400' }}; display:inline-flex; align-items:center; gap:4px; margin-top:2px;">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                      <span>{{ $task->due_at->isPast() ? 'Overdue: '.$task->due_at->diffForHumans() : $task->due_at->format('M d, h:i A') }}</span>
                     </div>
                   @endif
                 </div>
-              </div>
 
-              <!-- Right: Clean Action Buttons (NO TEXT) -->
-              <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;" onclick="event.stopPropagation()">
-                <!-- Edit Icon Button -->
-                <button type="button" onclick="openEditTaskModal({{ json_encode($taskData) }})" style="width:28px; height:28px; border-radius:6px; border:1px solid #e2e8f0; background:#ffffff; color:#64748b; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.background='#ffffff'; this.style.color='#64748b';" title="Edit Task">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                </button>
-
-                <!-- Done Icon Button -->
-                <form action="{{ route('admin.outreach-tasks.complete', $task) }}" method="POST" style="margin:0;">
-                  @csrf
-                  <button type="submit" style="width:28px; height:28px; border-radius:6px; border:1px solid #a7f3d0; background:#ecfdf5; color:#059669; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#d1fae5'; this.style.color='#047857';" onmouseout="this.style.background='#ecfdf5'; this.style.color='#059669';" title="Mark as Done">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <!-- Right Column: Action Buttons -->
+                <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;" onclick="event.stopPropagation()">
+                  <button type="button" onclick="openEditTaskModal({{ json_encode($taskData) }})" style="width:28px; height:28px; border-radius:6px; border:1px solid #e2e8f0; background:#ffffff; color:#64748b; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.background='#ffffff'; this.style.color='#64748b';" title="Edit Task">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                   </button>
-                </form>
 
-                <!-- Delete Icon Button -->
-                <form action="{{ route('admin.outreach-tasks.destroy', $task) }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete this task?');">
-                  @csrf
-                  @method('DELETE')
-                  <button type="submit" style="width:28px; height:28px; border-radius:6px; border:1px solid #fee2e2; background:#ffffff; color:#ef4444; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='#ffffff';" title="Delete Task">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                  </button>
-                </form>
+                  <form action="{{ route('admin.outreach-tasks.complete', $task) }}" method="POST" style="margin:0;">
+                    @csrf
+                    <button type="submit" style="width:28px; height:28px; border-radius:6px; border:1px solid #a7f3d0; background:#ecfdf5; color:#059669; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#d1fae5'; this.style.color='#047857';" onmouseout="this.style.background='#ecfdf5'; this.style.color='#059669';" title="Mark as Done">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                  </form>
+
+                  <form action="{{ route('admin.outreach-tasks.destroy', $task) }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete this task?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" style="width:28px; height:28px; border-radius:6px; border:1px solid #fee2e2; background:#ffffff; color:#ef4444; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='#ffffff';" title="Delete Task">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </form>
+                </div>
               </div>
-            </div>
+            @else
+              <!-- Case 3: No Order Tagged AND No Note (Title vertical center, Right: Buttons) -->
+              <div class="task-interactive-row" onclick="openTaskDetailsModal({{ json_encode($taskData) }})" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; gap:12px; cursor:pointer; transition:all 0.15s ease;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#ffffff'; this.style.borderColor='#e2e8f0';">
+                <!-- Left: Title vertical center -->
+                <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
+                  <span style="font-size:0.86rem; font-weight:600; color:#1e293b; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0;" title="{{ $cleanTitle }}">
+                    {{ $cleanTitle }}
+                  </span>
+                  @if($task->priority === 'urgent')
+                    <span style="font-size:0.65rem; font-weight:700; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; padding:1px 6px; border-radius:6px; text-transform:uppercase; flex-shrink:0;">Urgent</span>
+                  @elseif($task->priority === 'high')
+                    <span style="font-size:0.65rem; font-weight:700; background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; padding:1px 6px; border-radius:6px; text-transform:uppercase; flex-shrink:0;">High</span>
+                  @endif
+
+                  @if($task->due_at)
+                    <span style="font-size:0.72rem; color:{{ $task->due_at->isPast() ? '#dc2626' : '#64748b' }}; font-weight:{{ $task->due_at->isPast() ? '600' : '400' }}; display:inline-flex; align-items:center; gap:4px; flex-shrink:0;">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                      <span>{{ $task->due_at->isPast() ? 'Overdue: '.$task->due_at->diffForHumans() : $task->due_at->format('M d, h:i A') }}</span>
+                    </span>
+                  @endif
+                </div>
+
+                <!-- Right: Action Buttons -->
+                <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;" onclick="event.stopPropagation()">
+                  <button type="button" onclick="openEditTaskModal({{ json_encode($taskData) }})" style="width:28px; height:28px; border-radius:6px; border:1px solid #e2e8f0; background:#ffffff; color:#64748b; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.background='#ffffff'; this.style.color='#64748b';" title="Edit Task">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  </button>
+
+                  <form action="{{ route('admin.outreach-tasks.complete', $task) }}" method="POST" style="margin:0;">
+                    @csrf
+                    <button type="submit" style="width:28px; height:28px; border-radius:6px; border:1px solid #a7f3d0; background:#ecfdf5; color:#059669; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#d1fae5'; this.style.color='#047857';" onmouseout="this.style.background='#ecfdf5'; this.style.color='#059669';" title="Mark as Done">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                  </form>
+
+                  <form action="{{ route('admin.outreach-tasks.destroy', $task) }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete this task?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" style="width:28px; height:28px; border-radius:6px; border:1px solid #fee2e2; background:#ffffff; color:#ef4444; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all 0.15s ease;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='#ffffff';" title="Delete Task">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            @endif
           @empty
             <div style="text-align:center; padding:1.75rem 1rem; color:var(--paces-text-muted);">
               <div style="width:40px; height:40px; border-radius:50%; background:#ecfdf5; color:#059669; display:inline-flex; align-items:center; justify-content:center; margin-bottom:8px;">

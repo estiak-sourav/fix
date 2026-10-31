@@ -62,7 +62,7 @@
               </div>
               <div class="contact-detail-text">
                 <h5>Central Office</h5>
-                <p>{{ \App\Models\SiteSetting::get('head_office_address', 'Plot 42, Road 11, Block D, Banani, Dhaka-1213, Bangladesh') }}</p>
+                <p>{{ \App\Models\SiteSetting::get('head_office_address', 'Plot 12, Road 11, Block D, Banani, Dhaka-1213, Bangladesh') }}</p>
               </div>
             </li>
 
@@ -75,7 +75,7 @@
               </div>
               <div class="contact-detail-text">
                 <h5>Operating Hours</h5>
-                <p>{!! nl2br(e($content?->meta_data['operating_hours'] ?? "General Support: 8:00 AM – 10:00 PM (Daily)\nEmergency Callouts: 24/7 Available")) !!}</p>
+                <p>{!! nl2br(e(\App\Models\SiteSetting::get('operating_hours', "General Support: 8:00 AM – 10:00 PM (Daily)\nEmergency Callouts: 24/7 Available"))) !!}</p>
               </div>
             </li>
           </ul>
@@ -96,7 +96,13 @@
         </div>
 
         <div style="border-top:1px solid rgba(255,255,255,0.15); padding-top:1.25rem; margin-top:1rem; font-size:0.85rem; color:#cbd5e1;">
-          {{ $content?->meta_data['coverage_text'] ?? 'Covering Dhaka North, Dhaka South, Gazipur, Savar, EPZ & Major Industrial Zones.' }}
+          @php
+            $cardCoverage = \App\Models\SiteSetting::get('coverage_area', 'Dhaka North, Dhaka South, Gazipur, Savar, EPZ & Major Industrial Zones');
+            if (!\Illuminate\Support\Str::startsWith(strtolower(trim($cardCoverage)), 'covering')) {
+              $cardCoverage = 'Covering ' . $cardCoverage;
+            }
+          @endphp
+          {{ rtrim($cardCoverage, '.') }}.
         </div>
       </div>
 

@@ -45,15 +45,24 @@
             <p style="margin:0; color:var(--text-muted);">{{ $booking->street_address }}, {{ $booking->area }}, {{ $booking->district }}</p>
           </div>
           <div>
-            <strong style="color:var(--text-main); display:block; margin-bottom:4px;">Billing / Agreed Price:</strong>
-            @if($booking->final_cost > 0)
-              <p style="margin:0; color:#16a34a; font-weight:700; font-size:1.1rem;">৳ {{ number_format($booking->final_cost, 2) }} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">(Invoiced)</span></p>
-            @elseif($booking->estimated_cost > 0)
-              <p style="margin:0; color:var(--primary); font-weight:700; font-size:1.1rem;">৳ {{ number_format($booking->estimated_cost, 2) }} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">(Agreed)</span></p>
-            @elseif(in_array($booking->status, ['accepted', 'assigned', 'in_progress']))
-              <p style="margin:0; color:#d97706; font-weight:600;">To be billed upon completion</p>
+            @if($booking->is_amc)
+              <strong style="color:var(--text-main); display:block; margin-bottom:4px;">AMC Recurring Billing:</strong>
+              <p style="margin:0; color:#7c3aed; font-weight:700; font-size:1.1rem;">
+                ৳ {{ number_format($booking->recurring_amount ?: $booking->final_cost, 2) }}
+                <span style="font-size:0.75rem; font-weight:500; color:var(--text-muted);">/ {{ $booking->billing_cycle_label }}</span>
+              </p>
+              <span style="font-size:0.75rem; color:#64748b;">Next Due: {{ $booking->next_billing_date ? $booking->next_billing_date->format('M d, Y') : 'Active' }}</span>
             @else
-              <p style="margin:0; color:var(--text-muted);">Pending phone discussion</p>
+              <strong style="color:var(--text-main); display:block; margin-bottom:4px;">Billing / Agreed Price:</strong>
+              @if($booking->final_cost > 0)
+                <p style="margin:0; color:#16a34a; font-weight:700; font-size:1.1rem;">৳ {{ number_format($booking->final_cost, 2) }} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">(Invoiced)</span></p>
+              @elseif($booking->estimated_cost > 0)
+                <p style="margin:0; color:var(--primary); font-weight:700; font-size:1.1rem;">৳ {{ number_format($booking->estimated_cost, 2) }} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">(Agreed)</span></p>
+              @elseif(in_array($booking->status, ['accepted', 'assigned', 'in_progress']))
+                <p style="margin:0; color:#d97706; font-weight:600;">To be billed upon completion</p>
+              @else
+                <p style="margin:0; color:var(--text-muted);">Pending phone discussion</p>
+              @endif
             @endif
           </div>
         </div>
@@ -87,6 +96,30 @@
                 <a href="{{ $booking->agreement_url }}" target="_blank" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; background:#fff;">
                   <span>📄 View Signed Agreement Document ↗</span>
                 </a>
+              </div>
+            @endif
+
+            @if($booking->amcInvoices->isNotEmpty())
+              <div style="margin-top:1rem; border-top:1px dashed #bbf7d0; padding-top:0.75rem;">
+                <strong style="font-size:0.82rem; color:#166534; display:block; margin-bottom:6px;">Recurring Invoices & Payment Status:</strong>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                  @foreach($booking->amcInvoices as $inv)
+                    <div style="background:#ffffff; border:1px solid #dcfce7; border-radius:6px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; flex-wrap:wrap; gap:6px;">
+                      <div>
+                        <strong style="color:#0f172a;">{{ $inv->invoice_number }}</strong>
+                        <span style="color:#64748b; font-size:0.75rem; margin-left:4px;">({{ $inv->billing_cycle_label }})</span>
+                      </div>
+                      <div style="display:flex; align-items:center; gap:8px;">
+                        <strong style="color:#166534;">৳ {{ number_format($inv->amount, 2) }}</strong>
+                        @if($inv->status === 'paid')
+                          <span style="background:#dcfce7; color:#15803d; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px;">✓ Paid</span>
+                        @else
+                          <span style="background:#fef3c7; color:#92400e; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px;">Due: {{ $inv->due_date?->format('M d') }}</span>
+                        @endif
+                      </div>
+                    </div>
+                  @endforeach
+                </div>
               </div>
             @endif
           </div>

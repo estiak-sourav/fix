@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Actions\Booking\UpdateBookingStatusAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateBookingStatusRequest;
+use App\Models\AmcInvoice;
 use App\Models\AmcPlan;
 use App\Models\Booking;
 use App\Models\OutreachTask;
 use App\Models\Partner;
 use App\Models\User;
 use App\Services\ActivityLogService;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,7 +25,39 @@ class AdminBookingController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Booking::with(['user', 'service', 'amcPlan', 'statusLogs'])->latest();
+        $query = Booking::with(['user', 'service', 'amcPlan', 'statusLogs', 'amcInvoices'])->latest();
+
+        // 1. Order Type / Service vs AMC filter
+        $serviceType = $request->query('service_type', $request->query('type'));
+        if ($serviceType === 'service' || $serviceType === 'regular') {
+            $query->where(function ($q) {
+                $q->where('service_type', '!=', 'amc_contract')
+                    ->orWhereNull('service_type');
+            })->whereNull('amc_plan_id');
+        } elseif ($serviceType === 'amc' || $serviceType === 'amc_contract') {
+            $query->where(function ($q) {
+                $q->where('service_type', 'amc_contract')
+                    ->orWhereNotNull('amc_plan_id');
+            });
+        }
+
+        // 2. AMC Contract Status filter (Running / Active vs Expired)
+        $amcStatus = $request->query('amc_status');
+        if ($amcStatus === 'running' || $amcStatus === 'active') {
+            $query->where(function ($q) {
+                $q->where('service_type', 'amc_contract')
+                    ->orWhereNotNull('amc_plan_id');
+            })->where('contract_status', 'active')
+                ->where(function ($q) {
+                    $q->whereNull('contract_end_date')
+                        ->orWhereDate('contract_end_date', '>=', today());
+                });
+        } elseif ($amcStatus === 'expired') {
+            $query->where(function ($q) {
+                $q->where('service_type', 'amc_contract')
+                    ->orWhereNotNull('amc_plan_id');
+            })->whereDate('contract_end_date', '<', today());
+        }
 
         // Status filter (support both 'pending' and 'pending_review')
         if ($status = $request->query('status')) {
@@ -102,7 +136,27 @@ class AdminBookingController extends Controller
             'cancelled' => Booking::where('status', 'cancelled')->count(),
         ];
 
-        return view('admin.bookings.index', compact('bookings', 'availableDivisions', 'availableDistricts', 'availableAreas', 'statusCounts'));
+        $typeCounts = [
+            'all' => Booking::count(),
+            'regular' => Booking::where(function ($q) {
+                $q->where('service_type', '!=', 'amc_contract')
+                    ->orWhereNull('service_type');
+            })->whereNull('amc_plan_id')->count(),
+            'amc' => Booking::where(function ($q) {
+                $q->where('service_type', 'amc_contract')
+                    ->orWhereNotNull('amc_plan_id');
+            })->count(),
+            'amc_running' => Booking::where(function ($q) {
+                $q->where('service_type', 'amc_contract')
+                    ->orWhereNotNull('amc_plan_id');
+            })->where('contract_status', 'active')
+                ->where(function ($q) {
+                    $q->whereNull('contract_end_date')
+                        ->orWhereDate('contract_end_date', '>=', today());
+                })->count(),
+        ];
+
+        return view('admin.bookings.index', compact('bookings', 'availableDivisions', 'availableDistricts', 'availableAreas', 'statusCounts', 'typeCounts'));
     }
 
     /**
@@ -110,7 +164,7 @@ class AdminBookingController extends Controller
      */
     public function show(Booking $booking): View
     {
-        $booking->load(['user', 'service', 'amcPlan', 'statusLogs.changedByUser', 'statusLogs.changedByAdmin']);
+        $booking->load(['user', 'service', 'amcPlan', 'statusLogs.changedByUser', 'statusLogs.changedByAdmin', 'amcInvoices.collectedByAdmin']);
 
         $fieldCrews = User::whereIn('role', ['technician', 'vendor', 'partner'])
             ->orWhere('role', 'admin')
@@ -194,7 +248,7 @@ class AdminBookingController extends Controller
                 'booking_id' => $booking->id,
                 'admin_id' => $admin?->id,
                 'created_by_admin_id' => $admin?->id,
-                'title' => "Retry Call: {$booking->customer_name} (#{$booking->booking_number})",
+                'title' => "Retry Call: {$booking->customer_name}",
                 'task_type' => 'call_unreachable',
                 'customer_name' => $booking->customer_name,
                 'customer_phone' => $booking->customer_phone,
@@ -222,7 +276,7 @@ class AdminBookingController extends Controller
                 'booking_id' => $booking->id,
                 'admin_id' => $admin?->id,
                 'created_by_admin_id' => $admin?->id,
-                'title' => "Follow-up Call: {$booking->customer_name} (#{$booking->booking_number})",
+                'title' => "Follow-up Call: {$booking->customer_name}",
                 'task_type' => 'call_back_later',
                 'customer_name' => $booking->customer_name,
                 'customer_phone' => $booking->customer_phone,
@@ -497,12 +551,22 @@ class AdminBookingController extends Controller
             'amc_plan_id' => ['required', 'exists:amc_plans,id'],
             'contract_start_date' => ['required', 'date'],
             'contract_end_date' => ['required', 'date', 'after_or_equal:contract_start_date'],
+            'billing_cycle' => ['nullable', 'in:daily,weekly,half_monthly,monthly,quarterly,yearly'],
+            'recurring_amount' => ['nullable', 'numeric', 'min:0'],
+            'billing_day' => ['nullable', 'integer', 'between:1,31'],
+            'first_bill_due_date' => ['nullable', 'date'],
             'contract_cost' => ['nullable', 'numeric', 'min:0'],
             'amc_package_notes' => ['nullable', 'string', 'max:2000'],
             'agreement_file' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:10240'],
         ]);
 
         $admin = Auth::guard('admin')->user();
+        $billingCycle = $validated['billing_cycle'] ?? $booking->billing_cycle ?? 'monthly';
+        $recurringAmount = isset($validated['recurring_amount']) && $validated['recurring_amount'] !== ''
+            ? (float) $validated['recurring_amount']
+            : (isset($validated['contract_cost']) ? (float) $validated['contract_cost'] : 0);
+        $billingDay = ! empty($validated['billing_day']) ? (int) $validated['billing_day'] : 1;
+        $firstDue = ! empty($validated['first_bill_due_date']) ? $validated['first_bill_due_date'] : $validated['contract_start_date'];
 
         $updates = [
             'amc_plan_id' => $validated['amc_plan_id'],
@@ -510,11 +574,17 @@ class AdminBookingController extends Controller
             'contract_start_date' => $validated['contract_start_date'],
             'contract_end_date' => $validated['contract_end_date'],
             'contract_status' => 'active',
+            'billing_cycle' => $billingCycle,
+            'recurring_amount' => $recurringAmount,
+            'billing_day' => $billingDay,
+            'next_billing_date' => $firstDue,
             'amc_package_notes' => $validated['amc_package_notes'] ?? null,
         ];
 
         if (isset($validated['contract_cost']) && $validated['contract_cost'] !== '') {
             $updates['final_cost'] = (float) $validated['contract_cost'];
+        } elseif ($recurringAmount > 0) {
+            $updates['final_cost'] = $recurringAmount;
         }
 
         if ($request->hasFile('agreement_file')) {
@@ -523,6 +593,30 @@ class AdminBookingController extends Controller
         }
 
         $booking->update($updates);
+
+        // Generate initial recurring invoice if none exist
+        if ($booking->amcInvoices()->count() === 0 && $recurringAmount > 0) {
+            $periodStart = Carbon::parse($validated['contract_start_date']);
+            $periodEnd = match ($billingCycle) {
+                'daily' => $periodStart->copy()->addDay(),
+                'weekly' => $periodStart->copy()->addWeek(),
+                'half_monthly' => $periodStart->copy()->addDays(15),
+                'quarterly' => $periodStart->copy()->addMonths(3),
+                'yearly' => $periodStart->copy()->addYear(),
+                default => $periodStart->copy()->addMonth(),
+            };
+
+            $booking->amcInvoices()->create([
+                'invoice_number' => 'AMC-'.$booking->booking_number.'-01',
+                'billing_cycle_label' => ucfirst($billingCycle).' Recurring Cycle #1',
+                'period_start' => $periodStart,
+                'period_end' => $periodEnd,
+                'due_date' => $firstDue,
+                'amount' => $recurringAmount,
+                'status' => 'unpaid',
+                'notes' => 'Initial billing cycle invoice scheduled upon contract activation.',
+            ]);
+        }
 
         $plan = AmcPlan::find($validated['amc_plan_id']);
         $planName = $plan ? $plan->name : 'AMC Plan';
@@ -542,10 +636,106 @@ class AdminBookingController extends Controller
             'amc_plan' => $planName,
             'start_date' => $validated['contract_start_date'],
             'end_date' => $validated['contract_end_date'],
+            'billing_cycle' => $billingCycle,
+            'recurring_amount' => $recurringAmount,
             'has_agreement_file' => ! empty($updates['agreement_document_path']),
         ]);
 
         return redirect()->back()->with('success', "AMC Contract ({$planName}) has been successfully ACTIVATED for Work Order #{$booking->booking_number}.");
+    }
+
+    /**
+     * Record payment and collect an AMC recurring bill invoice.
+     */
+    public function collectAmcBill(Request $request, Booking $booking, AmcInvoice $invoice): RedirectResponse
+    {
+        $validated = $request->validate([
+            'payment_method' => ['required', 'string', 'max:50'],
+            'payment_reference' => ['nullable', 'string', 'max:100'],
+            'paid_at' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+        $paidDate = ! empty($validated['paid_at']) ? Carbon::parse($validated['paid_at']) : now();
+
+        $invoice->update([
+            'status' => 'paid',
+            'paid_at' => $paidDate,
+            'payment_method' => $validated['payment_method'],
+            'payment_reference' => $validated['payment_reference'] ?? null,
+            'collected_by_admin_id' => $admin->id,
+            'notes' => $validated['notes'] ?? $invoice->notes,
+        ]);
+
+        // Calculate and advance next billing date
+        $nextDate = match ($booking->billing_cycle) {
+            'daily' => ($invoice->period_end ?: now())->copy()->addDay(),
+            'weekly' => ($invoice->period_end ?: now())->copy()->addWeek(),
+            'half_monthly' => ($invoice->period_end ?: now())->copy()->addDays(15),
+            'quarterly' => ($invoice->period_end ?: now())->copy()->addMonths(3),
+            'yearly' => ($invoice->period_end ?: now())->copy()->addYear(),
+            default => ($invoice->period_end ?: now())->copy()->addMonth(),
+        };
+
+        if (! $booking->contract_end_date || $nextDate->lte($booking->contract_end_date)) {
+            $booking->update(['next_billing_date' => $nextDate]);
+        }
+
+        ActivityLogService::logBooking('amc.bill.collected', "Collected AMC recurring bill #{$invoice->invoice_number} (৳ ".number_format($invoice->amount, 2).") via {$validated['payment_method']}.", $booking, [
+            'booking_number' => $booking->booking_number,
+            'invoice_number' => $invoice->invoice_number,
+            'amount' => $invoice->amount,
+            'payment_method' => $validated['payment_method'],
+            'reference' => $validated['payment_reference'] ?? null,
+        ]);
+
+        return redirect()->back()->with('success', 'Payment of ৳ '.number_format($invoice->amount, 2)." successfully collected for Invoice #{$invoice->invoice_number}.");
+    }
+
+    /**
+     * Generate next recurring cycle bill for an active AMC contract.
+     */
+    public function generateNextAmcBill(Request $request, Booking $booking): RedirectResponse
+    {
+        if (! $booking->is_amc || $booking->contract_status !== 'active') {
+            return redirect()->back()->with('error', 'Recurring bills can only be generated for active AMC contracts.');
+        }
+
+        $latestInvoice = $booking->amcInvoices()->latest('period_end')->first();
+        $cycleCount = $booking->amcInvoices()->count() + 1;
+
+        $periodStart = $latestInvoice && $latestInvoice->period_end
+            ? Carbon::parse($latestInvoice->period_end)
+            : ($booking->contract_start_date ?: today());
+
+        $periodEnd = match ($booking->billing_cycle) {
+            'daily' => $periodStart->copy()->addDay(),
+            'weekly' => $periodStart->copy()->addWeek(),
+            'half_monthly' => $periodStart->copy()->addDays(15),
+            'quarterly' => $periodStart->copy()->addMonths(3),
+            'yearly' => $periodStart->copy()->addYear(),
+            default => $periodStart->copy()->addMonth(),
+        };
+
+        $dueDate = $booking->next_billing_date ?: $periodStart;
+        $amount = (float) ($booking->recurring_amount ?: $booking->final_cost ?: 0);
+        $padded = str_pad((string) $cycleCount, 2, '0', STR_PAD_LEFT);
+
+        $invoice = $booking->amcInvoices()->create([
+            'invoice_number' => "AMC-{$booking->booking_number}-{$padded}",
+            'billing_cycle_label' => ucfirst($booking->billing_cycle ?: 'monthly')." Recurring Cycle #{$cycleCount}",
+            'period_start' => $periodStart,
+            'period_end' => $periodEnd,
+            'due_date' => $dueDate,
+            'amount' => $amount,
+            'status' => 'unpaid',
+            'notes' => 'Recurring cycle invoice generated by '.Auth::guard('admin')->user()->name.'.',
+        ]);
+
+        ActivityLogService::logBooking('amc.bill.generated', "Generated next AMC recurring invoice #{$invoice->invoice_number} (৳ ".number_format($amount, 2).').', $booking);
+
+        return redirect()->back()->with('success', "Next cycle invoice #{$invoice->invoice_number} has been generated successfully.");
     }
 
     /**

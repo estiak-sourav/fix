@@ -101,7 +101,7 @@
           <div>
             <label class="form-label-paces">Header Logo (Dark Mode)</label>
             <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:8px; border:1px solid #334155; text-align:center;">
-              <img src="{{ asset(\App\Models\SiteSetting::get('header_logo_dark', \App\Models\SiteSetting::get('header_logo', 'assets/images/logo-white-crop.png'))) }}" alt="Dark Header Logo" style="height:36px; max-width:180px; object-fit:contain;">
+              <img src="{{ asset(\App\Models\SiteSetting::get('header_logo_dark', \App\Models\SiteSetting::get('footer_logo', 'assets/images/logo-white-crop.png'))) }}" alt="Dark Header Logo" style="height:36px; max-width:180px; object-fit:contain;">
             </div>
             <input type="file" name="header_logo_dark" accept="image/*" class="form-control-paces">
             <span class="form-help-paces">Alternate logo for dark navbar or dark mode.</span>
@@ -163,14 +163,22 @@
 
         <div style="margin-bottom:1.25rem;">
           <label class="form-label-paces">Physical Office Address *</label>
-          <input type="text" name="head_office_address" value="{{ \App\Models\SiteSetting::get('head_office_address', 'Plot 12, Road 11, Block D, Banani, Dhaka-1213') }}" class="form-control-paces" required>
-          <span class="form-help-paces">Official location rendered dynamically in contact sections and footer.</span>
+          <input type="text" name="head_office_address" value="{{ \App\Models\SiteSetting::get('head_office_address', 'Plot 12, Road 11, Block D, Banani, Dhaka-1213, Bangladesh') }}" class="form-control-paces" required>
+          <span class="form-help-paces">Official location rendered dynamically in contact section, website footer, and search engine schema.</span>
         </div>
 
-        <div>
-          <label class="form-label-paces">Operating Hours</label>
-          <input type="text" name="operating_hours" value="{{ \App\Models\SiteSetting::get('operating_hours', '24/7 Operations Command Center') }}" class="form-control-paces">
-          <span class="form-help-paces">Working schedule displayed in contact sections and footer.</span>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem;">
+          <div>
+            <label class="form-label-paces">Operating Hours</label>
+            <textarea name="operating_hours" class="form-control-paces" rows="3">{{ \App\Models\SiteSetting::get('operating_hours', "General Support: 8:00 AM – 10:00 PM (Daily)\nEmergency Callouts: 24/7 Available") }}</textarea>
+            <span class="form-help-paces">Working schedule displayed in contact center card and website footer. Supports multi-line formatting.</span>
+          </div>
+
+          <div>
+            <label class="form-label-paces">Service Coverage Area</label>
+            <textarea name="coverage_area" class="form-control-paces" rows="3">{{ \App\Models\SiteSetting::get('coverage_area', 'Dhaka North, Dhaka South, Gazipur, Savar, EPZ & Major Industrial Zones') }}</textarea>
+            <span class="form-help-paces">Operational service regions displayed in website top announcement bar and contact center card.</span>
+          </div>
         </div>
       </div>
 
@@ -386,6 +394,25 @@
             </select>
             <span class="form-help-paces">Target page linked in cookie notices and privacy disclosures.</span>
           </div>
+        </div>
+      </div>
+
+      <!-- 7. Customer OTP & Authentication Email Content -->
+      <div class="card-paces" style="margin-bottom:1.5rem;">
+        <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.85rem; margin-bottom:1.25rem;">
+          <h3 class="card-title-paces" style="margin:0;">Customer OTP & Authentication Email Content</h3>
+        </div>
+
+        <div style="margin-bottom:1.25rem;">
+          <label class="form-label-paces">OTP Security Notice</label>
+          <input type="text" name="otp_security_notice" value="{{ \App\Models\SiteSetting::get('otp_security_notice', 'This code is valid for 10 minutes. Never share your OTP with anyone, including FIX representatives.') }}" class="form-control-paces">
+          <span class="form-help-paces">The security notice box text displayed right below the OTP code box.</span>
+        </div>
+
+        <div>
+          <label class="form-label-paces">OTP Disclaimer / Help Notice</label>
+          <textarea name="otp_disclaimer_text" class="form-control-paces" rows="3">{{ \App\Models\SiteSetting::get('otp_disclaimer_text', 'If you did not request this verification code, please ignore this email or contact our 24/7 emergency dispatch immediately.') }}</textarea>
+          <span class="form-help-paces">Instructions for customers if they did not request the verification code.</span>
         </div>
       </div>
 

@@ -18,7 +18,8 @@ class SiteCmsSeeder extends Seeder
             ['key' => 'emergency_phone', 'value' => '+880 1700-000000', 'group' => 'contact', 'label' => 'Emergency Hotline'],
             ['key' => 'support_email', 'value' => 'support@fix.com.bd', 'group' => 'contact', 'label' => 'Support Email'],
             ['key' => 'head_office_address', 'value' => 'Plot 12, Road 11, Block D, Banani, Dhaka-1213, Bangladesh', 'group' => 'contact', 'label' => 'Head Office Address'],
-            ['key' => 'operating_hours', 'value' => '24/7 Operations Command Center', 'group' => 'contact', 'label' => 'Operating Hours'],
+            ['key' => 'operating_hours', 'value' => "General Support: 8:00 AM – 10:00 PM (Daily)\nEmergency Callouts: 24/7 Available", 'group' => 'contact', 'label' => 'Operating Hours'],
+            ['key' => 'coverage_area', 'value' => 'Dhaka North, Dhaka South, Gazipur, Savar, EPZ & Major Industrial Zones', 'group' => 'contact', 'label' => 'Service Coverage Area'],
             ['key' => 'header_logo', 'value' => 'assets/images/logo-dark-crop.png', 'group' => 'branding', 'label' => 'Header Dark Logo'],
             ['key' => 'footer_logo', 'value' => 'assets/images/logo-white-crop.png', 'group' => 'branding', 'label' => 'Footer Light Logo'],
             ['key' => 'meta_title', 'value' => 'FIX - Facility Management & Maintenance Services in Bangladesh', 'group' => 'seo', 'label' => 'Default SEO Title'],
@@ -220,7 +221,10 @@ class SiteCmsSeeder extends Seeder
                 'secondary_button_url' => null,
                 'media_path' => null,
                 'media_type' => 'form',
-                'meta_data' => null,
+                'meta_data' => [
+                    'card_title' => 'Operations Command & Technical Support',
+                    'card_desc' => 'Have an urgent maintenance request or need facility engineering assistance? Contact our central operations center 24/7.',
+                ],
             ],
             // 12. Become a Partner - Hero & Statistics
             [

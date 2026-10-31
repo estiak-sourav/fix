@@ -176,36 +176,135 @@
               <h3>Core Trade Competencies</h3>
             </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label>Primary Technical Domain <span class="required">*</span></label>
-                <select name="trade_domain" class="form-control" required>
-                  <option value="Electrical & Substation">Electrical & Substation Power</option>
-                  <option value="HVAC & Central Air Conditioning">HVAC & Central Air Conditioning</option>
-                  <option value="Plumbing & Water Boosting">Plumbing & Water Boosting Systems</option>
-                  <option value="Fire Safety & NFPA Suppression">Fire Safety & NFPA Suppression</option>
-                  <option value="Commercial Janitorial & Sanitization">Commercial Janitorial & Sanitization</option>
-                  <option value="Interior Fit-Out & Renovation">Interior Fit-Out & Renovation</option>
-                  <option value="Pest Control & Vector Management">Pest Control & Vector Management</option>
-                </select>
-              </div>
+            <div class="form-group" style="margin-bottom:1.5rem;">
+              <label>Active Field Technicians Count <span class="required">*</span></label>
+              <select name="technicians_count" class="form-control" required>
+                <option value="1-5" {{ old('technicians_count') === '1-5' ? 'selected' : '' }}>1 - 5 Technicians</option>
+                <option value="6-15" {{ old('technicians_count') === '6-15' ? 'selected' : '' }}>6 - 15 Technicians</option>
+                <option value="16-50" {{ old('technicians_count') === '16-50' ? 'selected' : '' }}>16 - 50 Technicians</option>
+                <option value="50+" {{ old('technicians_count') === '50+' ? 'selected' : '' }}>50+ Field Workforce</option>
+              </select>
+            </div>
 
-              <div class="form-group">
-                <label>Active Field Technicians Count <span class="required">*</span></label>
-                <select name="technicians_count" class="form-control" required>
-                  <option value="1-5">1 - 5 Technicians</option>
-                  <option value="6-15">6 - 15 Technicians</option>
-                  <option value="16-50">16 - 50 Technicians</option>
-                  <option value="50+">50+ Field Workforce</option>
-                </select>
+            @php
+              $tradeDomainOptions = [
+                'Electrical & Substation Power',
+                'HVAC & Central Air Conditioning',
+                'Plumbing & Water Boosting Systems',
+                'Fire Safety & NFPA Suppression',
+                'Commercial Janitorial & Sanitization',
+                'Interior Fit-Out & Renovation',
+                'Pest Control & Vector Management',
+                'General Facility Maintenance',
+              ];
+
+              $coverageAreaOptions = [
+                'Dhaka North (Uttara, Gulshan, Banani, Mirpur)',
+                'Dhaka South (Dhanmondi, Motijheel, Old Dhaka)',
+                'Gazipur & Tongi Industrial Belt',
+                'Savar, Ashulia & Dhaka EPZ',
+                'Narayanganj & Keraniganj Industrial Area',
+                'Chattogram & Regional Industrial Corridor',
+                'Cumilla & Mymensingh Economic Zones',
+                'Nationwide / Pan-Bangladesh Coverage',
+              ];
+
+              $rawOldDomains = old('trade_domain', []);
+              $selectedDomains = is_array($rawOldDomains) ? $rawOldDomains : array_map('trim', explode(',', (string) $rawOldDomains));
+
+              $rawOldAreas = old('coverage_areas', []);
+              $selectedAreas = is_array($rawOldAreas) ? $rawOldAreas : array_map('trim', explode(',', (string) $rawOldAreas));
+            @endphp
+
+            <div class="form-group" style="margin-bottom:1.75rem;">
+              <label style="display:block; margin-bottom:0.6rem; font-weight:600;">
+                Primary Technical Domain <span class="required">*</span>
+                <span style="font-weight:400; color:#64748b; font-size:0.85rem; margin-left:6px;">(Select one or multiple core technical competencies)</span>
+              </label>
+              <div class="competency-checkbox-grid">
+                @foreach($tradeDomainOptions as $domain)
+                  @php
+                    $isDomainChecked = in_array($domain, $selectedDomains, true) || in_array(str_replace([' Power', ' Systems'], '', $domain), $selectedDomains, true);
+                  @endphp
+                  <label class="competency-checkbox-card">
+                    <input type="checkbox" name="trade_domain[]" value="{{ $domain }}" {{ $isDomainChecked ? 'checked' : '' }}>
+                    <span class="checkbox-label-text">{{ $domain }}</span>
+                  </label>
+                @endforeach
               </div>
             </div>
 
-            <div class="form-group">
-              <label>Operating Coverage Areas <span class="required">*</span></label>
-              <input type="text" name="coverage_areas" value="{{ old('coverage_areas') }}" class="form-control" placeholder="e.g. Dhaka Metro, Savar EPZ, Gazipur, Narayanganj" required>
+            <div class="form-group" style="margin-bottom:1.5rem;">
+              <label style="display:block; margin-bottom:0.6rem; font-weight:600;">
+                Operating Coverage Areas <span class="required">*</span>
+                <span style="font-weight:400; color:#64748b; font-size:0.85rem; margin-left:6px;">(Select all operational territories you cover)</span>
+              </label>
+              <div class="competency-checkbox-grid">
+                @foreach($coverageAreaOptions as $area)
+                  @php
+                    $areaShort = explode(' (', $area)[0];
+                    $isAreaChecked = in_array($area, $selectedAreas, true) || in_array($areaShort, $selectedAreas, true);
+                  @endphp
+                  <label class="competency-checkbox-card">
+                    <input type="checkbox" name="coverage_areas[]" value="{{ $area }}" {{ $isAreaChecked ? 'checked' : '' }}>
+                    <span class="checkbox-label-text">{{ $area }}</span>
+                  </label>
+                @endforeach
+              </div>
+              <div style="margin-top:12px;">
+                <input type="text" name="other_coverage_areas" value="{{ old('other_coverage_areas') }}" class="form-control" placeholder="Other specific areas or industrial zones (Optional)">
+              </div>
             </div>
           </div>
+
+          <style>
+            .competency-checkbox-grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 10px;
+            }
+            @media (max-width: 640px) {
+              .competency-checkbox-grid {
+                grid-template-columns: 1fr;
+              }
+            }
+            .competency-checkbox-card {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              padding: 12px 14px;
+              background: #ffffff;
+              border: 1.5px solid #e2e8f0;
+              border-radius: 10px;
+              cursor: pointer;
+              transition: all 0.2s ease;
+              user-select: none;
+              margin: 0;
+            }
+            .competency-checkbox-card:hover {
+              background: #f8fafc;
+              border-color: #cbd5e1;
+            }
+            .competency-checkbox-card input[type="checkbox"] {
+              width: 18px;
+              height: 18px;
+              accent-color: #0d9488;
+              cursor: pointer;
+              flex-shrink: 0;
+              margin: 0;
+            }
+            .competency-checkbox-card:has(input[type="checkbox"]:checked) {
+              background: #f0fdf4;
+              border-color: #10b981;
+              box-shadow: 0 1px 3px rgba(16, 185, 129, 0.12);
+            }
+            .competency-checkbox-card .checkbox-label-text {
+              font-size: 0.9rem;
+              font-weight: 500;
+              color: #1e293b;
+              line-height: 1.35;
+            }
+          </style>
 
           <button type="submit" class="btn btn-accent btn-lg btn-block" style="padding:1.1rem; width:100%;">
             Submit Enlistment Application
@@ -214,4 +313,27 @@
       </div>
     </div>
   </section>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.querySelector('form[action="{{ route('vendor.apply') }}"]');
+      if (!form) return;
+      form.addEventListener('submit', function(e) {
+        const domains = form.querySelectorAll('input[name="trade_domain[]"]:checked');
+        const areas = form.querySelectorAll('input[name="coverage_areas[]"]:checked');
+        const otherArea = form.querySelector('input[name="other_coverage_areas"]');
+        
+        if (domains.length === 0) {
+          e.preventDefault();
+          alert('Please select at least one Primary Technical Domain.');
+          return false;
+        }
+        if (areas.length === 0 && (!otherArea || !otherArea.value.trim())) {
+          e.preventDefault();
+          alert('Please select at least one Operating Coverage Area.');
+          return false;
+        }
+      });
+    });
+  </script>
 </x-layouts.app>

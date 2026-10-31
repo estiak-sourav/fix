@@ -142,9 +142,14 @@
               <select id="profDivision" name="division" class="form-control">
                 <option value="">— Select Division —</option>
                 @foreach($divisionsData ?? [] as $div)
-                  <option value="{{ $div['name'] }}" {{ old('division', $user->division) == $div['name'] ? 'selected' : '' }}>
-                    {{ $div['name'] }}
-                  </option>
+                  @php
+                    $divName = is_array($div) ? ($div['name'] ?? null) : (is_object($div) ? ($div->name ?? null) : (is_string($div) ? $div : null));
+                  @endphp
+                  @if(!empty($divName))
+                    <option value="{{ $divName }}" {{ old('division', $user->division) == $divName ? 'selected' : '' }}>
+                      {{ $divName }}
+                    </option>
+                  @endif
                 @endforeach
               </select>
             </div>
@@ -220,14 +225,17 @@
 
       if (!divName) return;
 
-      const foundDiv = locationsHierarchy.find(d => d.name === divName);
-      if (!foundDiv || !foundDiv.districts) return;
+      const foundDiv = Array.isArray(locationsHierarchy) 
+        ? locationsHierarchy.find(d => d && (d.name === divName || d === divName))
+        : null;
+      if (!foundDiv || !Array.isArray(foundDiv.districts)) return;
 
       foundDiv.districts.forEach(dist => {
+        const distName = (dist && dist.name) ? dist.name : dist;
         const opt = document.createElement('option');
-        opt.value = dist.name;
-        opt.textContent = dist.name;
-        if (dist.name === preselectedDistrict) {
+        opt.value = distName;
+        opt.textContent = distName;
+        if (distName === preselectedDistrict) {
           opt.selected = true;
         }
         districtSelect.appendChild(opt);
@@ -243,13 +251,16 @@
 
       if (!divName || !distName) return;
 
-      const foundDiv = locationsHierarchy.find(d => d.name === divName);
-      if (!foundDiv || !foundDiv.districts) return;
+      const foundDiv = Array.isArray(locationsHierarchy)
+        ? locationsHierarchy.find(d => d && (d.name === divName || d === divName))
+        : null;
+      if (!foundDiv || !Array.isArray(foundDiv.districts)) return;
 
-      const foundDist = foundDiv.districts.find(d => d.name === distName);
-      if (!foundDist || !foundDist.thanas) return;
+      const foundDist = foundDiv.districts.find(d => d && (d.name === distName || d === distName));
+      if (!foundDist || !Array.isArray(foundDist.thanas)) return;
 
-      foundDist.thanas.forEach(thanaName => {
+      foundDist.thanas.forEach(thanaItem => {
+        const thanaName = (thanaItem && thanaItem.name) ? thanaItem.name : thanaItem;
         const opt = document.createElement('option');
         opt.value = thanaName;
         opt.textContent = thanaName;

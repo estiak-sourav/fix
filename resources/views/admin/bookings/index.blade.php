@@ -6,31 +6,58 @@
   </div>
 
   <div class="card-paces">
-    <!-- Status Tabs -->
-    <div class="card-header-paces" style="flex-wrap:wrap; gap:10px; border-bottom:1px solid var(--paces-border); padding-bottom:1rem;">
+    <!-- Order Type & AMC Segments Bar -->
+    @php
+      $curType = request('service_type', request('type'));
+      $curAmcStatus = request('amc_status');
+      $curStatus = request('status');
+      $isAllType = empty($curType) && empty($curAmcStatus);
+      $isRegular = $curType === 'service' || $curType === 'regular';
+      $isAmc = ($curType === 'amc' || $curType === 'amc_contract') && empty($curAmcStatus);
+      $isRunningAmc = $curAmcStatus === 'running' || $curAmcStatus === 'active';
+    @endphp
+    <div style="padding:0.85rem 1.25rem; background:#ffffff; border-bottom:1px solid var(--paces-border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-        @php
-          $curStatus = request('status');
-        @endphp
-        <a href="{{ route('admin.bookings.index', request()->except(['status', 'page'])) }}" class="btn-paces {{ !$curStatus ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500;">
-          All Orders ({{ $statusCounts['all'] ?? 0 }})
+        <span style="font-size:0.8rem; font-weight:600; color:var(--paces-text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-right:4px;">Workflow Scope:</span>
+        <a href="{{ route('admin.bookings.index', request()->except(['service_type', 'type', 'amc_status', 'page'])) }}" class="btn-paces {{ $isAllType ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:600; padding:5px 12px; font-size:0.8rem;">
+          All Orders ({{ $typeCounts['all'] ?? 0 }})
         </a>
-        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page']), ['status' => 'pending'])) }}" class="btn-paces {{ ($curStatus === 'pending' || $curStatus === 'pending_review') ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500;">
+        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page', 'amc_status']), ['service_type' => 'service'])) }}" class="btn-paces {{ $isRegular ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:600; padding:5px 12px; font-size:0.8rem;">
+          🛠️ Regular Services ({{ $typeCounts['regular'] ?? 0 }})
+        </a>
+        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page', 'amc_status']), ['service_type' => 'amc_contract'])) }}" class="btn-paces {{ $isAmc ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:600; padding:5px 12px; font-size:0.8rem;">
+          🏢 AMC Contracts ({{ $typeCounts['amc'] ?? 0 }})
+        </a>
+        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page', 'service_type', 'type']), ['amc_status' => 'running'])) }}" class="btn-paces {{ $isRunningAmc ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:600; padding:5px 12px; font-size:0.8rem; border-color:{{ $isRunningAmc ? 'var(--paces-primary)' : '#10b981' }}; color:{{ $isRunningAmc ? '#ffffff' : '#059669' }}; background:{{ $isRunningAmc ? 'var(--paces-primary)' : '#ecfdf5' }};">
+          <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; margin-right:4px;"></span>
+          Active Contracts (Running: {{ $typeCounts['amc_running'] ?? 0 }})
+        </a>
+      </div>
+    </div>
+
+    <!-- Status Tabs -->
+    <div class="card-header-paces" style="flex-wrap:wrap; gap:10px; border-bottom:1px solid var(--paces-border); padding:0.75rem 1.25rem;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <span style="font-size:0.78rem; font-weight:600; color:var(--paces-text-muted); text-transform:uppercase; margin-right:2px;">Status:</span>
+        <a href="{{ route('admin.bookings.index', request()->except(['status', 'page'])) }}" class="btn-paces {{ !$curStatus ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500; font-size:0.78rem; padding:4px 10px;">
+          All ({{ $statusCounts['all'] ?? 0 }})
+        </a>
+        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page']), ['status' => 'pending'])) }}" class="btn-paces {{ ($curStatus === 'pending' || $curStatus === 'pending_review') ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500; font-size:0.78rem; padding:4px 10px;">
           Pending ({{ $statusCounts['pending'] ?? 0 }})
         </a>
-        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page']), ['status' => 'accepted'])) }}" class="btn-paces {{ $curStatus === 'accepted' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500;">
+        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page']), ['status' => 'accepted'])) }}" class="btn-paces {{ $curStatus === 'accepted' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500; font-size:0.78rem; padding:4px 10px;">
           Accepted ({{ $statusCounts['accepted'] ?? 0 }})
         </a>
-        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page']), ['status' => 'assigned'])) }}" class="btn-paces {{ $curStatus === 'assigned' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500;">
+        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page']), ['status' => 'assigned'])) }}" class="btn-paces {{ $curStatus === 'assigned' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500; font-size:0.78rem; padding:4px 10px;">
           Assigned ({{ $statusCounts['assigned'] ?? 0 }})
         </a>
-        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page']), ['status' => 'in_progress'])) }}" class="btn-paces {{ $curStatus === 'in_progress' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500;">
+        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page']), ['status' => 'in_progress'])) }}" class="btn-paces {{ $curStatus === 'in_progress' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500; font-size:0.78rem; padding:4px 10px;">
           In Progress ({{ $statusCounts['in_progress'] ?? 0 }})
         </a>
-        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page']), ['status' => 'completed'])) }}" class="btn-paces {{ $curStatus === 'completed' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500;">
+        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page']), ['status' => 'completed'])) }}" class="btn-paces {{ $curStatus === 'completed' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500; font-size:0.78rem; padding:4px 10px;">
           Completed ({{ $statusCounts['completed'] ?? 0 }})
         </a>
-        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page']), ['status' => 'cancelled'])) }}" class="btn-paces {{ $curStatus === 'cancelled' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500;">
+        <a href="{{ route('admin.bookings.index', array_merge(request()->except(['page']), ['status' => 'cancelled'])) }}" class="btn-paces {{ $curStatus === 'cancelled' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="font-weight:500; font-size:0.78rem; padding:4px 10px;">
           Cancelled ({{ $statusCounts['cancelled'] ?? 0 }})
         </a>
       </div>
@@ -190,10 +217,29 @@
                   </div>
                 </td>
                 <td>
-                  <div style="font-weight:500; color:var(--paces-text-dark);">
-                    {{ $b->service?->title ?? ($b->amcPlan?->name ?? 'Custom Service') }}
-                  </div>
-                  <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:capitalize; font-weight:400;">
+                  @if($b->is_amc)
+                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px; flex-wrap:wrap;">
+                      <span style="font-size:0.68rem; font-weight:700; text-transform:uppercase; background:#f5f3ff; color:#7c3aed; border:1px solid #ef0b0bff; padding:1px 6px; border-radius:4px;">
+                        🏢 AMC Contract
+                      </span>
+                      <span style="font-size:0.72rem; color:#475569; font-weight:600;">
+                        {{ $b->billing_cycle_label }} • ৳ {{ number_format($b->recurring_amount ?: $b->final_cost, 0) }}
+                      </span>
+                    </div>
+                    <div style="font-weight:600; color:var(--paces-text-dark);">
+                      {{ $b->amcPlan?->name ?? 'Annual Maintenance Plan' }}
+                    </div>
+                  @else
+                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;">
+                      <span style="font-size:0.68rem; font-weight:600; text-transform:uppercase; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; padding:1px 5px; border-radius:4px;">
+                        🛠️ One-Off Service
+                      </span>
+                    </div>
+                    <div style="font-weight:500; color:var(--paces-text-dark);">
+                      {{ $b->service?->title ?? 'General Facility Service' }}
+                    </div>
+                  @endif
+                  <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:capitalize; font-weight:400; margin-top:2px;">
                     {{ $b->property_type }}
                   </div>
                 </td>
@@ -208,19 +254,26 @@
                   <div style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:400;">{{ $b->district }}</div>
                 </td>
                 <td>
-                  @php
-                    $statusClass = match($b->status) {
-                      'pending_review' => 'bg-warning-subtle',
-                      'accepted', 'confirmed' => 'bg-primary-subtle',
-                      'in_progress', 'assigned' => 'bg-info-subtle',
-                      'completed' => 'bg-success-subtle',
-                      'cancelled' => 'bg-danger-subtle',
-                      default => 'bg-primary-subtle'
-                    };
-                  @endphp
-                  <span class="badge-pill-paces {{ $statusClass }}" style="font-weight:500; font-size:0.78rem;">
-                    {{ $b->status_label }}
-                  </span>
+                  @if($b->is_running_contract)
+                    <span class="badge-pill-paces" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-weight:600; font-size:0.75rem; display:inline-flex; align-items:center; gap:5px;">
+                      <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block;"></span>
+                      Running Contract
+                    </span>
+                  @else
+                    @php
+                      $statusClass = match($b->status) {
+                        'pending_review' => 'bg-warning-subtle',
+                        'accepted', 'confirmed' => 'bg-primary-subtle',
+                        'in_progress', 'assigned' => 'bg-info-subtle',
+                        'completed' => 'bg-success-subtle',
+                        'cancelled' => 'bg-danger-subtle',
+                        default => 'bg-primary-subtle'
+                      };
+                    @endphp
+                    <span class="badge-pill-paces {{ $statusClass }}" style="font-weight:500; font-size:0.78rem;">
+                      {{ $b->status_label }}
+                    </span>
+                  @endif
                 </td>
                 <td style="text-align:right; white-space:nowrap;">
                   <a href="{{ route('admin.bookings.show', $b) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="white-space:nowrap; display:inline-flex; align-items:center; gap:4px; font-weight:500; text-decoration:none;">

@@ -105,7 +105,7 @@
 
   <div class="page-header-box" style="margin-bottom:1.25rem;">
     <div>
-      <h1 class="page-header-title">Web Content Management</h1>
+      <h1 class="page-header-title">Web Content</h1>
       <p class="page-header-subtitle">Manage homepage sections, partner recruitment, legal compliance, and customer helpdesk</p>
     </div>
     <div style="display:flex; gap:10px; align-items:center;">
@@ -497,6 +497,20 @@
                       <span style="color:#64748b;">{{ $c['desc'] ?? '' }}</span>
                     </div>
                   @endforeach
+                </div>
+              </div>
+            @endif
+
+            <!-- 6.5. Contact Command Center Preview -->
+            @if($content->section_key === 'contact')
+              <div style="border-top:1px dashed var(--paces-border); padding-top:10px;">
+                <span style="font-size:0.75rem; font-weight:600; color:var(--paces-text-muted); text-transform:uppercase;">Command Center Card:</span>
+                <div style="background:#ffffff; border:1px solid var(--paces-border); padding:8px 10px; border-radius:6px; font-size:0.78rem; margin-top:6px;">
+                  <strong style="color:#1e293b; display:block;">{{ $meta['card_title'] ?? 'Operations Command & Technical Support' }}</strong>
+                  <span style="color:#64748b;">{{ $meta['card_desc'] ?? 'Have an urgent maintenance request or need facility engineering assistance? Contact our central operations center 24/7.' }}</span>
+                  <div style="margin-top:6px; font-size:0.75rem; color:#0284c7;">
+                    Hotline: {{ \App\Models\SiteSetting::get('emergency_phone') }} | Email: {{ \App\Models\SiteSetting::get('support_email') }}
+                  </div>
                 </div>
               </div>
             @endif
@@ -922,6 +936,29 @@
                         </div>
                       </div>
                     @endforeach
+                  </div>
+                </div>
+              @endif
+
+              <!-- 6.5. Contact Command Center Controls -->
+              @if($content->section_key === 'contact')
+                <div style="border-top:1px dashed var(--paces-border); padding-top:1rem; margin-bottom:1rem;">
+                  <strong style="display:block; font-size:0.875rem; margin-bottom:0.75rem; color:#1e293b;">Operations Command Center Card Details</strong>
+                  <div style="display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                      <label class="form-label-paces">Card Heading Title</label>
+                      <input type="text" name="card_title" value="{{ $meta['card_title'] ?? 'Operations Command & Technical Support' }}" class="form-control-paces" placeholder="e.g. Operations Command & Technical Support">
+                    </div>
+                    <div>
+                      <label class="form-label-paces">Card Description / Subtitle</label>
+                      <textarea name="card_desc" class="form-control-paces" rows="2" placeholder="e.g. Have an urgent maintenance request or need facility engineering assistance? Contact our central operations center 24/7.">{{ $meta['card_desc'] ?? 'Have an urgent maintenance request or need facility engineering assistance? Contact our central operations center 24/7.' }}</textarea>
+                    </div>
+                  </div>
+                  <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:10px 12px; font-size:0.8rem; color:#1e40af; display:flex; align-items:flex-start; gap:8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <div>
+                      <strong>Unified Company Information:</strong> Hotline, Support Email, Office Address, Operating Hours, and Coverage Area are centrally synced from <a href="{{ route('admin.cms.settings') }}" style="color:#2563eb; font-weight:700; text-decoration:underline;">Web Settings</a> so they update everywhere across the entire site simultaneously.
+                    </div>
                   </div>
                 </div>
               @endif

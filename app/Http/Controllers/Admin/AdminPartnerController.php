@@ -49,11 +49,195 @@ class AdminPartnerController extends Controller
     }
 
     /**
+     * Show form to enlist a new partner or field crew directly from admin.
+     */
+    public function create(): View
+    {
+        return view('admin.partners.create');
+    }
+
+    /**
+     * Store a newly created partner / field crew in storage.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'company_name' => ['required', 'string', 'max:255'],
+            'contact_person' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:30'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'partner_type' => ['required', 'string', 'in:individual,company'],
+            'trade_domain' => ['required'],
+            'trade_domain.*' => ['string'],
+            'technicians_count' => ['required', 'string', 'max:50'],
+            'coverage_areas' => ['required'],
+            'coverage_areas.*' => ['string'],
+            'other_coverage_areas' => ['nullable', 'string', 'max:255'],
+            'status' => ['required', 'string', 'in:approved,pending,rejected,suspended'],
+            'payout_terms' => ['required', 'string', 'in:weekly,bi_weekly,monthly,per_job'],
+            'commission_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'payment_method' => ['nullable', 'string', 'in:bank,bkash,nagad,rocket'],
+            'bank_name' => ['nullable', 'string', 'max:100'],
+            'account_holder' => ['nullable', 'string', 'max:100'],
+            'account_number' => ['nullable', 'string', 'max:60'],
+            'branch_name' => ['nullable', 'string', 'max:100'],
+            'mfs_number' => ['nullable', 'string', 'max:30'],
+            'admin_notes' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'trade_domain.required' => 'Please select at least one primary technical domain.',
+            'coverage_areas.required' => 'Please select at least one operating coverage area.',
+        ]);
+
+        $tradeDomain = is_array($request->input('trade_domain'))
+            ? implode(', ', array_filter($request->input('trade_domain')))
+            : (string) $request->input('trade_domain');
+
+        if (is_array($request->input('coverage_areas'))) {
+            $selectedAreas = array_filter($request->input('coverage_areas'));
+            if ($request->filled('other_coverage_areas')) {
+                $selectedAreas[] = trim((string) $request->input('other_coverage_areas'));
+            }
+            $coverageAreas = implode(', ', $selectedAreas);
+        } else {
+            $coverageAreas = (string) $request->input('coverage_areas');
+            if ($request->filled('other_coverage_areas')) {
+                $coverageAreas .= ', '.trim((string) $request->input('other_coverage_areas'));
+            }
+        }
+
+        $admin = Auth::guard('admin')->user();
+        $isApproved = $request->input('status') === 'approved';
+
+        $partner = Partner::create([
+            'company_name' => (string) $request->input('company_name'),
+            'contact_person' => (string) $request->input('contact_person'),
+            'phone' => (string) $request->input('phone'),
+            'email' => $request->input('email') ?: null,
+            'partner_type' => (string) $request->input('partner_type'),
+            'trade_domain' => $tradeDomain,
+            'technicians_count' => (string) $request->input('technicians_count'),
+            'coverage_areas' => $coverageAreas,
+            'status' => (string) $request->input('status'),
+            'payout_terms' => (string) $request->input('payout_terms'),
+            'commission_rate' => $request->filled('commission_rate') ? $request->input('commission_rate') : 15.00,
+            'payment_method' => $request->input('payment_method') ?: 'bank',
+            'bank_name' => $request->input('bank_name') ?: null,
+            'account_holder' => $request->input('account_holder') ?: null,
+            'account_number' => $request->input('account_number') ?: null,
+            'branch_name' => $request->input('branch_name') ?: null,
+            'mfs_number' => $request->input('mfs_number') ?: null,
+            'admin_notes' => $request->input('admin_notes') ?: null,
+            'approved_at' => $isApproved ? now() : null,
+            'approved_by_admin_id' => $isApproved ? $admin?->id : null,
+        ]);
+
+        ActivityLogService::logPartner('partner.create', "Enlisted new partner/field crew '{$partner->company_name}' ({$partner->contact_person}).", $partner);
+
+        return redirect()->route('admin.partners.show', $partner)
+            ->with('success', "Partner / Field Crew '{$partner->company_name}' has been created successfully!");
+    }
+
+    /**
      * Display individual partner review and payment configuration.
      */
     public function show(Partner $partner): View
     {
         return view('admin.partners.show', compact('partner'));
+    }
+
+    /**
+     * Show form to edit existing partner or field crew.
+     */
+    public function edit(Partner $partner): View
+    {
+        return view('admin.partners.edit', compact('partner'));
+    }
+
+    /**
+     * Update existing partner or field crew.
+     */
+    public function update(Request $request, Partner $partner): RedirectResponse
+    {
+        $request->validate([
+            'company_name' => ['required', 'string', 'max:255'],
+            'contact_person' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:30'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'partner_type' => ['required', 'string', 'in:individual,company'],
+            'trade_domain' => ['required'],
+            'trade_domain.*' => ['string'],
+            'technicians_count' => ['required', 'string', 'max:50'],
+            'coverage_areas' => ['required'],
+            'coverage_areas.*' => ['string'],
+            'other_coverage_areas' => ['nullable', 'string', 'max:255'],
+            'status' => ['required', 'string', 'in:approved,pending,rejected,suspended'],
+            'payout_terms' => ['required', 'string', 'in:weekly,bi_weekly,monthly,per_job'],
+            'commission_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'payment_method' => ['nullable', 'string', 'in:bank,bkash,nagad,rocket'],
+            'bank_name' => ['nullable', 'string', 'max:100'],
+            'account_holder' => ['nullable', 'string', 'max:100'],
+            'account_number' => ['nullable', 'string', 'max:60'],
+            'branch_name' => ['nullable', 'string', 'max:100'],
+            'mfs_number' => ['nullable', 'string', 'max:30'],
+            'admin_notes' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'trade_domain.required' => 'Please select at least one primary technical domain.',
+            'coverage_areas.required' => 'Please select at least one operating coverage area.',
+        ]);
+
+        $tradeDomain = is_array($request->input('trade_domain'))
+            ? implode(', ', array_filter($request->input('trade_domain')))
+            : (string) $request->input('trade_domain');
+
+        if (is_array($request->input('coverage_areas'))) {
+            $selectedAreas = array_filter($request->input('coverage_areas'));
+            if ($request->filled('other_coverage_areas')) {
+                $selectedAreas[] = trim((string) $request->input('other_coverage_areas'));
+            }
+            $coverageAreas = implode(', ', $selectedAreas);
+        } else {
+            $coverageAreas = (string) $request->input('coverage_areas');
+            if ($request->filled('other_coverage_areas')) {
+                $coverageAreas .= ', '.trim((string) $request->input('other_coverage_areas'));
+            }
+        }
+
+        $admin = Auth::guard('admin')->user();
+        $wasApproved = $partner->status === 'approved';
+        $isApproved = $request->input('status') === 'approved';
+
+        $updateData = [
+            'company_name' => (string) $request->input('company_name'),
+            'contact_person' => (string) $request->input('contact_person'),
+            'phone' => (string) $request->input('phone'),
+            'email' => $request->input('email') ?: null,
+            'partner_type' => (string) $request->input('partner_type'),
+            'trade_domain' => $tradeDomain,
+            'technicians_count' => (string) $request->input('technicians_count'),
+            'coverage_areas' => $coverageAreas,
+            'status' => (string) $request->input('status'),
+            'payout_terms' => (string) $request->input('payout_terms'),
+            'commission_rate' => $request->filled('commission_rate') ? $request->input('commission_rate') : $partner->commission_rate,
+            'payment_method' => $request->input('payment_method') ?: $partner->payment_method,
+            'bank_name' => $request->input('bank_name') ?: null,
+            'account_holder' => $request->input('account_holder') ?: null,
+            'account_number' => $request->input('account_number') ?: null,
+            'branch_name' => $request->input('branch_name') ?: null,
+            'mfs_number' => $request->input('mfs_number') ?: null,
+            'admin_notes' => $request->input('admin_notes') ?: null,
+        ];
+
+        if ($isApproved && ! $wasApproved) {
+            $updateData['approved_at'] = now();
+            $updateData['approved_by_admin_id'] = $admin?->id;
+        }
+
+        $partner->update($updateData);
+
+        ActivityLogService::logPartner('partner.update', "Updated partner/field crew '{$partner->company_name}' details.", $partner);
+
+        return redirect()->route('admin.partners.show', $partner)
+            ->with('success', "Partner / Field Crew '{$partner->company_name}' updated successfully!");
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\SiteSetting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -22,9 +23,10 @@ class AuthOtpMail extends Mailable
     public function envelope(): Envelope
     {
         $actionText = $this->purpose === 'register' ? 'Account Registration' : 'Sign In';
+        $siteName = SiteSetting::get('site_name', 'FIX');
 
         return new Envelope(
-            subject: "{$this->otpCode} is your FIX Facility verification code for {$actionText}",
+            subject: "{$this->otpCode} is your {$siteName} verification code for {$actionText}",
         );
     }
 

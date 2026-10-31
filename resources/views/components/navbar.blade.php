@@ -28,19 +28,19 @@
       </ul>
     </nav>
 
-    <div class="nav-actions" style="margin-left: 2.25rem;">
+    <div class="nav-actions" style="margin-left: 1.75rem; flex-shrink: 0;">
       <a href="{{ route('vendor') }}" class="btn btn-vendor-nav">Become a Partner</a>
 
       @auth
-        <div class="nav-dropdown-item user-menu" style="position: relative;">
-          <a href="{{ route('customer.bookings') }}" class="btn btn-outline-primary" style="display:inline-flex; align-items:center; gap:8px; padding: 0.4rem 0.85rem; font-size: 0.85rem; border-radius: 6px; font-weight:600;">
+        <div class="nav-dropdown-item user-menu" style="position: relative; flex-shrink: 0;">
+          <a href="{{ route('customer.bookings') }}" class="btn btn-outline-primary" style="display:inline-flex; align-items:center; gap:8px; padding: 0.35rem 0.85rem; font-size: 0.85rem; border-radius: 6px; font-weight:600; text-decoration:none;">
             @if(auth()->user()->avatar_url)
-              <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" style="width:24px; height:24px; border-radius:50%; object-fit:cover; border:1px solid #c7d2fe;">
+              <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" style="width:26px; height:26px; border-radius:50%; object-fit:cover; border:1px solid #c7d2fe; flex-shrink: 0;">
             @else
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="flex-shrink: 0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             @endif
-            <span>{{ auth()->user()->name ?: 'My Account' }}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <span style="display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; max-width:160px; min-width:105px; line-height:1.2; text-align:left; word-break:break-word;">{{ auth()->user()->name ?: 'My Account' }}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="flex-shrink: 0; stroke-width: 2.5;"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </a>
           <ul class="nav-dropdown-menu" style="right: 0; left: auto; min-width: 170px;">
             <li><a href="{{ route('customer.bookings') }}" class="dropdown-item">My Bookings</a></li>

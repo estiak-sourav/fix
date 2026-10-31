@@ -1,7 +1,14 @@
 <x-layouts.admin title="Partners & Field Crews | FIX Admin">
-  <div class="page-header-box" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+  <div class="page-header-box" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
     <div>
       <h1 class="page-header-title">Enlisted Partners & Field Crew Network</h1>
+      <p class="page-header-subtitle">Manage certified contractors, specialized technical partners, and active field dispatch crews</p>
+    </div>
+    <div>
+      <a href="{{ route('admin.partners.create') }}" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:6px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>Add Partner / Field Crew</span>
+      </a>
     </div>
   </div>
 
@@ -169,9 +176,14 @@
                   @endif
                 </td>
                 <td style="text-align:right; white-space:nowrap;">
-                  <a href="{{ route('admin.partners.show', $p) }}" class="btn-paces {{ $p->status === 'pending' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm">
-                    {{ $p->status === 'pending' ? 'Review & Approve →' : 'View Details →' }}
-                  </a>
+                  <div style="display:inline-flex; align-items:center; gap:6px;">
+                    <a href="{{ route('admin.partners.edit', $p) }}" class="btn-paces btn-paces-outline btn-paces-sm" style="padding:4px 8px;" title="Edit Partner">
+                      Edit
+                    </a>
+                    <a href="{{ route('admin.partners.show', $p) }}" class="btn-paces {{ $p->status === 'pending' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm">
+                      {{ $p->status === 'pending' ? 'Review & Approve →' : 'View Details →' }}
+                    </a>
+                  </div>
                 </td>
               </tr>
             @endforeach

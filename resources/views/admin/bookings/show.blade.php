@@ -182,7 +182,7 @@
                        onclick="openImageLightbox('{{ asset($imgUrl) }}', 'Problem Photo #{{ $imgIndex + 1 }} - #{{ $booking->booking_number }}')" 
                        title="Click to view & zoom">
                     <img src="{{ asset($imgUrl) }}" alt="Problem Photo" style="width:100%; height:100%; object-fit:cover; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
-                    <div style="position:absolute; bottom:3px; right:4px; font-size:0.65rem; background:rgba(0,0,0,0.65); color:#fff; padding:1px 4px; border-radius:4px; pointer-events:none;">🔍 Zoom</div>
+                    <div style="position:absolute; bottom:3px; right:4px; font-size:0.65rem; background:rgba(0,0,0,0.65); color:#fff; padding:1px 4px; border-radius:4px; pointer-events:none;">🔍</div>
                   </div>
                 @endforeach
               </div>
@@ -264,12 +264,10 @@
       <div class="card-paces" style="margin-bottom:1.5rem; border:1px solid {{ $booking->contract_status === 'active' ? '#10b981' : 'var(--paces-border)' }};">
         <div class="card-header-paces" style="background:{{ $booking->contract_status === 'active' ? '#f0fdf4' : '#f8fafc' }}; border-bottom:1px solid {{ $booking->contract_status === 'active' ? '#bbf7d0' : 'var(--paces-border)' }}; display:flex; justify-content:space-between; align-items:center;">
           <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:1.1rem;">📑</span>
             <div>
               <h3 class="card-title-paces" style="margin:0; font-size:0.98rem; color:{{ $booking->contract_status === 'active' ? '#166534' : 'var(--paces-text-dark)' }};">
                 Annual Maintenance Contract (AMC) & Agreement
               </h3>
-              <div style="font-size:0.75rem; color:var(--paces-text-muted);">Post-inspection agreement and package activation</div>
             </div>
           </div>
           @if($booking->contract_status === 'active')
@@ -301,15 +299,223 @@
                 <strong style="font-size:0.95rem; color:var(--paces-text-dark); display:block; margin-top:2px;">
                   {{ $booking->contract_start_date?->format('M d, Y') }} — {{ $booking->contract_end_date?->format('M d, Y') }}
                 </strong>
-                <span style="font-size:0.7rem; color:#10b981;">Valid & Active</span>
+                <span style="font-size:0.7rem; color:#10b981;">Valid & Active ({{ $booking->days_remaining_in_contract }} days remaining)</span>
               </div>
 
-              <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:10px 12px;">
-                <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase;">Agreed Contract Cost</div>
-                <strong style="font-size:1.1rem; color:var(--paces-success); display:block; margin-top:2px;">
-                  ৳ {{ number_format($booking->final_cost ?? 0, 2) }}
+              <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:10px 12px;">
+                <div style="font-size:0.72rem; color:#7c3aed; text-transform:uppercase; font-weight:700;">Recurring Billing Cycle</div>
+                <strong style="font-size:1.05rem; color:#6d28d9; display:block; margin-top:2px;">
+                  ৳ {{ number_format($booking->recurring_amount ?: $booking->final_cost, 2) }}
+                  <span style="font-size:0.75rem; font-weight:500;">/ {{ $booking->billing_cycle_label }}</span>
                 </strong>
+                <span style="font-size:0.72rem; color:#64748b;">Next Due: {{ $booking->next_billing_date ? $booking->next_billing_date->format('M d, Y') : 'Active' }}</span>
               </div>
+
+              <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:10px 12px;">
+                <div style="font-size:0.72rem; color:#065f46; text-transform:uppercase; font-weight:700;">Collected Revenue</div>
+                <strong style="font-size:1.05rem; color:#047857; display:block; margin-top:2px;">
+                  ৳ {{ number_format($booking->collected_amc_revenue, 2) }}
+                </strong>
+                @if($booking->pending_amc_due > 0)
+                  <span style="font-size:0.72rem; color:#b45309; font-weight:600;">Due: ৳ {{ number_format($booking->pending_amc_due, 2) }}</span>
+                @else
+                  <span style="font-size:0.72rem; color:#10b981;">All Bills Paid Up to Date</span>
+                @endif
+              </div>
+            </div>
+
+            <!-- AMC Recurring Invoices & Bill Collection History -->
+            <div style="background:#ffffff; border:1px solid var(--paces-border); border-radius:10px; padding:14px; margin-bottom:1.25rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                <div>
+                  <h4 style="margin:0; font-size:0.92rem; font-weight:600; color:var(--paces-text-dark); display:flex; align-items:center; gap:6px;">
+                    AMC Recurring Invoices & Collection Log
+                  </h4>
+                  <div style="font-size:0.75rem; color:var(--paces-text-muted);">Recurring billing cycles scheduled for this agreement</div>
+                </div>
+                @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+                  <form action="{{ route('admin.bookings.amc-bills.generate', $booking) }}" method="POST" style="margin:0;">
+                    @csrf
+                    <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.78rem; padding:4px 10px; display:inline-flex; align-items:center; gap:4px;">
+                      <span>+ Generate Next Cycle Bill</span>
+                    </button>
+                  </form>
+                @endif
+              </div>
+
+              @if($booking->amcInvoices->isEmpty())
+                <div style="text-align:center; padding:1.5rem; color:var(--paces-text-muted); font-size:0.85rem; background:#f8fafc; border-radius:8px;">
+                  No recurring invoices recorded yet. Click "+ Generate Next Cycle Bill" above to generate the first bill.
+                </div>
+              @else
+                <div style="overflow-x:auto;">
+                  <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+                    <thead>
+                      <tr style="background:#f8fafc; border-bottom:1px solid var(--paces-border); text-align:left; color:var(--paces-text-muted);">
+                        <th style="padding:8px 10px;">Invoice #</th>
+                        <th style="padding:8px 10px;">Cycle Label</th>
+                        <th style="padding:8px 10px;">Period</th>
+                        <th style="padding:8px 10px;">Due Date</th>
+                        <th style="padding:8px 10px;">Amount</th>
+                        <th style="padding:8px 10px;">Status</th>
+                        <th style="padding:8px 10px;">Payment Details</th>
+                        <th style="padding:8px 10px; text-align:right;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @foreach($booking->amcInvoices as $inv)
+                        <tr style="border-bottom:1px solid var(--paces-border);">
+                          <td style="padding:8px 10px; font-weight:600; font-family:monospace; color:var(--paces-primary);">
+                            {{ $inv->invoice_number }}
+                          </td>
+                          <td style="padding:8px 10px; color:var(--paces-text-dark);">
+                            {{ $inv->billing_cycle_label }}
+                          </td>
+                          <td style="padding:8px 10px; color:var(--paces-text-muted); font-size:0.75rem;">
+                            {{ $inv->period_start?->format('M d, Y') }} — {{ $inv->period_end?->format('M d, Y') }}
+                          </td>
+                          <td style="padding:8px 10px; font-weight:500;">
+                            {{ $inv->due_date?->format('M d, Y') }}
+                          </td>
+                          <td style="padding:8px 10px; font-weight:700; color:var(--paces-text-dark);">
+                            ৳ {{ number_format($inv->amount, 2) }}
+                          </td>
+                          <td style="padding:8px 10px;">
+                            @if($inv->status === 'paid')
+                              <span class="badge-pill-paces" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-weight:600; font-size:0.72rem;">
+                                ✓ Paid
+                              </span>
+                            @elseif($inv->is_overdue)
+                              <span class="badge-pill-paces" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-weight:700; font-size:0.72rem;">
+                                ⚠️ Overdue
+                              </span>
+                            @else
+                              <span class="badge-pill-paces" style="background:#fffbeb; color:#b45309; border:1px solid #fde68a; font-weight:600; font-size:0.72rem;">
+                                Due for Collection
+                              </span>
+                            @endif
+                          </td>
+                          <td style="padding:8px 10px; font-size:0.75rem; color:var(--paces-text-muted);">
+                            @if($inv->status === 'paid')
+                              <strong style="color:var(--paces-text-dark);">{{ $inv->payment_method }}</strong>
+                              @if($inv->payment_reference) ({{ $inv->payment_reference }}) @endif
+                              <div style="color:#64748b;">Paid on {{ $inv->paid_at?->format('M d, Y') }}</div>
+                            @else
+                              <span style="color:#d97706;">Pending Collection</span>
+                            @endif
+                          </td>
+                          <td style="padding:8px 10px; text-align:right;">
+                            @if($inv->status !== 'paid' && auth('admin')->user()?->hasPermission('bookings.edit'))
+                              <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.72rem; padding:3px 8px; font-weight:600;" onclick="openCollectBillModal('{{ $inv->id }}', '{{ $inv->invoice_number }}', '{{ number_format($inv->amount, 2) }}')">
+                                Collect Bill
+                              </button>
+                            @else
+                              <span style="font-size:0.75rem; color:#10b981; font-weight:600;">✓ Settled</span>
+                            @endif
+                          </td>
+                        </tr>
+                      @endforeach
+                    </tbody>
+                  </table>
+                </div>
+              @endif
+            </div>
+
+            <!-- AMC Recurring Invoices & Bill Collection History -->
+            <div style="background:#ffffff; border:1px solid var(--paces-border); border-radius:10px; padding:14px; margin-bottom:1.25rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                <div>
+                  <h4 style="margin:0; font-size:0.92rem; font-weight:600; color:var(--paces-text-dark); display:flex; align-items:center; gap:6px;">
+                    AMC Recurring Invoices & Collection Log
+                  </h4>
+                  <div style="font-size:0.75rem; color:var(--paces-text-muted);">Recurring billing cycles scheduled for this agreement</div>
+                </div>
+                @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+                  <form action="{{ route('admin.bookings.amc-bills.generate', $booking) }}" method="POST" style="margin:0;">
+                    @csrf
+                    <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.78rem; padding:4px 10px; display:inline-flex; align-items:center; gap:4px;">
+                      <span>+ Generate Next Cycle Bill</span>
+                    </button>
+                  </form>
+                @endif
+              </div>
+
+              @if($booking->amcInvoices->isEmpty())
+                <div style="text-align:center; padding:1.5rem; color:var(--paces-text-muted); font-size:0.85rem; background:#f8fafc; border-radius:8px;">
+                  No recurring invoices recorded yet. Click "+ Generate Next Cycle Bill" above to generate the first bill.
+                </div>
+              @else
+                <div style="overflow-x:auto;">
+                  <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+                    <thead>
+                      <tr style="background:#f8fafc; border-bottom:1px solid var(--paces-border); text-align:left; color:var(--paces-text-muted);">
+                        <th style="padding:8px 10px;">Invoice #</th>
+                        <th style="padding:8px 10px;">Cycle Label</th>
+                        <th style="padding:8px 10px;">Period</th>
+                        <th style="padding:8px 10px;">Due Date</th>
+                        <th style="padding:8px 10px;">Amount</th>
+                        <th style="padding:8px 10px;">Status</th>
+                        <th style="padding:8px 10px;">Payment Details</th>
+                        <th style="padding:8px 10px; text-align:right;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @foreach($booking->amcInvoices as $inv)
+                        <tr style="border-bottom:1px solid var(--paces-border);">
+                          <td style="padding:8px 10px; font-weight:600; font-family:monospace; color:var(--paces-primary);">
+                            {{ $inv->invoice_number }}
+                          </td>
+                          <td style="padding:8px 10px; color:var(--paces-text-dark);">
+                            {{ $inv->billing_cycle_label }}
+                          </td>
+                          <td style="padding:8px 10px; color:var(--paces-text-muted); font-size:0.75rem;">
+                            {{ $inv->period_start?->format('M d, Y') }} — {{ $inv->period_end?->format('M d, Y') }}
+                          </td>
+                          <td style="padding:8px 10px; font-weight:500;">
+                            {{ $inv->due_date?->format('M d, Y') }}
+                          </td>
+                          <td style="padding:8px 10px; font-weight:700; color:var(--paces-text-dark);">
+                            ৳ {{ number_format($inv->amount, 2) }}
+                          </td>
+                          <td style="padding:8px 10px;">
+                            @if($inv->status === 'paid')
+                              <span class="badge-pill-paces" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-weight:600; font-size:0.72rem;">
+                                ✓ Paid
+                              </span>
+                            @elseif($inv->is_overdue)
+                              <span class="badge-pill-paces" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-weight:700; font-size:0.72rem;">
+                                ⚠️ Overdue
+                              </span>
+                            @else
+                              <span class="badge-pill-paces" style="background:#fffbeb; color:#b45309; border:1px solid #fde68a; font-weight:600; font-size:0.72rem;">
+                                Due for Collection
+                              </span>
+                            @endif
+                          </td>
+                          <td style="padding:8px 10px; font-size:0.75rem; color:var(--paces-text-muted);">
+                            @if($inv->status === 'paid')
+                              <strong style="color:var(--paces-text-dark);">{{ $inv->payment_method }}</strong>
+                              @if($inv->payment_reference) ({{ $inv->payment_reference }}) @endif
+                              <div style="color:#64748b;">Paid on {{ $inv->paid_at?->format('M d, Y') }}</div>
+                            @else
+                              <span style="color:#d97706;">Pending Collection</span>
+                            @endif
+                          </td>
+                          <td style="padding:8px 10px; text-align:right;">
+                            @if($inv->status !== 'paid' && auth('admin')->user()?->hasPermission('bookings.edit'))
+                              <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.72rem; padding:3px 8px; font-weight:600;" onclick="openCollectBillModal('{{ $inv->id }}', '{{ $inv->invoice_number }}', '{{ number_format($inv->amount, 2) }}')">
+                                Collect Bill
+                              </button>
+                            @else
+                              <span style="font-size:0.75rem; color:#10b981; font-weight:600;">✓ Settled</span>
+                            @endif
+                          </td>
+                        </tr>
+                      @endforeach
+                    </tbody>
+                  </table>
+                </div>
+              @endif
             </div>
 
             @if($booking->amc_package_notes)
@@ -323,9 +529,6 @@
             @if($booking->agreement_document_path)
               <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:1rem;">
                 <div style="display:flex; align-items:center; gap:12px;">
-                  <div style="width:42px; height:42px; border-radius:6px; background:#dcfce7; display:flex; align-items:center; justify-content:center; color:#166534; font-size:1.25rem;">
-                    📄
-                  </div>
                   <div>
                     <div style="font-weight:600; font-size:0.88rem; color:#166534;">Signed Agreement Document Uploaded</div>
                     <div style="font-size:0.75rem; color:#14532d;">Stored copy of verified contract document</div>
@@ -372,12 +575,37 @@
                     </select>
                   </div>
                   <div>
-                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Agreed Contract Cost (৳)</label>
-                    <input type="number" step="0.01" name="contract_cost" value="{{ old('contract_cost', $booking->final_cost) }}" placeholder="e.g. 50000.00" class="form-control-paces">
+                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Recurring Billing Cycle *</label>
+                    <select name="billing_cycle" class="form-control-paces" required>
+                      <option value="monthly" {{ old('billing_cycle', $booking->billing_cycle) === 'monthly' ? 'selected' : '' }}>Monthly (Standard Cycle)</option>
+                      <option value="half_monthly" {{ old('billing_cycle', $booking->billing_cycle) === 'half_monthly' ? 'selected' : '' }}>Bi-Weekly / Every 15 Days</option>
+                      <option value="weekly" {{ old('billing_cycle', $booking->billing_cycle) === 'weekly' ? 'selected' : '' }}>Weekly Cycle</option>
+                      <option value="daily" {{ old('billing_cycle', $booking->billing_cycle) === 'daily' ? 'selected' : '' }}>Daily Billing</option>
+                      <option value="quarterly" {{ old('billing_cycle', $booking->billing_cycle) === 'quarterly' ? 'selected' : '' }}>Quarterly (Every 3 Months)</option>
+                      <option value="yearly" {{ old('billing_cycle', $booking->billing_cycle) === 'yearly' ? 'selected' : '' }}>Yearly (Annual Settlement)</option>
+                    </select>
                   </div>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
+                  <div>
+                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Recurring Amount / Cycle (৳) *</label>
+                    <input type="number" step="0.01" name="recurring_amount" value="{{ old('recurring_amount', $booking->recurring_amount ?: $booking->final_cost) }}" placeholder="e.g. 3000.00" class="form-control-paces" required>
+                    <span class="form-help-paces">Amount billed per recurring cycle.</span>
+                  </div>
+                  <div>
+                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Set Billing Day (1–31)</label>
+                    <input type="number" min="1" max="31" name="billing_day" value="{{ old('billing_day', $booking->billing_day ?? 1) }}" placeholder="e.g. 1" class="form-control-paces">
+                    <span class="form-help-paces">Target day of period for bill generation.</span>
+                  </div>
+                  <div>
+                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">First Bill Due Date</label>
+                    <input type="date" name="first_bill_due_date" value="{{ old('first_bill_due_date', $booking->next_billing_date?->format('Y-m-d') ?: ($booking->contract_start_date?->format('Y-m-d') ?: date('Y-m-d'))) }}" class="form-control-paces">
+                    <span class="form-help-paces">Due date for cycle #1 invoice.</span>
+                  </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
                   <div>
                     <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Contract Start Date *</label>
                     <input type="date" name="contract_start_date" value="{{ old('contract_start_date', $booking->contract_start_date?->format('Y-m-d') ?: date('Y-m-d')) }}" class="form-control-paces" required>
@@ -385,6 +613,10 @@
                   <div>
                     <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Contract End Date *</label>
                     <input type="date" name="contract_end_date" value="{{ old('contract_end_date', $booking->contract_end_date?->format('Y-m-d') ?: date('Y-m-d', strtotime('+1 year'))) }}" class="form-control-paces" required>
+                  </div>
+                  <div>
+                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Total Annual Commitment (৳)</label>
+                    <input type="number" step="0.01" name="contract_cost" value="{{ old('contract_cost', $booking->final_cost) }}" placeholder="e.g. 36000.00" class="form-control-paces">
                   </div>
                 </div>
 
@@ -566,7 +798,7 @@
                   <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:#ffffff; border:1px solid #edf2f7; border-radius:6px; font-size:0.8rem; gap:8px;">
                     <div>
                       <div style="font-weight:600; color:{{ $ot->status === 'completed' ? '#64748b' : '#1e293b' }}; text-decoration:{{ $ot->status === 'completed' ? 'line-through' : 'none' }};">
-                        {{ $ot->title }}
+                        {{ preg_replace('/\s*\(#[A-Za-z0-9-]+\)\s*$/', '', $ot->title) }}
                       </div>
                       <div style="font-size:0.72rem; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                         <span style="font-weight:500; text-transform:uppercase;">{{ $ot->type_label }}</span>
@@ -819,18 +1051,31 @@
                 <div style="font-size:0.8rem; color:var(--paces-text-muted);">Field Technical Lead</div>
               </div>
 
-              <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px;">
-                <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">Billing Total</div>
-                <div style="font-size:1.15rem; font-weight:500; color:var(--paces-success); margin-top:2px;">
-                  @if($booking->final_cost > 0)
-                    ৳ {{ number_format($booking->final_cost, 2) }} <span style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:400;">(Invoiced)</span>
-                  @elseif($booking->estimated_cost > 0)
-                    ৳ {{ number_format($booking->estimated_cost, 2) }} <span style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:400;">(Agreed Estimate)</span>
-                  @else
-                    <span style="font-size:0.88rem; color:#d97706; font-weight:500;">Billed upon completion</span>
-                  @endif
+              @if($booking->is_amc)
+                <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:12px;">
+                  <div style="font-size:0.72rem; color:#7c3aed; text-transform:uppercase; font-weight:700;">AMC Recurring Billing</div>
+                  <div style="font-size:1.15rem; font-weight:700; color:#6d28d9; margin-top:2px;">
+                    ৳ {{ number_format($booking->recurring_amount ?: $booking->final_cost, 2) }}
+                    <span style="font-size:0.75rem; color:#7c3aed; font-weight:500;">/ {{ $booking->billing_cycle_label }}</span>
+                  </div>
+                  <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">
+                    Next Due: {{ $booking->next_billing_date ? $booking->next_billing_date->format('M d, Y') : 'Active' }}
+                  </div>
                 </div>
-              </div>
+              @else
+                <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px;">
+                  <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">One-Off Final Bill</div>
+                  <div style="font-size:1.15rem; font-weight:500; color:var(--paces-success); margin-top:2px;">
+                    @if($booking->final_cost > 0)
+                      ৳ {{ number_format($booking->final_cost, 2) }} <span style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:400;">(Invoiced)</span>
+                    @elseif($booking->estimated_cost > 0)
+                      ৳ {{ number_format($booking->estimated_cost, 2) }} <span style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:400;">(Agreed Estimate)</span>
+                    @else
+                      <span style="font-size:0.88rem; color:#d97706; font-weight:500;">Billed upon completion</span>
+                    @endif
+                  </div>
+                </div>
+              @endif
             </div>
 
             <!-- Completion Banner & Feedback (If Completed) -->
@@ -1414,4 +1659,77 @@
       <img id="lightboxImage" src="" alt="Zoomable View" style="max-width:100%; max-height:100%; object-fit:contain; transform-origin:center center; transition:transform 0.15s ease-out; user-select:none; pointer-events:none;">
     </div>
   </div>
+
+  <!-- Modal: Record AMC Bill Collection -->
+  <div id="collectAmcBillModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:9999; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:1rem;">
+    <div style="background:#ffffff; border-radius:12px; max-width:480px; width:100%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); border:1px solid var(--paces-border); overflow:hidden;">
+      <div style="padding:1.25rem 1.5rem; border-bottom:1px solid var(--paces-border); display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+        <div>
+          <h3 style="margin:0; font-size:1.05rem; font-weight:600; color:var(--paces-text-dark);">Record AMC Bill Payment</h3>
+          <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-top:2px;" id="modalInvoiceSubtitle">Invoice Collection</div>
+        </div>
+        <button type="button" onclick="closeCollectBillModal()" style="background:none; border:none; color:#64748b; font-size:1.2rem; cursor:pointer;">✕</button>
+      </div>
+
+      <form id="collectAmcBillForm" method="POST" action="" style="padding:1.5rem;">
+        @csrf
+        <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:10px 14px; margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.82rem; font-weight:600; color:#065f46;">Amount to Collect:</span>
+          <strong style="font-size:1.15rem; color:#047857;" id="modalInvoiceAmount">৳ 0.00</strong>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Payment Method *</label>
+          <select name="payment_method" class="form-control-paces" required>
+            <option value="Bank Transfer">Bank Transfer / Cheque</option>
+            <option value="bKash">bKash (Merchant / Personal)</option>
+            <option value="Nagad">Nagad</option>
+            <option value="Cash">Cash on Delivery / Field Handover</option>
+            <option value="POS / Card">Credit / Debit Card (POS)</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Transaction / Cheque Reference</label>
+          <input type="text" name="payment_reference" placeholder="e.g. TrxID 9H82J1 or Cheque #12345" class="form-control-paces">
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Payment Date *</label>
+          <input type="date" name="paid_at" value="{{ date('Y-m-d') }}" class="form-control-paces" required>
+        </div>
+
+        <div style="margin-bottom:1.25rem;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Receipt Notes</label>
+          <textarea name="notes" rows="2" placeholder="Received by manager, deposit slip filed..." class="form-control-paces"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onclick="closeCollectBillModal()" class="btn-paces btn-paces-outline btn-paces-sm">Cancel</button>
+          <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:600; padding:6px 16px;">
+            ✓ Confirm Bill Collection
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openCollectBillModal(invoiceId, invoiceNumber, amountFormatted) {
+      const modal = document.getElementById('collectAmcBillModal');
+      const form = document.getElementById('collectAmcBillForm');
+      const sub = document.getElementById('modalInvoiceSubtitle');
+      const amt = document.getElementById('modalInvoiceAmount');
+      if (modal && form) {
+        form.action = "{{ url('admin/bookings/' . $booking->id . '/amc-bills') }}/" + invoiceId + "/collect";
+        if (sub) sub.textContent = "Invoice #" + invoiceNumber + " • Work Order #{{ $booking->booking_number }}";
+        if (amt) amt.textContent = "৳ " + amountFormatted;
+        modal.style.display = 'flex';
+      }
+    }
+    function closeCollectBillModal() {
+      const modal = document.getElementById('collectAmcBillModal');
+      if (modal) modal.style.display = 'none';
+    }
+  </script>
 </x-layouts.admin>

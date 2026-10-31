@@ -206,7 +206,7 @@
           <div style="min-width:0; flex:1;">
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
               <span style="font-size:0.92rem; font-weight:600; color:{{ $task->status === 'completed' ? '#94a3b8; text-decoration:line-through;' : '#1e293b' }};">
-                {{ $task->title }}
+                {{ preg_replace('/\s*\(#[A-Za-z0-9-]+\)\s*$/', '', $task->title) }}
               </span>
 
               @if($task->priority === 'urgent')

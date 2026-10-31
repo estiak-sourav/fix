@@ -6,6 +6,7 @@ use App\Actions\Booking\UpdateBookingStatusAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateBookingStatusRequest;
 use App\Models\AdminNotification;
+use App\Models\AmcInvoice;
 use App\Models\AmcPlan;
 use App\Models\Booking;
 use App\Models\DailyAnalytics;
@@ -200,6 +201,58 @@ class AdminDashboardController extends Controller
             'next_date' => $nextDate,
         ];
 
+        // Running AMC Contracts count
+        $runningAmcContracts = Booking::where(function ($q) {
+            $q->where('service_type', 'amc_contract')
+                ->orWhereNotNull('amc_plan_id');
+        })->where('contract_status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('contract_end_date')
+                    ->orWhereDate('contract_end_date', '>=', today());
+            })->get();
+        $runningAmcCount = $runningAmcContracts->count();
+
+        // Calculate AMC Monthly Recurring Revenue (MRR)
+        $amcMrr = (float) $runningAmcContracts->sum(function ($c) {
+            $amount = (float) ($c->recurring_amount ?: $c->final_cost ?: 0);
+
+            return match ($c->billing_cycle) {
+                'daily' => $amount * 30,
+                'weekly' => $amount * 4.33,
+                'half_monthly' => $amount * 2,
+                'quarterly' => $amount / 3,
+                'yearly' => $amount / 12,
+                default => $amount,
+            };
+        });
+
+        // AMC Bill Collection Alert (Due or Overdue Invoices)
+        $amcBillsDue = AmcInvoice::with(['booking.user', 'booking.amcPlan'])
+            ->where('status', '!=', 'paid')
+            ->where(function ($q) {
+                $q->where('status', 'overdue')
+                    ->orWhere('due_date', '<=', today()->addDays(7));
+            })
+            ->orderBy('due_date')
+            ->get();
+
+        $amcCollectionAlert = [
+            'has_due' => $amcBillsDue->isNotEmpty(),
+            'count' => $amcBillsDue->count(),
+            'total_amount' => (float) $amcBillsDue->sum('amount'),
+            'invoices' => $amcBillsDue->take(4),
+        ];
+
+        // Period Revenue calculation: Regular Completed Services + Paid AMC Bills in Range
+        $regularServiceRevenue = (float) $bookingsInRange->filter(fn ($b) => ! $b->is_amc)->where('status', 'completed')->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0);
+        $amcCollectedInPeriod = (float) AmcInvoice::where('status', 'paid')
+            ->whereBetween('paid_at', [$startDate, $endDate])
+            ->sum('amount');
+        if ($amcCollectedInPeriod === 0.0) {
+            $amcCollectedInPeriod = (float) $bookingsInRange->filter(fn ($b) => $b->is_amc && $b->contract_status === 'active')->sum(fn ($b) => $b->recurring_amount ?: $b->final_cost ?: 0);
+        }
+        $periodRevenue = $regularServiceRevenue + $amcCollectedInPeriod;
+
         // Summary Statistics for the Active Period
         $stats = [
             'range' => $range,
@@ -235,8 +288,10 @@ class AdminDashboardController extends Controller
             'service_orders' => $currentServiceBook,
             'amc_requests' => $currentAmcRequests,
             'amc_orders' => $currentAmcBook,
+            'running_amc_contracts' => $runningAmcCount,
+            'amc_mrr' => $amcMrr,
             'period_bookings' => $bookingsInRange->count(),
-            'period_revenue' => (float) $bookingsInRange->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0),
+            'period_revenue' => $periodRevenue,
 
             // Operations State
             'pending_review' => Booking::where('status', 'pending_review')->count(),
@@ -439,7 +494,7 @@ class AdminDashboardController extends Controller
 
         foreach ($legacyUnsyncedBookings as $legacyBooking) {
             $type = $legacyBooking->call_status === 'unreachable' ? 'call_unreachable' : 'call_back_later';
-            $title = ($legacyBooking->call_status === 'unreachable' ? 'Retry Call: ' : 'Follow-up Call: ').$legacyBooking->customer_name." (#{$legacyBooking->booking_number})";
+            $title = ($legacyBooking->call_status === 'unreachable' ? 'Retry Call: ' : 'Follow-up Call: ').$legacyBooking->customer_name;
             OutreachTask::create([
                 'booking_id' => $legacyBooking->id,
                 'title' => $title,
@@ -527,7 +582,8 @@ class AdminDashboardController extends Controller
             'taskBookings',
             'taskUsers',
             'topSellingDynamic',
-            'latestSupportTicket'
+            'latestSupportTicket',
+            'amcCollectionAlert'
         ));
     }
 

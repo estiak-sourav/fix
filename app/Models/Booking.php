@@ -49,6 +49,10 @@ class Booking extends Model
         'agreement_document_path',
         'amc_package_notes',
         'contract_status',
+        'billing_cycle',
+        'recurring_amount',
+        'billing_day',
+        'next_billing_date',
     ];
 
     protected function casts(): array
@@ -58,9 +62,12 @@ class Booking extends Model
             'preferred_date' => 'date',
             'contract_start_date' => 'date',
             'contract_end_date' => 'date',
+            'next_billing_date' => 'date',
             'estimated_sqft' => 'integer',
             'estimated_cost' => 'decimal:2',
             'final_cost' => 'decimal:2',
+            'recurring_amount' => 'decimal:2',
+            'billing_day' => 'integer',
             'review_rating' => 'integer',
             'reviewed_at' => 'datetime',
             'accepted_at' => 'datetime',
@@ -97,6 +104,54 @@ class Booking extends Model
     public function outreachTasks(): HasMany
     {
         return $this->hasMany(OutreachTask::class)->latest();
+    }
+
+    public function amcInvoices(): HasMany
+    {
+        return $this->hasMany(AmcInvoice::class)->orderBy('due_date');
+    }
+
+    public function getIsAmcAttribute(): bool
+    {
+        return $this->service_type === 'amc_contract' || ! is_null($this->amc_plan_id);
+    }
+
+    public function getIsRunningContractAttribute(): bool
+    {
+        return $this->is_amc
+            && $this->contract_status === 'active'
+            && (! $this->contract_end_date || $this->contract_end_date->isFuture() || $this->contract_end_date->isToday());
+    }
+
+    public function getBillingCycleLabelAttribute(): string
+    {
+        return match ($this->billing_cycle) {
+            'daily' => 'Daily',
+            'weekly' => 'Weekly',
+            'half_monthly' => 'Bi-Weekly (15 Days)',
+            'quarterly' => 'Quarterly (3 Months)',
+            'yearly' => 'Yearly',
+            default => 'Monthly',
+        };
+    }
+
+    public function getCollectedAmcRevenueAttribute(): float
+    {
+        return (float) $this->amcInvoices()->where('status', 'paid')->sum('amount');
+    }
+
+    public function getPendingAmcDueAttribute(): float
+    {
+        return (float) $this->amcInvoices()->whereIn('status', ['unpaid', 'overdue'])->sum('amount');
+    }
+
+    public function getDaysRemainingInContractAttribute(): ?int
+    {
+        if (! $this->contract_end_date) {
+            return null;
+        }
+
+        return max(0, (int) today()->diffInDays($this->contract_end_date, false));
     }
 
     public static function divisionCode(?string $division, ?string $district = null): string

@@ -161,7 +161,7 @@
                       "{{ $rev->review_comment }}"
                     </div>
                     <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">
-                      Work Order #{{ $rev->booking_number }} • {{ $rev->reviewed_at?->format('M d, Y') }}
+                      {{ $rev->reviewed_at?->format('M d, Y') }}
                     </div>
                   </div>
                 @endforeach

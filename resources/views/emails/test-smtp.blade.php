@@ -73,9 +73,29 @@
   </style>
 </head>
 <body>
+  @php
+    $siteName = \App\Models\SiteSetting::get('site_name', 'FIX Facility Management');
+    $logoRelative = \App\Models\SiteSetting::get('header_logo_dark', \App\Models\SiteSetting::get('footer_logo', 'assets/images/logo-white-crop.png'));
+    $logoPath = $logoRelative ? public_path($logoRelative) : null;
+    if (isset($message) && is_object($message) && method_exists($message, 'embed') && $logoPath && file_exists($logoPath)) {
+        $logoSrc = $message->embed($logoPath);
+    } elseif ($logoRelative) {
+        $logoSrc = url(asset($logoRelative));
+    } else {
+        $logoSrc = null;
+    }
+  @endphp
   <div class="wrapper">
     <div class="header">
-      <h2>FIX FACILITY MANAGEMENT</h2>
+      @if($logoSrc)
+        <div style="margin-bottom: 6px;">
+          <a href="{{ url('/') }}" target="_blank" style="text-decoration: none; display: inline-block;">
+            <img src="{{ $logoSrc }}" alt="{{ $siteName }}" style="height: 44px; max-width: 220px; object-fit: contain; vertical-align: middle; border: 0;">
+          </a>
+        </div>
+      @else
+        <h2>{{ $siteName }}</h2>
+      @endif
       <p style="color:#94a3b8; margin:4px 0 0; font-size:12px;">Admin Command Center</p>
     </div>
 

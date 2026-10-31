@@ -29,9 +29,29 @@
   </style>
 </head>
 <body>
+  @php
+    $siteName = \App\Models\SiteSetting::get('site_name', 'FIX Facility Management');
+    $logoRelative = \App\Models\SiteSetting::get('header_logo_dark', \App\Models\SiteSetting::get('footer_logo', 'assets/images/logo-white-crop.png'));
+    $logoPath = $logoRelative ? public_path($logoRelative) : null;
+    if (isset($message) && is_object($message) && method_exists($message, 'embed') && $logoPath && file_exists($logoPath)) {
+        $logoSrc = $message->embed($logoPath);
+    } elseif ($logoRelative) {
+        $logoSrc = url(asset($logoRelative));
+    } else {
+        $logoSrc = null;
+    }
+  @endphp
   <div class="wrapper">
     <div class="header">
-      <h2>FIX FACILITY MANAGEMENT</h2>
+      @if($logoSrc)
+        <div style="margin-bottom: 6px;">
+          <a href="{{ url('/') }}" target="_blank" style="text-decoration: none; display: inline-block;">
+            <img src="{{ $logoSrc }}" alt="{{ $siteName }}" style="height: 44px; max-width: 220px; object-fit: contain; vertical-align: middle; border: 0;">
+          </a>
+        </div>
+      @else
+        <h2>{{ $siteName }}</h2>
+      @endif
       <p>Engineering Helpdesk Confirmation</p>
     </div>
 
@@ -64,7 +84,7 @@
     </div>
 
     <div class="footer">
-      <div>© {{ date('Y') }} FIX Facility Management. All rights reserved.</div>
+      <div>© {{ date('Y') }} {{ $siteName }}. All rights reserved.</div>
       <div style="margin-top:6px;">
         Emergency Hotline: <strong>{{ \App\Models\SiteSetting::get('emergency_phone', '+880 1700-000000') }}</strong> |
         Support: <a href="mailto:{{ \App\Models\SiteSetting::get('support_email', 'support@fix.com.bd') }}">{{ \App\Models\SiteSetting::get('support_email', 'support@fix.com.bd') }}</a>

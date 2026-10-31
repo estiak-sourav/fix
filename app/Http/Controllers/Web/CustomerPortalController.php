@@ -78,19 +78,29 @@ class CustomerPortalController extends Controller
     {
         $user = Auth::guard('web')->user();
 
-        $divisionsData = Cache::rememberForever('bd_locations_dropdown', function () {
-            return Division::with(['districts.thanas'])->orderBy('name')->get()->map(function ($div) {
+        $divisionsData = Cache::rememberForever('bd_locations_hierarchy_v2', function () {
+            $divisions = Division::with(['districts.thanas'])->orderBy('name')->get();
+
+            if ($divisions->isEmpty()) {
+                return [];
+            }
+
+            return $divisions->map(function ($div) {
                 return [
-                    'name' => $div->name,
+                    'name' => (string) $div->name,
                     'districts' => $div->districts->sortBy('name')->map(function ($dist) {
                         return [
-                            'name' => $dist->name,
-                            'thanas' => $dist->thanas->sortBy('name')->pluck('name')->values(),
+                            'name' => (string) $dist->name,
+                            'thanas' => $dist->thanas->sortBy('name')->pluck('name')->values()->all(),
                         ];
-                    })->values(),
+                    })->values()->all(),
                 ];
-            })->values();
+            })->values()->all();
         });
+
+        if (! is_array($divisionsData)) {
+            $divisionsData = [];
+        }
 
         return view('web.pages.customer.profile', compact('user', 'divisionsData'));
     }

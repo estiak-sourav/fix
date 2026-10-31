@@ -81,7 +81,11 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
     // Partner & Field Crew Enlistment
     Route::prefix('partners')->name('partners.')->group(function () {
         Route::get('/', [AdminPartnerController::class, 'index'])->name('index')->middleware('admin.can:users.view');
+        Route::get('/create', [AdminPartnerController::class, 'create'])->name('create')->middleware('admin.can:users.edit');
+        Route::post('/', [AdminPartnerController::class, 'store'])->name('store')->middleware('admin.can:users.edit');
         Route::get('/{partner}', [AdminPartnerController::class, 'show'])->name('show')->middleware('admin.can:users.view');
+        Route::get('/{partner}/edit', [AdminPartnerController::class, 'edit'])->name('edit')->middleware('admin.can:users.edit');
+        Route::put('/{partner}', [AdminPartnerController::class, 'update'])->name('update')->middleware('admin.can:users.edit');
         Route::put('/{partner}/approve', [AdminPartnerController::class, 'approve'])->name('approve')->middleware('admin.can:users.edit');
         Route::put('/{partner}/status', [AdminPartnerController::class, 'updateStatus'])->name('status')->middleware('admin.can:users.edit');
         Route::delete('/{partner}', [AdminPartnerController::class, 'destroy'])->name('destroy')->middleware('admin.can:users.edit');
@@ -96,6 +100,8 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
     Route::post('/bookings/{booking}/complete', [AdminBookingController::class, 'complete'])->name('bookings.complete')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/log-call', [AdminBookingController::class, 'logCallStatus'])->name('bookings.log-call')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/activate-amc', [AdminBookingController::class, 'activateAmcContract'])->name('bookings.activate-amc')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/amc-bills/{invoice}/collect', [AdminBookingController::class, 'collectAmcBill'])->name('bookings.amc-bills.collect')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/amc-bills/generate', [AdminBookingController::class, 'generateNextAmcBill'])->name('bookings.amc-bills.generate')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status')->middleware('admin.can:bookings.edit');
 
     // Outreach Tasks Management (Automatic & Manual)

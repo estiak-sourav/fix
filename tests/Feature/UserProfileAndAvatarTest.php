@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\Division;
 use App\Models\Service;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
@@ -51,6 +52,22 @@ class UserProfileAndAvatarTest extends TestCase
         $response->assertSee('Tanvir Customer');
         $response->assertSee('Profile Picture');
         $response->assertSee('Address');
+    }
+
+    /**
+     * Test client user can view profile page when divisions and districts are populated.
+     */
+    public function test_customer_user_can_view_profile_page_with_seeded_divisions(): void
+    {
+        $division = Division::create(['name' => 'Dhaka']);
+        $district = $division->districts()->create(['name' => 'Dhaka']);
+        $district->thanas()->create(['name' => 'Gulshan']);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('customer.profile'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Dhaka');
     }
 
     /**

@@ -150,7 +150,11 @@
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            <span>{{ \App\Models\SiteSetting::get('operating_hours', '24/7 Operations Command Center') }}</span>
+            @php
+              $hoursText = \App\Models\SiteSetting::get('operating_hours', "General Support: 8:00 AM – 10:00 PM (Daily)\nEmergency Callouts: 24/7 Available");
+              $cleanHours = trim(preg_replace('/\r\n|\r|\n/', ' • ', $hoursText));
+            @endphp
+            <span>{{ $cleanHours }}</span>
           </li>
         </ul>
       </div>

@@ -9,7 +9,12 @@
       <h1 class="page-header-title">{{ $partner->company_name }}</h1>
     </div>
 
-    <div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <a href="{{ route('admin.partners.edit', $partner) }}" class="btn-paces btn-paces-outline" style="display:inline-flex; align-items:center; gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        <span>Edit Partner</span>
+      </a>
+
       @php $badge = $partner->status_badge; @endphp
       <span class="badge-pill-paces {{ $badge['bg'] }}" style="color:{{ $badge['color'] }}; font-size:0.85rem; padding:6px 14px;">
         {{ $badge['label'] }}
