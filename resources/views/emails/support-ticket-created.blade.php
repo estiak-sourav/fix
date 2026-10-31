@@ -52,7 +52,12 @@
       @else
         <h2>{{ $siteName }}</h2>
       @endif
-      <p>Engineering Helpdesk Confirmation</p>
+      @php
+        $ticketCreatedSubtitle = \App\Models\SiteSetting::get('email_header_ticket_created', 'Engineering Helpdesk Confirmation');
+      @endphp
+      @if(!empty($ticketCreatedSubtitle))
+        <p>{{ $ticketCreatedSubtitle }}</p>
+      @endif
     </div>
 
     <div class="content">

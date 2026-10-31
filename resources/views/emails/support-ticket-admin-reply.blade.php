@@ -47,7 +47,12 @@
       @else
         <h2>{{ $siteName }}</h2>
       @endif
-      <p>Engineering Helpdesk — New Response</p>
+      @php
+        $ticketReplySubtitle = \App\Models\SiteSetting::get('email_header_ticket_reply', 'Engineering Helpdesk — New Response');
+      @endphp
+      @if(!empty($ticketReplySubtitle))
+        <p>{{ $ticketReplySubtitle }}</p>
+      @endif
     </div>
 
     <div class="content">

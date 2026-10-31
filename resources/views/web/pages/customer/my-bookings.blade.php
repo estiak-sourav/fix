@@ -209,13 +209,6 @@
                   <p style="margin:4px 0 0; color:#475569; line-height:1.5;">{{ $booking->problem_description }}</p>
                 </div>
 
-                @if($booking->assigned_team)
-                  <div style="margin-bottom:0.75rem; display:inline-flex; align-items:center; gap:6px; background:#eff6ff; color:#1e40af; padding:4px 10px; border-radius:6px; font-weight:600; font-size:0.825rem; border:1px solid #bfdbfe;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    <span>Assigned Operations Team: {{ $booking->assigned_team }}</span>
-                  </div>
-                @endif
-
                 @if($booking->statusLogs->isNotEmpty())
                   <div style="margin-top:0.75rem; border-top:1px dashed #cbd5e1; padding-top:0.75rem;">
                     <strong style="color:var(--text-main); font-size:0.825rem; display:block; margin-bottom:6px;">Latest Operations Update:</strong>

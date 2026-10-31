@@ -105,7 +105,7 @@
 <body>
   @php
     $siteName = \App\Models\SiteSetting::get('site_name', 'FIX Facility Management');
-    $siteTagline = \App\Models\SiteSetting::get('site_tagline', 'Clean • Safe • Sustainable Engineering');
+    $siteTagline = \App\Models\SiteSetting::get('email_header_otp', \App\Models\SiteSetting::get('site_tagline', 'Clean • Safe • Sustainable Engineering'));
     $logoRelative = \App\Models\SiteSetting::get('header_logo_dark', \App\Models\SiteSetting::get('footer_logo', 'assets/images/logo-white-crop.png'));
     $logoPath = $logoRelative ? public_path($logoRelative) : null;
     if (isset($message) && is_object($message) && method_exists($message, 'embed') && $logoPath && file_exists($logoPath)) {

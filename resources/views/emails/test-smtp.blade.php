@@ -96,7 +96,12 @@
       @else
         <h2>{{ $siteName }}</h2>
       @endif
-      <p style="color:#94a3b8; margin:4px 0 0; font-size:12px;">Admin Command Center</p>
+      @php
+        $testSmtpSubtitle = \App\Models\SiteSetting::get('email_header_test_smtp', 'Admin Command Center');
+      @endphp
+      @if(!empty($testSmtpSubtitle))
+        <p style="color:#94a3b8; margin:4px 0 0; font-size:12px;">{{ $testSmtpSubtitle }}</p>
+      @endif
     </div>
 
     <div class="content">

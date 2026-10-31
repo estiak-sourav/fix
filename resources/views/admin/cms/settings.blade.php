@@ -397,22 +397,53 @@
         </div>
       </div>
 
-      <!-- 7. Customer OTP & Authentication Email Content -->
+      <!-- 7. Email Templates Header Branding & Customer OTP Content -->
       <div class="card-paces" style="margin-bottom:1.5rem;">
         <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.85rem; margin-bottom:1.25rem;">
-          <h3 class="card-title-paces" style="margin:0;">Customer OTP & Authentication Email Content</h3>
+          <h3 class="card-title-paces" style="margin:0;">Email Templates Header Branding &amp; OTP Content</h3>
+          <span style="font-size:0.8rem; color:#64748b; margin-top:3px; display:block;">Customize the sub-heading text displayed directly underneath the header logo across system emails.</span>
         </div>
 
-        <div style="margin-bottom:1.25rem;">
-          <label class="form-label-paces">OTP Security Notice</label>
-          <input type="text" name="otp_security_notice" value="{{ \App\Models\SiteSetting::get('otp_security_notice', 'This code is valid for 10 minutes. Never share your OTP with anyone, including FIX representatives.') }}" class="form-control-paces">
-          <span class="form-help-paces">The security notice box text displayed right below the OTP code box.</span>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+          <div>
+            <label class="form-label-paces">New Ticket Confirmation (Under Logo)</label>
+            <input type="text" name="email_header_ticket_created" value="{{ \App\Models\SiteSetting::get('email_header_ticket_created', 'Engineering Helpdesk Confirmation') }}" class="form-control-paces">
+            <span class="form-help-paces">Shown under logo when a customer submits a new support ticket.</span>
+          </div>
+
+          <div>
+            <label class="form-label-paces">Ticket Admin Reply (Under Logo)</label>
+            <input type="text" name="email_header_ticket_reply" value="{{ \App\Models\SiteSetting::get('email_header_ticket_reply', 'Engineering Helpdesk — New Response') }}" class="form-control-paces">
+            <span class="form-help-paces">Shown under logo when admin responds to a customer ticket.</span>
+          </div>
         </div>
 
-        <div>
-          <label class="form-label-paces">OTP Disclaimer / Help Notice</label>
-          <textarea name="otp_disclaimer_text" class="form-control-paces" rows="3">{{ \App\Models\SiteSetting::get('otp_disclaimer_text', 'If you did not request this verification code, please ignore this email or contact our 24/7 emergency dispatch immediately.') }}</textarea>
-          <span class="form-help-paces">Instructions for customers if they did not request the verification code.</span>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.5rem;">
+          <div>
+            <label class="form-label-paces">Customer OTP / Login Email (Under Logo)</label>
+            <input type="text" name="email_header_otp" value="{{ \App\Models\SiteSetting::get('email_header_otp', \App\Models\SiteSetting::get('site_tagline', 'Clean • Safe • Sustainable Engineering')) }}" class="form-control-paces">
+            <span class="form-help-paces">Shown under logo in OTP verification &amp; registration emails.</span>
+          </div>
+
+          <div>
+            <label class="form-label-paces">SMTP Test Verification Email (Under Logo)</label>
+            <input type="text" name="email_header_test_smtp" value="{{ \App\Models\SiteSetting::get('email_header_test_smtp', 'Admin Command Center') }}" class="form-control-paces">
+            <span class="form-help-paces">Shown under logo in SMTP gateway test emails sent from admin.</span>
+          </div>
+        </div>
+
+        <div style="border-top:1px dashed #e2e8f0; padding-top:1.25rem; margin-top:0.5rem;">
+          <div style="margin-bottom:1.25rem;">
+            <label class="form-label-paces">OTP Security Notice</label>
+            <input type="text" name="otp_security_notice" value="{{ \App\Models\SiteSetting::get('otp_security_notice', 'This code is valid for 10 minutes. Never share your OTP with anyone, including FIX representatives.') }}" class="form-control-paces">
+            <span class="form-help-paces">The security notice box text displayed right below the OTP code box.</span>
+          </div>
+
+          <div>
+            <label class="form-label-paces">OTP Disclaimer / Help Notice</label>
+            <textarea name="otp_disclaimer_text" class="form-control-paces" rows="3">{{ \App\Models\SiteSetting::get('otp_disclaimer_text', 'If you did not request this verification code, please ignore this email or contact our 24/7 emergency dispatch immediately.') }}</textarea>
+            <span class="form-help-paces">Instructions for customers if they did not request the verification code.</span>
+          </div>
         </div>
       </div>
 

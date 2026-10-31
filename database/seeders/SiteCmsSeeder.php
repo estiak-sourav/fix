@@ -34,6 +34,10 @@ class SiteCmsSeeder extends Seeder
             ['key' => 'youtube_active', 'value' => '1', 'group' => 'social', 'label' => 'YouTube Active'],
             ['key' => 'whatsapp_number', 'value' => '+8801700000000', 'group' => 'social', 'label' => 'WhatsApp Number'],
             ['key' => 'whatsapp_active', 'value' => '1', 'group' => 'social', 'label' => 'WhatsApp Active'],
+            ['key' => 'email_header_ticket_created', 'value' => 'Engineering Helpdesk Confirmation', 'group' => 'email', 'label' => 'Ticket Created Email Subtitle'],
+            ['key' => 'email_header_ticket_reply', 'value' => 'Engineering Helpdesk — New Response', 'group' => 'email', 'label' => 'Ticket Admin Reply Email Subtitle'],
+            ['key' => 'email_header_otp', 'value' => 'Clean • Safe • Sustainable Engineering', 'group' => 'email', 'label' => 'OTP Email Subtitle'],
+            ['key' => 'email_header_test_smtp', 'value' => 'Admin Command Center', 'group' => 'email', 'label' => 'SMTP Test Email Subtitle'],
         ];
 
         foreach ($settings as $setting) {
