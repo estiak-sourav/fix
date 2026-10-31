@@ -107,7 +107,7 @@
         </div>
       </div>
 
-      <!-- Right Column: Interactive Send Us a Message Card -->
+      <!-- Right Column: Interactive  Send Us a Message Card -->
       <div class="contact-form-card">
         <h3>Contact &amp; Submit Support Inquiry</h3>
         <p>Send your message below. A unified support ticket reference with live status tracking will be generated instantly.</p>
