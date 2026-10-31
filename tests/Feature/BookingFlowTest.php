@@ -122,10 +122,14 @@ class BookingFlowTest extends TestCase
         $this->assertEquals('in_progress', $booking->status);
         $this->assertEquals('Delta HVAC Engineering & Industrial Solutions — Engr. Kamrul Hasan - 01711223344', $booking->assigned_team);
 
-        // Verify customer tracking page shows Assigned and In Progress
+        // Verify customer tracking page shows In Progress status
         $trackerResponse = $this->actingAs($user, 'web')->get('http://localhost/my-bookings');
         $trackerResponse->assertStatus(200);
         $trackerResponse->assertSee('In Progress');
-        $trackerResponse->assertSee('Delta HVAC Engineering');
+
+        // Verify booking details page shows assigned field team
+        $detailsResponse = $this->actingAs($user, 'web')->get(route('customer.bookings.show', $booking->booking_number));
+        $detailsResponse->assertStatus(200);
+        $detailsResponse->assertSee('Delta HVAC Engineering');
     }
 }

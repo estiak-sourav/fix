@@ -89,8 +89,9 @@
             <p style="font-size:0.8rem; color:#cbd5e1; margin-bottom:10px; line-height:1.4;">
               Track real-time engineering work progress, replies, and status updates.
             </p>
-            <a href="{{ route('support.track') }}" style="display:inline-flex; align-items:center; gap:6px; color:#38bdf8; font-size:0.825rem; font-weight:700; text-decoration:none;">
-              Track Your Existing Ticket &rarr;
+            <a href="{{ route('support.track') }}" class="btn" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:10px 16px; font-size:0.85rem; font-weight:700; border-radius:8px; text-decoration:none; background:#00a896; color:#ffffff; border:none; box-shadow:0 2px 6px rgba(0,0,0,0.15); transition:all 0.2s ease;" onmouseover="this.style.background='#00a896'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#00a896'; this.style.transform='translateY(0)';">
+              <span>Track Your Existing Ticket</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
             </a>
           </div>
         </div>
