@@ -59,9 +59,9 @@ class UserProfileAndAvatarTest extends TestCase
      */
     public function test_customer_user_can_view_profile_page_with_seeded_divisions(): void
     {
-        $division = Division::create(['name' => 'Dhaka']);
-        $district = $division->districts()->create(['name' => 'Dhaka']);
-        $district->thanas()->create(['name' => 'Gulshan']);
+        $division = Division::firstOrCreate(['name' => 'Dhaka']);
+        $district = $division->districts()->firstOrCreate(['name' => 'Dhaka']);
+        $district->thanas()->firstOrCreate(['name' => 'Gulshan']);
 
         $response = $this->actingAs($this->user)
             ->get(route('customer.profile'));

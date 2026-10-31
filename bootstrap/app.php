@@ -16,15 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
-            $adminDomain = config('app.admin_domain', 'admin.localhost');
-
-            // 1. Subdomain Routing (admin.domain.com and admin.localhost)
-            Route::domain($adminDomain)
-                ->middleware(['web'])
-                ->as('admin.')
-                ->group(base_path('routes/admin.php'));
-
-            // 2. Direct path fallback for local dev (http://127.0.0.1:8000/admin)
+            // Direct path routing for admin command center (/admin)
             Route::prefix('admin')
                 ->middleware(['web'])
                 ->as('admin.')
