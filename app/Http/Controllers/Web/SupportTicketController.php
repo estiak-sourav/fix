@@ -95,8 +95,12 @@ class SupportTicketController extends Controller
      */
     public function show(Request $request, string $ticketNumber): View|RedirectResponse
     {
+        $cleanNumber = ltrim(trim($ticketNumber), '#');
         $ticket = SupportTicket::with(['messages', 'user'])
-            ->where('ticket_number', $ticketNumber)
+            ->where(function ($q) use ($cleanNumber, $ticketNumber) {
+                $q->where('ticket_number', $cleanNumber)
+                    ->orWhere('ticket_number', $ticketNumber);
+            })
             ->firstOrFail();
 
         $token = $request->query('token');
@@ -127,7 +131,11 @@ class SupportTicketController extends Controller
      */
     public function reply(ReplySupportTicketRequest $request, string $ticketNumber): RedirectResponse
     {
-        $ticket = SupportTicket::where('ticket_number', $ticketNumber)->firstOrFail();
+        $cleanNumber = ltrim(trim($ticketNumber), '#');
+        $ticket = SupportTicket::where(function ($q) use ($cleanNumber, $ticketNumber) {
+            $q->where('ticket_number', $cleanNumber)
+                ->orWhere('ticket_number', $ticketNumber);
+        })->firstOrFail();
 
         $user = auth()->user();
         $token = $request->input('token');
@@ -178,21 +186,59 @@ class SupportTicketController extends Controller
 
     /**
      * Public search/lookup form to check status by Ticket Number + Email.
+     * Shows current user's tickets if logged in.
      */
     public function track(Request $request): View|RedirectResponse
     {
-        if ($request->isMethod('post')) {
-            $request->validate([
-                'ticket_number' => ['required', 'string'],
-                'email' => ['required', 'email'],
-            ]);
+        $user = auth()->user();
 
-            $ticket = SupportTicket::where('ticket_number', trim($request->ticket_number))
-                ->where('customer_email', trim($request->email))
-                ->first();
+        if ($request->isMethod('post')) {
+            $rawNumber = trim((string) $request->ticket_number);
+            $cleanNumber = strtoupper(ltrim($rawNumber, '#'));
+            $cleanNumber = trim($cleanNumber);
+
+            $rules = [
+                'ticket_number' => ['required', 'string'],
+            ];
+
+            // If user is guest, email is required to verify ownership
+            if (! $user) {
+                $rules['email'] = ['required', 'email'];
+            } else {
+                $rules['email'] = ['nullable', 'email'];
+            }
+
+            $request->validate($rules);
+
+            $email = $request->filled('email')
+                ? strtolower(trim((string) $request->email))
+                : ($user ? strtolower(trim((string) $user->email)) : null);
+
+            $query = SupportTicket::where(function ($q) use ($cleanNumber, $rawNumber) {
+                $q->where('ticket_number', $cleanNumber)
+                    ->orWhere('ticket_number', $rawNumber)
+                    ->orWhereRaw('UPPER(ticket_number) = ?', [$cleanNumber]);
+            });
+
+            if ($email) {
+                $query->where(function ($q) use ($email, $user) {
+                    $q->whereRaw('LOWER(TRIM(customer_email)) = ?', [$email]);
+                    if ($user) {
+                        $q->orWhere('user_id', $user->id);
+                    }
+                });
+            } elseif ($user) {
+                $query->where('user_id', $user->id);
+            }
+
+            $ticket = $query->first();
 
             if (! $ticket) {
-                return back()->with('error', 'No support ticket found matching this ticket number and email address.');
+                return back()->withInput()->with('error', 'No support ticket found matching this ticket number'.($email ? ' and email address.' : '.'));
+            }
+
+            if ($user && ($ticket->user_id === $user->id || strtolower(trim($ticket->customer_email)) === strtolower(trim($user->email)))) {
+                return redirect()->route('customer.tickets.show', $ticket->ticket_number);
             }
 
             return redirect()->route('support.show', [
@@ -201,7 +247,20 @@ class SupportTicketController extends Controller
             ]);
         }
 
-        return view('web.pages.support.track');
+        // For GET request:
+        // If user is logged in, fetch their tickets!
+        $myTickets = collect();
+        if ($user) {
+            $myTickets = SupportTicket::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhereRaw('LOWER(TRIM(customer_email)) = ?', [strtolower(trim($user->email))]);
+            })
+                ->with('messages')
+                ->orderByDesc('updated_at')
+                ->get();
+        }
+
+        return view('web.pages.support.track', compact('myTickets'));
     }
 
     /**
@@ -213,7 +272,7 @@ class SupportTicketController extends Controller
 
         $tickets = SupportTicket::where(function ($q) use ($user) {
             $q->where('user_id', $user->id)
-                ->orWhere('customer_email', $user->email);
+                ->orWhereRaw('LOWER(TRIM(customer_email)) = ?', [strtolower(trim($user->email))]);
         })
             ->with('messages')
             ->orderByDesc('updated_at')
@@ -228,12 +287,16 @@ class SupportTicketController extends Controller
     public function customerShow(string $ticketNumber): View
     {
         $user = auth()->user();
+        $cleanNumber = ltrim(trim($ticketNumber), '#');
 
         $ticket = SupportTicket::with(['messages', 'user', 'admin'])
-            ->where('ticket_number', $ticketNumber)
+            ->where(function ($q) use ($cleanNumber, $ticketNumber) {
+                $q->where('ticket_number', $cleanNumber)
+                    ->orWhere('ticket_number', $ticketNumber);
+            })
             ->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)
-                    ->orWhere('customer_email', $user->email);
+                    ->orWhereRaw('LOWER(TRIM(customer_email)) = ?', [strtolower(trim($user->email))]);
             })
             ->firstOrFail();
 

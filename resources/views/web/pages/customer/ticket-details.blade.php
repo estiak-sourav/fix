@@ -66,7 +66,7 @@
                 <div style="display:flex; align-items:center; gap:8px;">
                   @if($msg->sender_type === 'admin')
                     <span style="font-size:0.875rem; font-weight:700; color:#1e40af;">
-                      🛠️ FIX Support Specialist
+                    FIX Support
                     </span>
                   @else
                     <span style="font-size:0.875rem; font-weight:700; color:#1e293b;">

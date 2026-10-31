@@ -94,16 +94,38 @@ class SupportTicketWorkflowTest extends TestCase
         $res->assertStatus(200);
         $res->assertSee('Track Support Ticket');
 
-        // 2. Submit track search
+        // 2. Submit track search with hash prefix and mixed case
         $searchRes = $this->post(route('support.track'), [
-            'ticket_number' => $ticket->ticket_number,
-            'email' => 'ayesha@example.com',
+            'ticket_number' => '#'.strtolower($ticket->ticket_number),
+            'email' => 'AYESHA@example.com',
         ]);
 
         $searchRes->assertRedirect(route('support.show', [
             'ticketNumber' => $ticket->ticket_number,
             'token' => $ticket->access_token,
         ]));
+    }
+
+    public function test_logged_in_user_sees_their_tickets_on_track_page(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Sourav Ahmed',
+            'email' => 'sourav@example.com',
+        ]);
+
+        $ticket = SupportTicket::factory()->create([
+            'user_id' => $user->id,
+            'customer_name' => $user->name,
+            'customer_email' => $user->email,
+            'subject' => 'AC cooling issues in office',
+        ]);
+
+        $res = $this->actingAs($user, 'web')->get(route('support.track'));
+        $res->assertStatus(200);
+        $res->assertSee('My Support Tickets');
+        $res->assertSee('#'.$ticket->ticket_number);
+        $res->assertSee('AC cooling issues in office');
+        $res->assertSee(route('customer.tickets.show', $ticket->ticket_number));
     }
 
     /**
