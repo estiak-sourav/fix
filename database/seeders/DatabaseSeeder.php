@@ -20,7 +20,13 @@ class DatabaseSeeder extends Seeder
             FaqSeeder::class,
             TestimonialSeeder::class,
             SiteCmsSeeder::class,
-            DailyAnalyticsSeeder::class,
+            BangladeshLocationsSeeder::class,
         ]);
+
+        if (app()->environment('local', 'testing')) {
+            $this->call([
+                DailyAnalyticsSeeder::class,
+            ]);
+        }
     }
 }
