@@ -1,4 +1,4 @@
-<x-layouts.app title="Book a Service | FIX Facility Management">
+<x-layouts.app :title="'Book a Service | ' . \App\Models\SiteSetting::get('site_name', 'FIX Facility Management')">
   <!-- Page Header -->
   <x-page-hero 
     title="Book a Building & Facility Service"

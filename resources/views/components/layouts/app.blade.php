@@ -45,13 +45,13 @@
   {
     "@@context": "https://schema.org",
     "@@type": "LocalBusiness",
-    "name": "FIX Facility Management",
-    "image": "{{ asset('assets/images/logo-dark-crop.png') }}",
+    "name": "{{ \App\Models\SiteSetting::get('site_name', 'FIX Facility Management') }}",
+    "image": "{{ asset(\App\Models\SiteSetting::get('header_logo', 'assets/images/logo-dark-crop.png')) }}",
     "telephone": "{{ \App\Models\SiteSetting::get('emergency_phone', '+880 1700-000000') }}",
     "email": "{{ \App\Models\SiteSetting::get('support_email', 'support@fix.com.bd') }}",
     "address": {
       "@@type": "PostalAddress",
-      "streetAddress": "Plot 12, Road 11, Block D, Banani",
+      "streetAddress": "{{ \App\Models\SiteSetting::get('head_office_address', 'Plot 12, Road 11, Block D, Banani') }}",
       "addressLocality": "Dhaka",
       "postalCode": "1213",
       "addressCountry": "BD"
@@ -62,10 +62,12 @@
       "opens": "00:00",
       "closes": "23:59"
     },
-    "sameAs": [
-      "https://facebook.com/fixbangladesh",
-      "https://linkedin.com/company/fix-bangladesh"
-    ]
+    "sameAs": {!! json_encode(array_values(array_filter([
+      \App\Models\SiteSetting::get('facebook_url', 'https://facebook.com/fixbangladesh'),
+      \App\Models\SiteSetting::get('linkedin_url', 'https://linkedin.com/company/fix-bangladesh'),
+      \App\Models\SiteSetting::get('instagram_url'),
+      \App\Models\SiteSetting::get('youtube_url'),
+    ]))) !!}
   }
   </script>
 

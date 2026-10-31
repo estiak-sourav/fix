@@ -1,4 +1,4 @@
-<x-layouts.app title="My Profile Settings | FIX Facility Management">
+<x-layouts.app :title="'My Profile Settings | ' . \App\Models\SiteSetting::get('site_name', 'FIX Facility Management')">
   <x-page-hero 
     title="Customer Profile & Settings" 
     subtitle="Keep your contact details and default facility address up to date." 

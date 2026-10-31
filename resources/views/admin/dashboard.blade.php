@@ -340,9 +340,7 @@
     </div>
   </div>
 
-  <!-- =========================================================================
-       CLEAN BARCHART SECTION (SCREENSHOT DESIGN PATTERN - 10 DEDICATED METRIC BARS)
-       ========================================================================= -->
+  <!-- Operations & Traffic Analytics BarChart Section -->
   <div class="card-paces card-paces-analytics" style="padding: 24px 28px; margin-bottom: 1.75rem; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); min-width: 0; max-width: 100%;">
     <!-- Header with Title -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 22px;">
@@ -836,7 +834,7 @@
     </div>
   </div>
 
-  <!-- 📈 Earning & Sales Analytics Section (Exact Screenshot Match) -->
+  <!-- Earning & Sales Analytics Section -->
   <div class="earnings-analytics-grid">
     
     <!-- Left Card: Earning -->
@@ -931,7 +929,7 @@
 
   </div>
 
-  <!-- 🎯 Top Selling, Tasks & Chat Widget Row (Exact Screenshot Match) -->
+  <!-- Top Selling Services, Tasks & Chat Widget Row -->
   <div class="top-tasks-chat-grid">
 
     <!-- Card 1: Top Selling Services & AMC Packages -->
@@ -1289,14 +1287,14 @@
     @endif
   </div>
 
-  <!-- Unified Clean BarChart Script (Screenshot Match - 10 Dedicated Metric Bars) -->
+  <!-- Unified Clean BarChart Script -->
   <script>
     const metricLabels = {!! json_encode($metricChart['labels']) !!};
     const metricValues = {!! json_encode($metricChart['values']) !!};
     const metricDetails = {!! json_encode($metricChart['details']) !!};
     const currentRangeLabel = {!! json_encode($stats['range_label']) !!};
 
-    // 10 distinct, cohesive colors matching the screenshot palette
+    // Palette for 10 analytics metrics
     const barColors = [
       '#4e73df', // Total visitor (Royal Blue)
       '#60a5fa', // New visitor (Sky Blue)

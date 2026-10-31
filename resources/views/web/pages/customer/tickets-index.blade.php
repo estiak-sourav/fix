@@ -1,4 +1,4 @@
-<x-layouts.app title="My Support Tickets | FIX Customer Portal">
+<x-layouts.app :title="'My Support Tickets | ' . \App\Models\SiteSetting::get('site_name', 'FIX') . ' Customer Portal'">
   <x-page-hero 
     title="My Support Tickets & Inquiries"
     subtitle="Track all your engineering maintenance tickets, real-time status updates, and support communications."

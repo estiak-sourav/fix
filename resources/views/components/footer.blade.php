@@ -189,12 +189,18 @@
       <p class="modal-service-desc" style="color:var(--text-main); font-size:1rem; margin-bottom:1.5rem;"></p>
 
       <div style="background:var(--bg-page); padding:1.25rem; border-radius:var(--radius-md); border:1px solid var(--border); margin-bottom:1.25rem;">
-        <h4 style="font-size:0.95rem; margin-bottom:0.5rem; color:var(--primary);">🏠 Residential Scope:</h4>
+        <h4 style="font-size:0.95rem; margin-bottom:0.5rem; color:var(--primary); display:flex; align-items:center; gap:6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>Residential Scope:</span>
+        </h4>
         <p class="modal-residential-scope" style="font-size:0.875rem; color:var(--text-muted); margin-bottom:0;"></p>
       </div>
 
       <div style="background:var(--bg-page); padding:1.25rem; border-radius:var(--radius-md); border:1px solid var(--border); margin-bottom:1.25rem;">
-        <h4 style="font-size:0.95rem; margin-bottom:0.5rem; color:var(--primary);">🏢 Commercial & Facility Scope:</h4>
+        <h4 style="font-size:0.95rem; margin-bottom:0.5rem; color:var(--primary); display:flex; align-items:center; gap:6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="22.01"></line><line x1="15" y1="22" x2="15" y2="22.01"></line><line x1="9" y1="18" x2="9" y2="18.01"></line><line x1="15" y1="18" x2="15" y2="18.01"></line><line x1="9" y1="14" x2="9" y2="14.01"></line><line x1="15" y1="14" x2="15" y2="14.01"></line><line x1="9" y1="10" x2="9" y2="10.01"></line><line x1="15" y1="10" x2="15" y2="10.01"></line><line x1="9" y1="6" x2="9" y2="6.01"></line><line x1="15" y1="6" x2="15" y2="6.01"></line></svg>
+          <span>Commercial &amp; Facility Scope:</span>
+        </h4>
         <p class="modal-commercial-scope" style="font-size:0.875rem; color:var(--text-muted); margin-bottom:0;"></p>
       </div>
 

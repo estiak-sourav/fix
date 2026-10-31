@@ -1,4 +1,4 @@
-<x-layouts.app title="Ticket #{{ $ticket->ticket_number }} | FIX Customer Portal">
+<x-layouts.app :title="'Ticket #' . $ticket->ticket_number . ' | ' . \App\Models\SiteSetting::get('site_name', 'FIX') . ' Customer Portal'">
   <section class="page-hero" style="padding-bottom:1.5rem;">
     <div class="container">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">

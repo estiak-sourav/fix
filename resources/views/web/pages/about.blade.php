@@ -1,4 +1,4 @@
-<x-layouts.app title="About Us | FIX Facility Management">
+<x-layouts.app :title="'About Us | ' . \App\Models\SiteSetting::get('site_name', 'FIX Facility Management')">
   <!-- Page Hero Banner -->
   <x-page-hero 
     :title="$heroContent->title ?? 'Pioneering Modern Facility Engineering in Bangladesh'"

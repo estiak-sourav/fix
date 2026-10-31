@@ -1,4 +1,4 @@
-<x-layouts.app title="FIX - Building & Facility Maintenance Services">
+<x-layouts.app :title="\App\Models\SiteSetting::get('meta_title', 'FIX - Building & Facility Maintenance Services')">
   <!-- Hero & Quick Booking Strip Component -->
   @if(!isset($siteContents['hero']) || ($siteContents['hero']->is_active ?? true))
     <x-sections.hero :content="$siteContents['hero'] ?? null" :categories="$categories" :services="$services" />

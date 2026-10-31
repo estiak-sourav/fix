@@ -1,4 +1,4 @@
-<x-layouts.app title="Track Support Ticket | FIX Helpdesk">
+<x-layouts.app :title="'Track Support Ticket | ' . \App\Models\SiteSetting::get('site_name', 'FIX') . ' Helpdesk'">
   <x-page-hero 
     title="Track Support Ticket"
     subtitle="Enter your ticket reference and email address to view updates, chat responses, and resolution status."

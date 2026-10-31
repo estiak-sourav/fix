@@ -1,4 +1,4 @@
-<x-layouts.app title="Booking #{{ $booking->booking_number }} | FIX Facility Management">
+<x-layouts.app :title="'Booking #' . $booking->booking_number . ' | ' . \App\Models\SiteSetting::get('site_name', 'FIX Facility Management')">
   <x-page-hero 
     title="Booking #{{ $booking->booking_number }}"
     subtitle="Real-time dispatch timeline and technical work progress."

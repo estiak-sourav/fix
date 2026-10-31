@@ -1,4 +1,4 @@
-<x-layouts.app title="{{ $service->title }} | FIX Facility Management">
+<x-layouts.app :title="$service->title . ' | ' . \App\Models\SiteSetting::get('site_name', 'FIX Facility Management')">
   <x-page-hero 
     :title="$service->title"
     :subtitle="$service->subtitle ?? $service->category?->name"

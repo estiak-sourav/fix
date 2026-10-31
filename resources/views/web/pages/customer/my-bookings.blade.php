@@ -1,4 +1,4 @@
-<x-layouts.app title="My Bookings & Live Status | FIX Facility Management">
+<x-layouts.app :title="'My Bookings & Live Status | ' . \App\Models\SiteSetting::get('site_name', 'FIX Facility Management')">
   <x-page-hero 
     title="My Service Requests & Live Tracking" 
     subtitle="Monitor real-time status updates, engineering assignments, and audit logs for your facility bookings." 

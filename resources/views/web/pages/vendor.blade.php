@@ -1,4 +1,4 @@
-<x-layouts.app title="Become a Service Partner | FIX Facility Management">
+<x-layouts.app :title="'Become a Service Partner | ' . \App\Models\SiteSetting::get('site_name', 'FIX Facility Management')">
   @php
     $heroContent = \App\Models\SiteContent::forSection('vendor_hero');
     $benefitsContent = \App\Models\SiteContent::forSection('vendor_benefits');

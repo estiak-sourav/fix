@@ -1,4 +1,4 @@
-<x-layouts.app title="Submit Support Ticket | FIX Helpdesk">
+<x-layouts.app :title="'Submit Support Ticket | ' . \App\Models\SiteSetting::get('site_name', 'FIX') . ' Helpdesk'">
   @php
     $supportDesk = \App\Models\SiteContent::forSection('support_desk');
   @endphp
