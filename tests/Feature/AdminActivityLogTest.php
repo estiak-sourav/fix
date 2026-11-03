@@ -218,4 +218,42 @@ class AdminActivityLogTest extends TestCase
         $response->assertSee('Created staff account for test filtering');
         $response->assertDontSee('Updated booking status for test filtering');
     }
+
+    /**
+     * 9. Activity logs older than 60 days are automatically pruned.
+     */
+    public function test_activity_logs_older_than_60_days_are_pruned(): void
+    {
+        // 1. Create a log older than 60 days (e.g. 65 days old)
+        $oldLog = AdminActivityLog::create([
+            'admin_id' => $this->superAdmin->id,
+            'admin_name' => $this->superAdmin->name,
+            'admin_email' => $this->superAdmin->email,
+            'category' => 'auth',
+            'action' => 'auth.login',
+            'description' => 'Old login log that should be pruned',
+        ]);
+        $oldLog->created_at = now()->subDays(65);
+        $oldLog->saveQuietly();
+
+        // 2. Create a recent log (e.g. 30 days old)
+        $recentLog = AdminActivityLog::create([
+            'admin_id' => $this->superAdmin->id,
+            'admin_name' => $this->superAdmin->name,
+            'admin_email' => $this->superAdmin->email,
+            'category' => 'auth',
+            'action' => 'auth.login',
+            'description' => 'Recent login log that should be kept',
+        ]);
+        $recentLog->created_at = now()->subDays(30);
+        $recentLog->saveQuietly();
+
+        // 3. Execute model pruning
+        $this->artisan('model:prune', ['--model' => [AdminActivityLog::class]])
+            ->assertSuccessful();
+
+        // 4. Assert old log was pruned and recent log was kept
+        $this->assertDatabaseMissing('admin_activity_logs', ['id' => $oldLog->id]);
+        $this->assertDatabaseHas('admin_activity_logs', ['id' => $recentLog->id]);
+    }
 }

@@ -4,13 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class AdminActivityLog extends Model
 {
-    use HasFactory;
+    use HasFactory, MassPrunable;
 
     /**
      * The table associated with the model.
@@ -49,6 +50,14 @@ class AdminActivityLog extends Model
         return [
             'properties' => 'array',
         ];
+    }
+
+    /**
+     * Determine the prunable query for the model (purge records older than 60 days).
+     */
+    public function prunable(): Builder
+    {
+        return static::where('created_at', '<=', now()->subDays(60));
     }
 
     /**
