@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Web\AnalyticsBeaconController;
 use App\Http\Controllers\Web\Auth\OtpAuthController;
 use App\Http\Controllers\Web\BookingController;
 use App\Http\Controllers\Web\CustomerPortalController;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::post('/analytics/ping', [AnalyticsBeaconController::class, 'ping'])->name('analytics.ping');
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/about-us', function () {
     return redirect()->route('about');

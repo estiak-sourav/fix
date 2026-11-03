@@ -3,7 +3,6 @@
 use App\Http\Middleware\AuthorizeAdminPermission;
 use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\EnsureAdminPasswordUpdated;
-use App\Http\Middleware\TrackWebsiteVisitor;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -26,7 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             CheckMaintenanceMode::class,
-            TrackWebsiteVisitor::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'analytics/ping',
         ]);
 
         $middleware->alias([

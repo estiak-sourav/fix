@@ -17,91 +17,60 @@ class VisitorTrackingTest extends TestCase
         Cache::flush();
     }
 
-    public function test_human_visitor_is_tracked_and_marked_as_new(): void
+    public function test_public_pages_render_with_visitor_tracker_script_and_no_synchronous_db_writes(): void
+    {
+        $today = today()->toDateString();
+
+        $response = $this->get('/');
+        $response->assertStatus(200);
+        $response->assertSee('fix_vst_uid'); // Confirms tracker script is embedded
+
+        // Confirms page load did NOT synchronously write to daily analytics
+        $record = DailyAnalytics::where('date', $today)->first();
+        $this->assertNull($record);
+    }
+
+    public function test_human_visitor_beacon_records_new_visitor(): void
     {
         $today = today()->toDateString();
 
         $response = $this->withHeaders([
-            'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept' => 'text/html,application/xhtml+xml',
-        ])->get('/');
+            'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0 Safari/537.36',
+        ])->postJson('/analytics/ping', [
+            'is_new_visit' => true,
+            'is_new_user' => true,
+        ]);
 
         $response->assertStatus(200);
-        $response->assertCookie('fix_returning_user', '1');
-
-        $record = DailyAnalytics::forDate($today);
-        $this->assertEquals(1, $record->total_visitors);
-        $this->assertEquals(1, $record->new_visitors);
-    }
-
-    public function test_refreshing_page_or_multi_tab_does_not_inflate_visitor_count(): void
-    {
-        $today = today()->toDateString();
-        $headers = [
-            'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept' => 'text/html,application/xhtml+xml',
-        ];
-
-        // First visit
-        $this->withHeaders($headers)->get('/');
-
-        // Second visit (same session & cookies)
-        $this->withHeaders($headers)->get('/about');
-
-        // Third visit (refreshing homepage)
-        $this->withHeaders($headers)->get('/');
+        $response->assertJson(['status' => 'recorded']);
 
         $record = DailyAnalytics::forDate($today)->fresh();
         $this->assertEquals(1, $record->total_visitors);
         $this->assertEquals(1, $record->new_visitors);
     }
 
-    public function test_service_and_amc_visitors_tracked_only_once_per_visit_session(): void
+    public function test_ongoing_navigation_does_not_inflate_visitor_count(): void
     {
         $today = today()->toDateString();
         $headers = [
             'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0 Safari/537.36',
-            'Accept' => 'text/html,application/xhtml+xml',
         ];
 
-        // 1. Visit 1 starts on home page
-        $this->withHeaders($headers)->get('/');
+        // 1. First visit (new visit + new user)
+        $this->withHeaders($headers)->postJson('/analytics/ping', [
+            'is_new_visit' => true,
+            'is_new_user' => true,
+        ]);
+
+        // 2. Ongoing navigation within session (is_new_visit = false)
+        $this->withHeaders($headers)->postJson('/analytics/ping', [
+            'is_new_visit' => false,
+            'is_new_user' => false,
+        ]);
+
         $record = DailyAnalytics::forDate($today)->fresh();
         $this->assertEquals(1, $record->total_visitors);
-        $this->assertEquals(0, $record->service_visitors);
-        $this->assertEquals(0, $record->amc_visitors);
-
-        // 2. Browse to Services section
-        $this->withHeaders($headers)->get('/services');
-        $record = DailyAnalytics::forDate($today)->fresh();
-        $this->assertEquals(1, $record->total_visitors);
-        $this->assertEquals(1, $record->service_visitors);
-
-        // 3. Browse another service page in same session (should NOT increment again)
-        $this->withHeaders($headers)->get('/services');
-        $record = DailyAnalytics::forDate($today)->fresh();
-        $this->assertEquals(1, $record->service_visitors);
-
-        // 4. Browse AMC section in same session
-        $this->withHeaders($headers)->get('/?amc_plan=1');
-        $record = DailyAnalytics::forDate($today)->fresh();
-        $this->assertEquals(1, $record->amc_visitors);
-
-        // 5. Browse AMC again in same session (should NOT increment again)
-        $this->withHeaders($headers)->get('/?plan=premium');
-        $record = DailyAnalytics::forDate($today)->fresh();
-        $this->assertEquals(1, $record->amc_visitors);
-        $this->assertEquals(1, $record->total_visitors);
-
-        // 6. Start Visit 2 (e.g. Browser reopen) and visit services again
-        $this->flushSession();
-        $this->withCookies(['fix_returning_user' => '1'])
-            ->withHeaders($headers)
-            ->get('/services');
-        $record = DailyAnalytics::forDate($today)->fresh();
-        $this->assertEquals(2, $record->total_visitors);
-        $this->assertEquals(2, $record->service_visitors);
-        $this->assertEquals(1, $record->amc_visitors);
+        $this->assertEquals(1, $record->new_visitors);
     }
 
     public function test_user_visiting_multiple_times_a_day_increments_total_visitors_each_time(): void
@@ -109,138 +78,129 @@ class VisitorTrackingTest extends TestCase
         $today = today()->toDateString();
         $headers = [
             'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0 Safari/537.36',
-            'Accept' => 'text/html,application/xhtml+xml',
         ];
 
-        // 1st Visit of the day (First time ever -> New visitor)
-        $this->withHeaders($headers)->get('/');
+        // 1st Visit (Morning): First time ever
+        $this->withHeaders($headers)->postJson('/analytics/ping', [
+            'is_new_visit' => true,
+            'is_new_user' => true,
+        ]);
         $record = DailyAnalytics::forDate($today)->fresh();
         $this->assertEquals(1, $record->total_visitors);
         $this->assertEquals(1, $record->new_visitors);
 
-        // 2nd Visit later that day (Simulating browser reopen / new session, keeping returning cookie)
-        $this->flushSession();
-        $this->withCookies(['fix_returning_user' => '1'])
-            ->withHeaders($headers)
-            ->get('/');
+        // 2nd Visit (Noon): Returning user (new visit = true, new user = false)
+        $this->withHeaders($headers)->postJson('/analytics/ping', [
+            'is_new_visit' => true,
+            'is_new_user' => false,
+        ]);
         $record = DailyAnalytics::forDate($today)->fresh();
         $this->assertEquals(2, $record->total_visitors);
         $this->assertEquals(1, $record->new_visitors);
 
-        // 3rd Visit later that day
-        $this->flushSession();
-        $this->withCookies(['fix_returning_user' => '1'])
-            ->withHeaders($headers)
-            ->get('/services');
+        // 3rd Visit (Afternoon)
+        $this->withHeaders($headers)->postJson('/analytics/ping', [
+            'is_new_visit' => true,
+            'is_new_user' => false,
+        ]);
         $record = DailyAnalytics::forDate($today)->fresh();
         $this->assertEquals(3, $record->total_visitors);
         $this->assertEquals(1, $record->new_visitors);
 
-        // 4th Visit later that day
-        $this->flushSession();
-        $this->withCookies(['fix_returning_user' => '1'])
-            ->withHeaders($headers)
-            ->get('/about');
+        // 4th Visit (Evening)
+        $this->withHeaders($headers)->postJson('/analytics/ping', [
+            'is_new_visit' => true,
+            'is_new_user' => false,
+        ]);
         $record = DailyAnalytics::forDate($today)->fresh();
         $this->assertEquals(4, $record->total_visitors);
         $this->assertEquals(1, $record->new_visitors);
 
-        // 5th Visit later that day
-        $this->flushSession();
-        $this->withCookies(['fix_returning_user' => '1'])
-            ->withHeaders($headers)
-            ->get('/');
+        // 5th Visit (Night)
+        $this->withHeaders($headers)->postJson('/analytics/ping', [
+            'is_new_visit' => true,
+            'is_new_user' => false,
+        ]);
         $record = DailyAnalytics::forDate($today)->fresh();
         $this->assertEquals(5, $record->total_visitors);
         $this->assertEquals(1, $record->new_visitors);
     }
 
-    public function test_visit_after_inactivity_window_is_counted_as_new_visit(): void
+    public function test_service_and_amc_visitors_tracked_properly(): void
     {
         $today = today()->toDateString();
         $headers = [
             'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0 Safari/537.36',
-            'Accept' => 'text/html,application/xhtml+xml',
         ];
 
-        // 1. First visit at 10:00 AM
-        $this->withHeaders($headers)->get('/');
+        // 1. Visit starts on home page
+        $this->withHeaders($headers)->postJson('/analytics/ping', [
+            'is_new_visit' => true,
+            'is_new_user' => true,
+        ]);
+
+        // 2. User explores service page for the first time in this session
+        $this->withHeaders($headers)->postJson('/analytics/ping', [
+            'is_new_visit' => false,
+            'is_service' => true,
+        ]);
+
         $record = DailyAnalytics::forDate($today)->fresh();
         $this->assertEquals(1, $record->total_visitors);
+        $this->assertEquals(1, $record->service_visitors);
+        $this->assertEquals(0, $record->amc_visitors);
 
-        // 2. Active browsing 5 minutes later at 10:05 AM (same visit, no increment)
-        $this->travel(5)->minutes();
-        $this->withHeaders($headers)->get('/services');
+        // 3. User explores AMC for the first time in this session
+        $this->withHeaders($headers)->postJson('/analytics/ping', [
+            'is_new_visit' => false,
+            'is_amc' => true,
+        ]);
+
         $record = DailyAnalytics::forDate($today)->fresh();
         $this->assertEquals(1, $record->total_visitors);
-
-        // 3. User comes back 25 minutes later at 10:30 AM (>15 mins inactivity -> new visit!)
-        $this->travel(25)->minutes();
-        $this->withHeaders($headers)->get('/about');
-        $record = DailyAnalytics::forDate($today)->fresh();
-        $this->assertEquals(2, $record->total_visitors);
-        $this->assertEquals(1, $record->new_visitors);
+        $this->assertEquals(1, $record->service_visitors);
+        $this->assertEquals(1, $record->amc_visitors);
     }
 
-    public function test_bots_and_crawlers_are_not_tracked(): void
+    public function test_bots_and_crawlers_are_rejected(): void
     {
         $today = today()->toDateString();
 
         // 1. Googlebot
-        $this->withHeaders([
+        $response = $this->withHeaders([
             'User-Agent' => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-            'Accept' => 'text/html',
-        ])->get('/');
+        ])->postJson('/analytics/ping', [
+            'is_new_visit' => true,
+            'is_new_user' => true,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['status' => 'ignored']);
 
         // 2. Python Requests / Scanner
-        $this->withHeaders([
+        $response = $this->withHeaders([
             'User-Agent' => 'python-requests/2.28.1',
-            'Accept' => '*/*',
-        ])->get('/');
+        ])->postJson('/analytics/ping', [
+            'is_new_visit' => true,
+            'is_new_user' => true,
+        ]);
 
-        // 3. Curl
-        $this->withHeaders([
-            'User-Agent' => 'curl/7.88.1',
-            'Accept' => '*/*',
-        ])->get('/');
+        $response->assertStatus(200);
+        $response->assertJson(['status' => 'ignored']);
 
-        $record = DailyAnalytics::forDate($today)->fresh();
-        $this->assertEquals(0, $record->total_visitors);
-        $this->assertEquals(0, $record->new_visitors);
-    }
-
-    public function test_assets_and_non_html_requests_are_not_tracked(): void
-    {
-        $today = today()->toDateString();
-
-        // Favicon
-        $this->withHeaders([
+        // 3. Automated Webdriver test runner
+        $response = $this->withHeaders([
             'User-Agent' => 'Mozilla/5.0 Chrome/120.0.0.0',
-            'Accept' => 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-        ])->get('/favicon.ico');
+        ])->postJson('/analytics/ping', [
+            'is_new_visit' => true,
+            'is_new_user' => true,
+            'is_webdriver' => true,
+        ]);
 
-        // Robots.txt
-        $this->withHeaders([
-            'User-Agent' => 'Mozilla/5.0 Chrome/120.0.0.0',
-            'Accept' => 'text/plain',
-        ])->get('/robots.txt');
+        $response->assertStatus(200);
+        $response->assertJson(['status' => 'ignored']);
 
-        $record = DailyAnalytics::forDate($today)->fresh();
-        $this->assertEquals(0, $record->total_visitors);
-        $this->assertEquals(0, $record->new_visitors);
-    }
-
-    public function test_admin_routes_are_never_tracked_as_public_visitors(): void
-    {
-        $today = today()->toDateString();
-
-        $this->withHeaders([
-            'User-Agent' => 'Mozilla/5.0 Chrome/120.0.0.0',
-            'Accept' => 'text/html',
-        ])->get('/admin/login');
-
-        $record = DailyAnalytics::forDate($today)->fresh();
-        $this->assertEquals(0, $record->total_visitors);
-        $this->assertEquals(0, $record->new_visitors);
+        $record = DailyAnalytics::where('date', $today)->first();
+        $this->assertNull($record);
     }
 }

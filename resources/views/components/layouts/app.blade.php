@@ -160,6 +160,8 @@
   <script src="{{ asset('assets/js/main.js') }}"></script>
   <script src="{{ asset('assets/js/auth.js') }}?v={{ filemtime(public_path('assets/js/auth.js')) }}"></script>
 
+  <x-visitor-tracker />
+
   {{ $scripts ?? '' }}
 </body>
 </html>
