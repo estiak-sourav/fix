@@ -73,18 +73,17 @@ class TrackWebsiteVisitor
                 $session->put('visit_seen_before', true);
             }
 
-            // 2. Determine if this request begins a new visit or continues an ongoing browsing session
-            $hasActiveCookie = $request->hasCookie('fix_visit_active');
-            $hasActiveSession = $session->has('visit_id');
+            // 2. Check visit session state
+            $hasSessionVisit = $session->has('visit_id');
             $lastActive = (int) $session->get('visit_last_active', 0);
+            $isIdleExpired = ($lastActive > 0 && (now()->timestamp - $lastActive) > 900);
+            $browserWasReopened = (! app()->runningUnitTests() && $hasSessionVisit && ! $request->hasCookie('fix_visit_session'));
 
             // A new visit starts when:
-            // - The session has no active visit_id (brand new visit, incognito, or fresh session)
-            // - OR the user was idle for more than 15 minutes (900 seconds) and returned
-            // - OR the browser was closed (session cookie 'fix_visit_active' was removed by browser)
-            $isNewVisit = ! $hasActiveSession
-                || ($lastActive > 0 && (now()->timestamp - $lastActive) > 900)
-                || (! app()->runningUnitTests() && ! $hasActiveCookie);
+            // - Brand new session (first entry, new tab without session, or incognito)
+            // - User was idle for more than 15 minutes (900 seconds) and returned
+            // - Browser was closed and reopened (session cookie 'fix_visit_session' was discarded by browser)
+            $isNewVisit = ! $hasSessionVisit || $isIdleExpired || $browserWasReopened;
 
             if ($isNewVisit) {
                 // Short debounce (5s) per IP+UA to prevent duplicate counts when opening multiple tabs simultaneously
@@ -102,7 +101,7 @@ class TrackWebsiteVisitor
                     $session->forget(['visit_srv_seen', 'visit_amc_seen']);
 
                     // Active visit session cookie (expires when browser is closed)
-                    cookie()->queue(cookie('fix_visit_active', '1', 0));
+                    cookie()->queue(cookie('fix_visit_session', '1', 0));
 
                     if ($isService) {
                         $session->put('visit_srv_seen', true);
@@ -119,7 +118,7 @@ class TrackWebsiteVisitor
                 // Continuing ongoing browsing session: update active timestamp
                 $session->put('visit_last_active', now()->timestamp);
 
-                // Track section engagement during this visit
+                // Track section engagement (at most ONCE per visit session)
                 if ($isService || $isAmc) {
                     $record = DailyAnalytics::forDate();
                     if ($isService && ! $session->has('visit_srv_seen')) {

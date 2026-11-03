@@ -56,6 +56,54 @@ class VisitorTrackingTest extends TestCase
         $this->assertEquals(1, $record->new_visitors);
     }
 
+    public function test_service_and_amc_visitors_tracked_only_once_per_visit_session(): void
+    {
+        $today = today()->toDateString();
+        $headers = [
+            'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0 Safari/537.36',
+            'Accept' => 'text/html,application/xhtml+xml',
+        ];
+
+        // 1. Visit 1 starts on home page
+        $this->withHeaders($headers)->get('/');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(1, $record->total_visitors);
+        $this->assertEquals(0, $record->service_visitors);
+        $this->assertEquals(0, $record->amc_visitors);
+
+        // 2. Browse to Services section
+        $this->withHeaders($headers)->get('/services');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(1, $record->total_visitors);
+        $this->assertEquals(1, $record->service_visitors);
+
+        // 3. Browse another service page in same session (should NOT increment again)
+        $this->withHeaders($headers)->get('/services');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(1, $record->service_visitors);
+
+        // 4. Browse AMC section in same session
+        $this->withHeaders($headers)->get('/?amc_plan=1');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(1, $record->amc_visitors);
+
+        // 5. Browse AMC again in same session (should NOT increment again)
+        $this->withHeaders($headers)->get('/?plan=premium');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(1, $record->amc_visitors);
+        $this->assertEquals(1, $record->total_visitors);
+
+        // 6. Start Visit 2 (e.g. Browser reopen) and visit services again
+        $this->flushSession();
+        $this->withCookies(['fix_returning_user' => '1'])
+            ->withHeaders($headers)
+            ->get('/services');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(2, $record->total_visitors);
+        $this->assertEquals(2, $record->service_visitors);
+        $this->assertEquals(1, $record->amc_visitors);
+    }
+
     public function test_user_visiting_multiple_times_a_day_increments_total_visitors_each_time(): void
     {
         $today = today()->toDateString();

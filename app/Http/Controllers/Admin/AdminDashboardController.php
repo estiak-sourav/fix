@@ -100,13 +100,13 @@ class AdminDashboardController extends Controller
 
         // 1. Current Period Metrics for each of the 10 dedicated Bars
         $currentTotalVisitors = (int) $analyticsRecords->sum('total_visitors');
-        $currentNewVisitors = (int) $analyticsRecords->sum('new_visitors');
+        $currentNewVisitors = min((int) $analyticsRecords->sum('new_visitors'), $currentTotalVisitors);
 
         $currentLogins = (int) $analyticsRecords->sum('logins_count');
         $currentRegs = max((int) $analyticsRecords->sum('registrations_count'), $usersInRange->count());
 
-        $currentServiceVisitors = (int) $analyticsRecords->sum('service_visitors');
-        $currentAmcVisitors = (int) $analyticsRecords->sum('amc_visitors');
+        $currentServiceVisitors = min((int) $analyticsRecords->sum('service_visitors'), $currentTotalVisitors);
+        $currentAmcVisitors = min((int) $analyticsRecords->sum('amc_visitors'), $currentTotalVisitors);
 
         // Service Requests vs Service Book
         $serviceBookings = $bookingsInRange->filter(fn ($b) => empty($b->amc_plan_id) && $b->service_type !== 'amc_contract');
@@ -124,13 +124,13 @@ class AdminDashboardController extends Controller
         $prevUsers = User::whereBetween('created_at', [$prevStartDate, $prevEndDate])->get();
 
         $prevTotalVisitors = (int) $prevAnalytics->sum('total_visitors');
-        $prevNewVisitors = (int) $prevAnalytics->sum('new_visitors');
+        $prevNewVisitors = min((int) $prevAnalytics->sum('new_visitors'), $prevTotalVisitors);
 
         $prevLogins = (int) $prevAnalytics->sum('logins_count');
         $prevRegs = max((int) $prevAnalytics->sum('registrations_count'), $prevUsers->count());
 
-        $prevServiceVisitors = (int) $prevAnalytics->sum('service_visitors');
-        $prevAmcVisitors = (int) $prevAnalytics->sum('amc_visitors');
+        $prevServiceVisitors = min((int) $prevAnalytics->sum('service_visitors'), $prevTotalVisitors);
+        $prevAmcVisitors = min((int) $prevAnalytics->sum('amc_visitors'), $prevTotalVisitors);
 
         $prevServiceBookings = $prevBookings->filter(fn ($b) => empty($b->amc_plan_id) && $b->service_type !== 'amc_contract');
         $prevServiceRequests = $prevServiceBookings->count();
