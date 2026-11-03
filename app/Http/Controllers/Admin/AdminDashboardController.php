@@ -101,9 +101,6 @@ class AdminDashboardController extends Controller
         // 1. Current Period Metrics for each of the 10 dedicated Bars
         $currentTotalVisitors = (int) $analyticsRecords->sum('total_visitors');
         $currentNewVisitors = (int) $analyticsRecords->sum('new_visitors');
-        if ($currentNewVisitors === 0 && $currentTotalVisitors > 0) {
-            $currentNewVisitors = (int) round($currentTotalVisitors * 0.65);
-        }
 
         $currentLogins = (int) $analyticsRecords->sum('logins_count');
         $currentRegs = max((int) $analyticsRecords->sum('registrations_count'), $usersInRange->count());
@@ -128,9 +125,6 @@ class AdminDashboardController extends Controller
 
         $prevTotalVisitors = (int) $prevAnalytics->sum('total_visitors');
         $prevNewVisitors = (int) $prevAnalytics->sum('new_visitors');
-        if ($prevNewVisitors === 0 && $prevTotalVisitors > 0) {
-            $prevNewVisitors = (int) round($prevTotalVisitors * 0.65);
-        }
 
         $prevLogins = (int) $prevAnalytics->sum('logins_count');
         $prevRegs = max((int) $prevAnalytics->sum('registrations_count'), $prevUsers->count());
