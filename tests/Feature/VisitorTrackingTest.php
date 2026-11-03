@@ -56,6 +56,84 @@ class VisitorTrackingTest extends TestCase
         $this->assertEquals(1, $record->new_visitors);
     }
 
+    public function test_user_visiting_multiple_times_a_day_increments_total_visitors_each_time(): void
+    {
+        $today = today()->toDateString();
+        $headers = [
+            'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0 Safari/537.36',
+            'Accept' => 'text/html,application/xhtml+xml',
+        ];
+
+        // 1st Visit of the day (First time ever -> New visitor)
+        $this->withHeaders($headers)->get('/');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(1, $record->total_visitors);
+        $this->assertEquals(1, $record->new_visitors);
+
+        // 2nd Visit later that day (Simulating browser reopen / new session, keeping returning cookie)
+        $this->flushSession();
+        $this->withCookies(['fix_returning_user' => '1'])
+            ->withHeaders($headers)
+            ->get('/');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(2, $record->total_visitors);
+        $this->assertEquals(1, $record->new_visitors);
+
+        // 3rd Visit later that day
+        $this->flushSession();
+        $this->withCookies(['fix_returning_user' => '1'])
+            ->withHeaders($headers)
+            ->get('/services');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(3, $record->total_visitors);
+        $this->assertEquals(1, $record->new_visitors);
+
+        // 4th Visit later that day
+        $this->flushSession();
+        $this->withCookies(['fix_returning_user' => '1'])
+            ->withHeaders($headers)
+            ->get('/about');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(4, $record->total_visitors);
+        $this->assertEquals(1, $record->new_visitors);
+
+        // 5th Visit later that day
+        $this->flushSession();
+        $this->withCookies(['fix_returning_user' => '1'])
+            ->withHeaders($headers)
+            ->get('/');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(5, $record->total_visitors);
+        $this->assertEquals(1, $record->new_visitors);
+    }
+
+    public function test_visit_after_inactivity_window_is_counted_as_new_visit(): void
+    {
+        $today = today()->toDateString();
+        $headers = [
+            'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0 Safari/537.36',
+            'Accept' => 'text/html,application/xhtml+xml',
+        ];
+
+        // 1. First visit at 10:00 AM
+        $this->withHeaders($headers)->get('/');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(1, $record->total_visitors);
+
+        // 2. Active browsing 5 minutes later at 10:05 AM (same visit, no increment)
+        $this->travel(5)->minutes();
+        $this->withHeaders($headers)->get('/services');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(1, $record->total_visitors);
+
+        // 3. User comes back 25 minutes later at 10:30 AM (>15 mins inactivity -> new visit!)
+        $this->travel(25)->minutes();
+        $this->withHeaders($headers)->get('/about');
+        $record = DailyAnalytics::forDate($today)->fresh();
+        $this->assertEquals(2, $record->total_visitors);
+        $this->assertEquals(1, $record->new_visitors);
+    }
+
     public function test_bots_and_crawlers_are_not_tracked(): void
     {
         $today = today()->toDateString();

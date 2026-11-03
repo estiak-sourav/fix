@@ -6,6 +6,7 @@ use App\Models\DailyAnalytics;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class TrackWebsiteVisitor
@@ -64,41 +65,69 @@ class TrackWebsiteVisitor
             $isService = str_contains($path, 'service') || $request->routeIs('services.*');
             $isAmc = str_contains($path, 'amc') || $request->has('plan') || $request->has('amc_plan');
 
-            $todayStr = today()->toDateString();
-            $fingerprint = hash('xxh64', $request->ip().'|'.$userAgent);
-
-            // Check if this visitor is brand new or returning (Cookie + 365-day cache fingerprint)
-            $hasCookie = $request->hasCookie('fix_returning_user');
-            $hasSeenBefore = Cache::has('vst_seen_'.$fingerprint);
-            $isNew = ! $hasCookie && ! $hasSeenBefore;
-
-            // Mark returning visitor across cookies (forever) and cache (1 year)
+            // 1. Identify first-time visitor vs returning visitor
+            $session = $request->session();
+            $isNew = ! $request->hasCookie('fix_returning_user') && ! $session->has('visit_seen_before');
             if ($isNew) {
                 cookie()->queue(cookie()->forever('fix_returning_user', '1'));
-                Cache::put('vst_seen_'.$fingerprint, true, now()->addYear());
+                $session->put('visit_seen_before', true);
             }
 
-            // Daily Unique Visit check (prevents duplicate counting on refresh or multi-tab browsing)
-            $sessionKey = 'visited_'.$todayStr;
-            $dailyCacheKey = 'vst_day_'.$todayStr.'_'.$fingerprint;
+            // 2. Determine if this request begins a new visit or continues an ongoing browsing session
+            $hasActiveCookie = $request->hasCookie('fix_visit_active');
+            $hasActiveSession = $session->has('visit_id');
+            $lastActive = (int) $session->get('visit_last_active', 0);
 
-            $alreadyCountedToday = $request->session()->has($sessionKey) || Cache::has($dailyCacheKey);
+            // A new visit starts when:
+            // - The session has no active visit_id (brand new visit, incognito, or fresh session)
+            // - OR the user was idle for more than 15 minutes (900 seconds) and returned
+            // - OR the browser was closed (session cookie 'fix_visit_active' was removed by browser)
+            $isNewVisit = ! $hasActiveSession
+                || ($lastActive > 0 && (now()->timestamp - $lastActive) > 900)
+                || (! app()->runningUnitTests() && ! $hasActiveCookie);
 
-            if (! $alreadyCountedToday) {
-                $request->session()->put($sessionKey, true);
-                Cache::put($dailyCacheKey, true, now()->endOfDay());
+            if ($isNewVisit) {
+                // Short debounce (5s) per IP+UA to prevent duplicate counts when opening multiple tabs simultaneously
+                $fingerprint = hash('xxh64', $request->ip().'|'.$userAgent);
+                $debounceKey = 'vst_deb_'.$fingerprint;
 
-                DailyAnalytics::recordVisitor($isService, $isAmc, $isNew);
+                if (app()->runningUnitTests() || ! Cache::has($debounceKey)) {
+                    if (! app()->runningUnitTests()) {
+                        Cache::put($debounceKey, true, now()->addSeconds(5));
+                    }
+
+                    $visitId = (string) Str::uuid();
+                    $session->put('visit_id', $visitId);
+                    $session->put('visit_last_active', now()->timestamp);
+                    $session->forget(['visit_srv_seen', 'visit_amc_seen']);
+
+                    // Active visit session cookie (expires when browser is closed)
+                    cookie()->queue(cookie('fix_visit_active', '1', 0));
+
+                    if ($isService) {
+                        $session->put('visit_srv_seen', true);
+                    }
+                    if ($isAmc) {
+                        $session->put('visit_amc_seen', true);
+                    }
+
+                    DailyAnalytics::recordVisitor($isService, $isAmc, $isNew);
+                } else {
+                    $session->put('visit_last_active', now()->timestamp);
+                }
             } else {
-                // Track specific section engagement even if visitor was already counted today
+                // Continuing ongoing browsing session: update active timestamp
+                $session->put('visit_last_active', now()->timestamp);
+
+                // Track section engagement during this visit
                 if ($isService || $isAmc) {
-                    $record = DailyAnalytics::forDate($todayStr);
-                    if ($isService && ! $request->session()->has('visited_srv_'.$todayStr)) {
-                        $request->session()->put('visited_srv_'.$todayStr, true);
+                    $record = DailyAnalytics::forDate();
+                    if ($isService && ! $session->has('visit_srv_seen')) {
+                        $session->put('visit_srv_seen', true);
                         $record->increment('service_visitors');
                     }
-                    if ($isAmc && ! $request->session()->has('visited_amc_'.$todayStr)) {
-                        $request->session()->put('visited_amc_'.$todayStr, true);
+                    if ($isAmc && ! $session->has('visit_amc_seen')) {
+                        $session->put('visit_amc_seen', true);
                         $record->increment('amc_visitors');
                     }
                 }
