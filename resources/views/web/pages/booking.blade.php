@@ -49,7 +49,7 @@
                     </svg>
                     <span>Login Required</span>
                   </div>
-                  <button type="button" class="btn btn-primary btn-sm" onclick="openAuthModal()" style="font-weight:600; padding:0.45rem 1.15rem; border-radius:6px;">Sign In with OTP</button>
+                  <button type="button" class="btn btn-primary btn-sm" onclick="openAuthModal()" style="font-weight:600; padding:0.45rem 1.15rem; border-radius:6px;">Sign Up</button>
                 </div>
               @endguest
 
