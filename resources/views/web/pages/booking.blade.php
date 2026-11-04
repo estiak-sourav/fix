@@ -41,11 +41,15 @@
               </div>
 
               @guest
-                <div style="background:rgba(30,58,138,0.06); border:1px solid rgba(30,58,138,0.15); border-radius:10px; padding:1rem; margin-bottom:1.25rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
-                  <div style="font-size:0.875rem; color:var(--primary);">
-                    <strong>Customer Account Required:</strong> Log in with email OTP to easily track real-time work status.
+                <div style="background:#fffbeb; border:1px solid #fde68a; border-left:4px solid #f59e0b; border-radius:8px; padding:0.85rem 1.25rem; margin-bottom:1.25rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                  <div style="display:flex; align-items:center; gap:8px; font-weight:700; color:#92400e; font-size:0.95rem;">
+                    <svg style="width:19px; height:19px; flex-shrink:0; color:#d97706;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <span>Login Required</span>
                   </div>
-                  <button type="button" class="btn btn-primary btn-sm" onclick="openAuthModal()">Sign In with OTP</button>
+                  <button type="button" class="btn btn-primary btn-sm" onclick="openAuthModal()" style="font-weight:600; padding:0.45rem 1.15rem; border-radius:6px;">Sign In with OTP</button>
                 </div>
               @endguest
 
