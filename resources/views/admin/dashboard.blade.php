@@ -105,6 +105,10 @@
       width: 100%;
       min-width: 0;
       overflow: hidden;
+      height: 290px;
+      min-height: 290px;
+      max-height: 290px;
+      box-sizing: border-box;
     }
     .analytics-counters-panel {
       display: grid;
@@ -117,7 +121,9 @@
       padding: 12px;
       min-width: 0;
       box-sizing: border-box;
-      height: 100%;
+      height: 290px;
+      min-height: 290px;
+      max-height: 290px;
     }
     .analytics-counter-item {
       background: #ffffff;
@@ -130,20 +136,29 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+      height: 100%;
+      box-sizing: border-box;
     }
     .analytics-counter-item:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
-    @media (max-width: 1280px) {
+    @media (max-width: 1200px) {
       .analytics-barchart-grid {
         grid-template-columns: 1fr !important;
         gap: 18px;
+      }
+      .analytics-canvas-wrapper {
+        min-height: 270px !important;
+        height: 270px !important;
+        max-height: 270px !important;
       }
       .analytics-counters-panel {
         grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
         grid-template-rows: auto !important;
         height: auto !important;
+        min-height: auto !important;
+        max-height: none !important;
       }
     }
     @media (max-width: 768px) {
@@ -151,8 +166,9 @@
         padding: 16px 14px !important;
       }
       .analytics-canvas-wrapper {
-        min-height: 270px !important;
-        height: 270px !important;
+        min-height: 260px !important;
+        height: 260px !important;
+        max-height: 260px !important;
       }
       .analytics-counters-panel {
         grid-template-columns: 1fr 1fr !important;
@@ -427,12 +443,12 @@
   <!-- Main Analytics Body: BarChart on Left (Compact Width) and 8 Operational Counters on Right -->
   <div class="analytics-barchart-grid">
     <!-- Left: Clean BarChart Canvas (Width reduced so bars are closer together) -->
-    <div class="analytics-canvas-wrapper" style="position:relative; min-height: 290px; height: 290px; width: 100%; min-width: 0; overflow: hidden;">
-      <canvas id="unifiedCleanBarChart" style="max-width: 100% !important;"></canvas>
+    <div class="analytics-canvas-wrapper" style="position:relative; height: 290px; min-height: 290px; max-height: 290px; width: 100%; min-width: 0; overflow: hidden; box-sizing: border-box;">
+      <canvas id="unifiedCleanBarChart" style="max-width: 100% !important; height: 290px !important; max-height: 290px !important;"></canvas>
     </div>
 
     <!-- Right: 8 Metric Counter Cards (Organized in 2 columns of 4) -->
-    <div class="analytics-counters-panel">
+    <div class="analytics-counters-panel" style="height: 290px; min-height: 290px; max-height: 290px; box-sizing: border-box;">
 
         <!-- 3. Login -->
         <div class="analytics-counter-item" style="border-top:3px solid #8b5cf6;">

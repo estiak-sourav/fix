@@ -32,6 +32,7 @@ class Admin extends Authenticatable
         'is_active',
         'must_change_password',
         'permissions',
+        'email_notification_preferences',
     ];
 
     /**
@@ -56,6 +57,7 @@ class Admin extends Authenticatable
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
             'permissions' => 'array',
+            'email_notification_preferences' => 'array',
         ];
     }
 
@@ -140,5 +142,33 @@ class Admin extends Authenticatable
         }
 
         return str_starts_with($this->avatar, 'http') ? $this->avatar : asset('storage/'.$this->avatar);
+    }
+
+    /**
+     * Determine if admin wishes to receive email notifications for a specific section.
+     * Sections: 'orders', 'partners', 'support', 'payments'.
+     * Super Admin receives all by default unless specifically toggled off.
+     */
+    public function wantsEmailFor(string $section): bool
+    {
+        if (empty($this->email) || ! $this->is_active) {
+            return false;
+        }
+
+        $prefs = $this->email_notification_preferences;
+
+        if ($this->isSuperAdmin()) {
+            if ($prefs === null) {
+                return true;
+            }
+
+            return in_array($section, $prefs, true);
+        }
+
+        if (empty($prefs) || ! is_array($prefs)) {
+            return false;
+        }
+
+        return in_array($section, $prefs, true);
     }
 }

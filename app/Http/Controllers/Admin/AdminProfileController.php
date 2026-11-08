@@ -43,6 +43,8 @@ class AdminProfileController extends Controller
             'current_password' => ['nullable', 'string', 'current_password:admin', 'required_with:password'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed', 'different:current_password', 'required_with:current_password'],
             'password_confirmation' => ['nullable', 'string', 'required_with:password'],
+            'email_notification_preferences' => ['nullable', 'array'],
+            'email_notification_preferences.*' => ['string', Rule::in(['orders', 'partners', 'support', 'payments'])],
         ], [
             'current_password.required_with' => 'Please enter your current password to set a new password.',
             'current_password.current_password' => 'The current password you entered is incorrect.',
@@ -69,6 +71,7 @@ class AdminProfileController extends Controller
         $admin->name = $validated['name'];
         $admin->email = $validated['email'];
         $admin->phone = $validated['phone'] ?? null;
+        $admin->email_notification_preferences = $request->input('email_notification_preferences', []);
 
         // Handle optional password update
         if (! empty($validated['password'])) {

@@ -2,21 +2,31 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Partner extends Model
+class Partner extends Authenticatable
 {
+    use Notifiable;
+
     protected $fillable = [
         'user_id',
         'company_name',
         'contact_person',
         'phone',
+        'password',
+        'remember_token',
         'email',
         'trade_domain',
         'technicians_count',
         'coverage_areas',
         'status',
+        'is_currently_offline',
+        'offline_until',
+        'offline_reason',
         'partner_type',
         'payment_method',
         'bank_name',
@@ -25,15 +35,28 @@ class Partner extends Model
         'branch_name',
         'mfs_number',
         'commission_rate',
+        'earning_model',
+        'payout_rate',
         'payout_terms',
         'admin_notes',
+        'notification_preferences',
         'approved_at',
         'approved_by_admin_id',
     ];
 
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
     protected $casts = [
+        'password' => 'hashed',
         'approved_at' => 'datetime',
+        'offline_until' => 'datetime',
+        'is_currently_offline' => 'boolean',
         'commission_rate' => 'decimal:2',
+        'payout_rate' => 'decimal:2',
+        'notification_preferences' => 'array',
     ];
 
     public function user(): BelongsTo
@@ -44,6 +67,130 @@ class Partner extends Model
     public function approvedByAdmin(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'approved_by_admin_id');
+    }
+
+    public function leaves(): HasMany
+    {
+        return $this->hasMany(PartnerLeave::class)->orderBy('start_at');
+    }
+
+    public function crews(): HasMany
+    {
+        return $this->hasMany(PartnerCrew::class)->latest();
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class)->latest();
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(PartnerNotification::class)->latest();
+    }
+
+    public function unreadNotificationsCount(): int
+    {
+        return $this->notifications()->where('is_read', false)->count();
+    }
+
+    public function isVendor(): bool
+    {
+        return $this->partner_type === 'company';
+    }
+
+    public function isSoloCrew(): bool
+    {
+        return $this->partner_type === 'individual';
+    }
+
+    public function getEarningModelLabelAttribute(): string
+    {
+        return match ($this->earning_model) {
+            'hourly' => 'Hourly Rate',
+            'daily' => 'Daily Rate',
+            'monthly' => 'Monthly Retainer',
+            'per_job' => 'Fixed Per Job',
+            default => 'Commission (%)',
+        };
+    }
+
+    public function getFormattedRateAttribute(): string
+    {
+        return match ($this->earning_model) {
+            'hourly' => '৳ '.number_format((float) ($this->payout_rate ?? 0), 2).' / hr',
+            'daily' => '৳ '.number_format((float) ($this->payout_rate ?? 0), 2).' / day',
+            'monthly' => '৳ '.number_format((float) ($this->payout_rate ?? 0), 2).' / month',
+            'per_job' => '৳ '.number_format((float) ($this->payout_rate ?? 0), 2).' / job',
+            default => number_format((float) ($this->payout_rate ?? $this->commission_rate ?: 15.00), 2).'%',
+        };
+    }
+
+    /**
+     * Calculate partner's net earning for a specific booking.
+     */
+    public function calculateBookingEarning(Booking $booking): float
+    {
+        if ($booking->partner_payout_amount !== null) {
+            return (float) $booking->partner_payout_amount;
+        }
+
+        $rate = (float) ($this->payout_rate ?? $this->commission_rate ?? 0);
+
+        return match ($this->earning_model) {
+            'hourly' => (float) ($rate * (float) ($booking->partner_worked_hours ?: 1)),
+            'daily' => (float) $rate,
+            'per_job' => (float) $rate,
+            'monthly' => 0.0,
+            default => (float) ((($booking->final_cost ?? $booking->estimated_cost ?? 0) * (float) ($rate ?: 15.00)) / 100),
+        };
+    }
+
+    /**
+     * Check if the partner is currently available or at a specific datetime.
+     */
+    public function isAvailableAt(?Carbon $targetTime = null): bool
+    {
+        $time = $targetTime ?? now();
+
+        // 1. Check quick offline toggle
+        if ($this->is_currently_offline) {
+            if ($this->offline_until === null || $this->offline_until->isAfter($time)) {
+                return false;
+            }
+        }
+
+        // 2. Check scheduled leave blocks
+        $hasLeave = $this->leaves()
+            ->where('start_at', '<=', $time)
+            ->where('end_at', '>=', $time)
+            ->exists();
+
+        return ! $hasLeave;
+    }
+
+    /**
+     * Check if partner currently has an active job underway.
+     */
+    public function getActiveJobsAttribute()
+    {
+        return $this->bookings()
+            ->whereIn('partner_job_status', ['on_the_way', 'in_progress'])
+            ->get();
+    }
+
+    /**
+     * Notification preference helper.
+     */
+    public function wantsNotification(string $key): bool
+    {
+        if (empty($this->email)) {
+            return false;
+        }
+
+        $prefs = $this->notification_preferences ?? [];
+
+        return (bool) ($prefs[$key] ?? true);
     }
 
     public function getStatusBadgeAttribute(): array

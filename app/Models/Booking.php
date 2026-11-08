@@ -53,12 +53,25 @@ class Booking extends Model
         'recurring_amount',
         'billing_day',
         'next_billing_date',
+        'partner_id',
+        'assigned_partner_crew_id',
+        'arrival_window',
+        'estimated_arrival_at',
+        'partner_job_status',
+        'partner_payout_amount',
+        'partner_worked_hours',
+        'partner_notes',
+        'completion_photos',
+        'partner_assigned_at',
     ];
 
     protected function casts(): array
     {
         return [
             'attached_images' => 'array',
+            'completion_photos' => 'array',
+            'partner_payout_amount' => 'decimal:2',
+            'partner_worked_hours' => 'decimal:2',
             'preferred_date' => 'date',
             'contract_start_date' => 'date',
             'contract_end_date' => 'date',
@@ -73,6 +86,8 @@ class Booking extends Model
             'accepted_at' => 'datetime',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'estimated_arrival_at' => 'datetime',
+            'partner_assigned_at' => 'datetime',
         ];
     }
 
@@ -89,6 +104,16 @@ class Booking extends Model
     public function amcPlan(): BelongsTo
     {
         return $this->belongsTo(AmcPlan::class);
+    }
+
+    public function partner(): BelongsTo
+    {
+        return $this->belongsTo(Partner::class);
+    }
+
+    public function assignedCrew(): BelongsTo
+    {
+        return $this->belongsTo(PartnerCrew::class, 'assigned_partner_crew_id');
     }
 
     public function statusLogs(): HasMany

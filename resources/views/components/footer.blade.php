@@ -95,6 +95,7 @@
           <li><a href="{{ route('home') }}#amc">AMC Packages</a></li>
           <li><a href="{{ route('booking.create') }}">Book a Service</a></li>
           <li><a href="{{ route('vendor') }}">Become a Partner</a></li>
+          <li><a href="{{ route('partner.login') }}">Partner Portal Login</a></li>
         </ul>
       </div>
 

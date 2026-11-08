@@ -89,8 +89,12 @@ Route::post('/book', [BookingController::class, 'store']);
 Route::get('/vendor', function () {
     return view('web.pages.vendor');
 })->name('vendor');
+Route::get('/become-a-partner', function () {
+    return view('web.pages.vendor');
+})->name('become-a-partner');
 Route::post('/vendor/apply', [PartnerApplicationController::class, 'store'])->name('vendor.apply');
 Route::post('/partner/register', [PartnerApplicationController::class, 'store'])->name('partner.register');
+Route::post('/become-a-partner/apply', [PartnerApplicationController::class, 'store']);
 
 // Web Login Redirect (triggers modal on booking page or returns to intended redirect target)
 Route::get('/login', function (Request $request) {

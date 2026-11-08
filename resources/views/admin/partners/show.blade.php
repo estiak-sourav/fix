@@ -105,6 +105,13 @@
         </div>
       </div>
 
+      <div style="border-top:1px dashed var(--paces-border); padding-top:12px; margin-bottom:14px;">
+        <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">Earning Model & Rate</div>
+        <div style="font-size:0.88rem; font-weight:600; color:var(--paces-primary); margin-top:2px;">
+          💰 {{ $partner->earning_model_label }}: <span style="color:#0f766e;">{{ $partner->formatted_rate }}</span>
+        </div>
+      </div>
+
       <div style="font-size:0.75rem; color:var(--paces-text-muted); border-top:1px solid var(--paces-border); padding-top:10px;">
         Applied: {{ $partner->created_at->format('M d, Y • h:i A') }}
       </div>
@@ -153,35 +160,48 @@
             </div>
           </div>
 
+          <div style="margin-bottom:1.25rem;">
+            <label class="form-label-paces">Disbursement Method *</label>
+            <select name="payment_method" id="paymentMethodSelect" onchange="togglePaymentInputs(this.value)" class="form-control-paces" required>
+              <option value="bank" {{ old('payment_method', $partner->payment_method) === 'bank' ? 'selected' : '' }}>
+                Bank Transfer (BEFTN / NPSB)
+              </option>
+              <option value="bkash" {{ old('payment_method', $partner->payment_method) === 'bkash' ? 'selected' : '' }}>
+                bKash Merchant / Personal
+              </option>
+              <option value="nagad" {{ old('payment_method', $partner->payment_method) === 'nagad' ? 'selected' : '' }}>
+                Nagad
+              </option>
+              <option value="rocket" {{ old('payment_method', $partner->payment_method) === 'rocket' ? 'selected' : '' }}>
+                Rocket
+              </option>
+            </select>
+          </div>
+
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:1.25rem;">
             <div>
-              <label class="form-label-paces">Disbursement Method *</label>
-              <select name="payment_method" id="paymentMethodSelect" onchange="togglePaymentInputs(this.value)" class="form-control-paces" required>
-                <option value="bank" {{ old('payment_method', $partner->payment_method) === 'bank' ? 'selected' : '' }}>
-                  Bank Transfer (BEFTN / NPSB)
-                </option>
-                <option value="bkash" {{ old('payment_method', $partner->payment_method) === 'bkash' ? 'selected' : '' }}>
-                  bKash Merchant / Personal
-                </option>
-                <option value="nagad" {{ old('payment_method', $partner->payment_method) === 'nagad' ? 'selected' : '' }}>
-                  Nagad
-                </option>
-                <option value="rocket" {{ old('payment_method', $partner->payment_method) === 'rocket' ? 'selected' : '' }}>
-                  Rocket
-                </option>
+              <label class="form-label-paces">Earning Model *</label>
+              <select name="earning_model" id="earning_model" class="form-control-paces" onchange="updateEarningRateUI(this.value)">
+                <option value="commission" {{ old('earning_model', $partner->earning_model ?? 'commission') === 'commission' ? 'selected' : '' }}>Commission Based (% of Job Total)</option>
+                <option value="hourly" {{ old('earning_model', $partner->earning_model) === 'hourly' ? 'selected' : '' }}>Hourly Rate (Fixed ৳ per hour)</option>
+                <option value="daily" {{ old('earning_model', $partner->earning_model) === 'daily' ? 'selected' : '' }}>Daily Rate (Fixed ৳ per day)</option>
+                <option value="monthly" {{ old('earning_model', $partner->earning_model) === 'monthly' ? 'selected' : '' }}>Monthly Salary / Retainer (Fixed ৳ per month)</option>
+                <option value="per_job" {{ old('earning_model', $partner->earning_model) === 'per_job' ? 'selected' : '' }}>Fixed Per Job (Flat ৳ per work order)</option>
               </select>
             </div>
 
             <div>
-              <label class="form-label-paces">Contracted Commission / Rate (%)</label>
+              <label class="form-label-paces" id="payoutRateLabel">Rate Value (%)</label>
               <input 
                 type="number" 
                 step="0.01" 
-                name="commission_rate" 
-                value="{{ old('commission_rate', $partner->commission_rate ?: 15.00) }}" 
+                name="payout_rate" 
+                id="payout_rate" 
+                value="{{ old('payout_rate', $partner->payout_rate ?? $partner->commission_rate ?? '15.00') }}" 
                 class="form-control-paces" 
-                placeholder="e.g. 15.00"
+                placeholder="15.00"
               >
+              <input type="hidden" name="commission_rate" id="hidden_commission_rate" value="{{ old('commission_rate', $partner->commission_rate ?: '15.00') }}">
             </div>
           </div>
 
@@ -223,6 +243,28 @@
             </div>
           </div>
 
+          <!-- Partner Portal Authentication Credentials -->
+          <div style="background:#f0fdfa; border:1px solid #99f6e4; border-radius:8px; padding:14px; margin-bottom:1.25rem;">
+            <div style="font-size:0.85rem; font-weight:600; color:#0f766e; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              Partner Command Center Login Credentials
+            </div>
+            <div style="font-size:0.82rem; color:#134e4a; margin-bottom:10px;">
+              Partners access their dedicated portal at <a href="{{ url('/partner/login') }}" target="_blank" style="color:#0d9488; font-weight:600; text-decoration:underline;">/partner/login</a> using their registered phone number (<strong>{{ $partner->phone }}</strong>) and password. No OTP required (Admin approval verifies partner).
+            </div>
+            <div>
+              <label class="form-label-paces" style="font-size:0.78rem;">
+                Set / Reset Login Password
+                @if(!empty($partner->password))
+                  <span style="color:#059669; font-weight:600; margin-left:6px;">✓ Active Password Set</span>
+                @else
+                  <span style="color:#d97706; font-weight:600; margin-left:6px;">⚠️ No Password Set (Will default to 123456 upon approval)</span>
+                @endif
+              </label>
+              <input type="password" name="password" class="form-control-paces" placeholder="Enter new password (leave blank to keep unchanged)">
+            </div>
+          </div>
+
           <!-- Internal Admin Notes -->
           <div style="margin-bottom:1.5rem;">
             <label class="form-label-paces">Internal Admin Notes & Contract Verification</label>
@@ -257,6 +299,33 @@
   </div>
 
   <script>
+    function updateEarningRateUI(model) {
+      const label = document.getElementById('payoutRateLabel');
+      const input = document.getElementById('payout_rate');
+      if (!label || !input) return;
+
+      if (model === 'commission') {
+        label.innerText = 'Platform Margin / Commission Rate (%)';
+        input.placeholder = '15.00';
+      } else if (model === 'hourly') {
+        label.innerText = 'Hourly Payout Rate (৳ / hr)';
+        input.placeholder = '500';
+      } else if (model === 'daily') {
+        label.innerText = 'Daily Payout Rate (৳ / day)';
+        input.placeholder = '1500';
+      } else if (model === 'monthly') {
+        label.innerText = 'Monthly Salary / Retainer (৳ / month)';
+        input.placeholder = '30000';
+      } else if (model === 'per_job') {
+        label.innerText = 'Flat Payout Per Completed Job (৳ / job)';
+        input.placeholder = '800';
+      }
+      const hiddenComm = document.getElementById('hidden_commission_rate');
+      if (hiddenComm && model === 'commission') {
+        hiddenComm.value = input.value;
+      }
+    }
+
     function togglePaymentInputs(val) {
       const bankDiv = document.getElementById('bankDetailsContainer');
       const mfsDiv = document.getElementById('mfsDetailsContainer');
@@ -268,9 +337,22 @@
         mfsDiv.style.display = 'block';
       }
     }
+
     document.addEventListener('DOMContentLoaded', function() {
       const select = document.getElementById('paymentMethodSelect');
       if (select) togglePaymentInputs(select.value);
+
+      const modelSelect = document.getElementById('earning_model');
+      if (modelSelect) updateEarningRateUI(modelSelect.value);
+
+      const rateInput = document.getElementById('payout_rate');
+      if (rateInput) {
+        rateInput.addEventListener('input', function() {
+          const m = document.getElementById('earning_model')?.value;
+          const h = document.getElementById('hidden_commission_rate');
+          if (h && m === 'commission') h.value = this.value;
+        });
+      }
     });
   </script>
 </x-layouts.admin>

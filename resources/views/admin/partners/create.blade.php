@@ -94,6 +94,18 @@
             <option value="individual" {{ old('partner_type') === 'individual' ? 'selected' : '' }}>Individual Lead Technician / Freelance Specialist</option>
           </select>
         </div>
+
+        <div>
+          <label class="form-label-paces" for="password">Partner Portal Initial Password</label>
+          <input 
+            type="password" 
+            name="password" 
+            id="password" 
+            class="form-control-paces" 
+            placeholder="Default: 123456 (if left blank on approval)"
+          >
+          <span style="font-size:0.75rem; color:var(--paces-text-muted);">Used with phone number to sign in to /partner/login</span>
+        </div>
       </div>
     </div>
 
@@ -220,16 +232,28 @@
         </div>
 
         <div>
-          <label class="form-label-paces" for="commission_rate">Platform Margin / Commission Rate (%)</label>
+          <label class="form-label-paces" for="earning_model">Earning Model <span style="color:#ef4444;">*</span></label>
+          <select name="earning_model" id="earning_model" class="form-control-paces" onchange="updateEarningRateUI(this.value)">
+            <option value="commission" {{ old('earning_model', 'commission') === 'commission' ? 'selected' : '' }}>Commission Based (% of Job Total)</option>
+            <option value="hourly" {{ old('earning_model') === 'hourly' ? 'selected' : '' }}>Hourly Rate (Fixed ৳ per hour)</option>
+            <option value="daily" {{ old('earning_model') === 'daily' ? 'selected' : '' }}>Daily Rate (Fixed ৳ per day)</option>
+            <option value="monthly" {{ old('earning_model') === 'monthly' ? 'selected' : '' }}>Monthly Salary / Retainer (Fixed ৳ per month)</option>
+            <option value="per_job" {{ old('earning_model') === 'per_job' ? 'selected' : '' }}>Fixed Per Job (Flat ৳ per work order)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label-paces" for="payout_rate" id="payoutRateLabel">Rate Value (%)</label>
           <input 
             type="number" 
             step="0.01" 
-            name="commission_rate" 
-            id="commission_rate" 
+            name="payout_rate" 
+            id="payout_rate" 
             class="form-control-paces" 
-            value="{{ old('commission_rate', '15.00') }}" 
+            value="{{ old('payout_rate', old('commission_rate', '15.00')) }}" 
             placeholder="15.00"
           >
+          <input type="hidden" name="commission_rate" id="hidden_commission_rate" value="{{ old('commission_rate', '15.00') }}">
         </div>
 
         <div>
@@ -307,6 +331,33 @@
   </form>
 
   <script>
+    function updateEarningRateUI(model) {
+      const label = document.getElementById('payoutRateLabel');
+      const input = document.getElementById('payout_rate');
+      if (!label || !input) return;
+
+      if (model === 'commission') {
+        label.innerText = 'Platform Margin / Commission Rate (%)';
+        input.placeholder = '15.00';
+      } else if (model === 'hourly') {
+        label.innerText = 'Hourly Payout Rate (৳ / hr)';
+        input.placeholder = '500';
+      } else if (model === 'daily') {
+        label.innerText = 'Daily Payout Rate (৳ / day)';
+        input.placeholder = '1500';
+      } else if (model === 'monthly') {
+        label.innerText = 'Monthly Salary / Retainer (৳ / month)';
+        input.placeholder = '30000';
+      } else if (model === 'per_job') {
+        label.innerText = 'Flat Payout Per Completed Job (৳ / job)';
+        input.placeholder = '800';
+      }
+      const hiddenComm = document.getElementById('hidden_commission_rate');
+      if (hiddenComm && model === 'commission') {
+        hiddenComm.value = input.value;
+      }
+    }
+
     function togglePaymentInputs(method) {
       const bankBox = document.getElementById('bankDetailsContainer');
       const mfsBox = document.getElementById('mfsDetailsContainer');
@@ -324,6 +375,18 @@
       const select = document.getElementById('paymentMethodSelect');
       if (select) {
         togglePaymentInputs(select.value);
+      }
+      const modelSelect = document.getElementById('earning_model');
+      if (modelSelect) {
+        updateEarningRateUI(modelSelect.value);
+      }
+      const rateInput = document.getElementById('payout_rate');
+      if (rateInput) {
+        rateInput.addEventListener('input', function() {
+          const m = document.getElementById('earning_model')?.value;
+          const h = document.getElementById('hidden_commission_rate');
+          if (h && m === 'commission') h.value = this.value;
+        });
       }
     });
   </script>

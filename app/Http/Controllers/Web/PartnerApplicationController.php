@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
 use App\Models\Partner;
+use App\Services\NotificationDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -58,6 +60,29 @@ class PartnerApplicationController extends Controller
             'status' => 'pending',
             'partner_type' => 'company',
         ]);
+
+        AdminNotification::create([
+            'type' => 'partner_application',
+            'title' => 'New Partner Enlistment',
+            'message' => "Contractor '{$partner->company_name}' ({$partner->contact_person}, Phone: {$partner->phone}) applied for enlistment.",
+            'action_url' => route('admin.partners.show', $partner),
+            'is_read' => false,
+            'sound_played' => false,
+        ]);
+
+        NotificationDispatcher::notifyAdminSection(
+            'partners',
+            "New Partner Enlistment: {$partner->company_name}",
+            "New contractor enlistment received from {$partner->company_name} ({$partner->contact_person}, Phone: {$partner->phone}). Review and verify application in CMS.",
+            route('admin.partners.show', $partner),
+            [
+                'Company' => $partner->company_name,
+                'Contact' => $partner->contact_person,
+                'Phone' => $partner->phone,
+                'Domain' => $partner->trade_domain,
+                'Areas' => $partner->coverage_areas,
+            ]
+        );
 
         return back()->with('success', 'Application received successfully! Our Partner Operations Lead will review your trade profile and contact you within 24 hours for verification.');
     }

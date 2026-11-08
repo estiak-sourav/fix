@@ -12,6 +12,7 @@ use App\Models\OutreachTask;
 use App\Models\Partner;
 use App\Models\User;
 use App\Services\ActivityLogService;
+use App\Services\NotificationDispatcher;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -171,23 +172,61 @@ class AdminBookingController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'phone', 'role', 'company_name']);
 
-        $enlistedPartners = Partner::where('status', 'approved')->orderBy('company_name')->get();
+        $enlistedPartners = Partner::where('status', 'approved')
+            ->with(['leaves', 'bookings' => function ($q) {
+                $q->whereIn('partner_job_status', ['on_the_way', 'in_progress']);
+            }])
+            ->orderBy('company_name')
+            ->get();
 
         $crewOptions = collect();
         foreach ($enlistedPartners as $p) {
+            $isOffline = $p->is_currently_offline || $p->leaves->where('start_at', '<=', now())->where('end_at', '>=', now())->isNotEmpty();
+            $activeJob = $p->bookings->first();
+
+            $availStatus = 'available';
+            $availLabel = '🟢 Available';
+            $availColor = '#10b981';
+            $warningMsg = null;
+
+            if ($activeJob) {
+                $availStatus = 'busy';
+                $availLabel = "🟡 In Active Job (#{$activeJob->booking_number})";
+                $availColor = '#d97706';
+                $warningMsg = "Partner is currently working on Job #{$activeJob->booking_number}. Please call over phone ({$p->phone}) to coordinate arrival window before assigning.";
+            } elseif ($isOffline) {
+                $availStatus = 'offline';
+                $availLabel = '🔴 Offline / On Leave';
+                $availColor = '#dc2626';
+                $offlineReason = $p->offline_reason ?: 'Scheduled Time Off';
+                $warningMsg = "Partner is marked unavailable ({$offlineReason}). Please confirm availability over phone ({$p->phone}) before assigning.";
+            }
+
             $crewOptions->push((object) [
+                'partner_id' => $p->id,
                 'name' => "{$p->company_name} — {$p->contact_person}",
                 'phone' => $p->phone,
-                'role' => "Enlisted Partner • {$p->trade_domain}",
+                'role' => ($p->isVendor() ? 'Vendor Agency' : 'Individual Solo Crew')." • {$p->trade_domain}",
                 'company_name' => $p->company_name,
+                'is_partner' => true,
+                'avail_status' => $availStatus,
+                'avail_label' => $availLabel,
+                'avail_color' => $availColor,
+                'warning_msg' => $warningMsg,
             ]);
         }
         foreach ($fieldCrews as $u) {
             $crewOptions->push((object) [
+                'partner_id' => null,
                 'name' => $u->name,
                 'phone' => $u->phone,
                 'role' => ucfirst($u->role),
                 'company_name' => $u->company_name,
+                'is_partner' => false,
+                'avail_status' => 'available',
+                'avail_label' => 'Staff Crew',
+                'avail_color' => '#64748b',
+                'warning_msg' => null,
             ]);
         }
 
@@ -315,12 +354,15 @@ class AdminBookingController extends Controller
             'preferred_date' => ['nullable', 'date'],
             'preferred_time_slot' => ['nullable', 'string', 'max:100'],
             'assigned_team' => ['nullable', 'string', 'max:255'],
+            'partner_id' => ['nullable', 'exists:partners,id'],
+            'arrival_window' => ['nullable', 'string', 'max:100'],
+            'estimated_arrival_at' => ['nullable', 'date'],
             'comment' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $admin = Auth::guard('admin')->user();
 
-        // Update schedule if provided
+        // Update schedule and partner assignment if provided
         $directUpdates = [];
         if (! empty($validated['preferred_date'])) {
             $directUpdates['preferred_date'] = $validated['preferred_date'];
@@ -328,6 +370,23 @@ class AdminBookingController extends Controller
         if (! empty($validated['preferred_time_slot'])) {
             $directUpdates['preferred_time_slot'] = $validated['preferred_time_slot'];
         }
+        if (! empty($validated['arrival_window'])) {
+            $directUpdates['arrival_window'] = $validated['arrival_window'];
+        }
+        if (! empty($validated['estimated_arrival_at'])) {
+            $directUpdates['estimated_arrival_at'] = $validated['estimated_arrival_at'];
+        }
+
+        $partner = ! empty($validated['partner_id']) ? Partner::find($validated['partner_id']) : null;
+        if ($partner) {
+            $directUpdates['partner_id'] = $partner->id;
+            $directUpdates['partner_job_status'] = 'assigned';
+            $directUpdates['partner_assigned_at'] = now();
+            $assignedTeam = "{$partner->company_name} ({$partner->contact_person})";
+        } else {
+            $assignedTeam = ! empty($validated['assigned_team']) ? trim($validated['assigned_team']) : $booking->assigned_team;
+        }
+
         if (! empty($directUpdates)) {
             $booking->update($directUpdates);
         }
@@ -366,7 +425,9 @@ class AdminBookingController extends Controller
             'completed_by_admin_id' => $admin?->id,
         ]);
 
-        $assignedTeam = ! empty($validated['assigned_team']) ? trim($validated['assigned_team']) : $booking->assigned_team;
+        if (! $partner) {
+            $assignedTeam = ! empty($validated['assigned_team']) ? trim($validated['assigned_team']) : $booking->assigned_team;
+        }
         $status = ! empty($assignedTeam) ? 'in_progress' : 'accepted';
 
         $payload = [
@@ -385,6 +446,23 @@ class AdminBookingController extends Controller
         }
 
         $action->execute($booking, $payload, $admin);
+
+        if ($partner) {
+            $booking->refresh();
+            NotificationDispatcher::notifyPartnerJobAssigned($booking);
+            NotificationDispatcher::notifyAdminSection(
+                'orders',
+                "Order #{$booking->booking_number} Dispatched to Partner",
+                "Work Order #{$booking->booking_number} assigned to partner '{$partner->company_name}'. Arrival Window: ".($booking->arrival_window ?: 'Coordinated via phone').'.',
+                route('admin.bookings.show', $booking),
+                [
+                    'Order' => "#{$booking->booking_number}",
+                    'Service' => $booking->service?->name ?? 'Facility Service',
+                    'Partner' => $partner->company_name,
+                    'Arrival Window' => $booking->arrival_window ?: 'Coordinated via phone',
+                ]
+            );
+        }
 
         ActivityLogService::logBooking('booking.accept', "Accepted Work Order #{$booking->booking_number} after phone discussion with {$booking->customer_name}.", $booking, [
             'booking_number' => $booking->booking_number,
@@ -461,6 +539,10 @@ class AdminBookingController extends Controller
 
         $action->execute($booking, $payload, $admin);
 
+        if ($booking->partner) {
+            NotificationDispatcher::notifyPartnerJobCancelled($booking, $validated['cancellation_reason']);
+        }
+
         ActivityLogService::logBooking('booking.cancel', "Cancelled Work Order #{$booking->booking_number}. Reason: {$validated['cancellation_reason']}", $booking, [
             'booking_number' => $booking->booking_number,
             'reason' => $validated['cancellation_reason'],
@@ -479,6 +561,9 @@ class AdminBookingController extends Controller
             'estimated_cost' => ['nullable', 'numeric', 'min:0'],
             'final_cost' => ['nullable', 'numeric', 'min:0'],
             'assigned_team' => ['nullable', 'string', 'max:255'],
+            'partner_id' => ['nullable', 'exists:partners,id'],
+            'arrival_window' => ['nullable', 'string', 'max:100'],
+            'estimated_arrival_at' => ['nullable', 'date'],
             'preferred_date' => ['nullable', 'date'],
             'preferred_time_slot' => ['nullable', 'string', 'max:50'],
             'street_address' => ['nullable', 'string', 'max:500'],
@@ -488,6 +573,8 @@ class AdminBookingController extends Controller
         ]);
 
         $admin = Auth::guard('admin')->user();
+        $oldPartnerId = $booking->partner_id;
+        $oldArrivalWindow = $booking->arrival_window;
 
         // Update direct booking properties if provided
         $directUpdates = [];
@@ -503,12 +590,30 @@ class AdminBookingController extends Controller
         if (isset($validated['problem_description'])) {
             $directUpdates['problem_description'] = $validated['problem_description'];
         }
+        if ($request->has('arrival_window')) {
+            $directUpdates['arrival_window'] = $validated['arrival_window'];
+        }
+        if ($request->has('estimated_arrival_at')) {
+            $directUpdates['estimated_arrival_at'] = $validated['estimated_arrival_at'];
+        }
+
+        $partner = ! empty($validated['partner_id']) ? Partner::find($validated['partner_id']) : null;
+        if ($partner) {
+            $directUpdates['partner_id'] = $partner->id;
+            if ($oldPartnerId !== (int) $partner->id) {
+                $directUpdates['partner_job_status'] = 'assigned';
+                $directUpdates['partner_assigned_at'] = now();
+            }
+            $assignedTeam = "{$partner->company_name} ({$partner->contact_person})";
+        } else {
+            $assignedTeam = isset($validated['assigned_team']) ? trim($validated['assigned_team']) : $booking->assigned_team;
+        }
+
         if (! empty($directUpdates)) {
             $booking->update($directUpdates);
         }
 
         $newStatus = $validated['status'];
-        $assignedTeam = isset($validated['assigned_team']) ? trim($validated['assigned_team']) : $booking->assigned_team;
 
         // Auto change status to in_progress if crew is assigned and order was pending, accepted or assigned
         if (! empty($assignedTeam) && in_array($newStatus, ['pending_review', 'accepted', 'assigned'])) {
@@ -530,6 +635,17 @@ class AdminBookingController extends Controller
         }
 
         $action->execute($booking, $payload, $admin);
+
+        $booking->refresh();
+        if ($partner && $oldPartnerId !== (int) $partner->id) {
+            NotificationDispatcher::notifyPartnerJobAssigned($booking);
+        } elseif ($partner && ! empty($validated['arrival_window']) && $validated['arrival_window'] !== $oldArrivalWindow) {
+            NotificationDispatcher::notifyPartnerJobUpdated($booking, "Arrival slot adjusted: {$validated['arrival_window']}");
+        }
+
+        if ($newStatus === 'cancelled' && $booking->partner) {
+            NotificationDispatcher::notifyPartnerJobCancelled($booking, $validated['comment'] ?? 'Cancelled by dispatch.');
+        }
 
         ActivityLogService::logBooking('booking.modify', "Modified details & status of Work Order #{$booking->booking_number}.", $booking, [
             'booking_number' => $booking->booking_number,

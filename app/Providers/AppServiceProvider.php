@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\MailConfigService;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,5 +24,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::defaultView('vendor.pagination.paces');
         MailConfigService::applyDynamicConfig();
+        Blade::component('partner.layouts.app', 'partner.layouts.app');
+        Blade::component('partner.layouts.app', 'partner-layout');
     }
 }

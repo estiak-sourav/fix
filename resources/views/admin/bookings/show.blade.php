@@ -922,6 +922,12 @@
                 <div style="position:relative;" id="crewDropdownWrapper_accept">
                   <div style="position:relative; display:flex; align-items:center;">
                     <input 
+                      type="hidden" 
+                      name="partner_id" 
+                      id="partner_id_accept" 
+                      value="{{ old('partner_id', $booking->partner_id) }}"
+                    >
+                    <input 
                       type="text" 
                       id="crewInput_accept" 
                       name="assigned_team" 
@@ -951,14 +957,23 @@
                         @php
                           $compOrRole = $crew->company_name ?: $crew->role;
                           $crewFullVal = "{$crew->name} ({$compOrRole}) - {$crew->phone}";
+                          $crewPartnerId = $crew->partner_id ?? '';
+                          $crewWarning = $crew->warning_msg ?? '';
                         @endphp
                         <div class="crew-option-item" 
                              data-val="{{ strtolower($crewFullVal) }}"
-                             onclick="selectCrew('accept', '{{ addslashes($crewFullVal) }}', false)"
+                             onclick="selectCrew('accept', '{{ addslashes($crewFullVal) }}', false, '{{ $crewPartnerId }}', '{{ addslashes($crewWarning) }}')"
                              style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f8fafc; transition:background 0.15s ease;"
                              onmouseover="this.style.background='#eff6ff'" 
                              onmouseout="this.style.background='transparent'">
-                          <div style="font-weight:600; font-size:0.85rem; color:#1e293b;">{{ $crew->name }}</div>
+                          <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="font-weight:600; font-size:0.85rem; color:#1e293b;">{{ $crew->name }}</div>
+                            @if(!empty($crew->avail_label))
+                              <span style="font-size:0.72rem; font-weight:600; color:{{ $crew->avail_color }}; background:#f8fafc; border:1px solid #e2e8f0; padding:1px 6px; border-radius:4px;">
+                                {{ $crew->avail_label }}
+                              </span>
+                            @endif
+                          </div>
                           <div style="font-size:0.75rem; color:#64748b; display:flex; justify-content:space-between; margin-top:2px;">
                             <span>{{ $crew->role }}</span>
                             <span style="color:#0284c7; font-weight:500;">📞 {{ $crew->phone }}</span>
@@ -969,6 +984,27 @@
                     <div id="crewNoResults_accept" style="display:none; padding:12px; text-align:center; font-size:0.8rem; color:#94a3b8;">
                       No matching crew found. Custom text will be saved.
                     </div>
+                  </div>
+
+                  <!-- Partner Conflict Warning Banner -->
+                  <div id="crewWarning_accept" style="display:none; background:#fffbeb; border:1px solid #fde68a; color:#92400e; padding:8px 12px; border-radius:6px; font-size:0.8rem; margin-top:8px;">
+                  </div>
+
+                  <!-- Arrival Window / Slot -->
+                  <div style="margin-top:10px;">
+                    <label class="form-label-paces" style="font-weight:500; font-size:0.78rem;">
+                      Expected Arrival Window (Fluid Slot, e.g. 10:00 AM - 11:00 AM)
+                    </label>
+                    <input 
+                      type="text" 
+                      name="arrival_window" 
+                      class="form-control-paces" 
+                      placeholder="e.g. 10:00 AM - 11:00 AM (Coordinated via phone)" 
+                      value="{{ old('arrival_window', $booking->arrival_window) }}"
+                    >
+                    <span style="font-size:0.72rem; color:var(--paces-text-muted);">
+                      Arrival window notifies client when crew will arrive on site.
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1044,11 +1080,50 @@
               </div>
 
               <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px;">
-                <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">Assigned Field Crew</div>
-                <div style="font-size:0.95rem; font-weight:500; color:var(--paces-primary); margin-top:2px;">
-                  {{ $booking->assigned_team ?: 'Awaiting Team Dispatch' }}
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                  <span style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">Assigned Field Crew</span>
+                  @if($booking->partner_job_status)
+                    @php
+                      $admPartnerBadge = match($booking->partner_job_status) {
+                        'assigned' => ['bg' => '#fffbeb', 'color' => '#d97706', 'label' => 'Awaiting Acceptance'],
+                        'accepted' => ['bg' => '#eff6ff', 'color' => '#2563eb', 'label' => 'Accepted'],
+                        'on_the_way' => ['bg' => '#f3e8ff', 'color' => '#7e22ce', 'label' => 'En Route'],
+                        'in_progress' => ['bg' => '#f0fdfa', 'color' => '#0d9488', 'label' => 'In Progress'],
+                        'completed' => ['bg' => '#ecfdf5', 'color' => '#047857', 'label' => 'Completed'],
+                        'declined' => ['bg' => '#fef2f2', 'color' => '#dc2626', 'label' => 'Declined'],
+                        default => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => ucfirst($booking->partner_job_status)],
+                      };
+                    @endphp
+                    <span style="background:{{ $admPartnerBadge['bg'] }}; color:{{ $admPartnerBadge['color'] }}; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:12px;">
+                      {{ $admPartnerBadge['label'] }}
+                    </span>
+                  @endif
                 </div>
-                <div style="font-size:0.8rem; color:var(--paces-text-muted);">Field Technical Lead</div>
+                <div style="font-size:0.95rem; font-weight:600; color:var(--paces-primary);">
+                  @if($booking->partner)
+                    <a href="{{ route('admin.partners.show', $booking->partner) }}" style="color:var(--paces-primary); text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+                      <span>{{ $booking->partner->company_name }}</span>
+                      <span style="font-size:0.8rem; font-weight:400; color:var(--paces-text-muted);">({{ $booking->partner->contact_person }})</span>
+                    </a>
+                    <div style="font-size:0.78rem; color:var(--paces-text-muted); margin-top:2px;">
+                      📞 <a href="tel:{{ $booking->partner->phone }}" style="color:inherit; text-decoration:none;">{{ $booking->partner->phone }}</a>
+                      @if($booking->partner->trade_domain)
+                        • {{ $booking->partner->trade_domain }}
+                      @endif
+                    </div>
+                    @if($booking->assignedCrew)
+                      <div style="font-size:0.78rem; color:#0f766e; font-weight:600; margin-top:3px;">
+                        👷 Technician: {{ $booking->assignedCrew->name }} ({{ $booking->assignedCrew->trade_skill ?: 'Tech' }}) • {{ $booking->assignedCrew->phone }}
+                      </div>
+                    @endif
+                    <div style="font-size:0.76rem; color:#b45309; margin-top:4px; font-weight:600;">
+                      💰 Model: {{ $booking->partner->earning_model_label }} ({{ $booking->partner->formatted_rate }})
+                      • Est. Payout: ৳ {{ number_format($booking->partner->calculateBookingEarning($booking), 2) }}
+                    </div>
+                  @else
+                    {{ $booking->assigned_team ?: 'Awaiting Team Dispatch' }}
+                  @endif
+                </div>
               </div>
 
               @if($booking->is_amc)
@@ -1085,8 +1160,27 @@
                   <span>✓</span> Work Order Completed
                 </div>
                 @if($booking->completion_feedback)
-                  <div style="font-size:0.88rem; color:#14532d; line-height:1.5;">
+                  <div style="font-size:0.88rem; color:#14532d; line-height:1.5; margin-bottom:8px;">
                     <strong>Operations Remarks for Client:</strong> "{{ $booking->completion_feedback }}"
+                  </div>
+                @endif
+                @if(!empty($booking->completion_photos) && is_array($booking->completion_photos) && count($booking->completion_photos) > 0)
+                  <div style="margin-top:10px; border-top:1px dashed #bbf7d0; padding-top:10px;">
+                    <div style="font-size:0.82rem; font-weight:700; color:#166534; margin-bottom:8px;">
+                      📸 Completion Proof Photos (Uploaded by Field Crew):
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                      @foreach($booking->completion_photos as $cImg)
+                        <a href="{{ asset(str_starts_with($cImg, 'storage/') ? $cImg : 'storage/' . $cImg) }}" target="_blank">
+                          <img src="{{ asset(str_starts_with($cImg, 'storage/') ? $cImg : 'storage/' . $cImg) }}" alt="Proof" style="width:72px; height:72px; object-fit:cover; border-radius:6px; border:2px solid #16a34a;">
+                        </a>
+                      @endforeach
+                    </div>
+                  </div>
+                @endif
+                @if($booking->partner_notes)
+                  <div style="font-size:0.82rem; color:#14532d; margin-top:8px;">
+                    <strong>Partner Field Notes:</strong> "{{ $booking->partner_notes }}"
                   </div>
                 @endif
               </div>
@@ -1210,6 +1304,12 @@
                     <div style="position:relative;" id="crewDropdownWrapper_edit">
                       <div style="position:relative; display:flex; align-items:center;">
                         <input 
+                          type="hidden" 
+                          name="partner_id" 
+                          id="partner_id_edit" 
+                          value="{{ old('partner_id', $booking->partner_id) }}"
+                        >
+                        <input 
                           type="text" 
                           id="crewInput_edit" 
                           name="assigned_team" 
@@ -1239,14 +1339,23 @@
                             @php
                               $compOrRole = $crew->company_name ?: $crew->role;
                               $crewFullVal = "{$crew->name} ({$compOrRole}) - {$crew->phone}";
+                              $crewPartnerId = $crew->partner_id ?? '';
+                              $crewWarning = $crew->warning_msg ?? '';
                             @endphp
                             <div class="crew-option-item" 
                                  data-val="{{ strtolower($crewFullVal) }}"
-                                 onclick="selectCrew('edit', '{{ addslashes($crewFullVal) }}', true)"
+                                 onclick="selectCrew('edit', '{{ addslashes($crewFullVal) }}', true, '{{ $crewPartnerId }}', '{{ addslashes($crewWarning) }}')"
                                  style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f8fafc; transition:background 0.15s ease;"
                                  onmouseover="this.style.background='#eff6ff'" 
                                  onmouseout="this.style.background='transparent'">
-                              <div style="font-weight:600; font-size:0.85rem; color:#1e293b;">{{ $crew->name }}</div>
+                              <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div style="font-weight:600; font-size:0.85rem; color:#1e293b;">{{ $crew->name }}</div>
+                                @if(!empty($crew->avail_label))
+                                  <span style="font-size:0.72rem; font-weight:600; color:{{ $crew->avail_color }}; background:#f8fafc; border:1px solid #e2e8f0; padding:1px 6px; border-radius:4px;">
+                                    {{ $crew->avail_label }}
+                                  </span>
+                                @endif
+                              </div>
                               <div style="font-size:0.75rem; color:#64748b; display:flex; justify-content:space-between; margin-top:2px;">
                                 <span>{{ $crew->role }}</span>
                                 <span style="color:#0284c7; font-weight:500;">📞 {{ $crew->phone }}</span>
@@ -1257,6 +1366,24 @@
                         <div id="crewNoResults_edit" style="display:none; padding:12px; text-align:center; font-size:0.8rem; color:#94a3b8;">
                           No matching crew found. Custom text will be saved.
                         </div>
+                      </div>
+
+                      <!-- Partner Conflict Warning Notice -->
+                      <div id="crewWarning_edit" style="display:none; background:#fffbeb; border:1px solid #fde68a; color:#92400e; padding:8px 12px; border-radius:6px; font-size:0.8rem; margin-top:8px;">
+                      </div>
+
+                      <!-- Arrival Window -->
+                      <div style="margin-top:10px;">
+                        <label class="form-label-paces" style="font-weight:500; font-size:0.78rem;">
+                          Arrival Window Slot (e.g. 10:00 AM - 11:00 AM)
+                        </label>
+                        <input 
+                          type="text" 
+                          name="arrival_window" 
+                          class="form-control-paces" 
+                          placeholder="e.g. 10:00 AM - 11:00 AM" 
+                          value="{{ old('arrival_window', $booking->arrival_window) }}"
+                        >
                       </div>
                     </div>
                   </div>
@@ -1439,14 +1566,28 @@
     }
 
     // Searchable Crew Selection & Auto Status Change
-    function selectCrew(prefix, value, autoChangeStatus) {
+    function selectCrew(prefix, value, autoChangeStatus, partnerId, warningMsg) {
       const input = document.getElementById('crewInput_' + prefix);
       const clearBtn = document.getElementById('crewClearBtn_' + prefix);
+      const partnerInput = document.getElementById('partner_id_' + prefix);
+      const warningBox = document.getElementById('crewWarning_' + prefix);
+
       if (input) {
         input.value = value;
       }
       if (clearBtn) {
         clearBtn.style.display = value ? 'inline' : 'none';
+      }
+      if (partnerInput) {
+        partnerInput.value = partnerId || '';
+      }
+      if (warningBox) {
+        if (warningMsg) {
+          warningBox.innerHTML = '<strong>Notice:</strong> ' + warningMsg;
+          warningBox.style.display = 'block';
+        } else {
+          warningBox.style.display = 'none';
+        }
       }
       closeCrewDropdown(prefix);
 
@@ -1472,12 +1613,21 @@
     function clearCrewSelection(prefix) {
       const input = document.getElementById('crewInput_' + prefix);
       const clearBtn = document.getElementById('crewClearBtn_' + prefix);
+      const partnerInput = document.getElementById('partner_id_' + prefix);
+      const warningBox = document.getElementById('crewWarning_' + prefix);
+
       if (input) {
         input.value = '';
         input.focus();
       }
       if (clearBtn) {
         clearBtn.style.display = 'none';
+      }
+      if (partnerInput) {
+        partnerInput.value = '';
+      }
+      if (warningBox) {
+        warningBox.style.display = 'none';
       }
       openCrewDropdown(prefix);
       filterCrewOptions(prefix);

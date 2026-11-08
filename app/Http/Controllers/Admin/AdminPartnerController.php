@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Services\ActivityLogService;
+use App\Services\NotificationDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 class AdminPartnerController extends Controller
@@ -75,6 +77,8 @@ class AdminPartnerController extends Controller
             'other_coverage_areas' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'string', 'in:approved,pending,rejected,suspended'],
             'payout_terms' => ['required', 'string', 'in:weekly,bi_weekly,monthly,per_job'],
+            'earning_model' => ['nullable', 'string', 'in:commission,hourly,daily,monthly,per_job'],
+            'payout_rate' => ['nullable', 'numeric', 'min:0'],
             'commission_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'payment_method' => ['nullable', 'string', 'in:bank,bkash,nagad,rocket'],
             'bank_name' => ['nullable', 'string', 'max:100'],
@@ -83,6 +87,7 @@ class AdminPartnerController extends Controller
             'branch_name' => ['nullable', 'string', 'max:100'],
             'mfs_number' => ['nullable', 'string', 'max:30'],
             'admin_notes' => ['nullable', 'string', 'max:1000'],
+            'password' => ['nullable', 'string', 'min:6'],
         ], [
             'trade_domain.required' => 'Please select at least one primary technical domain.',
             'coverage_areas.required' => 'Please select at least one operating coverage area.',
@@ -108,18 +113,26 @@ class AdminPartnerController extends Controller
         $admin = Auth::guard('admin')->user();
         $isApproved = $request->input('status') === 'approved';
 
+        $rawPassword = $request->input('password');
+        $hashedPassword = ! empty($rawPassword)
+            ? Hash::make($rawPassword)
+            : ($isApproved ? Hash::make('123456') : null);
+
         $partner = Partner::create([
             'company_name' => (string) $request->input('company_name'),
             'contact_person' => (string) $request->input('contact_person'),
             'phone' => (string) $request->input('phone'),
             'email' => $request->input('email') ?: null,
+            'password' => $hashedPassword,
             'partner_type' => (string) $request->input('partner_type'),
             'trade_domain' => $tradeDomain,
             'technicians_count' => (string) $request->input('technicians_count'),
             'coverage_areas' => $coverageAreas,
             'status' => (string) $request->input('status'),
             'payout_terms' => (string) $request->input('payout_terms'),
-            'commission_rate' => $request->filled('commission_rate') ? $request->input('commission_rate') : 15.00,
+            'earning_model' => (string) ($request->input('earning_model') ?: 'commission'),
+            'payout_rate' => $request->filled('payout_rate') ? (float) $request->input('payout_rate') : ($request->filled('commission_rate') ? (float) $request->input('commission_rate') : 15.00),
+            'commission_rate' => $request->filled('commission_rate') ? $request->input('commission_rate') : ($request->filled('payout_rate') && $request->input('earning_model') === 'commission' ? $request->input('payout_rate') : 15.00),
             'payment_method' => $request->input('payment_method') ?: 'bank',
             'bank_name' => $request->input('bank_name') ?: null,
             'account_holder' => $request->input('account_holder') ?: null,
@@ -172,6 +185,8 @@ class AdminPartnerController extends Controller
             'other_coverage_areas' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'string', 'in:approved,pending,rejected,suspended'],
             'payout_terms' => ['required', 'string', 'in:weekly,bi_weekly,monthly,per_job'],
+            'earning_model' => ['nullable', 'string', 'in:commission,hourly,daily,monthly,per_job'],
+            'payout_rate' => ['nullable', 'numeric', 'min:0'],
             'commission_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'payment_method' => ['nullable', 'string', 'in:bank,bkash,nagad,rocket'],
             'bank_name' => ['nullable', 'string', 'max:100'],
@@ -180,6 +195,7 @@ class AdminPartnerController extends Controller
             'branch_name' => ['nullable', 'string', 'max:100'],
             'mfs_number' => ['nullable', 'string', 'max:30'],
             'admin_notes' => ['nullable', 'string', 'max:1000'],
+            'password' => ['nullable', 'string', 'min:6'],
         ], [
             'trade_domain.required' => 'Please select at least one primary technical domain.',
             'coverage_areas.required' => 'Please select at least one operating coverage area.',
@@ -217,7 +233,9 @@ class AdminPartnerController extends Controller
             'coverage_areas' => $coverageAreas,
             'status' => (string) $request->input('status'),
             'payout_terms' => (string) $request->input('payout_terms'),
-            'commission_rate' => $request->filled('commission_rate') ? $request->input('commission_rate') : $partner->commission_rate,
+            'earning_model' => (string) ($request->input('earning_model') ?: ($partner->earning_model ?? 'commission')),
+            'payout_rate' => $request->filled('payout_rate') ? (float) $request->input('payout_rate') : ($request->filled('commission_rate') && $request->input('earning_model') === 'commission' ? (float) $request->input('commission_rate') : $partner->payout_rate),
+            'commission_rate' => $request->filled('commission_rate') ? $request->input('commission_rate') : ($request->filled('payout_rate') && $request->input('earning_model') === 'commission' ? $request->input('payout_rate') : $partner->commission_rate),
             'payment_method' => $request->input('payment_method') ?: $partner->payment_method,
             'bank_name' => $request->input('bank_name') ?: null,
             'account_holder' => $request->input('account_holder') ?: null,
@@ -226,6 +244,10 @@ class AdminPartnerController extends Controller
             'mfs_number' => $request->input('mfs_number') ?: null,
             'admin_notes' => $request->input('admin_notes') ?: null,
         ];
+
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->input('password'));
+        }
 
         if ($isApproved && ! $wasApproved) {
             $updateData['approved_at'] = now();
@@ -253,14 +275,17 @@ class AdminPartnerController extends Controller
             'account_number' => ['nullable', 'string', 'max:60'],
             'branch_name' => ['nullable', 'string', 'max:100'],
             'mfs_number' => ['nullable', 'string', 'max:30'],
+            'earning_model' => ['nullable', 'string', 'in:commission,hourly,daily,monthly,per_job'],
+            'payout_rate' => ['nullable', 'numeric', 'min:0'],
             'commission_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'payout_terms' => ['required', 'string', 'in:weekly,bi_weekly,monthly,per_job'],
             'admin_notes' => ['nullable', 'string', 'max:1000'],
+            'password' => ['nullable', 'string', 'min:6'],
         ]);
 
         $admin = Auth::guard('admin')->user();
 
-        $partner->update([
+        $updateData = [
             'status' => 'approved',
             'partner_type' => $validated['partner_type'],
             'payment_method' => $validated['payment_method'],
@@ -269,17 +294,45 @@ class AdminPartnerController extends Controller
             'account_number' => $validated['account_number'] ?? null,
             'branch_name' => $validated['branch_name'] ?? null,
             'mfs_number' => $validated['mfs_number'] ?? null,
-            'commission_rate' => $validated['commission_rate'] ?? 15.00,
+            'earning_model' => $validated['earning_model'] ?? ($partner->earning_model ?? 'commission'),
+            'payout_rate' => array_key_exists('payout_rate', $validated) && $validated['payout_rate'] !== null ? (float) $validated['payout_rate'] : ($validated['commission_rate'] ?? $partner->payout_rate ?? 15.00),
+            'commission_rate' => $validated['commission_rate'] ?? ($validated['payout_rate'] ?? 15.00),
             'payout_terms' => $validated['payout_terms'],
             'admin_notes' => $validated['admin_notes'] ?? null,
             'approved_at' => now(),
             'approved_by_admin_id' => $admin?->id,
-        ]);
+        ];
+
+        // Ensure partner has a password for login
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->input('password'));
+        } elseif (empty($partner->password)) {
+            $updateData['password'] = Hash::make('123456');
+        }
+
+        $partner->update($updateData);
 
         ActivityLogService::logPartner('partner.approve', "Approved partner/crew '{$partner->company_name}' ({$partner->contact_person}). Added to dispatch network.", $partner);
 
+        // Notify admins subscribed to partner section
+        NotificationDispatcher::notifyAdminSection(
+            'partners',
+            "Partner '{$partner->company_name}' Approved",
+            "Partner '{$partner->company_name}' ({$partner->contact_person}, Phone: {$partner->phone}) has been approved and added to active field crew dispatch.",
+            route('admin.partners.show', $partner),
+            [
+                'Partner' => $partner->company_name,
+                'Classification' => $partner->isVendor() ? 'Vendor Agency' : 'Individual Solo Crew',
+                'Phone' => $partner->phone,
+                'Approved By' => $admin?->name ?? 'Admin',
+            ]
+        );
+
+        // Notify Partner in-app
+        NotificationDispatcher::notifyPartnerAccountApproved($partner);
+
         return redirect()->route('admin.partners.show', $partner)
-            ->with('success', "Partner '{$partner->company_name}' has been approved and added to active field crew dispatch!");
+            ->with('success', "Partner '{$partner->company_name}' has been approved and can now log in at /partner/login using phone number '{$partner->phone}'!");
     }
 
     /**

@@ -6,8 +6,11 @@ use App\Actions\User\UpdateUserProfileAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\UpdateAvatarRequest;
 use App\Http\Requests\Web\UpdateProfileRequest;
+use App\Models\AdminNotification;
 use App\Models\Booking;
+use App\Models\BookingStatusLog;
 use App\Models\Division;
+use App\Models\PartnerNotification;
 use App\Services\ImageService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -40,7 +43,13 @@ class CustomerPortalController extends Controller
         $user = Auth::guard('web')->user();
         $booking = Booking::where('booking_number', $bookingNumber)
             ->where('user_id', $user->id)
-            ->with(['service', 'amcPlan', 'statusLogs' => fn ($q) => $q->where('is_customer_visible', true)->latest()])
+            ->with([
+                'service',
+                'amcPlan',
+                'partner',
+                'assignedCrew',
+                'statusLogs' => fn ($q) => $q->where('is_customer_visible', true)->latest(),
+            ])
             ->firstOrFail();
 
         return view('web.pages.customer.booking-details', compact('booking'));
@@ -66,6 +75,37 @@ class CustomerPortalController extends Controller
             'review_rating' => (int) $validated['review_rating'],
             'review_comment' => $validated['review_comment'],
             'reviewed_at' => now(),
+        ]);
+
+        // 1. Audit status log entry
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'from_status' => 'completed',
+            'to_status' => 'completed',
+            'comment' => "Client {$user->name} rated this service {$validated['review_rating']} out of 5 stars: \"{$validated['review_comment']}\"",
+            'is_customer_visible' => true,
+        ]);
+
+        // 2. Notify assigned Partner in-app if assigned
+        if ($booking->partner_id) {
+            PartnerNotification::create([
+                'partner_id' => $booking->partner_id,
+                'booking_id' => $booking->id,
+                'type' => 'review_received',
+                'title' => "Client Review: {$validated['review_rating']} Stars ★",
+                'message' => "Client {$user->name} left feedback for Job #{$booking->booking_number}: \"{$validated['review_comment']}\"",
+                'action_url' => route('partner.jobs.show', $booking),
+            ]);
+        }
+
+        // 3. Notify Admin
+        AdminNotification::create([
+            'type' => 'order_status',
+            'title' => "Client Review: Job #{$booking->booking_number}",
+            'message' => "Client {$user->name} left a {$validated['review_rating']}-star review: \"{$validated['review_comment']}\"",
+            'booking_id' => $booking->id,
+            'action_url' => route('admin.bookings.show', $booking),
+            'is_read' => false,
         ]);
 
         return redirect()->back()->with('success', 'Thank you! Your feedback and rating have been submitted successfully.');

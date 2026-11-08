@@ -76,6 +76,8 @@ class AdminStaffController extends Controller
             'must_change_password' => ['nullable', 'boolean'],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', Rule::in($allKeys)],
+            'email_notification_preferences' => ['nullable', 'array'],
+            'email_notification_preferences.*' => ['string', Rule::in(['orders', 'partners', 'support', 'payments'])],
         ]);
 
         $admin = new Admin;
@@ -90,6 +92,9 @@ class AdminStaffController extends Controller
 
         // If super_admin, permissions aren't strictly required, but we can store them or null
         $admin->permissions = $validated['role'] === 'super_admin' ? $allKeys : ($validated['permissions'] ?? []);
+        $admin->email_notification_preferences = $validated['role'] === 'super_admin'
+            ? ['orders', 'partners', 'support', 'payments']
+            : ($request->input('email_notification_preferences') ?? []);
         $admin->save();
 
         ActivityLogService::logStaff('staff.create', "Created admin staff account '{$admin->name}' ({$admin->email}) with role '{$admin->role}'.", $admin, [
@@ -130,6 +135,8 @@ class AdminStaffController extends Controller
             'is_active' => ['nullable', 'boolean'],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', Rule::in($allKeys)],
+            'email_notification_preferences' => ['nullable', 'array'],
+            'email_notification_preferences.*' => ['string', Rule::in(['orders', 'partners', 'support', 'payments'])],
         ]);
 
         $currentUser = Auth::guard('admin')->user();
@@ -154,6 +161,9 @@ class AdminStaffController extends Controller
         }
 
         $staff->permissions = $validated['role'] === 'super_admin' ? $allKeys : ($validated['permissions'] ?? []);
+        $staff->email_notification_preferences = $validated['role'] === 'super_admin'
+            ? ($request->input('email_notification_preferences') ?? ['orders', 'partners', 'support', 'payments'])
+            : ($request->input('email_notification_preferences') ?? []);
         $staff->save();
 
         ActivityLogService::logStaff('staff.update', "Updated admin staff profile & permissions for '{$staff->name}'.", $staff, [

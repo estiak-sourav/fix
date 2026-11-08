@@ -223,6 +223,59 @@
         </div>
       </div>
 
+      <!-- Email Notification Preferences Card -->
+      @php
+        $myPrefs = $admin->email_notification_preferences ?? ($admin->isSuperAdmin() ? ['orders', 'partners', 'support', 'payments'] : []);
+      @endphp
+      <div class="card-paces">
+        <div class="card-header-paces">
+          <h2 style="font-size:1.05rem; font-weight:500; margin:0; color:var(--paces-text); display:flex; align-items:center; gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            My Email Notification Preferences
+          </h2>
+        </div>
+
+        <div class="card-body-paces" style="padding:1.5rem;">
+          <p style="font-size:0.82rem; color:var(--paces-text-muted); margin:0 0 1.25rem 0;">
+            Select which categories of CMS system alerts and operational events are forwarded to your official inbox (<strong>{{ $admin->email }}</strong>).
+          </p>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1rem;">
+            <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid var(--paces-border); border-radius:8px; background:#ffffff; cursor:pointer;">
+              <input type="checkbox" name="email_notification_preferences[]" value="orders" {{ in_array('orders', $myPrefs, true) ? 'checked' : '' }} style="width:18px; height:18px; accent-color:#3e60d5; margin-top:2px;">
+              <div>
+                <div style="font-weight:600; font-size:0.9rem; color:var(--paces-text);">Service & AMC Orders</div>
+                <div style="font-size:0.76rem; color:var(--paces-text-muted);">New client bookings, emergency service requests, partner dispatches, schedule updates, cancellations.</div>
+              </div>
+            </label>
+
+            <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid var(--paces-border); border-radius:8px; background:#ffffff; cursor:pointer;">
+              <input type="checkbox" name="email_notification_preferences[]" value="partners" {{ in_array('partners', $myPrefs, true) ? 'checked' : '' }} style="width:18px; height:18px; accent-color:#3e60d5; margin-top:2px;">
+              <div>
+                <div style="font-weight:600; font-size:0.9rem; color:var(--paces-text);">Partners & Field Crews</div>
+                <div style="font-size:0.76rem; color:var(--paces-text-muted);">New vendor/crew applications, job acceptance/decline alerts, scheduled leave & unavailability notices.</div>
+              </div>
+            </label>
+
+            <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid var(--paces-border); border-radius:8px; background:#ffffff; cursor:pointer;">
+              <input type="checkbox" name="email_notification_preferences[]" value="support" {{ in_array('support', $myPrefs, true) ? 'checked' : '' }} style="width:18px; height:18px; accent-color:#3e60d5; margin-top:2px;">
+              <div>
+                <div style="font-weight:600; font-size:0.9rem; color:var(--paces-text);">Customer Support & Inquiries</div>
+                <div style="font-size:0.76rem; color:var(--paces-text-muted);">Website contact messages, client support ticket creation, urgent complaints.</div>
+              </div>
+            </label>
+
+            <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid var(--paces-border); border-radius:8px; background:#ffffff; cursor:pointer;">
+              <input type="checkbox" name="email_notification_preferences[]" value="payments" {{ in_array('payments', $myPrefs, true) ? 'checked' : '' }} style="width:18px; height:18px; accent-color:#3e60d5; margin-top:2px;">
+              <div>
+                <div style="font-weight:600; font-size:0.9rem; color:var(--paces-text);">Billing & Payout Settlements</div>
+                <div style="font-size:0.76rem; color:var(--paces-text-muted);">Partner payout processing, manual payment receipts, offline invoice settlements.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
       <!-- Action Buttons -->
       <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:0.5rem; margin-bottom:2rem;">
         <a href="{{ route('admin.dashboard') }}" class="btn-paces" style="background:#e2e8f0; color:#334155; font-weight:500; text-decoration:none; display:inline-flex; align-items:center; padding:10px 20px; border-radius:var(--paces-radius-sm);">

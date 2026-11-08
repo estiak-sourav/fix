@@ -139,6 +139,53 @@
       </div>
     </div>
 
+    <!-- Email Notification Distribution Matrix Card -->
+    <div class="card-paces" style="margin-bottom:1.5rem;">
+      <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:0.85rem; margin-bottom:1.25rem;">
+        <h2 style="font-size:1.05rem; font-weight:500; margin:0; color:var(--paces-text); display:flex; align-items:center; gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          Automated Email Notification Dispatch Matrix
+        </h2>
+        <p style="margin:4px 0 0; font-size:0.82rem; color:var(--paces-text-muted);">
+          Super Admin controls which operational sections send automated email alerts directly to this staff member's email inbox.
+        </p>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1rem; padding:0.25rem 0.5rem 1rem;">
+        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid var(--paces-border); border-radius:8px; background:#ffffff; cursor:pointer;">
+          <input type="checkbox" name="email_notification_preferences[]" value="orders" checked style="width:18px; height:18px; accent-color:#3e60d5; margin-top:2px;">
+          <div>
+            <div style="font-weight:600; font-size:0.9rem; color:var(--paces-text);">Service & AMC Orders</div>
+            <div style="font-size:0.78rem; color:var(--paces-text-muted);">New client bookings, emergency service requests, partner dispatches, schedule updates, cancellations.</div>
+          </div>
+        </label>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid var(--paces-border); border-radius:8px; background:#ffffff; cursor:pointer;">
+          <input type="checkbox" name="email_notification_preferences[]" value="partners" checked style="width:18px; height:18px; accent-color:#3e60d5; margin-top:2px;">
+          <div>
+            <div style="font-weight:600; font-size:0.9rem; color:var(--paces-text);">Partners & Field Crews</div>
+            <div style="font-size:0.78rem; color:var(--paces-text-muted);">New vendor/crew applications, job acceptance/decline alerts, scheduled leave & unavailability notices.</div>
+          </div>
+        </label>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid var(--paces-border); border-radius:8px; background:#ffffff; cursor:pointer;">
+          <input type="checkbox" name="email_notification_preferences[]" value="support" checked style="width:18px; height:18px; accent-color:#3e60d5; margin-top:2px;">
+          <div>
+            <div style="font-weight:600; font-size:0.9rem; color:var(--paces-text);">Customer Support & Inquiries</div>
+            <div style="font-size:0.78rem; color:var(--paces-text-muted);">Website contact messages, client support ticket creation, urgent complaints.</div>
+          </div>
+        </label>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid var(--paces-border); border-radius:8px; background:#ffffff; cursor:pointer;">
+          <input type="checkbox" name="email_notification_preferences[]" value="payments" checked style="width:18px; height:18px; accent-color:#3e60d5; margin-top:2px;">
+          <div>
+            <div style="font-weight:600; font-size:0.9rem; color:var(--paces-text);">Billing & Payout Settlements</div>
+            <div style="font-size:0.78rem; color:var(--paces-text-muted);">Partner payout processing, manual payment receipts, offline invoice settlements.</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
     <!-- Modular Feature Permissions Matrix Card -->
     <div class="card-paces" id="permissionsContainer">
       <div class="card-header-paces" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">

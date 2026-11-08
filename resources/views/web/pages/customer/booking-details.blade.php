@@ -125,22 +125,74 @@
           </div>
         @endif
 
-        @if($booking->assigned_team)
-          <div style="background:rgba(30,58,138,0.06); border:1px solid rgba(30,58,138,0.15); border-radius:10px; padding:1rem; margin-bottom:1.5rem; color:var(--primary); font-size:0.9rem;">
-            <strong>Assigned Field Team:</strong> {{ $booking->assigned_team }}
+        @if($booking->partner || $booking->assigned_team)
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1.2rem; margin-bottom:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
+              <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Assigned Service Partner &amp; Crew</span>
+              @if($booking->partner_job_status)
+                @php
+                  $pBadge = match($booking->partner_job_status) {
+                    'on_the_way' => ['bg' => '#f3e8ff', 'color' => '#7e22ce', 'label' => 'En Route to Address'],
+                    'in_progress' => ['bg' => '#dcfce7', 'color' => '#15803d', 'label' => 'Working On Site'],
+                    'completed' => ['bg' => '#ecfdf5', 'color' => '#047857', 'label' => 'Service Completed'],
+                    'accepted' => ['bg' => '#eff6ff', 'color' => '#1d4ed8', 'label' => 'Team Confirmed'],
+                    default => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Dispatched'],
+                  };
+                @endphp
+                <span style="background:{{ $pBadge['bg'] }}; color:{{ $pBadge['color'] }}; font-size:0.75rem; font-weight:700; padding:3px 10px; border-radius:12px;">
+                  ● {{ $pBadge['label'] }}
+                </span>
+              @endif
+            </div>
+
+            <div style="font-size:1rem; font-weight:700; color:var(--primary);">
+              {{ $booking->partner ? $booking->partner->company_name : $booking->assigned_team }}
+            </div>
+
+            @if($booking->assignedCrew)
+              <div style="font-size:0.85rem; color:#334155; margin-top:4px;">
+                👷 Lead Technician: <strong>{{ $booking->assignedCrew->name }}</strong> ({{ $booking->assignedCrew->trade_skill ?: 'Technician' }}) • 📞 <a href="tel:{{ $booking->assignedCrew->phone }}" style="color:var(--primary); font-weight:600; text-decoration:none;">{{ $booking->assignedCrew->phone }}</a>
+              </div>
+            @elseif($booking->partner)
+              <div style="font-size:0.85rem; color:#475569; margin-top:4px;">
+                Contact: {{ $booking->partner->contact_person }} • 📞 <a href="tel:{{ $booking->partner->phone }}" style="color:var(--primary); font-weight:600; text-decoration:none;">{{ $booking->partner->phone }}</a>
+              </div>
+            @endif
+
+            @if($booking->arrival_window)
+              <div style="font-size:0.82rem; color:#0d9488; font-weight:600; margin-top:6px;">
+                ⏱ Expected Arrival Slot: {{ $booking->arrival_window }}
+              </div>
+            @endif
           </div>
         @endif
 
-        <!-- Completed Work Order Feedback from Operations -->
-        @if($booking->status === 'completed' && $booking->completion_feedback)
-          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:1.25rem; margin-bottom:1.5rem;">
-            <div style="font-weight:700; color:#166534; margin-bottom:4px; font-size:0.95rem;">
-              ✓ Operations Team Completion Remarks
+        <!-- Completed Work Order Feedback & Proof Photos from Operations -->
+        @if($booking->status === 'completed')
+          @if($booking->completion_feedback || (!empty($booking->completion_photos) && is_array($booking->completion_photos) && count($booking->completion_photos) > 0))
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:1.25rem; margin-bottom:1.5rem;">
+              <div style="font-weight:700; color:#166534; margin-bottom:6px; font-size:0.95rem;">
+                ✓ Operations &amp; Work Completion Summary
+              </div>
+              @if($booking->completion_feedback)
+                <p style="margin:0 0 10px 0; color:#14532d; font-size:0.9rem; line-height:1.5;">
+                  "{{ $booking->completion_feedback }}"
+                </p>
+              @endif
+              @if(!empty($booking->completion_photos) && is_array($booking->completion_photos) && count($booking->completion_photos) > 0)
+                <div style="margin-top:8px;">
+                  <span style="font-size:0.8rem; font-weight:700; color:#166534; display:block; margin-bottom:6px;">📸 On-Site Service Completion Photos:</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                    @foreach($booking->completion_photos as $cImg)
+                      <a href="{{ asset(str_starts_with($cImg, 'storage/') ? $cImg : 'storage/' . $cImg) }}" target="_blank">
+                        <img src="{{ asset(str_starts_with($cImg, 'storage/') ? $cImg : 'storage/' . $cImg) }}" alt="Completion Proof" style="width:76px; height:76px; object-fit:cover; border-radius:8px; border:2px solid #16a34a;">
+                      </a>
+                    @endforeach
+                  </div>
+                </div>
+              @endif
             </div>
-            <p style="margin:0; color:#14532d; font-size:0.9rem; line-height:1.5;">
-              "{{ $booking->completion_feedback }}"
-            </p>
-          </div>
+          @endif
         @endif
 
         <!-- Customer Review & Rating Section -->

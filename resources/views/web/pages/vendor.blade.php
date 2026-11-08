@@ -35,9 +35,9 @@
             {{ $heroContent?->button_text ?? 'Apply for Enlistment' }}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
           </a>
-          <a href="tel:{{ \App\Models\SiteSetting::get('emergency_phone', '+8801700000000') }}" class="btn btn-outline-white btn-lg">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:18px;height:18px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-            Hotline: {{ \App\Models\SiteSetting::get('emergency_phone', '+880 1700-000000') }}
+          <a href="{{ route('partner.login') }}" class="btn btn-outline-white btn-lg" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.25);">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right:6px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+            Partner Portal Login ↗
           </a>
         </div>
 
@@ -116,7 +116,7 @@
   <section id="vendorFormSection" class="section section-alt">
     <div class="container" style="max-width:850px;">
       <div class="section-header">
-        <h2 class="section-title">Partner Enlistment Application</h2>
+        <h2 class="section-title">Partner Enlistment</h2>
         <p class="section-subtitle">Join our verified network of engineering contractors and technical experts.</p>
       </div>
 

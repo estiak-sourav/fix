@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AuthenticatePartner;
 use App\Http\Middleware\AuthorizeAdminPermission;
 use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\EnsureAdminPasswordUpdated;
@@ -20,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->middleware(['web'])
                 ->as('admin.')
                 ->group(base_path('routes/admin.php'));
+
+            // Dedicated routing for Partner/Vendor Portal (/partner)
+            Route::prefix('partner')
+                ->middleware(['web'])
+                ->as('partner.')
+                ->group(base_path('routes/partner.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -32,14 +39,34 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
+            'auth.partner' => AuthenticatePartner::class,
             'admin.can' => AuthorizeAdminPermission::class,
             'admin.must_change_password' => EnsureAdminPasswordUpdated::class,
         ]);
 
-        $middleware->redirectGuestsTo(fn (Request $request) => str_starts_with($request->getHost(), 'admin.') || $request->is('admin*')
-                ? route('admin.login')
-                : route('login')
-        );
+        $middleware->redirectGuestsTo(function (Request $request) {
+            if ($request->is('partner*')) {
+                return route('partner.login');
+            }
+
+            if (str_starts_with($request->getHost(), 'admin.') || $request->is('admin*')) {
+                return route('admin.login');
+            }
+
+            return route('login');
+        });
+
+        $middleware->redirectUsersTo(function (Request $request) {
+            if ($request->is('partner*') || Auth::guard('partner')->check()) {
+                return route('partner.dashboard');
+            }
+
+            if (str_starts_with($request->getHost(), 'admin.') || $request->is('admin*') || Auth::guard('admin')->check()) {
+                return route('admin.dashboard');
+            }
+
+            return route('home');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
