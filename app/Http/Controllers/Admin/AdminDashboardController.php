@@ -140,23 +140,19 @@ class AdminDashboardController extends Controller
         $prevAmcRequests = $prevAmcBookings->count();
         $prevAmcBook = $prevAmcBookings->filter(fn ($b) => in_array($b->status, ['accepted', 'assigned', 'in_progress', 'completed']))->count();
 
-        // Dedicated 10 Metric Bars Payload
+        // Dedicated 8 Operational Funnel Bars Payload (Total & New Visitors moved to top Line Chart)
         $metricChart = [
             'labels' => [
-                'Total visitor',
-                'New visitor',
                 'Login',
                 'Registration',
                 'Service visitor',
-                'Amc visitor',
+                'AMC visitor',
                 'Service Request',
                 'Service Book',
                 'AMC Request',
                 'AMC Book',
             ],
             'values' => [
-                $currentTotalVisitors,
-                $currentNewVisitors,
                 $currentLogins,
                 $currentRegs,
                 $currentServiceVisitors,
@@ -167,8 +163,6 @@ class AdminDashboardController extends Controller
                 $currentAmcBook,
             ],
             'previous_values' => [
-                $prevTotalVisitors,
-                $prevNewVisitors,
                 $prevLogins,
                 $prevRegs,
                 $prevServiceVisitors,
@@ -193,6 +187,56 @@ class AdminDashboardController extends Controller
             'prev_label' => $prevPeriodLabel,
             'prev_date' => $prevDate,
             'next_date' => $nextDate,
+        ];
+
+        // Dedicated Visitor Trend Line Chart (Full-width, Total vs New Visitor trend)
+        $trendStartDate = $startDate->copy();
+        $trendEndDate = $endDate->copy();
+        if ($startDate->isSameDay($endDate)) {
+            $trendStartDate = $startDate->copy()->subDays(6)->startOfDay();
+        }
+
+        $trendRecords = DailyAnalytics::whereBetween('date', [$trendStartDate->toDateString(), $trendEndDate->toDateString()])
+            ->get()
+            ->keyBy(fn ($item) => $item->date->format('Y-m-d'));
+
+        $visitorTrendLabels = [];
+        $visitorTrendTotal = [];
+        $visitorTrendNew = [];
+
+        if ($range === 'year') {
+            for ($m = 1; $m <= 12; $m++) {
+                $monthDate = Carbon::createFromDate($startDate->year, $m, 1);
+                $visitorTrendLabels[] = $monthDate->format('M');
+                $mRecords = $trendRecords->filter(fn ($r) => (int) $r->date->format('n') === $m);
+                $totalV = (int) $mRecords->sum('total_visitors');
+                $newV = min((int) $mRecords->sum('new_visitors'), $totalV);
+                $visitorTrendTotal[] = $totalV;
+                $visitorTrendNew[] = $newV;
+            }
+        } else {
+            $cursor = $trendStartDate->copy();
+            while ($cursor->lte($trendEndDate)) {
+                $dateKey = $cursor->format('Y-m-d');
+                $rec = $trendRecords->get($dateKey);
+                $totalV = $rec ? (int) $rec->total_visitors : 0;
+                $newV = $rec ? min((int) $rec->new_visitors, $totalV) : 0;
+
+                $visitorTrendLabels[] = $cursor->format('d M');
+                $visitorTrendTotal[] = $totalV;
+                $visitorTrendNew[] = $newV;
+
+                $cursor->addDay();
+            }
+        }
+
+        $visitorTrendChart = [
+            'labels' => $visitorTrendLabels,
+            'total' => $visitorTrendTotal,
+            'new' => $visitorTrendNew,
+            'current_total' => $currentTotalVisitors,
+            'current_new' => $currentNewVisitors,
+            'range_subtitle' => $startDate->isSameDay($endDate) ? 'Last 7 Days (ending '.$endDate->format('M d').')' : ($startDate->format('M d').' – '.$endDate->format('M d, Y')),
         ];
 
         // Running AMC Contracts count
@@ -562,6 +606,7 @@ class AdminDashboardController extends Controller
         return view('admin.dashboard', compact(
             'stats',
             'metricChart',
+            'visitorTrendChart',
             'categoryBreakdown',
             'areaHotspots',
             'selectedHotspotDivision',

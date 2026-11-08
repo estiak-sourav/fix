@@ -109,22 +109,27 @@
     .analytics-counters-panel {
       display: grid;
       grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(4, 1fr);
       gap: 10px;
-      align-content: start;
       background: #fafbfc;
       border: 1px solid #edf2f7;
       border-radius: 12px;
       padding: 12px;
       min-width: 0;
+      box-sizing: border-box;
+      height: 100%;
     }
     .analytics-counter-item {
       background: #ffffff;
       border: 1px solid #edf2f7;
-      padding: 8px 10px;
+      padding: 6px 10px;
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.02);
       transition: transform 0.15s ease, box-shadow 0.15s ease;
       min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .analytics-counter-item:hover {
       transform: translateY(-2px);
@@ -137,6 +142,8 @@
       }
       .analytics-counters-panel {
         grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+        grid-template-rows: auto !important;
+        height: auto !important;
       }
     }
     @media (max-width: 768px) {
@@ -375,6 +382,39 @@
     </a>
   </div>
 
+  <!-- Visitor Traffic Line Chart Section (Full-Width, 100px Height) -->
+  <div class="card-paces" style="padding: 16px 24px; margin-bottom: 1.5rem; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); background:#ffffff; min-width: 0; max-width: 100%;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 10px;">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <h2 style="font-size: 1.15rem; font-weight: 500; color: #1e293b; margin: 0; font-family: 'Poppins', sans-serif;">
+          Visitor Traffic
+        </h2>
+        <span style="font-size:0.75rem; color:#64748b; background:#f1f5f9; padding:3px 9px; border-radius:6px; font-weight:500;">
+          {{ $visitorTrendChart['range_subtitle'] ?? $stats['range_label'] }}
+        </span>
+      </div>
+
+      <!-- Visitor Metric Indicators / Legend -->
+      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:7px; font-size:0.82rem; color:#475569;">
+          <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#4e73df;"></span>
+          <span style="font-weight:500;">Total visitor:</span>
+          <strong style="color:#1e293b; font-size:1rem; font-weight:600;">{{ number_format($visitorTrendChart['current_total']) }}</strong>
+        </div>
+        <div style="display:flex; align-items:center; gap:7px; font-size:0.82rem; color:#475569;">
+          <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#60a5fa;"></span>
+          <span style="font-weight:500;">New visitor:</span>
+          <strong style="color:#1e293b; font-size:1rem; font-weight:600;">{{ number_format($visitorTrendChart['current_new']) }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full-Width 100px Height Canvas Container -->
+    <div style="position:relative; height:100px; width:100%; min-width:0; overflow:hidden;">
+      <canvas id="visitorTrafficLineChart" style="height:100px !important; max-height:100px !important; width:100% !important;"></canvas>
+    </div>
+  </div>
+
   <!-- Operations & Traffic Analytics BarChart Section -->
   <div class="card-paces card-paces-analytics" style="padding: 24px 28px; margin-bottom: 1.75rem; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); min-width: 0; max-width: 100%;">
     <!-- Header with Title -->
@@ -384,26 +424,15 @@
       </h2>
     </div>
 
-  <!-- Main Analytics Body: BarChart on Left (Compact Width) and 10 Counters on Right -->
+  <!-- Main Analytics Body: BarChart on Left (Compact Width) and 8 Operational Counters on Right -->
   <div class="analytics-barchart-grid">
     <!-- Left: Clean BarChart Canvas (Width reduced so bars are closer together) -->
-    <div class="analytics-canvas-wrapper" style="position:relative; min-height: 380px; width: 100%; min-width: 0; overflow: hidden;">
+    <div class="analytics-canvas-wrapper" style="position:relative; min-height: 290px; height: 290px; width: 100%; min-width: 0; overflow: hidden;">
       <canvas id="unifiedCleanBarChart" style="max-width: 100% !important;"></canvas>
     </div>
 
-    <!-- Right: 10 Metric Counter Cards (Organized in 2 columns of 5) -->
+    <!-- Right: 8 Metric Counter Cards (Organized in 2 columns of 4) -->
     <div class="analytics-counters-panel">
-        <!-- 1. Total visitor -->
-        <div class="analytics-counter-item" style="border-top:3px solid #4e73df;">
-          <div style="font-size:0.72rem; font-weight:500; color:#64748b; line-height:1.25; word-break:break-word;">Total visitor</div>
-          <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['total_visitors']) }}</div>
-        </div>
-
-        <!-- 2. New visitor -->
-        <div class="analytics-counter-item" style="border-top:3px solid #60a5fa;">
-          <div style="font-size:0.72rem; font-weight:500; color:#64748b; line-height:1.25; word-break:break-word;">New visitor</div>
-          <div style="font-size:1.1rem; font-weight:500; color:#1e293b; margin-top:2px;">{{ number_format($metricChart['details']['new_visitors']) }}</div>
-        </div>
 
         <!-- 3. Login -->
         <div class="analytics-counter-item" style="border-top:3px solid #8b5cf6;">
@@ -1415,17 +1444,19 @@
     @endif
   </div>
 
-  <!-- Unified Clean BarChart Script -->
+  <!-- Visitor Traffic Line Chart & Unified Clean BarChart Scripts -->
   <script>
     const metricLabels = {!! json_encode($metricChart['labels']) !!};
     const metricValues = {!! json_encode($metricChart['values']) !!};
     const metricDetails = {!! json_encode($metricChart['details']) !!};
     const currentRangeLabel = {!! json_encode($stats['range_label']) !!};
 
-    // Palette for 10 analytics metrics
+    const visitorTrendLabels = {!! json_encode($visitorTrendChart['labels'] ?? []) !!};
+    const visitorTrendTotal = {!! json_encode($visitorTrendChart['total'] ?? []) !!};
+    const visitorTrendNew = {!! json_encode($visitorTrendChart['new'] ?? []) !!};
+
+    // Palette for 8 operational funnel metrics
     const barColors = [
-      '#4e73df', // Total visitor (Royal Blue)
-      '#60a5fa', // New visitor (Sky Blue)
       '#8b5cf6', // Login (Purple)
       '#a855f7', // Registration (Violet)
       '#f6b749', // Service visitor (Warm Amber)
@@ -1437,6 +1468,112 @@
     ];
 
     let cleanBarChart = null;
+    let visitorTrafficLineChart = null;
+
+    function initVisitorTrafficLineChart() {
+      const canvas = document.getElementById('visitorTrafficLineChart');
+      if (!canvas || typeof Chart === 'undefined') return;
+
+      if (visitorTrafficLineChart) visitorTrafficLineChart.destroy();
+
+      const ctx = canvas.getContext('2d');
+      const gradientTotal = ctx.createLinearGradient(0, 0, 0, 100);
+      gradientTotal.addColorStop(0, 'rgba(78, 115, 223, 0.22)');
+      gradientTotal.addColorStop(1, 'rgba(78, 115, 223, 0.00)');
+
+      const gradientNew = ctx.createLinearGradient(0, 0, 0, 100);
+      gradientNew.addColorStop(0, 'rgba(96, 165, 250, 0.20)');
+      gradientNew.addColorStop(1, 'rgba(96, 165, 250, 0.00)');
+
+      visitorTrafficLineChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: visitorTrendLabels,
+          datasets: [
+            {
+              label: 'Total visitor',
+              data: visitorTrendTotal,
+              borderColor: '#4e73df',
+              borderWidth: 2.5,
+              backgroundColor: gradientTotal,
+              fill: true,
+              tension: 0.35,
+              pointRadius: 2.5,
+              pointHoverRadius: 5,
+              pointHoverBackgroundColor: '#4e73df',
+              pointHoverBorderColor: '#ffffff',
+              pointHoverBorderWidth: 2
+            },
+            {
+              label: 'New visitor',
+              data: visitorTrendNew,
+              borderColor: '#60a5fa',
+              borderWidth: 2,
+              backgroundColor: gradientNew,
+              fill: true,
+              tension: 0.35,
+              pointRadius: 2,
+              pointHoverRadius: 4.5,
+              pointHoverBackgroundColor: '#60a5fa',
+              pointHoverBorderColor: '#ffffff',
+              pointHoverBorderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: {
+            padding: { top: 4, bottom: 0, left: 0, right: 6 }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: {
+                font: { family: 'Poppins', size: 10, weight: '500' },
+                color: '#94a3b8',
+                maxRotation: 0,
+                autoSkip: true,
+                maxTicksLimit: 12
+              },
+              border: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: '#f8fafc',
+                drawBorder: false
+              },
+              ticks: {
+                font: { family: 'Poppins', size: 9.5, weight: '500' },
+                color: '#94a3b8',
+                precision: 0,
+                maxTicksLimit: 3
+              },
+              border: { display: false }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: '#1e293b',
+              padding: 9,
+              cornerRadius: 8,
+              titleFont: { family: 'Poppins', size: 11, weight: '500' },
+              bodyFont: { family: 'Poppins', size: 11 },
+              callbacks: {
+                label: function(context) {
+                  return ' ' + context.dataset.label + ': ' + context.parsed.y.toLocaleString();
+                }
+              }
+            }
+          }
+        }
+      });
+      window.visitorTrafficLineChart = visitorTrafficLineChart;
+    }
 
     function initUnifiedBarChart() {
       const canvas = document.getElementById('unifiedCleanBarChart');
@@ -1470,7 +1607,7 @@
                   return { family: 'Poppins', size: window.innerWidth < 576 ? 8.5 : 10.5, weight: '500' };
                 },
                 color: '#475569',
-                maxRotation: 45,
+                maxRotation: 28,
                 minRotation: 0,
                 autoSkip: false
               },
@@ -2136,6 +2273,7 @@
       initEarningSplineChart({{ $currentMonth }});
       initSalesAnalyticsDonut();
       initUnifiedBarChart();
+      initVisitorTrafficLineChart();
 
       const modal = document.getElementById('dateToDateModal');
       if (modal) {
