@@ -179,7 +179,8 @@
           @endforeach
         </div>
       @endif
-
+ 
+      
       <form action="{{ route('partner.login.submit') }}" method="POST">
         @csrf
 
