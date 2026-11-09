@@ -8,6 +8,8 @@ use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\PartnerApplicationController;
 use App\Http\Controllers\Web\SupportTicketController;
 use App\Models\AmcPlan;
+use App\Models\District;
+use App\Models\Division;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use Illuminate\Http\Request;
@@ -86,15 +88,35 @@ Route::get('/book/{service}', function (string $service) {
 Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
 Route::post('/book', [BookingController::class, 'store']);
 
-Route::get('/vendor', function () {
-    return view('web.pages.vendor');
-})->name('vendor');
-Route::get('/become-a-partner', function () {
-    return view('web.pages.vendor');
-})->name('become-a-partner');
+$vendorViewHandler = function () {
+    $serviceCategories = ServiceCategory::where('is_active', true)->orderBy('order')->get();
+    $activeDistricts = District::where('is_active', true)
+        ->with(['division', 'thanas' => function ($q) {
+            $q->where('is_active', true)->orderBy('name');
+        }])
+        ->orderBy('name')
+        ->get();
+
+    return view('web.pages.vendor', compact('serviceCategories', 'activeDistricts'));
+};
+
+Route::get('/vendor', $vendorViewHandler)->name('vendor');
+Route::get('/become-a-partner', $vendorViewHandler)->name('become-a-partner');
 Route::post('/vendor/apply', [PartnerApplicationController::class, 'store'])->name('vendor.apply');
 Route::post('/partner/register', [PartnerApplicationController::class, 'store'])->name('partner.register');
 Route::post('/become-a-partner/apply', [PartnerApplicationController::class, 'store']);
+
+Route::get('/api/locations/active', function () {
+    $divisions = Division::whereHas('districts', function ($q) {
+        $q->where('is_active', true);
+    })->with(['districts' => function ($q) {
+        $q->where('is_active', true)->with(['thanas' => function ($t) {
+            $t->where('is_active', true)->orderBy('name');
+        }])->orderBy('name');
+    }])->orderBy('name')->get();
+
+    return response()->json($divisions);
+})->name('api.locations.active');
 
 // Web Login Redirect (triggers modal on booking page or returns to intended redirect target)
 Route::get('/login', function (Request $request) {

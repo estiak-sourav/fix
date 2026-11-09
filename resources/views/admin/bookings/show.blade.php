@@ -967,7 +967,14 @@
                              onmouseover="this.style.background='#eff6ff'" 
                              onmouseout="this.style.background='transparent'">
                           <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div style="font-weight:600; font-size:0.85rem; color:#1e293b;">{{ $crew->name }}</div>
+                            <div style="font-weight:600; font-size:0.85rem; color:#1e293b;">
+                              {{ $crew->name }}
+                              @if(!empty($crew->match_badge))
+                                <span style="font-size:0.68rem; font-weight:700; color:#047857; background:#ecfdf5; border:1px solid #a7f3d0; padding:1px 6px; border-radius:4px; margin-left:4px;">
+                                  {{ $crew->match_badge }}
+                                </span>
+                              @endif
+                            </div>
                             @if(!empty($crew->avail_label))
                               <span style="font-size:0.72rem; font-weight:600; color:{{ $crew->avail_color }}; background:#f8fafc; border:1px solid #e2e8f0; padding:1px 6px; border-radius:4px;">
                                 {{ $crew->avail_label }}
@@ -1125,6 +1132,57 @@
                   @endif
                 </div>
               </div>
+
+              <!-- Vendor Payout Settlement Card -->
+              @if($booking->partner || $booking->partner_payout_amount)
+                @php
+                  $payoutAmt = (float) ($booking->partner_payout_amount ?? ($booking->partner ? $booking->partner->calculateBookingEarning($booking) : 0));
+                  $payoutStatus = $booking->partner_payout_status ?: 'unpaid';
+                  $payoutBadge = match($payoutStatus) {
+                    'paid' => ['bg' => '#ecfdf5', 'color' => '#047857', 'label' => 'Paid'],
+                    'processing' => ['bg' => '#eff6ff', 'color' => '#2563eb', 'label' => 'Processing'],
+                    default => ['bg' => '#fef2f2', 'color' => '#b91c1c', 'label' => 'Unpaid / Due'],
+                  };
+                @endphp
+                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <span style="font-size:0.72rem; color:#92400e; text-transform:uppercase; font-weight:700;">Vendor Payout Settlement</span>
+                    <span style="background:{{ $payoutBadge['bg'] }}; color:{{ $payoutBadge['color'] }}; font-size:0.72rem; font-weight:800; padding:2px 8px; border-radius:12px; border:1px solid currentColor;">
+                      {{ $payoutBadge['label'] }}
+                    </span>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:2px;">
+                    <div>
+                      <div style="font-size:1.2rem; font-weight:800; color:#b45309;">
+                        ৳ {{ number_format($payoutAmt, 2) }}
+                      </div>
+                      <div style="font-size:0.75rem; color:#92400e; margin-top:2px;">
+                        @if($booking->partner_payout_status === 'paid' && $booking->partner_payout_paid_at)
+                          Settled: {{ $booking->partner_payout_paid_at->format('M d, Y') }} via {{ strtoupper($booking->partner_payout_method ?: 'Bank') }}
+                          @if($booking->partner_payout_reference)
+                            <span style="color:#64748b;">(Ref: {{ $booking->partner_payout_reference }})</span>
+                          @endif
+                        @else
+                          Disbursement Pending
+                        @endif
+                      </div>
+                    </div>
+
+                    @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+                      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="padding:4px 10px; font-size:0.78rem;" onclick="openPayoutModal()">
+                        Update Payout
+                      </button>
+                    @endif
+                  </div>
+
+                  @if($booking->partner_payout_notes)
+                    <div style="font-size:0.75rem; color:#78350f; background:#fef3c7; border-radius:6px; padding:6px 10px; margin-top:8px;">
+                      <strong>Note:</strong> {{ $booking->partner_payout_notes }}
+                    </div>
+                  @endif
+                </div>
+              @endif
 
               @if($booking->is_amc)
                 <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:12px;">
@@ -1349,7 +1407,14 @@
                                  onmouseover="this.style.background='#eff6ff'" 
                                  onmouseout="this.style.background='transparent'">
                               <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div style="font-weight:600; font-size:0.85rem; color:#1e293b;">{{ $crew->name }}</div>
+                                <div style="font-weight:600; font-size:0.85rem; color:#1e293b;">
+                                  {{ $crew->name }}
+                                  @if(!empty($crew->match_badge))
+                                    <span style="font-size:0.68rem; font-weight:700; color:#047857; background:#ecfdf5; border:1px solid #a7f3d0; padding:1px 6px; border-radius:4px; margin-left:4px;">
+                                      {{ $crew->match_badge }}
+                                    </span>
+                                  @endif
+                                </div>
                                 @if(!empty($crew->avail_label))
                                   <span style="font-size:0.72rem; font-weight:600; color:{{ $crew->avail_color }}; background:#f8fafc; border:1px solid #e2e8f0; padding:1px 6px; border-radius:4px;">
                                     {{ $crew->avail_label }}
@@ -1879,6 +1944,82 @@
     }
     function closeCollectBillModal() {
       const modal = document.getElementById('collectAmcBillModal');
+      if (modal) modal.style.display = 'none';
+    }
+  </script>
+
+  <!-- Vendor Payout Settlement Modal -->
+  <div id="payoutSettlementModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#ffffff; border-radius:14px; max-width:480px; width:100%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2); border:1px solid var(--paces-border); overflow:hidden;">
+      <div style="padding:1.25rem 1.5rem; border-bottom:1px solid var(--paces-border); display:flex; justify-content:space-between; align-items:center; background:#fffbeb;">
+        <div>
+          <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:#78350f;">Vendor Payout Settlement</h3>
+          <div style="font-size:0.75rem; color:#92400e; margin-top:2px;">Work Order #{{ $booking->booking_number }} • {{ $booking->partner?->company_name ?? 'Vendor' }}</div>
+        </div>
+        <button type="button" onclick="closePayoutModal()" style="background:none; border:none; color:#64748b; font-size:1.2rem; cursor:pointer;">✕</button>
+      </div>
+
+      <form method="POST" action="{{ route('admin.bookings.partner-payout', $booking) }}" style="padding:1.5rem;">
+        @csrf
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1rem;">
+          <div>
+            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Payout Amount (৳) *</label>
+            <input type="number" step="0.01" name="partner_payout_amount" value="{{ old('partner_payout_amount', $booking->partner_payout_amount ?? ($booking->partner ? $booking->partner->calculateBookingEarning($booking) : 0)) }}" class="form-control-paces" required>
+          </div>
+          <div>
+            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Payout Status *</label>
+            <select name="partner_payout_status" class="form-control-paces" required>
+              <option value="unpaid" {{ old('partner_payout_status', $booking->partner_payout_status) === 'unpaid' ? 'selected' : '' }}>Unpaid / Due</option>
+              <option value="processing" {{ old('partner_payout_status', $booking->partner_payout_status) === 'processing' ? 'selected' : '' }}>Processing</option>
+              <option value="paid" {{ old('partner_payout_status', $booking->partner_payout_status) === 'paid' ? 'selected' : '' }}>Paid / Disbursed</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1rem;">
+          <div>
+            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Disbursement Method</label>
+            <select name="partner_payout_method" class="form-control-paces">
+              <option value="bank" {{ old('partner_payout_method', $booking->partner_payout_method) === 'bank' ? 'selected' : '' }}>Bank Transfer / Cheque</option>
+              <option value="bkash" {{ old('partner_payout_method', $booking->partner_payout_method) === 'bkash' ? 'selected' : '' }}>bKash</option>
+              <option value="nagad" {{ old('partner_payout_method', $booking->partner_payout_method) === 'nagad' ? 'selected' : '' }}>Nagad</option>
+              <option value="rocket" {{ old('partner_payout_method', $booking->partner_payout_method) === 'rocket' ? 'selected' : '' }}>Rocket</option>
+              <option value="cash" {{ old('partner_payout_method', $booking->partner_payout_method) === 'cash' ? 'selected' : '' }}>Cash Handover</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Paid Date</label>
+            <input type="date" name="partner_payout_paid_at" value="{{ old('partner_payout_paid_at', $booking->partner_payout_paid_at ? $booking->partner_payout_paid_at->format('Y-m-d') : date('Y-m-d')) }}" class="form-control-paces">
+          </div>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Txn ID / Cheque Reference</label>
+          <input type="text" name="partner_payout_reference" value="{{ old('partner_payout_reference', $booking->partner_payout_reference) }}" placeholder="e.g. TrxID 9H82J1 or Cheque #12345" class="form-control-paces">
+        </div>
+
+        <div style="margin-bottom:1.25rem;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Settlement Remarks</label>
+          <textarea name="partner_payout_notes" rows="2" placeholder="Remarks or notes for this payout..." class="form-control-paces">{{ old('partner_payout_notes', $booking->partner_payout_notes) }}</textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onclick="closePayoutModal()" class="btn-paces btn-paces-outline btn-paces-sm">Cancel</button>
+          <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:600; padding:6px 16px;">
+            ✓ Save Settlement
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openPayoutModal() {
+      const modal = document.getElementById('payoutSettlementModal');
+      if (modal) modal.style.display = 'flex';
+    }
+    function closePayoutModal() {
+      const modal = document.getElementById('payoutSettlementModal');
       if (modal) modal.style.display = 'none';
     }
   </script>

@@ -15,54 +15,58 @@
     </div>
   </div>
 
-  <!-- 4 Compact Revenue KPI Highlights -->
-  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:14px; margin-bottom:1.5rem;">
-    <!-- Total Revenue -->
+  <!-- Revenue & Vendor Payout KPI Highlights -->
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:1.5rem;">
+    <!-- Gross Revenue -->
     <div class="card-paces" style="margin-bottom:0; padding:16px 18px; border-left:4px solid var(--paces-primary);">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:0.8rem; font-weight:500; color:var(--paces-text-muted); text-transform:uppercase;">Total Recorded Value</span>
-        <span style="font-size:1.25rem;">💰</span>
+        <span style="font-size:0.75rem; font-weight:700; color:var(--paces-text-muted); text-transform:uppercase;">Gross Client Billed</span>
+        <span style="font-size:1.15rem;">💰</span>
       </div>
-      <div style="font-size:1.65rem; font-weight:500; color:var(--paces-primary); margin:6px 0 2px;">
+      <div style="font-size:1.55rem; font-weight:800; color:var(--paces-primary); margin:6px 0 2px;">
         ৳ {{ number_format($totalRevenue, 2) }}
       </div>
-      <div style="font-size:0.75rem; color:var(--paces-text-muted);">Cumulative order gross</div>
+      <div style="font-size:0.72rem; color:var(--paces-text-muted);">Invoiced: ৳ {{ number_format($invoicedRevenue, 2) }}</div>
     </div>
 
-    <!-- Completed & Invoiced -->
-    <div class="card-paces" style="margin-bottom:0; padding:16px 18px; border-left:4px solid #16a34a;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:0.8rem; font-weight:500; color:#15803d; text-transform:uppercase;">Invoiced & Settled</span>
-        <span style="font-size:1.25rem;">✓</span>
-      </div>
-      <div style="font-size:1.65rem; font-weight:500; color:#16a34a; margin:6px 0 2px;">
-        ৳ {{ number_format($invoicedRevenue, 2) }}
-      </div>
-      <div style="font-size:0.75rem; color:var(--paces-text-muted);">Completed service executions</div>
-    </div>
-
-    <!-- Pipeline Estimated -->
+    <!-- Vendor Direct Cost -->
     <div class="card-paces" style="margin-bottom:0; padding:16px 18px; border-left:4px solid #f59e0b;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:0.8rem; font-weight:500; color:#b45309; text-transform:uppercase;">In-Flight Pipeline</span>
-        <span style="font-size:1.25rem;">⏳</span>
+        <span style="font-size:0.75rem; font-weight:700; color:#b45309; text-transform:uppercase;">Vendor Payout Costs</span>
+        <span style="font-size:1.15rem;">👷</span>
       </div>
-      <div style="font-size:1.65rem; font-weight:500; color:#b45309; margin:6px 0 2px;">
-        ৳ {{ number_format($pendingPipeline, 2) }}
+      <div style="font-size:1.55rem; font-weight:800; color:#b45309; margin:6px 0 2px;">
+        ৳ {{ number_format($totalVendorCost, 2) }}
       </div>
-      <div style="font-size:0.75rem; color:var(--paces-text-muted);">Active / scheduled work value</div>
+      <div style="font-size:0.72rem; color:var(--paces-text-muted);">
+        Paid: ৳ {{ number_format($settledVendorPayouts, 2) }} • Due: ৳ {{ number_format($pendingVendorPayouts, 2) }}
+      </div>
     </div>
 
-    <!-- Average Order Value (AOV) -->
+    <!-- Net Platform Margin -->
+    <div class="card-paces" style="margin-bottom:0; padding:16px 18px; border-left:4px solid #16a34a;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:0.75rem; font-weight:700; color:#15803d; text-transform:uppercase;">Net Platform Margin</span>
+        <span style="font-size:1.15rem;">📈</span>
+      </div>
+      <div style="font-size:1.55rem; font-weight:800; color:#16a34a; margin:6px 0 2px;">
+        ৳ {{ number_format($netPlatformMargin, 2) }}
+      </div>
+      <div style="font-size:0.72rem; color:var(--paces-text-muted);">
+        Margin: {{ $totalRevenue > 0 ? round(($netPlatformMargin / $totalRevenue) * 100, 1) : 0 }}% of gross
+      </div>
+    </div>
+
+    <!-- Pipeline In-Flight -->
     <div class="card-paces" style="margin-bottom:0; padding:16px 18px; border-left:4px solid #6366f1;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:0.8rem; font-weight:500; color:#4338ca; text-transform:uppercase;">Average Order Value</span>
-        <span style="font-size:1.25rem;">📊</span>
+        <span style="font-size:0.75rem; font-weight:700; color:#4338ca; text-transform:uppercase;">In-Flight Pipeline</span>
+        <span style="font-size:1.15rem;">⏳</span>
       </div>
-      <div style="font-size:1.65rem; font-weight:500; color:#4338ca; margin:6px 0 2px;">
-        ৳ {{ number_format($avgOrderValue, 2) }}
+      <div style="font-size:1.55rem; font-weight:800; color:#4338ca; margin:6px 0 2px;">
+        ৳ {{ number_format($pendingPipeline, 2) }}
       </div>
-      <div style="font-size:0.75rem; color:var(--paces-text-muted);">Per booking transaction average</div>
+      <div style="font-size:0.72rem; color:var(--paces-text-muted);">AOV: ৳ {{ number_format($avgOrderValue, 2) }}</div>
     </div>
   </div>
 
@@ -178,6 +182,131 @@
     </div>
   </div>
 
+  <!-- Vendor Payables Breakdown (কাকে কত পে করতে হবে) -->
+  <div class="card-paces" style="margin-bottom:1.5rem; padding:0; overflow:hidden;">
+    <div class="card-header-paces" style="padding:16px 20px; border-bottom:1px solid var(--paces-border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:#fffdf5;">
+      <div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h3 class="card-title-paces" style="margin:0; color:#b45309; font-size:1rem;">
+            👷 Vendor Payables & Outstanding Disbursements (কাকে কত পে করতে হবে)
+          </h3>
+          <span class="badge-paces" style="background:#fef3c7; color:#b45309; font-weight:700; padding:2px 10px; border-radius:12px; font-size:0.75rem;">
+            {{ $vendorPayables->where('pending_due', '>', 0)->count() }} Vendors with Dues
+          </span>
+        </div>
+        <p class="card-subtitle-paces" style="margin:2px 0 0; color:#78350f; font-size:0.8rem;">
+          Partner-by-partner payout calculation: completed work orders delivered, amounts disbursed, and current payable balances
+        </p>
+      </div>
+
+      <div style="text-align:right;">
+        <span style="font-size:0.75rem; color:#b45309; text-transform:uppercase; font-weight:700;">Total Pending Payables</span>
+        <div style="font-size:1.35rem; font-weight:800; color:#b45309;">
+          ৳ {{ number_format($pendingVendorPayouts, 2) }}
+        </div>
+      </div>
+    </div>
+
+    @if($vendorPayables->isEmpty())
+      <div style="text-align:center; padding:2.5rem 1rem; color:var(--paces-text-muted);">
+        <p style="margin:0; font-size:0.9rem;">No vendor payout records found.</p>
+      </div>
+    @else
+      <div class="table-responsive-paces">
+        <table class="table-paces">
+          <thead>
+            <tr>
+              <th>Vendor / Contractor</th>
+              <th>Trade Domain</th>
+              <th>Payment Destination</th>
+              <th style="text-align:center;">Delivered Orders</th>
+              <th style="text-align:right;">Total Earned</th>
+              <th style="text-align:right;">Total Disbursed</th>
+              <th style="text-align:right;">Payable Due (বকেয়া)</th>
+              <th style="text-align:center;">Payout Status</th>
+              <th style="text-align:right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($vendorPayables as $vp)
+              @php
+                $hasDue = $vp['pending_due'] > 0;
+              @endphp
+              <tr style="{{ $hasDue ? 'background:rgba(254, 243, 199, 0.15);' : '' }}">
+                <td>
+                  <div style="font-weight:700; color:var(--paces-text-dark); font-size:0.92rem;">
+                    <a href="{{ route('admin.partners.show', $vp['partner']) }}#payouts" style="color:inherit; text-decoration:none;">
+                      {{ $vp['company_name'] }}
+                    </a>
+                  </div>
+                  <div style="font-size:0.78rem; color:var(--paces-text-muted); display:flex; align-items:center; gap:6px; margin-top:2px;">
+                    <span>👤 {{ $vp['contact_person'] }}</span>
+                    <span>•</span>
+                    <span>📞 <a href="tel:{{ $vp['phone'] }}" style="color:inherit; text-decoration:none;">{{ $vp['phone'] }}</a></span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge-paces" style="background:#f1f5f9; color:#475569; font-weight:600; font-size:0.75rem; padding:3px 8px; border-radius:6px;">
+                    {{ $vp['trade_domain'] ?: 'Facility Service' }}
+                  </span>
+                </td>
+                <td>
+                  @if($vp['payment_method'] === 'bank' && !empty($vp['bank_name']))
+                    <div style="font-size:0.82rem; font-weight:600; color:var(--paces-text-dark);">🏦 {{ $vp['bank_name'] }}</div>
+                    <div style="font-size:0.72rem; color:var(--paces-text-muted); font-family:monospace;">
+                      A/C: {{ $vp['account_number'] }} • {{ $vp['account_holder'] }}
+                    </div>
+                  @elseif(!empty($vp['mfs_number']))
+                    <div style="font-size:0.82rem; font-weight:600; color:#d97706;">
+                      📱 {{ strtoupper($vp['payment_method']) }}: {{ $vp['mfs_number'] }}
+                    </div>
+                  @else
+                    <span style="font-size:0.78rem; color:var(--paces-text-muted);">Not configured</span>
+                  @endif
+                </td>
+                <td style="text-align:center;">
+                  <span style="font-weight:700; font-size:0.85rem;">{{ $vp['completed_count'] }}</span>
+                  @if($vp['unsettled_count'] > 0)
+                    <div style="font-size:0.7rem; color:#b45309; font-weight:600;">{{ $vp['unsettled_count'] }} unpaid</div>
+                  @else
+                    <div style="font-size:0.7rem; color:#16a34a; font-weight:500;">All settled</div>
+                  @endif
+                </td>
+                <td style="text-align:right; font-weight:600;">
+                  ৳ {{ number_format($vp['total_earned'], 2) }}
+                </td>
+                <td style="text-align:right; font-weight:600; color:#16a34a;">
+                  ৳ {{ number_format($vp['total_paid'], 2) }}
+                </td>
+                <td style="text-align:right;">
+                  <strong style="font-size:1rem; color:{{ $hasDue ? '#dc2626' : '#16a34a' }};">
+                    ৳ {{ number_format($vp['pending_due'], 2) }}
+                  </strong>
+                </td>
+                <td style="text-align:center;">
+                  @if($hasDue)
+                    <span class="badge-paces" style="background:#fee2e2; color:#dc2626; font-weight:700; font-size:0.72rem; padding:3px 10px; border-radius:12px;">
+                      Payment Due
+                    </span>
+                  @else
+                    <span class="badge-paces" style="background:#dcfce7; color:#16a34a; font-weight:700; font-size:0.72rem; padding:3px 10px; border-radius:12px;">
+                      ✓ Cleared
+                    </span>
+                  @endif
+                </td>
+                <td style="text-align:right;">
+                  <a href="{{ route('admin.partners.show', $vp['partner']) }}#payouts" class="btn-paces btn-paces-primary btn-paces-sm" style="padding:4px 10px; font-size:0.78rem;">
+                    Settle Payout →
+                  </a>
+                </td>
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    @endif
+  </div>
+
   <!-- Detailed Transactions & Work Orders Table -->
   <div class="card-paces" style="padding:0; overflow:hidden;">
     <div class="card-header-paces" style="padding:16px 20px; border-bottom:1px solid var(--paces-border);">
@@ -203,6 +332,7 @@
               <th>Location</th>
               <th>Order Date</th>
               <th>Billing Amount</th>
+              <th>Vendor Payout</th>
               <th>Order Status</th>
               <th style="text-align:right;">Actions</th>
             </tr>
@@ -212,6 +342,8 @@
               @php
                 $amount = $b->final_cost > 0 ? $b->final_cost : ($b->estimated_cost ?: 0);
                 $isFinal = $b->final_cost > 0;
+                $vPayout = (float) ($b->partner_payout_amount ?? ($b->partner ? $b->partner->calculateBookingEarning($b) : 0));
+                $vStatus = $b->partner_payout_status ?: 'unpaid';
               @endphp
               <tr>
                 <td style="font-weight:500; font-family:monospace; color:var(--paces-primary);">
@@ -243,6 +375,24 @@
                   <div style="font-size:0.7rem; color:var(--paces-text-muted);">
                     {{ $isFinal ? 'Invoiced Final' : 'Agreed Estimate' }}
                   </div>
+                </td>
+                <td>
+                  @if($b->partner_id || $vPayout > 0)
+                    <strong style="font-size:0.9rem; color:#b45309;">
+                      ৳ {{ number_format($vPayout, 2) }}
+                    </strong>
+                    <div style="margin-top:2px;">
+                      @if($vStatus === 'paid')
+                        <span class="badge-paces badge-paces-success" style="font-size:0.68rem; padding:1px 6px;">Paid</span>
+                      @elseif($vStatus === 'processing')
+                        <span class="badge-paces badge-paces-info" style="font-size:0.68rem; padding:1px 6px;">Processing</span>
+                      @else
+                        <span class="badge-paces badge-paces-secondary" style="font-size:0.68rem; padding:1px 6px;">Unpaid</span>
+                      @endif
+                    </div>
+                  @else
+                    <span style="font-size:0.75rem; color:var(--paces-text-muted);">Unassigned</span>
+                  @endif
                 </td>
                 <td>
                   <span class="badge-pill-paces {{ $b->status === 'completed' ? 'bg-success-subtle' : 'bg-primary-subtle' }}" style="font-size:0.72rem; font-weight:500;">

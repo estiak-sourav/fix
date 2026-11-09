@@ -11,6 +11,7 @@ use App\Models\AmcPlan;
 use App\Models\Booking;
 use App\Models\DailyAnalytics;
 use App\Models\OutreachTask;
+use App\Models\Partner;
 use App\Models\Service;
 use App\Models\SupportTicket;
 use App\Models\User;
@@ -833,6 +834,12 @@ class AdminDashboardController extends Controller
         $pendingPipeline = (float) $allOrders->whereIn('status', ['pending_review', 'accepted', 'assigned', 'in_progress'])->sum(fn ($b) => $b->estimated_cost ?: ($b->final_cost ?: 0));
         $avgOrderValue = $allOrders->count() > 0 ? round($totalRevenue / $allOrders->count(), 2) : 0;
 
+        // Vendor Payout Analytics
+        $totalVendorCost = (float) $allOrders->sum(fn ($b) => (float) ($b->partner_payout_amount ?: 0));
+        $settledVendorPayouts = (float) $allOrders->where('partner_payout_status', 'paid')->sum(fn ($b) => (float) ($b->partner_payout_amount ?: 0));
+        $pendingVendorPayouts = (float) $allOrders->where('partner_payout_status', '!=', 'paid')->whereNotNull('partner_id')->sum(fn ($b) => (float) ($b->partner_payout_amount ?: 0));
+        $netPlatformMargin = max(0.0, $totalRevenue - $totalVendorCost);
+
         // Breakdown by Service
         $revenueByService = $allOrders
             ->groupBy(fn ($b) => $b->service?->title ?? ($b->amcPlan?->name ?? 'Custom Service'))
@@ -859,12 +866,61 @@ class AdminDashboardController extends Controller
 
         $servicesList = Service::where('is_active', true)->orderBy('title')->get(['id', 'title']);
 
+        // Vendor Payables Breakdown (Who is owed how much / কাকে কত পে করতে হবে)
+        $vendorPayables = Partner::whereHas('bookings', function ($q) {
+            $q->where('status', 'completed');
+        })
+            ->with(['bookings' => function ($q) {
+                $q->where('status', 'completed')
+                    ->select(['id', 'partner_id', 'status', 'partner_payout_amount', 'partner_payout_status', 'final_cost', 'estimated_cost', 'partner_worked_hours', 'booking_number', 'completed_at', 'created_at']);
+            }])
+            ->get()
+            ->map(function ($partner) {
+                $totalEarned = (float) $partner->bookings->sum(function ($b) use ($partner) {
+                    return (float) ($b->partner_payout_amount ?? $partner->calculateBookingEarning($b));
+                });
+
+                $totalPaid = (float) $partner->bookings->where('partner_payout_status', 'paid')->sum(function ($b) use ($partner) {
+                    return (float) ($b->partner_payout_amount ?? $partner->calculateBookingEarning($b));
+                });
+
+                $pendingDue = max(0.0, $totalEarned - $totalPaid);
+                $unsettledCount = $partner->bookings->where('partner_payout_status', '!=', 'paid')->count();
+
+                return [
+                    'partner' => $partner,
+                    'company_name' => $partner->company_name,
+                    'contact_person' => $partner->contact_person,
+                    'phone' => $partner->phone,
+                    'trade_domain' => $partner->trade_domain,
+                    'partner_type' => $partner->partner_type,
+                    'payment_method' => $partner->payment_method,
+                    'bank_name' => $partner->bank_name,
+                    'account_number' => $partner->account_number,
+                    'account_holder' => $partner->account_holder,
+                    'branch_name' => $partner->branch_name,
+                    'mfs_number' => $partner->mfs_number,
+                    'payout_terms' => $partner->payout_terms,
+                    'total_earned' => $totalEarned,
+                    'total_paid' => $totalPaid,
+                    'pending_due' => $pendingDue,
+                    'unsettled_count' => $unsettledCount,
+                    'completed_count' => $partner->bookings->count(),
+                ];
+            })
+            ->sortByDesc('pending_due')
+            ->values();
+
         return view('admin.analytics.earnings', compact(
             'bookings',
             'totalRevenue',
             'invoicedRevenue',
             'pendingPipeline',
             'avgOrderValue',
+            'totalVendorCost',
+            'settledVendorPayouts',
+            'pendingVendorPayouts',
+            'netPlatformMargin',
             'revenueByService',
             'revenueByDivision',
             'range',
@@ -872,7 +928,8 @@ class AdminDashboardController extends Controller
             'serviceId',
             'paymentStatus',
             'search',
-            'servicesList'
+            'servicesList',
+            'vendorPayables'
         ));
     }
 }

@@ -294,8 +294,23 @@
         toast.style.opacity = '0';
         toast.style.transition = 'opacity 0.3s ease';
         setTimeout(() => toast.remove(), 300);
-      }, 6000);
+      }, 4000);
     }
+
+    // Auto-dismiss alert banners after 4 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+      const alerts = document.querySelectorAll('[data-alert]');
+      alerts.forEach(function(alert) {
+        setTimeout(function() {
+          alert.style.transition = 'opacity 0.35s ease, transform 0.35s ease, max-height 0.35s ease, margin 0.35s ease, padding 0.35s ease';
+          alert.style.opacity = '0';
+          alert.style.transform = 'translateY(-6px)';
+          setTimeout(function() {
+            if (alert && alert.parentElement) alert.remove();
+          }, 360);
+        }, 4000);
+      });
+    });
 
     setInterval(pollAdminAlerts, 4000);
   </script>

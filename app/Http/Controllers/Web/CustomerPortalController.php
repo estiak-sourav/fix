@@ -28,9 +28,15 @@ class CustomerPortalController extends Controller
     {
         $user = Auth::guard('web')->user();
         $bookings = Booking::where('user_id', $user->id)
-            ->with(['service', 'amcPlan', 'statusLogs' => fn ($q) => $q->where('is_customer_visible', true)->latest()])
+            ->with([
+                'service',
+                'amcPlan',
+                'partner',
+                'assignedCrew',
+                'statusLogs' => fn ($q) => $q->where('is_customer_visible', true)->latest(),
+            ])
             ->latest()
-            ->paginate(10);
+            ->paginate(20);
 
         return view('web.pages.customer.my-bookings', compact('bookings'));
     }

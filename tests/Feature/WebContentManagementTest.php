@@ -538,4 +538,77 @@ class WebContentManagementTest extends TestCase
         $response->assertSee('View on Website');
         $response->assertDontSee('Live Preview:');
     }
+
+    /**
+     * Test CMS hero image guidelines and 600 KB size validation.
+     */
+    public function test_cms_hero_image_guidelines_and_600kb_limit_validation(): void
+    {
+        // 1. Check CMS page displays recommended aspect ratio and 600 KB notice
+        $cmsResponse = $this->actingAs($this->admin, 'admin')->get(route('admin.web.contents'));
+        $cmsResponse->assertStatus(200);
+        $cmsResponse->assertSee('Recommended Aspect Ratio: 4:3');
+        $cmsResponse->assertSee('Maximum file size: 600 KB per image');
+
+        $heroSection = SiteContent::where('section_key', 'hero')->firstOrFail();
+
+        // 2. Uploading an oversized image (> 600 KB, e.g. 700 KB) fails validation
+        $oversizedImage = UploadedFile::fake()->create('huge_slide.jpg', 700, 'image/jpeg');
+        $failResponse = $this->actingAs($this->admin, 'admin')->post(
+            route('admin.web.contents.update', $heroSection),
+            [
+                'title' => $heroSection->title,
+                'hero_images' => [$oversizedImage],
+            ]
+        );
+        $failResponse->assertSessionHasErrors(['hero_images.0']);
+
+        // 3. Uploading a valid image (<= 600 KB, e.g. 350 KB) succeeds
+        $validImage = UploadedFile::fake()->create('good_slide.jpg', 350, 'image/jpeg');
+        $successResponse = $this->actingAs($this->admin, 'admin')->post(
+            route('admin.web.contents.update', $heroSection),
+            [
+                'title' => $heroSection->title,
+                'hero_images' => [$validImage],
+            ]
+        );
+        $successResponse->assertRedirect();
+        $successResponse->assertSessionHas('success');
+
+        // Clean up uploaded test slide if created
+        $heroSection->refresh();
+        $slides = $heroSection->meta_data['slides'] ?? [];
+        foreach ($slides as $slide) {
+            if (str_contains($slide, 'good_slide') || str_contains($slide, 'hero_')) {
+                $p = public_path($slide);
+                if (file_exists($p) && ! str_contains($slide, 'slide_1') && ! str_contains($slide, 'slide_2') && ! str_contains($slide, 'slide_3')) {
+                    @unlink($p);
+                }
+            }
+        }
+    }
+
+    /**
+     * Test homepage hero slider uses 4:3 aspect ratio across responsive viewports.
+     */
+    public function test_homepage_hero_slider_uses_consistent_4_to_3_aspect_ratio(): void
+    {
+        $response = $this->get(route('home'));
+        $response->assertStatus(200);
+        $response->assertSee('aspect-ratio: 4 / 3', false);
+    }
+
+    /**
+     * Test homepage hero floating card has compact mobile overlap styling and trust badge spacing.
+     */
+    public function test_homepage_hero_floating_card_has_compact_mobile_overlap(): void
+    {
+        $response = $this->get(route('home'));
+        $response->assertStatus(200);
+        $response->assertSee('position: absolute !important;', false);
+        $response->assertSee('bottom: -28px !important;', false);
+        $response->assertSee('max-width: 220px !important;', false);
+        $response->assertSee('margin-top: -1.5rem !important;', false);
+        $response->assertSee('Quality Guaranteed');
+    }
 }

@@ -232,6 +232,27 @@
         btn.textContent = 'Show';
       }
     }
+
+    // Auto-dismiss alert messages after 4 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach(function(alert) {
+        setTimeout(function() {
+          alert.style.transition = 'opacity 0.35s ease, transform 0.35s ease, max-height 0.35s ease, margin 0.35s ease, padding 0.35s ease';
+          alert.style.opacity = '0';
+          alert.style.transform = 'translateY(-6px)';
+          alert.style.maxHeight = '0';
+          alert.style.marginTop = '0';
+          alert.style.marginBottom = '0';
+          alert.style.paddingTop = '0';
+          alert.style.paddingBottom = '0';
+          alert.style.overflow = 'hidden';
+          setTimeout(function() {
+            alert.remove();
+          }, 360);
+        }, 4000);
+      });
+    });
   </script>
 </body>
 </html>

@@ -9,7 +9,7 @@
   <div id="hero-section" class="section-anchor-target"></div>
   <div class="container hero-grid">
     <div class="hero-content">
-      <h1 style="padding-bottom: 160px;">{!! $content->title ?? 'Your Trusted Partner for <span>Every Building</span> Service' !!}</h1>
+      <h1>{!! $content->title ?? 'Your Trusted Partner for <span>Every Building</span> Service' !!}</h1>
 
       <div class="hero-actions">
         <a href="{{ route('booking.create') }}" class="btn btn-accent btn-lg">
@@ -100,7 +100,9 @@
     overflow: hidden !important;
     border-radius: var(--radius-lg, 16px) !important;
     width: 100% !important;
-    min-height: 420px !important;
+    aspect-ratio: 4 / 3 !important;
+    min-height: unset !important;
+    height: auto !important;
     background: #0f172a !important;
     box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25) !important;
   }
@@ -125,6 +127,7 @@
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
+    object-position: center 25% !important;
     display: block !important;
   }
   .hero-slide-dots {
@@ -158,7 +161,7 @@
     padding: 0.55rem 0.95rem !important;
     gap: 0.7rem !important;
     max-width: 280px !important;
-    bottom: -15px !important;
+    bottom: -20px !important;
     left: -15px !important;
   }
   .floating-card-icon {
@@ -179,6 +182,215 @@
     font-size: 0.72rem !important;
     line-height: 1.25 !important;
     margin-bottom: 0 !important;
+  }
+
+  @media (min-width: 992px) {
+    .hero-media {
+      width: 100% !important;
+      max-width: 520px !important;
+      margin-left: auto !important;
+    }
+  }
+
+  /* Responsive Rules for Tablet & Mobile */
+  @media (max-width: 991px) {
+    .hero {
+      padding: 2.25rem 0 3.5rem !important;
+    }
+    .hero-grid {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 0 !important;
+    }
+    .hero-content {
+      display: contents !important;
+    }
+    .hero-content h1 {
+      order: 1 !important;
+      text-align: center !important;
+      font-size: 2.05rem !important;
+      line-height: 1.22 !important;
+      margin: 0 auto 1.15rem auto !important;
+      padding-bottom: 0 !important;
+      max-width: 540px !important;
+    }
+    /* Image section placed above booking service button */
+    .hero-media {
+      order: 2 !important;
+      width: 100% !important;
+      max-width: 380px !important;
+      margin: 0 auto 2.85rem auto !important;
+      position: relative !important;
+    }
+    .hero-slider-wrap {
+      aspect-ratio: 4 / 3 !important;
+      min-height: unset !important;
+      height: auto !important;
+      max-height: unset !important;
+      border-radius: 14px !important;
+    }
+    /* Floating Quality Guaranteed Card slightly overlapping bottom-left of image (like desktop view) */
+    .hero-floating-card {
+      position: absolute !important;
+      bottom: -28px !important;
+      left: -8px !important;
+      right: auto !important;
+      margin-top: 0 !important;
+      width: auto !important;
+      max-width: 220px !important;
+      padding: 0.42rem 0.68rem !important;
+      gap: 0.5rem !important;
+      background: rgba(255, 255, 255, 0.96) !important;
+      backdrop-filter: blur(10px) !important;
+      box-shadow: 0 10px 22px -4px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+      border: 1px solid rgba(255, 255, 255, 0.9) !important;
+      border-radius: 9px !important;
+      z-index: 5 !important;
+    }
+    .hero-floating-card .floating-card-icon {
+      width: 28px !important;
+      height: 28px !important;
+      border-radius: 6px !important;
+      flex-shrink: 0 !important;
+    }
+    .hero-floating-card .floating-card-icon svg {
+      width: 14px !important;
+      height: 14px !important;
+    }
+    .hero-floating-card .floating-card-text h4 {
+      font-size: 0.74rem !important;
+      font-weight: 700 !important;
+      margin-bottom: 1px !important;
+      line-height: 1.15 !important;
+      color: #0f172a !important;
+      white-space: nowrap !important;
+    }
+    .hero-floating-card .floating-card-text p {
+      font-size: 0.63rem !important;
+      line-height: 1.2 !important;
+      margin-bottom: 0 !important;
+      color: #475569 !important;
+      display: -webkit-box !important;
+      -webkit-line-clamp: 2 !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
+    }
+    .hero-slide-dots {
+      bottom: 10px !important;
+      right: 10px !important;
+      padding: 4px 8px !important;
+      z-index: 4 !important;
+    }
+    /* Booking and explore service buttons centered in the middle */
+    .hero-actions {
+      order: 3 !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      text-align: center !important;
+      width: 100% !important;
+      margin: 0 auto 1.5rem auto !important;
+      gap: 12px !important;
+    }
+    .trust-badges {
+      order: 4 !important;
+      width: 100% !important;
+      max-width: 440px !important;
+      margin: 0 auto 1.5rem auto !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+      padding-top: 1.25rem !important;
+    }
+    .quick-book-strip {
+      margin-top: -1.5rem !important;
+    }
+  }
+
+  @media (max-width: 540px) {
+    .hero-content h1 {
+      font-size: 1.75rem !important;
+      letter-spacing: -0.02em !important;
+    }
+    .hero-media {
+      max-width: 350px !important;
+      margin: 0 auto 2.75rem auto !important;
+    }
+    .hero-slider-wrap {
+      aspect-ratio: 4 / 3 !important;
+      min-height: unset !important;
+      height: auto !important;
+      max-height: unset !important;
+    }
+    .hero-floating-card {
+      bottom: -25px !important;
+      left: -4px !important;
+      max-width: 200px !important;
+      padding: 0.38rem 0.58rem !important;
+      gap: 0.45rem !important;
+      border-radius: 8px !important;
+    }
+    .hero-floating-card .floating-card-icon {
+      width: 26px !important;
+      height: 26px !important;
+    }
+    .hero-floating-card .floating-card-icon svg {
+      width: 13px !important;
+      height: 13px !important;
+    }
+    .hero-floating-card .floating-card-text h4 {
+      font-size: 0.70rem !important;
+    }
+    .hero-floating-card .floating-card-text p {
+      font-size: 0.59rem !important;
+      line-height: 1.16 !important;
+    }
+    .hero-actions {
+      flex-direction: column !important;
+      gap: 10px !important;
+    }
+    .hero-actions .btn {
+      width: 100% !important;
+      max-width: 290px !important;
+      padding: 0.8rem 1.4rem !important;
+      font-size: 0.95rem !important;
+      justify-content: center !important;
+      text-align: center !important;
+      margin: 0 auto !important;
+    }
+    .trust-badges {
+      gap: 0.75rem !important;
+      margin: 0 auto 1.25rem auto !important;
+    }
+    .quick-book-strip {
+      margin-top: -1.25rem !important;
+    }
+    .trust-badge-item {
+      font-size: 0.82rem !important;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .hero-media {
+      max-width: 300px !important;
+      margin: 0 auto 2.5rem auto !important;
+    }
+    .hero-floating-card {
+      left: 0 !important;
+      bottom: -22px !important;
+      max-width: 185px !important;
+      padding: 0.32rem 0.48rem !important;
+    }
+    .hero-floating-card .floating-card-text h4 {
+      font-size: 0.67rem !important;
+    }
+    .hero-floating-card .floating-card-text p {
+      font-size: 0.56rem !important;
+    }
+    .quick-book-strip {
+      margin-top: -1rem !important;
+    }
+  }
+      font-size: 0.56rem !important;
+    }
   }
 </style>
 

@@ -8,7 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class District extends Model
 {
-    protected $fillable = ['division_id', 'name', 'bn_name'];
+    protected $fillable = ['division_id', 'name', 'bn_name', 'is_active'];
+
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
 
     public function division(): BelongsTo
     {

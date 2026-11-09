@@ -436,7 +436,7 @@
     .p-table tbody tr:last-child td { border-bottom: none; }
     .p-table tbody tr:hover { background: #fafafa; }
 
-    /* Flash Alerts */
+    /* Flash Alerts & Toasts */
     .p-alert {
       padding: 12px 16px;
       border-radius: 10px;
@@ -447,9 +447,25 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: opacity 0.35s ease, transform 0.35s ease, max-height 0.35s ease, margin 0.35s ease, padding 0.35s ease;
+      overflow: hidden;
+      max-height: 120px;
     }
     .p-alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
     .p-alert-danger { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+    .p-alert-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+    .p-alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .p-alert.p-alert-hiding {
+      opacity: 0;
+      transform: translateY(-8px);
+      max-height: 0;
+      margin-top: 0;
+      margin-bottom: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-width: 0;
+    }
 
     /* Forms */
     .p-input {
@@ -651,24 +667,33 @@
     </div>
   </header>
 
-  <!-- Flash Alerts -->
-  <div style="max-width:1240px; margin:16px auto 0; padding:0 20px; width:100%;">
+  <!-- Flash Alerts / Toasts -->
+  <div id="pFlashAlertsContainer" style="max-width:1240px; margin:16px auto 0; padding:0 20px; width:100%;">
     @if(session('success'))
-      <div class="p-alert p-alert-success">
+      <div class="p-alert p-alert-success" data-auto-dismiss="4000">
         <div style="display:flex; align-items:center; gap:8px;">
           <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
           <span>{{ session('success') }}</span>
         </div>
-        <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:inherit;font-size:1.1rem;line-height:1;">&times;</button>
+        <button type="button" onclick="dismissPartnerAlert(this.closest('.p-alert'))" style="background:none;border:none;cursor:pointer;color:inherit;font-size:1.2rem;line-height:1;padding:0 4px;" aria-label="Close">&times;</button>
       </div>
     @endif
     @if(session('error'))
-      <div class="p-alert p-alert-danger">
+      <div class="p-alert p-alert-danger" data-auto-dismiss="4500">
         <div style="display:flex; align-items:center; gap:8px;">
           <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
           <span>{{ session('error') }}</span>
         </div>
-        <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:inherit;font-size:1.1rem;line-height:1;">&times;</button>
+        <button type="button" onclick="dismissPartnerAlert(this.closest('.p-alert'))" style="background:none;border:none;cursor:pointer;color:inherit;font-size:1.2rem;line-height:1;padding:0 4px;" aria-label="Close">&times;</button>
+      </div>
+    @endif
+    @if(session('info'))
+      <div class="p-alert p-alert-info" data-auto-dismiss="4000">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          <span>{{ session('info') }}</span>
+        </div>
+        <button type="button" onclick="dismissPartnerAlert(this.closest('.p-alert'))" style="background:none;border:none;cursor:pointer;color:inherit;font-size:1.2rem;line-height:1;padding:0 4px;" aria-label="Close">&times;</button>
       </div>
     @endif
   </div>
@@ -809,6 +834,62 @@
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') closeConfirmDialog();
     });
+
+    // Dismiss partner alert / toast with smooth fade & collapse animation
+    function dismissPartnerAlert(el) {
+      if (!el || el.classList.contains('p-alert-hiding')) return;
+      el.classList.add('p-alert-hiding');
+      setTimeout(function() {
+        if (el && el.parentElement) {
+          el.remove();
+        }
+      }, 360);
+    }
+    window.dismissPartnerAlert = dismissPartnerAlert;
+
+    // Auto-dismiss all flash alerts after a short delay (default: 4s)
+    document.addEventListener('DOMContentLoaded', function() {
+      const alerts = document.querySelectorAll('.p-alert[data-auto-dismiss], .p-alert');
+      alerts.forEach(function(alert) {
+        const timeout = parseInt(alert.getAttribute('data-auto-dismiss') || '4000', 10);
+        setTimeout(function() {
+          dismissPartnerAlert(alert);
+        }, timeout);
+      });
+    });
+
+    // Programmatic toast utility for dynamic partner actions
+    window.showPartnerToast = function(message, type = 'success', duration = 4000) {
+      let container = document.getElementById('pFlashAlertsContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'pFlashAlertsContainer';
+        container.style.cssText = 'max-width:1240px; margin:16px auto 0; padding:0 20px; width:100%;';
+        const main = document.querySelector('.p-main');
+        if (main && main.parentNode) {
+          main.parentNode.insertBefore(container, main);
+        } else {
+          document.body.prepend(container);
+        }
+      }
+      const toast = document.createElement('div');
+      const isSuccess = type === 'success';
+      toast.className = `p-alert p-alert-${isSuccess ? 'success' : (type === 'danger' || type === 'error' ? 'danger' : 'info')}`;
+      toast.setAttribute('data-auto-dismiss', duration);
+      toast.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px;">
+          ${isSuccess 
+            ? '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
+            : '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'}
+          <span>${message}</span>
+        </div>
+        <button type="button" onclick="dismissPartnerAlert(this.closest(\'.p-alert\'))" style="background:none;border:none;cursor:pointer;color:inherit;font-size:1.2rem;line-height:1;padding:0 4px;" aria-label="Close">&times;</button>
+      `;
+      container.appendChild(toast);
+      setTimeout(function() {
+        dismissPartnerAlert(toast);
+      }, duration);
+    };
   </script>
 
   {{ $scripts ?? '' }}

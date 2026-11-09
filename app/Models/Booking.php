@@ -59,6 +59,11 @@ class Booking extends Model
         'estimated_arrival_at',
         'partner_job_status',
         'partner_payout_amount',
+        'partner_payout_status',
+        'partner_payout_paid_at',
+        'partner_payout_method',
+        'partner_payout_reference',
+        'partner_payout_notes',
         'partner_worked_hours',
         'partner_notes',
         'completion_photos',
@@ -72,6 +77,7 @@ class Booking extends Model
             'completion_photos' => 'array',
             'partner_payout_amount' => 'decimal:2',
             'partner_worked_hours' => 'decimal:2',
+            'partner_payout_paid_at' => 'datetime',
             'preferred_date' => 'date',
             'contract_start_date' => 'date',
             'contract_end_date' => 'date',
@@ -114,6 +120,11 @@ class Booking extends Model
     public function assignedCrew(): BelongsTo
     {
         return $this->belongsTo(PartnerCrew::class, 'assigned_partner_crew_id');
+    }
+
+    public function assignedPartnerCrew(): BelongsTo
+    {
+        return $this->assignedCrew();
     }
 
     public function statusLogs(): HasMany

@@ -280,6 +280,103 @@ class AdminCmsController extends Controller
     }
 
     /**
+     * Service Categories List.
+     */
+    public function categories(): View
+    {
+        $categories = ServiceCategory::withCount('services')->orderBy('order')->get();
+
+        return view('admin.cms.categories.index', compact('categories'));
+    }
+
+    /**
+     * Store a newly created Service Category.
+     */
+    public function storeCategory(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:150', 'unique:service_categories,name'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'icon' => ['nullable', 'string', 'max:100'],
+            'order' => ['nullable', 'integer'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $slug = Str::slug($validated['name']);
+        $baseSlug = $slug;
+        $counter = 1;
+        while (ServiceCategory::where('slug', $slug)->exists()) {
+            $slug = "{$baseSlug}-{$counter}";
+            $counter++;
+        }
+
+        $category = ServiceCategory::create([
+            'name' => $validated['name'],
+            'slug' => $slug,
+            'description' => $validated['description'] ?? null,
+            'icon' => $validated['icon'] ?? 'wrench',
+            'order' => $validated['order'] ?? (ServiceCategory::max('order') + 1),
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        ActivityLogService::logService('category.create', "Created service category '{$category->name}'.", $category);
+
+        return redirect()->route('admin.web.categories')->with('success', "Category '{$category->name}' created successfully.");
+    }
+
+    /**
+     * Update an existing Service Category.
+     */
+    public function updateCategory(Request $request, ServiceCategory $category): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:150', 'unique:service_categories,name,'.$category->id],
+            'description' => ['nullable', 'string', 'max:500'],
+            'icon' => ['nullable', 'string', 'max:100'],
+            'order' => ['nullable', 'integer'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $category->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'icon' => $validated['icon'] ?? $category->icon,
+            'order' => $validated['order'] ?? $category->order,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        ActivityLogService::logService('category.update', "Updated service category '{$category->name}'.", $category);
+
+        return redirect()->route('admin.web.categories')->with('success', "Category '{$category->name}' updated successfully.");
+    }
+
+    /**
+     * Toggle Service Category Active Status.
+     */
+    public function toggleCategoryStatus(ServiceCategory $category): RedirectResponse
+    {
+        $category->update(['is_active' => ! $category->is_active]);
+        $statusStr = $category->is_active ? 'activated' : 'deactivated';
+        ActivityLogService::logService('category.status', "Category '{$category->name}' was {$statusStr}.", $category);
+
+        return redirect()->back()->with('success', "Category '{$category->name}' {$statusStr} successfully.");
+    }
+
+    /**
+     * Delete Service Category.
+     */
+    public function destroyCategory(ServiceCategory $category): RedirectResponse
+    {
+        $name = $category->name;
+        $category->services()->update(['category_id' => null]);
+        $category->delete();
+
+        ActivityLogService::logService('category.delete', "Deleted service category '{$name}'.");
+
+        return redirect()->route('admin.web.categories')->with('success', "Category '{$name}' deleted successfully.");
+    }
+
+    /**
      * AMC Maintenance Packages List.
      */
     public function amcPlans(): View
@@ -485,7 +582,7 @@ class AdminCmsController extends Controller
             'secondary_button_text' => ['nullable', 'string', 'max:100'],
             'secondary_button_url' => ['nullable', 'string', 'max:255'],
             'media_path' => ['nullable', 'string', 'max:500'],
-            'hero_images.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
+            'hero_images.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:600'],
             'remove_slides' => ['nullable', 'array'],
             'section_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
             'floating_badge_title' => ['nullable', 'string', 'max:150'],
@@ -534,6 +631,10 @@ class AdminCmsController extends Controller
             'vision_desc' => ['nullable', 'string'],
             'values' => ['nullable', 'array'],
             'milestones' => ['nullable', 'array'],
+        ], [
+            'hero_images.*.max' => 'Each hero slide image must not exceed 600 KB.',
+            'hero_images.*.image' => 'Each hero slide file must be a valid image.',
+            'hero_images.*.mimes' => 'Each hero slide image must be a JPEG, PNG, JPG, or WEBP file.',
         ]);
 
         $meta = $content->meta_data ?? [];

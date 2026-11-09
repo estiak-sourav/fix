@@ -155,7 +155,51 @@ class AdminPartnerController extends Controller
      */
     public function show(Partner $partner): View
     {
-        return view('admin.partners.show', compact('partner'));
+        $partner->load([
+            'bookings' => function ($q) {
+                $q->with(['service', 'amcPlan', 'assignedCrew'])->latest();
+            },
+            'crews' => function ($q) {
+                $q->withCount('bookings')->latest();
+            },
+        ]);
+
+        $completedBookings = $partner->bookings->where('status', 'completed');
+
+        $totalEarned = (float) $completedBookings->sum(function ($b) use ($partner) {
+            return (float) ($b->partner_payout_amount ?? $partner->calculateBookingEarning($b));
+        });
+
+        $totalPaid = (float) $completedBookings->where('partner_payout_status', 'paid')->sum(function ($b) use ($partner) {
+            return (float) ($b->partner_payout_amount ?? $partner->calculateBookingEarning($b));
+        });
+
+        $pendingDue = max(0.0, $totalEarned - $totalPaid);
+        $unsettledCount = $completedBookings->where('partner_payout_status', '!=', 'paid')->count();
+        $activeJobsCount = $partner->bookings->whereIn('status', ['pending_review', 'accepted', 'assigned', 'in_progress'])->count();
+        $totalJobsCount = $partner->bookings->count();
+        $completedJobsCount = $completedBookings->count();
+
+        $avgRating = $partner->bookings->whereNotNull('review_rating')->avg('review_rating');
+        $reviewsCount = $partner->bookings->whereNotNull('review_rating')->count();
+
+        $crewsCount = $partner->crews->count();
+        $activeCrewsCount = $partner->crews->where('is_active', true)->count();
+
+        return view('admin.partners.show', compact(
+            'partner',
+            'totalEarned',
+            'totalPaid',
+            'pendingDue',
+            'unsettledCount',
+            'activeJobsCount',
+            'totalJobsCount',
+            'completedJobsCount',
+            'avgRating',
+            'reviewsCount',
+            'crewsCount',
+            'activeCrewsCount'
+        ));
     }
 
     /**

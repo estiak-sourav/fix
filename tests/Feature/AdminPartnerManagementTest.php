@@ -3,7 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\Booking;
 use App\Models\Partner;
+use App\Models\PartnerCrew;
+use App\Models\Service;
+use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -139,8 +143,8 @@ class AdminPartnerManagementTest extends TestCase
                 'Dhaka North (Uttara, Gulshan, Banani, Mirpur)',
                 'Gazipur & Tongi Industrial Belt',
                 'Savar, Ashulia & Dhaka EPZ',
+                'Mymensingh Industrial Zone',
             ],
-            'other_coverage_areas' => 'Mymensingh Industrial Zone',
         ];
 
         $response = $this->post(route('vendor.apply'), $payload);
@@ -218,5 +222,81 @@ class AdminPartnerManagementTest extends TestCase
         $this->assertStringContainsString('Nationwide / Pan-Bangladesh Coverage', $partner->coverage_areas);
         $this->assertStringContainsString('DEPZ Specialized Zone', $partner->coverage_areas);
         $updateResponse->assertRedirect(route('admin.partners.show', $partner));
+    }
+
+    public function test_admin_can_view_partner_show_page_with_tabbed_menu_and_payables(): void
+    {
+        $admin = Admin::first();
+        $partner = Partner::firstOrCreate([
+            'phone' => '+8801700000001',
+        ], [
+            'company_name' => 'Apex Cooling Engineering',
+            'contact_person' => 'Mofizul Islam',
+            'trade_domain' => 'HVAC & Central Air Conditioning',
+            'partner_type' => 'company',
+            'status' => 'approved',
+            'coverage_areas' => 'Dhaka Metro',
+        ]);
+
+        $crew = PartnerCrew::firstOrCreate([
+            'partner_id' => $partner->id,
+            'phone' => '+8801700000099',
+        ], [
+            'name' => 'Kabir Hossain',
+            'trade_skill' => 'AC Specialist',
+        ]);
+
+        $service = Service::first();
+        $user = User::first() ?? User::factory()->create();
+
+        Booking::create([
+            'booking_number' => Booking::generateBookingNumber(),
+            'user_id' => $user->id,
+            'partner_id' => $partner->id,
+            'service_id' => $service?->id,
+            'assigned_partner_crew_id' => $crew->id,
+            'customer_name' => 'Rahim Chowdhury',
+            'customer_email' => 'rahim@example.com',
+            'customer_phone' => '+8801711112233',
+            'property_type' => 'commercial',
+            'division' => 'Dhaka',
+            'district' => 'Dhaka',
+            'area' => 'Gulshan',
+            'street_address' => 'House 10, Road 5, Gulshan',
+            'preferred_date' => now()->toDateString(),
+            'preferred_time_slot' => '10:00 AM - 11:00 AM',
+            'urgency' => 'standard',
+            'problem_description' => 'Cooling system inspection.',
+            'status' => 'confirmed',
+            'service_type' => 'on_demand',
+            'total_amount' => 2500,
+            'partner_payout_amount' => 2000,
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->get(route('admin.partners.show', $partner));
+
+        $response->assertStatus(200);
+        $response->assertSee('Work History');
+        $response->assertSee('Payables & Financials', false);
+        $response->assertSee('Crew Members');
+        $response->assertSee('Admin & Payout Setup', false);
+        $response->assertSee('Business Profile & Docs', false);
+        $response->assertSee('Field Crew Status');
+        $response->assertSee('Payable Due');
+        $response->assertSee('Kabir Hossain');
+    }
+
+    public function test_admin_earnings_displays_vendor_payables_breakdown(): void
+    {
+        $admin = Admin::first();
+
+        $response = $this->actingAs($admin, 'admin')
+            ->get(route('admin.earnings.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Vendor Payables & Outstanding Disbursements', false);
+        $response->assertSee('কাকে কত পে করতে হবে');
+        $response->assertSee('Total Pending Payables');
     }
 }

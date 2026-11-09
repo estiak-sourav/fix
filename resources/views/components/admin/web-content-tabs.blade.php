@@ -9,6 +9,10 @@
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
     <span>Services</span>
   </a>
+  <a href="{{ route('admin.web.categories') }}" style="padding:0.6rem 1.15rem; font-size:0.88rem; font-weight:{{ $active === 'categories' ? '600' : '500' }}; color:{{ $active === 'categories' ? 'var(--paces-primary, #3e60d5)' : 'var(--paces-text-muted)' }}; text-decoration:none; border-bottom:2px solid {{ $active === 'categories' ? 'var(--paces-primary, #3e60d5)' : 'transparent' }}; display:flex; align-items:center; gap:6px; white-space:nowrap;">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect></svg>
+    <span>Categories</span>
+  </a>
   <a href="{{ route('admin.web.amc-plans') }}" style="padding:0.6rem 1.15rem; font-size:0.88rem; font-weight:{{ $active === 'amc_plans' ? '600' : '500' }}; color:{{ $active === 'amc_plans' ? 'var(--paces-primary, #3e60d5)' : 'var(--paces-text-muted)' }}; text-decoration:none; border-bottom:2px solid {{ $active === 'amc_plans' ? 'var(--paces-primary, #3e60d5)' : 'transparent' }}; display:flex; align-items:center; gap:6px; white-space:nowrap;">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
     <span>AMC Packages</span>

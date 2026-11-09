@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminBookingController;
 use App\Http\Controllers\Admin\AdminCmsController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminLocationController;
 use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\AdminOutreachTaskController;
 use App\Http\Controllers\Admin\AdminPartnerController;
@@ -103,6 +104,7 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
     Route::post('/bookings/{booking}/amc-bills/{invoice}/collect', [AdminBookingController::class, 'collectAmcBill'])->name('bookings.amc-bills.collect')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/amc-bills/generate', [AdminBookingController::class, 'generateNextAmcBill'])->name('bookings.amc-bills.generate')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/partner-payout', [AdminBookingController::class, 'updatePartnerPayout'])->name('bookings.partner-payout')->middleware('admin.can:bookings.edit');
 
     // Outreach Tasks Management (Automatic & Manual)
     Route::prefix('outreach-tasks')->name('outreach-tasks.')->group(function () {
@@ -111,6 +113,16 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
         Route::put('/{task}', [AdminOutreachTaskController::class, 'update'])->name('update')->middleware('admin.can:bookings.edit');
         Route::post('/{task}/complete', [AdminOutreachTaskController::class, 'complete'])->name('complete')->middleware('admin.can:bookings.edit');
         Route::delete('/{task}', [AdminOutreachTaskController::class, 'destroy'])->name('destroy')->middleware('admin.can:bookings.edit');
+    });
+
+    // Service Coverage & Operational Locations (Districts & Thanas)
+    Route::prefix('locations')->name('locations.')->group(function () {
+        Route::get('/', [AdminLocationController::class, 'index'])->name('index')->middleware('admin.can:locations.view');
+        Route::post('/districts/{district}/toggle', [AdminLocationController::class, 'toggleDistrict'])->name('districts.toggle')->middleware('admin.can:locations.edit');
+        Route::post('/thanas', [AdminLocationController::class, 'storeThana'])->name('thanas.store')->middleware('admin.can:locations.edit');
+        Route::put('/thanas/{thana}', [AdminLocationController::class, 'updateThana'])->name('thanas.update')->middleware('admin.can:locations.edit');
+        Route::post('/thanas/{thana}/toggle', [AdminLocationController::class, 'toggleThana'])->name('thanas.toggle')->middleware('admin.can:locations.edit');
+        Route::delete('/thanas/{thana}', [AdminLocationController::class, 'destroyThana'])->name('thanas.destroy')->middleware('admin.can:locations.edit');
     });
 
     // Support Tickets System
@@ -143,6 +155,13 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
         Route::put('/services/{service}', [AdminCmsController::class, 'updateService'])->name('services.update')->middleware('admin.can:services.edit');
         Route::post('/services/{service}/toggle-status', [AdminCmsController::class, 'toggleServiceStatus'])->name('services.toggle-status')->middleware('admin.can:services.edit');
         Route::delete('/services/{service}', [AdminCmsController::class, 'destroyService'])->name('services.destroy')->middleware('admin.can:services.edit');
+
+        // Service Categories (Dynamic Management)
+        Route::get('/categories', [AdminCmsController::class, 'categories'])->name('categories')->middleware('admin.can:services.view');
+        Route::post('/categories', [AdminCmsController::class, 'storeCategory'])->name('categories.store')->middleware('admin.can:services.edit');
+        Route::put('/categories/{category}', [AdminCmsController::class, 'updateCategory'])->name('categories.update')->middleware('admin.can:services.edit');
+        Route::post('/categories/{category}/toggle-status', [AdminCmsController::class, 'toggleCategoryStatus'])->name('categories.toggle-status')->middleware('admin.can:services.edit');
+        Route::delete('/categories/{category}', [AdminCmsController::class, 'destroyCategory'])->name('categories.destroy')->middleware('admin.can:services.edit');
 
         // AMC Packages
         Route::get('/amc-plans', [AdminCmsController::class, 'amcPlans'])->name('amc-plans')->middleware('admin.can:amc_plans.view');

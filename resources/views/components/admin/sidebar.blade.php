@@ -109,6 +109,16 @@
         </a>
       @endif
 
+      <!-- Service Coverage & Location Zones -->
+      @if($adminUser?->hasPermission('locations.view'))
+        <a href="{{ route('admin.locations.index') }}" class="nav-item {{ request()->routeIs('admin.locations.*') ? 'active' : '' }}" data-tooltip="Coverage Locations" title="Service Coverage & Locations">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          </span>
+          <span class="nav-text">Coverage Locations</span>
+        </a>
+      @endif
+
       <!-- Service Hub: Collapsible Submenu (Services + AMC Packages) -->
       @if($adminUser?->hasPermission('services.view') || $adminUser?->hasPermission('amc_plans.view'))
         <div class="nav-header">SERVICE & FACILITY</div>
@@ -130,6 +140,10 @@
               <a href="{{ route('admin.web.services') }}" class="nav-subitem {{ (request()->routeIs('admin.web.services*') || request()->routeIs('admin.cms.services*')) ? 'active' : '' }}">
                 <span class="nav-subdot"></span>
                 <span>Service List</span>
+              </a>
+              <a href="{{ route('admin.web.categories') }}" class="nav-subitem {{ request()->routeIs('admin.web.categories*') ? 'active' : '' }}">
+                <span class="nav-subdot"></span>
+                <span>Categories</span>
               </a>
             @endif
             @if($adminUser?->hasPermission('amc_plans.view'))

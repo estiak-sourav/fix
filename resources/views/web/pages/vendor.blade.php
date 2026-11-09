@@ -187,27 +187,30 @@
             </div>
 
             @php
-              $tradeDomainOptions = [
-                'Electrical & Substation Power',
-                'HVAC & Central Air Conditioning',
-                'Plumbing & Water Boosting Systems',
-                'Fire Safety & NFPA Suppression',
-                'Commercial Janitorial & Sanitization',
-                'Interior Fit-Out & Renovation',
-                'Pest Control & Vector Management',
-                'General Facility Maintenance',
-              ];
+              $categoriesList = isset($serviceCategories) && $serviceCategories->isNotEmpty()
+                ? $serviceCategories->pluck('name')->all()
+                : [
+                    'Electrical & Substation Power',
+                    'HVAC & Central Air Conditioning',
+                    'Plumbing & Water Boosting Systems',
+                    'Fire Safety & NFPA Suppression',
+                    'Commercial Janitorial & Sanitization',
+                    'Interior Fit-Out & Renovation',
+                    'General Facility Maintenance',
+                  ];
 
-              $coverageAreaOptions = [
-                'Dhaka North (Uttara, Gulshan, Banani, Mirpur)',
-                'Dhaka South (Dhanmondi, Motijheel, Old Dhaka)',
-                'Gazipur & Tongi Industrial Belt',
-                'Savar, Ashulia & Dhaka EPZ',
-                'Narayanganj & Keraniganj Industrial Area',
-                'Chattogram & Regional Industrial Corridor',
-                'Cumilla & Mymensingh Economic Zones',
-                'Nationwide / Pan-Bangladesh Coverage',
-              ];
+              $tradeDomainOptions = $categoriesList;
+
+              $coverageAreaOptions = isset($activeDistricts) && $activeDistricts->isNotEmpty()
+                ? $activeDistricts->map(fn($d) => $d->name.($d->division ? " ({$d->division->name})" : ''))->all()
+                : [
+                    'Dhaka (Dhaka)',
+                    'Gazipur (Dhaka)',
+                    'Chattogram (Chattogram)',
+                    'Narayanganj (Dhaka)',
+                    'Cumilla (Chattogram)',
+                    'Sylhet (Sylhet)',
+                  ];
 
               $rawOldDomains = old('trade_domain', []);
               $selectedDomains = is_array($rawOldDomains) ? $rawOldDomains : array_map('trim', explode(',', (string) $rawOldDomains));
@@ -237,7 +240,7 @@
             <div class="form-group" style="margin-bottom:1.5rem;">
               <label style="display:block; margin-bottom:0.6rem; font-weight:600;">
                 Operating Coverage Areas <span class="required">*</span>
-                <span style="font-weight:400; color:#64748b; font-size:0.85rem; margin-left:6px;">(Select all operational territories you cover)</span>
+                <span style="font-weight:400; color:#64748b; font-size:0.85rem; margin-left:6px;">(Select from FIX operating districts)</span>
               </label>
               <div class="competency-checkbox-grid">
                 @foreach($coverageAreaOptions as $area)
@@ -250,9 +253,6 @@
                     <span class="checkbox-label-text">{{ $area }}</span>
                   </label>
                 @endforeach
-              </div>
-              <div style="margin-top:12px;">
-                <input type="text" name="other_coverage_areas" value="{{ old('other_coverage_areas') }}" class="form-control" placeholder="Other specific areas or industrial zones (Optional)">
               </div>
             </div>
           </div>
@@ -321,14 +321,13 @@
       form.addEventListener('submit', function(e) {
         const domains = form.querySelectorAll('input[name="trade_domain[]"]:checked');
         const areas = form.querySelectorAll('input[name="coverage_areas[]"]:checked');
-        const otherArea = form.querySelector('input[name="other_coverage_areas"]');
         
         if (domains.length === 0) {
           e.preventDefault();
           alert('Please select at least one Primary Technical Domain.');
           return false;
         }
-        if (areas.length === 0 && (!otherArea || !otherArea.value.trim())) {
+        if (areas.length === 0) {
           e.preventDefault();
           alert('Please select at least one Operating Coverage Area.');
           return false;

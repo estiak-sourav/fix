@@ -3,7 +3,7 @@
  * Booking Page Interactive Flow
  */
 
-const BD_LOCATIONS = {
+const BD_LOCATIONS = window.BD_LOCATIONS || {
   "Dhaka": {
     "Dhaka City": [
       "Gulshan 1 & 2", "Banani", "Baridhara & DOHS", "Bashundhara R/A",
@@ -272,6 +272,10 @@ function initBookingForm() {
     }
   }
 
+  const initialOpt = categorySelect ? categorySelect.options[categorySelect.selectedIndex] : null;
+  const initialSrvTitle = initialOpt ? (initialOpt.dataset.title || initialOpt.text) : (categorySelect?.value || "");
+  updateAreaInputVisibility(initialSrvTitle);
+  updateProblemPlaceholder(initialSrvTitle);
   updateSidebarSummary();
 
   // Service Change Handler
@@ -279,11 +283,70 @@ function initBookingForm() {
     const opt = categorySelect.options[categorySelect.selectedIndex];
     const srvTitle = opt ? (opt.dataset.title || opt.text) : categorySelect.value;
     populateSpecificServices(srvTitle);
+    updateAreaInputVisibility(srvTitle);
+    updateProblemPlaceholder(srvTitle);
     updateSidebarSummary();
   });
 
   specificServiceSelect?.addEventListener("change", updateSidebarSummary);
   propertySelect?.addEventListener("change", updateSidebarSummary);
+
+  function isAreaBasedService(serviceTitle) {
+    if (!serviceTitle) return false;
+    const lower = serviceTitle.toLowerCase();
+    return lower.includes("clean") ||
+           lower.includes("sanitiz") ||
+           lower.includes("renovat") ||
+           lower.includes("interior") ||
+           lower.includes("paint") ||
+           lower.includes("carpet") ||
+           lower.includes("floor") ||
+           lower.includes("fit-out");
+  }
+
+  function updateAreaInputVisibility(serviceTitle) {
+    const sqftGroup = document.getElementById("sqftFormGroup");
+    const propertyRow = document.getElementById("propertySqftRow");
+    const sqftInput = document.getElementById("bookSqft");
+    if (!sqftGroup) return;
+
+    if (isAreaBasedService(serviceTitle)) {
+      sqftGroup.style.display = "block";
+      if (propertyRow) propertyRow.style.gridTemplateColumns = window.innerWidth <= 768 ? "1fr" : "1fr 1fr";
+    } else {
+      sqftGroup.style.display = "none";
+      if (sqftInput) sqftInput.value = "";
+      if (propertyRow) propertyRow.style.gridTemplateColumns = "1fr";
+    }
+  }
+
+  function updateProblemPlaceholder(serviceTitle) {
+    const descInput = document.getElementById("bookProblemDesc");
+    if (!descInput) return;
+    const lower = (serviceTitle || "").toLowerCase();
+
+    if (lower.includes("clean")) {
+      descInput.placeholder = "Please describe cleaning scope (e.g., 'Deep cleaning for 3-bedroom apartment, carpet shampooing, kitchen grease removal, or exterior glass wash').";
+    } else if (lower.includes("sanitiz")) {
+      descInput.placeholder = "Please describe sanitization scope (e.g., 'Hospital ward disinfection, cleanroom bio-decontamination, or clinical surface sterilization').";
+    } else if (lower.includes("renovat") || lower.includes("interior")) {
+      descInput.placeholder = "Please describe renovation scope (e.g., 'Full office interior fit-out, false ceiling repair, wall paint touch-up, or floor tiles replacement').";
+    } else if (lower.includes("electric") || lower.includes("power")) {
+      descInput.placeholder = "Please describe the electrical issue (e.g., 'Circuit breaker tripping repeatedly, burning smell in distribution board, or new power points installation').";
+    } else if (lower.includes("plumb") || lower.includes("sanitary")) {
+      descInput.placeholder = "Please describe the plumbing issue (e.g., 'Water leaking under bathroom tiles, booster pump not starting, or low water pressure on 4th floor').";
+    } else if (lower.includes("hvac") || lower.includes("air condition")) {
+      descInput.placeholder = "Please describe the AC issue (e.g., '2-ton Split AC blowing warm air, indoor unit dripping water, or annual master jet wash servicing required').";
+    } else if (lower.includes("generator") || lower.includes("ips")) {
+      descInput.placeholder = "Please describe the generator issue (e.g., '50 kVA diesel generator failing to auto-start during load shedding, routine oil/filter overhaul, or IPS battery backup dead').";
+    } else if (lower.includes("cctv") || lower.includes("surveillance")) {
+      descInput.placeholder = "Please describe surveillance requirement (e.g., 'Installation of 8 HD IP dome cameras, DVR hard disk replacement, or remote mobile viewing setup').";
+    } else if (lower.includes("fire")) {
+      descInput.placeholder = "Please describe fire safety requirement (e.g., 'Annual inspection and refill of 12 ABC powder fire extinguishers, smoke alarm beep troubleshooting, or hydrant testing').";
+    } else {
+      descInput.placeholder = "Please describe the issue or service scope in detail (e.g., 'Water leaking behind wall in master bathroom' or 'Central chiller AC making vibration noise in 3rd floor server room').";
+    }
+  }
 
   function populateSpecificServices(serviceTitle) {
     if (!specificServiceSelect) return;
@@ -562,8 +625,7 @@ function initLocationCascading() {
     const areas = BD_LOCATIONS[div][dist];
     areaSelect.disabled = false;
     areaSelect.innerHTML = `<option value="">Select Thana / Area...</option>` +
-      areas.map(a => `<option value="${a}" ${a === selectedArea ? 'selected' : ''}>${a}</option>`).join('') +
-      `<option value="Other Area" ${selectedArea === 'Other Area' ? 'selected' : ''}>Other Area / Specific Locality</option>`;
+      areas.map(a => `<option value="${a}" ${a === selectedArea ? 'selected' : ''}>${a}</option>`).join('');
   }
 
   divisionSelect.addEventListener("change", () => {

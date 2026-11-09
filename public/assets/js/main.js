@@ -754,6 +754,21 @@ function showToast(message) {
   }, 4000);
 }
 
+// Global auto-dismiss for [data-alert] flash banners across website
+document.addEventListener('DOMContentLoaded', () => {
+  const alerts = document.querySelectorAll('[data-alert]');
+  alerts.forEach(alert => {
+    setTimeout(() => {
+      alert.style.transition = 'opacity 0.35s ease, transform 0.35s ease, max-height 0.35s ease, margin 0.35s ease, padding 0.35s ease';
+      alert.style.opacity = '0';
+      alert.style.transform = 'translateY(-6px)';
+      setTimeout(() => {
+        if (alert && alert.parentElement) alert.remove();
+      }, 360);
+    }, 4000);
+  });
+});
+
 // Helpers
 function getServiceIcon(id) {
   switch (id) {

@@ -171,8 +171,8 @@
                 </div>
               </div>
 
-              <div class="form-row">
-                <div class="form-group">
+              <div class="form-row" id="propertySqftRow" style="grid-template-columns: 1fr;">
+                <div class="form-group" id="propertyTypeGroup">
                   <label for="bookProperty">Property Type <span class="required">*</span></label>
                   <select id="bookProperty" name="property_type" class="form-control" required>
                     <option value="Corporate Office" {{ old('property_type', auth()->user()?->property_type) == 'Corporate Office' ? 'selected' : '' }}>Corporate Office</option>
@@ -185,10 +185,11 @@
                   </select>
                 </div>
 
-                <div class="form-group">
-                  <label for="bookSqft">Estimated Area Size (sq ft)</label>
+                <div class="form-group" id="sqftFormGroup" style="display: none;">
+                  <label for="bookSqft">Estimated Area Size (sq ft) <span style="font-weight:400; color:var(--text-muted); font-size:0.75rem;">(Optional)</span></label>
                   <input type="number" id="bookSqft" name="estimated_sqft" class="form-control" 
-                    value="{{ old('estimated_sqft') }}" placeholder="e.g. 2400">
+                    value="{{ old('estimated_sqft') }}" placeholder="e.g. 2400" min="10" max="5000000">
+                  <small style="color:var(--text-muted); font-size:0.72rem; display:block; margin-top:4px;">Relevant for deep cleaning, sanitization, or renovation floor scope.</small>
                 </div>
               </div>
 
@@ -434,6 +435,7 @@
 
   <x-slot name="scripts">
     <script>
+      window.BD_LOCATIONS = @json($bdLocations ?? []);
       window.FIX_AUTH_USER = @json(auth()->user());
       window.IS_LOGGED_IN = {{ auth()->check() ? 'true' : 'false' }};
       window.FIX_SERVICES_DATA = {

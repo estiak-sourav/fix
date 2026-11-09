@@ -7,7 +7,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Thana extends Model
 {
-    protected $fillable = ['district_id', 'name', 'bn_name'];
+    protected $fillable = ['district_id', 'name', 'bn_name', 'is_active'];
+
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
 
     public function district(): BelongsTo
     {

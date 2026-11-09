@@ -26,7 +26,6 @@ class PartnerApplicationController extends Controller
             'technicians_count' => ['required', 'string', 'max:50'],
             'coverage_areas' => ['required'],
             'coverage_areas.*' => ['string', 'max:150'],
-            'other_coverage_areas' => ['nullable', 'string', 'max:255'],
         ], [
             'trade_domain.required' => 'Please select at least one primary technical domain.',
             'coverage_areas.required' => 'Please select at least one operating coverage area.',
@@ -36,18 +35,9 @@ class PartnerApplicationController extends Controller
             ? implode(', ', array_filter($request->input('trade_domain')))
             : (string) $request->input('trade_domain');
 
-        if (is_array($request->input('coverage_areas'))) {
-            $selectedAreas = array_filter($request->input('coverage_areas'));
-            if ($request->filled('other_coverage_areas')) {
-                $selectedAreas[] = trim((string) $request->input('other_coverage_areas'));
-            }
-            $coverageAreas = implode(', ', $selectedAreas);
-        } else {
-            $coverageAreas = (string) $request->input('coverage_areas');
-            if ($request->filled('other_coverage_areas')) {
-                $coverageAreas .= ', '.trim((string) $request->input('other_coverage_areas'));
-            }
-        }
+        $coverageAreas = is_array($request->input('coverage_areas'))
+            ? implode(', ', array_filter($request->input('coverage_areas')))
+            : (string) $request->input('coverage_areas');
 
         $partner = Partner::create([
             'company_name' => (string) $request->input('company_name'),

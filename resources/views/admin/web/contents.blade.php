@@ -756,8 +756,27 @@
                       @endforeach
                     </div>
                   @endif
-                  <label class="form-label-paces">Upload New Slide Images</label>
-                  <input type="file" name="hero_images[]" multiple class="form-control-paces" accept="image/jpeg,image/png,image/webp">
+                  <div style="margin-top:0.75rem; margin-bottom:0.5rem;">
+                    <label class="form-label-paces" style="font-weight:600; margin-bottom:0.35rem;">Upload New Slide Images</label>
+                    <div style="font-size:0.78rem; color:#334155; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:0.65rem 0.85rem; margin-bottom:0.65rem;">
+                      <div style="display:flex; align-items:flex-start; gap:8px;">
+                        <span style="font-size:1.1rem; line-height:1.2;">📐</span>
+                        <div>
+                          <div style="font-weight:600; color:#166534; margin-bottom:2px;">
+                            Recommended Aspect Ratio: 4:3 (e.g. 1200 &times; 900 px or 800 &times; 600 px)
+                          </div>
+                          <div style="color:#475569; line-height:1.4;">
+                            Both desktop and mobile views use a matching <strong>4:3 ratio</strong> for consistent framing. Exact ratio is flexible and not strictly blocked.
+                          </div>
+                          <div style="color:#b91c1c; font-weight:600; margin-top:4px;">
+                            ⚡ Maximum file size: 600 KB per image.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <input type="file" name="hero_images[]" id="heroImagesInput" multiple class="form-control-paces" accept="image/jpeg,image/png,image/jpg,image/webp" onchange="validateHeroImageFiles(this)">
+                    <div id="heroImageErrorNotice" style="display:none; color:#dc2626; font-size:0.78rem; font-weight:600; margin-top:0.35rem;"></div>
+                  </div>
                 </div>
               @endif
 
@@ -1303,6 +1322,32 @@
         const numSpan = r.querySelector('.video-item-number');
         if (numSpan) numSpan.textContent = idx + 1;
       });
+    }
+
+    function validateHeroImageFiles(input) {
+      const maxSize = 600 * 1024; // 600 KB
+      const errNotice = document.getElementById('heroImageErrorNotice');
+      if (errNotice) {
+        errNotice.style.display = 'none';
+        errNotice.textContent = '';
+      }
+
+      if (!input.files || input.files.length === 0) return;
+
+      for (let i = 0; i < input.files.length; i++) {
+        const file = input.files[i];
+        if (file.size > maxSize) {
+          const kb = (file.size / 1024).toFixed(1);
+          const msg = `Selected image "${file.name}" is ${kb} KB, exceeding the 600 KB maximum limit. Please compress or select an image under 600 KB.`;
+          if (errNotice) {
+            errNotice.textContent = msg;
+            errNotice.style.display = 'block';
+          }
+          alert(msg);
+          input.value = '';
+          return;
+        }
+      }
     }
 
     window.addEventListener('click', function(e) {

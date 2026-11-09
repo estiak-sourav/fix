@@ -80,6 +80,14 @@ class AdminPermissionService
                 'analytics.view' => 'View Regional Hotspots & Statistics',
             ],
         ],
+        'locations' => [
+            'name' => 'Service Coverage & Locations',
+            'description' => 'Manage operational districts, active service zones, and thanas/areas.',
+            'permissions' => [
+                'locations.view' => 'View Serviceable Districts & Thanas',
+                'locations.edit' => 'Toggle Active Districts, Add & Edit Thanas/Areas',
+            ],
+        ],
         'staff_management' => [
             'name' => 'Admin Staff & Role Permissions',
             'description' => 'Create admin staff, assign module access permissions, reset credentials.',

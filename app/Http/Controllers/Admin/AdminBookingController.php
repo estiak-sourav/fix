@@ -8,8 +8,10 @@ use App\Http\Requests\Admin\UpdateBookingStatusRequest;
 use App\Models\AmcInvoice;
 use App\Models\AmcPlan;
 use App\Models\Booking;
+use App\Models\BookingStatusLog;
 use App\Models\OutreachTask;
 use App\Models\Partner;
+use App\Models\PartnerNotification;
 use App\Models\User;
 use App\Services\ActivityLogService;
 use App\Services\NotificationDispatcher;
@@ -179,7 +181,23 @@ class AdminBookingController extends Controller
             ->orderBy('company_name')
             ->get();
 
-        $crewOptions = collect();
+        // Smart matching criteria based on booking district, area, service, and category
+        $bookingDistrict = strtolower(trim($booking->district ?? ''));
+        $bookingArea = strtolower(trim($booking->area ?? ''));
+        $bookingCat = strtolower(trim($booking->service?->category?->name ?? ''));
+        $bookingTitle = strtolower(trim($booking->service?->title ?? $booking->amcPlan?->name ?? ''));
+
+        // Stop words to exclude (generic property and service types, not trade domains)
+        $stopWords = ['service', 'services', 'facility', 'facilities', 'maintenance', 'system', 'systems', 'commercial', 'residential', 'industrial', 'package', 'packages', 'contract', 'annual', 'emergency', 'audit'];
+
+        $serviceKeywords = array_filter(
+            preg_split('/[\s,\/&]+/', $bookingCat.' '.$bookingTitle),
+            fn ($w) => strlen($w) > 3 && ! in_array(strtolower($w), $stopWords)
+        );
+
+        $matchingPartners = collect();
+        $otherPartners = collect();
+
         foreach ($enlistedPartners as $p) {
             $isOffline = $p->is_currently_offline || $p->leaves->where('start_at', '<=', now())->where('end_at', '>=', now())->isNotEmpty();
             $activeJob = $p->bookings->first();
@@ -202,19 +220,75 @@ class AdminBookingController extends Controller
                 $warningMsg = "Partner is marked unavailable ({$offlineReason}). Please confirm availability over phone ({$p->phone}) before assigning.";
             }
 
-            $crewOptions->push((object) [
+            // Check Area match
+            $pCoverage = strtolower($p->coverage_areas ?? '');
+            $isAreaMatch = empty($pCoverage)
+                || str_contains($pCoverage, 'nationwide')
+                || str_contains($pCoverage, 'pan-bangladesh')
+                || ($bookingDistrict && str_contains($pCoverage, $bookingDistrict))
+                || ($bookingArea && str_contains($pCoverage, $bookingArea));
+
+            // Check Trade / Domain match
+            $pDomain = strtolower($p->trade_domain ?? '');
+            $isDomainMatch = empty($pDomain)
+                || str_contains($pDomain, 'general')
+                || str_contains($pDomain, 'all')
+                || empty($serviceKeywords);
+
+            if (! $isDomainMatch) {
+                foreach ($serviceKeywords as $kw) {
+                    if (str_contains($pDomain, $kw)) {
+                        $isDomainMatch = true;
+                        break;
+                    }
+                }
+            }
+
+            $partnerOption = (object) [
                 'partner_id' => $p->id,
                 'name' => "{$p->company_name} — {$p->contact_person}",
                 'phone' => $p->phone,
                 'role' => ($p->isVendor() ? 'Vendor Agency' : 'Individual Solo Crew')." • {$p->trade_domain}",
                 'company_name' => $p->company_name,
                 'is_partner' => true,
+                'is_area_match' => $isAreaMatch,
+                'is_domain_match' => $isDomainMatch,
+                'is_full_match' => ($isAreaMatch && $isDomainMatch),
                 'avail_status' => $availStatus,
                 'avail_label' => $availLabel,
                 'avail_color' => $availColor,
                 'warning_msg' => $warningMsg,
-            ]);
+            ];
+
+            if ($isAreaMatch && $isDomainMatch) {
+                $matchingPartners->push($partnerOption);
+            } else {
+                $otherPartners->push($partnerOption);
+            }
         }
+
+        $crewOptions = collect();
+        // Dropdown: Only show vendors that service that area & trade domain
+        if ($matchingPartners->isNotEmpty()) {
+            foreach ($matchingPartners as $m) {
+                $m->match_badge = '✓ Matched Area & Trade';
+                $crewOptions->push($m);
+            }
+        } else {
+            // Fallback: If no partner matches both, show area or domain matching partners
+            foreach ($otherPartners as $op) {
+                $badges = [];
+                if ($op->is_area_match) {
+                    $badges[] = 'Area Match';
+                }
+                if ($op->is_domain_match) {
+                    $badges[] = 'Trade Match';
+                }
+                $op->match_badge = ! empty($badges) ? implode(' & ', $badges) : 'Unmatched';
+                $crewOptions->push($op);
+            }
+        }
+
         foreach ($fieldCrews as $u) {
             $crewOptions->push((object) [
                 'partner_id' => null,
@@ -223,6 +297,8 @@ class AdminBookingController extends Controller
                 'role' => ucfirst($u->role),
                 'company_name' => $u->company_name,
                 'is_partner' => false,
+                'is_full_match' => true,
+                'match_badge' => 'Internal Staff',
                 'avail_status' => 'available',
                 'avail_label' => 'Staff Crew',
                 'avail_color' => '#64748b',
@@ -235,8 +311,72 @@ class AdminBookingController extends Controller
         return view('admin.bookings.show', [
             'booking' => $booking,
             'fieldCrews' => $crewOptions,
+            'matchingCount' => $matchingPartners->count(),
             'amcPlans' => $amcPlans,
         ]);
+    }
+
+    /**
+     * Update vendor payout settlement details.
+     */
+    public function updatePartnerPayout(Request $request, Booking $booking): RedirectResponse
+    {
+        $validated = $request->validate([
+            'partner_payout_amount' => ['nullable', 'numeric', 'min:0'],
+            'partner_payout_status' => ['required', 'string', 'in:unpaid,processing,paid'],
+            'partner_payout_method' => ['nullable', 'string', 'max:50'],
+            'partner_payout_reference' => ['nullable', 'string', 'max:100'],
+            'partner_payout_notes' => ['nullable', 'string', 'max:1000'],
+            'partner_payout_paid_at' => ['nullable', 'date'],
+        ]);
+
+        $newStatus = $validated['partner_payout_status'];
+        $paidAt = ! empty($validated['partner_payout_paid_at']) ? Carbon::parse($validated['partner_payout_paid_at']) : null;
+        if ($newStatus === 'paid' && ! $paidAt) {
+            $paidAt = now();
+        }
+
+        $booking->update([
+            'partner_payout_amount' => $validated['partner_payout_amount'] ?? $booking->partner_payout_amount,
+            'partner_payout_status' => $newStatus,
+            'partner_payout_method' => $validated['partner_payout_method'] ?? $booking->partner_payout_method,
+            'partner_payout_reference' => $validated['partner_payout_reference'] ?? $booking->partner_payout_reference,
+            'partner_payout_notes' => $validated['partner_payout_notes'] ?? $booking->partner_payout_notes,
+            'partner_payout_paid_at' => $paidAt,
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+
+        // Create status log
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'from_status' => $booking->status,
+            'to_status' => $booking->status,
+            'comment' => "Vendor payout updated to '".strtoupper($newStatus)."' by {$admin?->name} (Amount: ৳".number_format((float) ($booking->partner_payout_amount ?: 0), 2).', Method: '.($booking->partner_payout_method ?: 'N/A').', Ref: '.($booking->partner_payout_reference ?: 'N/A').')',
+            'changed_by_admin_id' => $admin?->id,
+            'is_customer_visible' => false,
+        ]);
+
+        // If status marked as 'paid', send in-app notification to the partner
+        if ($newStatus === 'paid' && $booking->partner_id) {
+            PartnerNotification::create([
+                'partner_id' => $booking->partner_id,
+                'booking_id' => $booking->id,
+                'type' => 'payout_settled',
+                'title' => 'Payment Settled: ৳'.number_format((float) ($booking->partner_payout_amount ?: 0), 2),
+                'message' => 'Payment of ৳'.number_format((float) ($booking->partner_payout_amount ?: 0), 2)." for Work Order #{$booking->booking_number} has been disbursed via ".strtoupper($booking->partner_payout_method ?: 'Bank/MFS')." (Ref: {$booking->partner_payout_reference}).",
+                'action_url' => route('partner.payouts.index'),
+                'is_read' => false,
+            ]);
+        }
+
+        ActivityLogService::logBooking(
+            'booking.payout_update',
+            "Updated partner payout to '{$newStatus}' for booking #{$booking->booking_number} (৳{$booking->partner_payout_amount}).",
+            $booking
+        );
+
+        return redirect()->back()->with('success', "Partner payout settlement updated to '".strtoupper($newStatus)."' successfully.");
     }
 
     /**

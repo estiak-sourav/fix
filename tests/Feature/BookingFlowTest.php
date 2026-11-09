@@ -132,4 +132,17 @@ class BookingFlowTest extends TestCase
         $detailsResponse->assertStatus(200);
         $detailsResponse->assertSee('Delta HVAC Engineering');
     }
+
+    public function test_booking_page_has_conditional_area_sqft_field(): void
+    {
+        $response = $this->get('/booking');
+        $response->assertStatus(200);
+
+        // Asserts sqftFormGroup exists with conditional display none by default
+        $response->assertSee('id="propertySqftRow"', false);
+        $response->assertSee('id="sqftFormGroup"', false);
+        $response->assertSee('display: none;', false);
+        $response->assertSee('Estimated Area Size (sq ft)');
+        $response->assertSee('(Optional)');
+    }
 }

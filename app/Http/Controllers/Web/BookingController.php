@@ -6,6 +6,7 @@ use App\Actions\Booking\CreateBookingAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\StoreBookingRequest;
 use App\Models\AmcPlan;
+use App\Models\District;
 use App\Models\Service;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -23,10 +24,26 @@ class BookingController extends Controller
         $services = Service::where('is_active', true)->orderBy('order')->get();
         $amcPlans = AmcPlan::where('is_active', true)->orderBy('order')->get();
 
+        $activeDistricts = District::where('is_active', true)
+            ->with(['division', 'thanas' => function ($q) {
+                $q->where('is_active', true)->orderBy('name');
+            }])
+            ->orderBy('name')
+            ->get();
+
+        $bdLocations = [];
+        foreach ($activeDistricts as $dist) {
+            $divName = $dist->division?->name ?? 'Dhaka';
+            if (! isset($bdLocations[$divName])) {
+                $bdLocations[$divName] = [];
+            }
+            $bdLocations[$divName][$dist->name] = $dist->thanas->pluck('name')->values()->all();
+        }
+
         $selectedService = $request->query('service');
         $selectedPlan = $request->query('plan');
 
-        return view('web.pages.booking', compact('services', 'amcPlans', 'selectedService', 'selectedPlan'));
+        return view('web.pages.booking', compact('services', 'amcPlans', 'bdLocations', 'selectedService', 'selectedPlan'));
     }
 
     /**
