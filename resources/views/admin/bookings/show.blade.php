@@ -189,9 +189,15 @@
       </span>
 
       @if(auth('admin')->user()?->hasPermission('bookings.edit'))
-        <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="switchBookingTab('tab-manage-dispatch')">
-          ⚙️ Manage & Edit Dispatch
-        </button>
+        @if($booking->status === 'cancelled')
+          <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#16a34a; border-color:#16a34a; font-weight:700;" onclick="document.getElementById('restartWorkOrderModal').style.display='flex'">
+            🔄 Re-start Work Order
+          </button>
+        @else
+          <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="switchBookingTab('tab-manage-dispatch')">
+            ⚙️ Manage & Edit Dispatch
+          </button>
+        @endif
       @endif
     </div>
   </div>
@@ -239,14 +245,6 @@
           ⚡
         </div>
         <div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:#15803d; letter-spacing:0.04em;">
-              Operational Audit Timeline & Status Track
-            </span>
-            <span class="badge-pill-paces" style="background:#dcfce7; color:#166534; font-size:0.72rem; font-weight:800;">
-              ● {{ $booking->status_label }}
-            </span>
-          </div>
           <div style="font-size:1.15rem; font-weight:800; color:#0f172a; margin-top:2px;">
             @if($booking->status === 'pending_review')
               Awaiting Discussion with Client & Order Acceptance
@@ -269,7 +267,7 @@
             @endif
           </div>
 
-          @php $latestLog = $booking->statusLogs->last(); @endphp
+          @php $latestLog = $booking->statusLogs->sortByDesc('id')->first(); @endphp
           @if($latestLog)
             <div style="font-size:0.8rem; color:#475569; margin-top:3px;">
               <strong>Latest Audit Action:</strong> {{ $latestLog->changedByAdmin?->name ?? ($latestLog->changedByUser?->name ?? 'System Automated') }}
@@ -280,12 +278,6 @@
             </div>
           @endif
         </div>
-      </div>
-
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="switchBookingTab('tab-audit-logs')" style="font-weight:700; padding:8px 16px; background:#16a34a; border-color:#16a34a;">
-          📜 Full Audit Log ({{ $booking->statusLogs->count() }}) →
-        </button>
       </div>
     </div>
   </div>
@@ -353,15 +345,24 @@
       </div>
     </div>
   @else
-    <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:12px 16px; margin-bottom:1.25rem; display:flex; align-items:center; justify-content:space-between;">
+    <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:12px 18px; margin-bottom:1.25rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
       <div style="display:flex; align-items:center; gap:8px;">
         <span style="font-size:1.2rem; color:#dc2626;">✕</span>
-        <strong style="color:#991b1b; font-size:0.9rem;">Work Order Cancelled</strong>
-        @if($booking->cancellation_reason)
-          <span style="font-size:0.82rem; color:#7f1d1d;">• Reason: {{ $booking->cancellation_reason }}</span>
+        <div>
+          <strong style="color:#991b1b; font-size:0.9rem;">Work Order Cancelled</strong>
+          @if($booking->cancellation_reason)
+            <span style="font-size:0.82rem; color:#7f1d1d;">• Reason: {{ $booking->cancellation_reason }}</span>
+          @endif
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="background:#fee2e2; color:#b91c1c; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:10px;">Cancelled</span>
+        @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+          <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#16a34a; border-color:#16a34a; font-weight:700; display:inline-flex; align-items:center; gap:6px;" onclick="document.getElementById('restartWorkOrderModal').style.display='flex'">
+            <span>🔄 Re-start Work Order</span>
+          </button>
         @endif
       </div>
-      <span style="background:#fee2e2; color:#b91c1c; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:10px;">Cancelled</span>
     </div>
   @endif
 
@@ -579,6 +580,33 @@
 
       <!-- RIGHT: Active Operational Execution & Actions -->
       <div>
+        @if($booking->status === 'cancelled' && auth('admin')->user()?->hasPermission('bookings.edit'))
+          <!-- RE-START WORK ORDER CARD -->
+          <div class="card-paces" style="border:2px dashed #f87171; background:#fffafb; margin-bottom:1.5rem; padding:20px;">
+            <div style="display:flex; align-items:flex-start; gap:14px;">
+              <div style="width:42px; height:42px; border-radius:50%; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0;">
+                ✕
+              </div>
+              <div style="flex:1;">
+                <h4 style="margin:0 0 4px; font-size:1rem; font-weight:700; color:#991b1b;">
+                  Work Order Cancelled
+                </h4>
+                <p style="margin:0 0 12px; font-size:0.82rem; color:#7f1d1d; line-height:1.45;">
+                  This work order is currently cancelled. You can restart it to return it to <strong>Pending Review</strong>, discuss terms with the customer, re-accept the order, and dispatch to field crew.
+                </p>
+                @if($booking->cancellation_reason)
+                  <div style="background:#ffffff; border:1px solid #fecaca; border-radius:6px; padding:8px 12px; font-size:0.8rem; color:#991b1b; margin-bottom:14px;">
+                    <strong>Cancellation Reason:</strong> {{ $booking->cancellation_reason }}
+                  </div>
+                @endif
+                <button type="button" class="btn-paces btn-paces-primary" style="background:#16a34a; border-color:#16a34a; font-weight:700; display:inline-flex; align-items:center; gap:6px;" onclick="document.getElementById('restartWorkOrderModal').style.display='flex'">
+                  <span>🔄 Re-start Work Order</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        @endif
+
         @if($booking->status === 'pending_review' && auth('admin')->user()?->hasPermission('bookings.edit'))
           <!-- ACCEPT WORK ORDER CARD -->
           <div class="card-paces" style="border:2px solid #16a34a; margin-bottom:1.5rem;">
@@ -629,7 +657,7 @@
                       <input type="checkbox" name="is_estimated" id="isEstimatedCheckbox" value="1" {{ old('cost_type', $booking->cost_type) === 'estimated' ? 'checked' : '' }} onchange="toggleCostType(this.checked)" style="accent-color:var(--paces-primary); width:16px; height:16px;">
                       <span>Estimated Price (Subject to site verification)</span>
                     </label>
-                    <input type="hidden" name="cost_type" id="costTypeHidden" value="{{ old('cost_type', $booking->cost_type ?: 'final') }}">
+                    <input type="hidden" name="cost_type" id="costTypeHidden" value="{{ old('cost_type', $booking->cost_type === 'estimated' ? 'estimated' : 'final') }}">
                   </div>
                 </div>
 
@@ -878,14 +906,28 @@
 
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.25rem;">
             <div>
-              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Work Order Status *</label>
-              <select name="status" class="form-control-paces" id="workOrderStatusSelect" required>
-                @foreach(['pending_review' => 'Pending Review', 'accepted' => 'Accepted', 'assigned' => 'Assigned', 'on_the_way' => 'On The Way', 'in_progress' => 'In Progress (Working)', 'completed' => 'Completed', 'cancelled' => 'Cancelled'] as $stKey => $stLbl)
-                  <option value="{{ $stKey }}" {{ $booking->status === $stKey ? 'selected' : '' }}>
-                    {{ $stLbl }}
-                  </option>
-                @endforeach
-              </select>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem; display:flex; justify-content:space-between; align-items:center;">
+                <span>Work Order Status</span>
+                <span style="font-size:0.7rem; color:#64748b; font-weight:500;">🔒 Auto-calculated (Read Only)</span>
+              </label>
+              <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:7px 12px; min-height:42px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="badge-pill-paces {{ $badgeClass }}" style="font-size:0.82rem; font-weight:800; text-transform:uppercase; padding:4px 12px; letter-spacing:0.02em;">
+                    ● {{ $booking->status_label }}
+                  </span>
+                  @if($booking->partner_id && $booking->partner_job_status)
+                    <span style="font-size:0.75rem; color:#475569; font-weight:600; background:#e2e8f0; padding:2px 8px; border-radius:4px;">
+                      Crew: {{ ucfirst(str_replace('_', ' ', $booking->partner_job_status)) }}
+                    </span>
+                  @endif
+                </div>
+                @php $latestLog = $booking->statusLogs->sortByDesc('id')->first(); @endphp
+                @if($latestLog)
+                  <span style="font-size:0.72rem; color:#64748b; font-weight:500;">
+                    Updated {{ $latestLog->created_at->diffForHumans() }}
+                  </span>
+                @endif
+              </div>
             </div>
 
             <!-- STRICT CREW DROPDOWN (Edit mode) -->
@@ -965,14 +1007,50 @@
             </div>
           </div>
 
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.25rem;">
-            <div>
-              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Estimated Cost (৳)</label>
-              <input type="number" step="0.01" name="estimated_cost" class="form-control-paces" value="{{ old('estimated_cost', $booking->estimated_cost) }}">
+          <!-- Service Price Agreement Section -->
+          @php
+            $hasExistingCost = ($booking->final_cost > 0 || $booking->estimated_cost > 0);
+            $initialPricingMode = old('pricing_mode', $hasExistingCost ? 'price' : 'later');
+            $existingCostAmount = old('cost_amount', $booking->final_cost > 0 ? $booking->final_cost : ($booking->estimated_cost > 0 ? $booking->estimated_cost : ''));
+            $isEstimatedCost = old('cost_type') ? (old('cost_type') === 'estimated') : ($booking->cost_type === 'estimated' || (! $booking->final_cost && $booking->estimated_cost > 0));
+          @endphp
+          <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:14px; margin-bottom:1.25rem;">
+            <div style="font-weight:700; font-size:0.88rem; color:var(--paces-text-dark); margin-bottom:10px;">
+              Service Price Agreement
             </div>
-            <div>
-              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Final Invoiced Bill (৳)</label>
-              <input type="number" step="0.01" name="final_cost" class="form-control-paces" value="{{ old('final_cost', $booking->final_cost) }}">
+
+            <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.88rem; font-weight:600; color:var(--paces-text-dark);">
+                <input type="radio" name="pricing_mode" value="price" id="pricingModePrice_edit" {{ $initialPricingMode === 'price' ? 'checked' : '' }} onchange="togglePricingInputEdit(this.value)" style="accent-color:var(--paces-primary); width:16px; height:16px;">
+                <span>Price Agreed Now</span>
+              </label>
+
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.88rem; font-weight:600; color:var(--paces-text-dark);">
+                <input type="radio" name="pricing_mode" value="later" id="pricingModeLater_edit" {{ $initialPricingMode === 'later' ? 'checked' : '' }} onchange="togglePricingInputEdit(this.value)" style="accent-color:var(--paces-primary); width:16px; height:16px;">
+                <span>Set Price Later (Crew sets before work starts)</span>
+              </label>
+            </div>
+
+            <div id="priceAmountRow_edit" style="display:{{ $initialPricingMode === 'later' ? 'none' : 'flex' }}; align-items:center; gap:16px; flex-wrap:wrap;">
+              <div style="position:relative; width:180px;">
+                <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-weight:700; color:var(--paces-text-muted);">৳</span>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  name="cost_amount" 
+                  id="costAmountInput_edit" 
+                  class="form-control-paces" 
+                  value="{{ $existingCostAmount }}" 
+                  placeholder="0.00" 
+                  style="padding-left:28px; font-weight:700; font-size:1.05rem;"
+                >
+              </div>
+
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; color:var(--paces-text-dark);">
+                <input type="checkbox" name="is_estimated" id="isEstimatedCheckbox_edit" value="1" {{ $isEstimatedCost ? 'checked' : '' }} onchange="toggleCostTypeEdit(this.checked)" style="accent-color:var(--paces-primary); width:16px; height:16px;">
+                <span>Estimated Price (Subject to site verification)</span>
+              </label>
+              <input type="hidden" name="cost_type" id="costTypeHidden_edit" value="{{ $isEstimatedCost ? 'estimated' : 'final' }}">
             </div>
           </div>
 
@@ -1033,7 +1111,7 @@
         </div>
       @else
         <div style="display:flex; flex-direction:column; gap:14px; position:relative; padding-left:10px;">
-          @foreach($booking->statusLogs->reverse() as $log)
+          @foreach($booking->statusLogs->sortByDesc('id') as $log)
             <div style="display:flex; gap:16px; font-size:0.85rem; border-left:3px solid var(--paces-primary); padding-left:16px; position:relative;">
               <div style="position:absolute; left:-7px; top:4px; width:11px; height:11px; border-radius:50%; background:var(--paces-primary); border:2px solid #ffffff;"></div>
               
@@ -1334,6 +1412,49 @@
     </div>
   </div>
 
+  <!-- Modal: Re-start Work Order -->
+  <div id="restartWorkOrderModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:9999; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:1rem;" onclick="if(event.target===this) this.style.display='none'">
+    <div style="background:#ffffff; border-radius:12px; max-width:480px; width:100%; box-shadow:0 20px 35px rgba(0,0,0,0.18); border:1px solid var(--paces-border); overflow:hidden;">
+      <div style="padding:1.25rem 1.5rem; border-bottom:1px solid var(--paces-border); display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:34px; height:34px; border-radius:50%; background:#f0fdf4; color:#16a34a; display:flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:700;">
+            🔄
+          </div>
+          <div>
+            <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:var(--paces-text-dark);">Re-start Work Order</h3>
+            <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-top:2px;">Order #{{ $booking->booking_number }}</div>
+          </div>
+        </div>
+        <button type="button" onclick="document.getElementById('restartWorkOrderModal').style.display='none'" style="background:none; border:none; color:#64748b; font-size:1.2rem; cursor:pointer;">✕</button>
+      </div>
+
+      <form action="{{ route('admin.bookings.restart', $booking) }}" method="POST" style="padding:1.5rem;">
+        @csrf
+        <p style="font-size:0.84rem; color:#475569; margin:0 0 14px; line-height:1.5;">
+          Restarting will return this cancelled work order back to <strong>Pending Review</strong>. You will be able to discuss with the client, confirm pricing, and dispatch to a field crew.
+        </p>
+
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.78rem; color:#334155; line-height:1.45;">
+          ✓ Order status resets to <strong>Pending Review</strong><br>
+          ✓ Previous cancellation locks and crew assignments will be cleared<br>
+          ✓ Audit log will record the restart event
+        </div>
+
+        <div style="margin-bottom:1.25rem;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Restart Reason / Note (Optional)</label>
+          <textarea name="restart_reason" rows="2" placeholder="e.g. Client requested to resume work order / rescheduled after inspection..." class="form-control-paces"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onclick="document.getElementById('restartWorkOrderModal').style.display='none'" class="btn-paces btn-paces-outline btn-paces-sm">Cancel</button>
+          <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#16a34a; border-color:#16a34a; font-weight:700; padding:7px 18px;">
+            ✓ Confirm & Re-start Order
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ========================================================================= -->
   <!-- JAVASCRIPT CONTROLLERS                                                    -->
   <!-- ========================================================================= -->
@@ -1361,6 +1482,18 @@
 
     function toggleCostType(isEst) {
       const hidden = document.getElementById('costTypeHidden');
+      if (hidden) hidden.value = isEst ? 'estimated' : 'final';
+    }
+
+    function togglePricingInputEdit(val) {
+      const row = document.getElementById('priceAmountRow_edit');
+      if (row) {
+        row.style.display = (val === 'later') ? 'none' : 'flex';
+      }
+    }
+
+    function toggleCostTypeEdit(isEst) {
+      const hidden = document.getElementById('costTypeHidden_edit');
       if (hidden) hidden.value = isEst ? 'estimated' : 'final';
     }
 

@@ -481,7 +481,7 @@ class AdminBookingController extends Controller
     {
         $validated = $request->validate([
             'set_price' => ['nullable', 'boolean'],
-            'cost_type' => ['nullable', 'string', 'in:estimated,final'],
+            'cost_type' => ['nullable', 'string', 'in:estimated,final,none'],
             'cost_amount' => ['nullable', 'numeric', 'min:0'],
             'preferred_date' => ['nullable', 'date'],
             'preferred_time_slot' => ['nullable', 'string', 'max:100'],
@@ -532,7 +532,7 @@ class AdminBookingController extends Controller
             ]);
         }
 
-        $isEstimated = (bool) $request->input('is_estimated', false);
+        $isEstimated = (bool) $request->input('is_estimated', false) || $request->input('cost_type') === 'estimated';
         $costAmount = isset($validated['cost_amount']) && $validated['cost_amount'] !== '' ? (float) $validated['cost_amount'] : null;
         $isPriceSet = ($pricingMode === 'price') && $costAmount !== null && $costAmount > 0;
         $costType = $isEstimated ? 'estimated' : 'final';
@@ -572,9 +572,14 @@ class AdminBookingController extends Controller
         if ($isPriceSet) {
             if ($costType === 'final') {
                 $payload['final_cost'] = $costAmount;
+                $payload['estimated_cost'] = null;
             } else {
                 $payload['estimated_cost'] = $costAmount;
+                $payload['final_cost'] = null;
             }
+        } else {
+            $payload['estimated_cost'] = null;
+            $payload['final_cost'] = null;
         }
 
         $action->execute($booking, $payload, $admin);
@@ -684,12 +689,68 @@ class AdminBookingController extends Controller
     }
 
     /**
+     * Restart a cancelled work order back to pending_review.
+     * Allows admin to re-accept order with client and re-dispatch to crew.
+     */
+    public function restart(Request $request, Booking $booking, UpdateBookingStatusAction $action): RedirectResponse
+    {
+        if ($booking->status !== 'cancelled') {
+            return redirect()->back()->with('error', 'Only cancelled work orders can be restarted.');
+        }
+
+        $validated = $request->validate([
+            'restart_reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+        $reason = ! empty($validated['restart_reason']) ? $validated['restart_reason'] : 'Client requested to resume / re-opened by operations lead.';
+
+        // Clear cancellation and reset any prior crew dispatch so it can be re-assigned cleanly
+        $booking->update([
+            'cancelled_at' => null,
+            'cancellation_reason' => null,
+            'accepted_at' => null,
+            'completed_at' => null,
+            'partner_job_status' => null,
+            'partner_assigned_at' => null,
+            'assigned_team' => null,
+            'partner_id' => null,
+            'assigned_partner_crew_id' => null,
+        ]);
+
+        $payload = [
+            'status' => 'pending_review',
+            'comment' => "Work order restarted from cancelled status. {$reason}",
+            'admin_notes' => "Restarted by {$admin->name}. {$reason}",
+        ];
+
+        $action->execute($booking, $payload, $admin);
+
+        ActivityLogService::logBooking(
+            'booking.restart',
+            "Restarted cancelled Work Order #{$booking->booking_number}. Status reset to Pending Review for client acceptance & re-dispatch.",
+            $booking,
+            [
+                'booking_number' => $booking->booking_number,
+                'restart_reason' => $reason,
+            ]
+        );
+
+        return redirect()->route('admin.bookings.show', $booking)
+            ->with('success', "Work Order #{$booking->booking_number} has been RESTARTED and returned to Pending Review. You can now accept with the client and dispatch to crew.");
+    }
+
+    /**
      * Update and modify comprehensive booking parameters (schedule, team, billing, notes, status).
      */
     public function update(Request $request, Booking $booking, UpdateBookingStatusAction $action): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => ['required', 'string', 'in:pending_review,accepted,assigned,on_the_way,in_progress,completed,cancelled'],
+            'status' => ['nullable', 'string', 'in:pending_review,accepted,assigned,on_the_way,in_progress,completed,cancelled'],
+            'pricing_mode' => ['nullable', 'string', 'in:price,later'],
+            'cost_type' => ['nullable', 'string', 'in:estimated,final,none'],
+            'cost_amount' => ['nullable', 'numeric', 'min:0'],
+            'is_estimated' => ['nullable', 'boolean'],
             'estimated_cost' => ['nullable', 'numeric', 'min:0'],
             'final_cost' => ['nullable', 'numeric', 'min:0'],
             'assigned_team' => ['nullable', 'string', 'max:255'],
@@ -745,20 +806,45 @@ class AdminBookingController extends Controller
             $booking->update($directUpdates);
         }
 
-        $newStatus = $validated['status'];
+        $newStatus = $validated['status'] ?? $booking->status;
 
         $payload = [
             'status' => $newStatus,
             'assigned_team' => $assignedTeam,
             'admin_notes' => $validated['admin_notes'] ?? $booking->admin_notes,
-            'comment' => $validated['comment'] ?? 'Work Order details and status updated by operations lead.',
+            'comment' => $validated['comment'] ?? 'Work Order dispatch details and schedule updated by operations lead.',
         ];
 
-        if (array_key_exists('estimated_cost', $validated)) {
-            $payload['estimated_cost'] = $validated['estimated_cost'];
-        }
-        if (array_key_exists('final_cost', $validated)) {
-            $payload['final_cost'] = $validated['final_cost'];
+        if ($request->has('pricing_mode')) {
+            $pricingMode = $request->input('pricing_mode', 'price');
+            if ($pricingMode === 'price') {
+                $request->validate([
+                    'cost_amount' => ['required', 'numeric', 'min:0.01'],
+                ], [
+                    'cost_amount.required' => 'Service price amount is required when Price agreement is selected.',
+                ]);
+
+                $costAmount = (float) $request->input('cost_amount');
+                $isEstimated = (bool) $request->input('is_estimated', false) || $request->input('cost_type') === 'estimated';
+
+                if ($isEstimated) {
+                    $payload['estimated_cost'] = $costAmount;
+                    $payload['final_cost'] = null;
+                } else {
+                    $payload['final_cost'] = $costAmount;
+                    $payload['estimated_cost'] = null;
+                }
+            } else {
+                $payload['estimated_cost'] = null;
+                $payload['final_cost'] = null;
+            }
+        } else {
+            if (array_key_exists('estimated_cost', $validated)) {
+                $payload['estimated_cost'] = $validated['estimated_cost'];
+            }
+            if (array_key_exists('final_cost', $validated)) {
+                $payload['final_cost'] = $validated['final_cost'];
+            }
         }
 
         $action->execute($booking, $payload, $admin);

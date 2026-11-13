@@ -247,7 +247,7 @@ class SupportTicketWorkflowTest extends TestCase
             'user_id' => $user->id,
             'priority' => 'high',
             'subject' => 'Upcoming Substation Electrical Safety Audit',
-            'message' => 'Dear Sabbir, our engineering team has scheduled safety inspections for your building substation next Tuesday.',
+            'message' => 'Dear Sabbir, our team has scheduled safety inspections for your building substation next Tuesday.',
         ];
 
         $res = $this->actingAs($admin, 'admin')->post(route('admin.tickets.store'), $payload);
@@ -427,7 +427,7 @@ class SupportTicketWorkflowTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin, 'admin')->post(route('admin.tickets.reply', $ticket), [
-            'message' => 'Our field engineering team will visit on site today.',
+            'message' => 'Our field team will visit on site today.',
             'status' => 'in_progress',
         ]);
 

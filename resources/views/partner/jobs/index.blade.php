@@ -77,13 +77,21 @@
             <!-- Actions -->
             <div style="display: flex; align-items: center; gap: 8px;">
               @if($job->partner_job_status === 'assigned')
-                <form id="jobAccept_{{ $job->id }}" action="{{ route('partner.jobs.accept', $job) }}" method="POST" style="margin: 0;">
-                  @csrf
-                  <button type="button" class="btn-p btn-p-primary" style="padding: 6px 14px; font-size: 0.82rem;" onclick="confirmDialog({ title: 'Accept Job #{{ $job->booking_number }}?', text: 'Confirm accepting this service assignment.', type: 'success', confirmText: 'Accept Job', formId: 'jobAccept_{{ $job->id }}' })">
+                @if($job->final_cost > 0)
+                  <form id="jobAccept_{{ $job->id }}" action="{{ route('partner.jobs.accept', $job) }}" method="POST" style="margin: 0;">
+                    @csrf
+                    <input type="hidden" name="agreed_price" value="{{ $job->final_cost }}">
+                    <button type="button" class="btn-p btn-p-primary" style="padding: 6px 14px; font-size: 0.82rem;" onclick="confirmDialog({ title: 'Accept Job #{{ $job->booking_number }}?', text: 'Agreed Price: ৳ {{ number_format($job->final_cost, 2) }}. Confirm accepting this service assignment.', type: 'success', confirmText: 'Accept Job', formId: 'jobAccept_{{ $job->id }}' })">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      <span>Accept (৳{{ number_format($job->final_cost, 0) }})</span>
+                    </button>
+                  </form>
+                @else
+                  <a href="{{ route('partner.jobs.show', $job) }}#accept" class="btn-p btn-p-primary" style="padding: 6px 14px; font-size: 0.82rem; text-decoration: none;">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    <span>Accept</span>
-                  </button>
-                </form>
+                    <span>{{ $job->estimated_cost > 0 ? 'Confirm Price & Accept' : 'Set Price & Accept' }}</span>
+                  </a>
+                @endif
               @endif
               <a href="{{ route('partner.jobs.show', $job) }}" class="btn-p btn-p-outline" style="padding: 6px 14px; font-size: 0.82rem;">
                 <span>View</span>

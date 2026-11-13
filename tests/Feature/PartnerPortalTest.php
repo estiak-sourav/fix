@@ -6,14 +6,18 @@ use App\Mail\AdminEventNotificationMail;
 use App\Mail\PartnerJobAssignedMail;
 use App\Models\Admin;
 use App\Models\Booking;
+use App\Models\District;
 use App\Models\Partner;
 use App\Models\Service;
+use App\Models\ServiceCategory;
 use App\Models\User;
 use App\Services\NotificationDispatcher;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class PartnerPortalTest extends TestCase
@@ -199,7 +203,9 @@ class PartnerPortalTest extends TestCase
 
         // 1. Partner accepts job
         $this->actingAs($partner, 'partner')
-            ->post(route('partner.jobs.accept', $booking))
+            ->post(route('partner.jobs.accept', $booking), [
+                'agreed_price' => 1500,
+            ])
             ->assertRedirect();
 
         $booking->refresh();
@@ -524,5 +530,345 @@ class PartnerPortalTest extends TestCase
         $markAllResponse = $this->post(route('partner.notifications.mark-all-read'));
         $markAllResponse->assertRedirect();
         $this->assertEquals(0, $partner->unreadNotificationsCount());
+    }
+
+    public function test_partner_can_view_dynamic_service_types_and_coverage_areas_in_profile(): void
+    {
+        $partner = Partner::create([
+            'company_name' => 'ElectroCool Pro',
+            'contact_person' => 'Jamil Ahmed',
+            'phone' => '01711998877',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'company',
+            'trade_domain' => 'Electrical',
+            'technicians_count' => '5-15',
+            'coverage_areas' => 'Dhaka (Dhaka)',
+        ]);
+
+        // Add custom category and activate a district
+        $newCategory = ServiceCategory::create([
+            'name' => 'Solar & Renewable Energy',
+            'slug' => 'solar-renewable-energy',
+            'is_active' => true,
+            'order' => 10,
+        ]);
+
+        $inactiveCategory = ServiceCategory::create([
+            'name' => 'Decommissioned Category',
+            'slug' => 'decommissioned-category',
+            'is_active' => false,
+            'order' => 20,
+        ]);
+
+        $this->actingAs($partner, 'partner');
+        $response = $this->get(route('partner.profile.index'));
+
+        $response->assertOk();
+        $response->assertSee('Solar & Renewable Energy');
+        $response->assertDontSee('Decommissioned Category');
+        $response->assertSee('Gulshan');
+    }
+
+    public function test_partner_can_update_service_types_and_coverage_areas(): void
+    {
+        $partner = Partner::create([
+            'company_name' => 'Precision HVAC Services',
+            'contact_person' => 'Tanvir Alam',
+            'phone' => '01855667788',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'company',
+            'trade_domain' => 'General',
+            'technicians_count' => '5-15',
+            'coverage_areas' => 'Dhaka (Dhaka)',
+        ]);
+
+        $category1 = ServiceCategory::firstOrCreate(
+            ['name' => 'HVAC & Central Air Conditioning'],
+            ['slug' => 'hvac-central-air-conditioning', 'is_active' => true]
+        );
+        $category2 = ServiceCategory::firstOrCreate(
+            ['name' => 'Fire Safety & NFPA Suppression'],
+            ['slug' => 'fire-safety-nfpa-suppression', 'is_active' => true]
+        );
+
+        $this->actingAs($partner, 'partner');
+
+        $response = $this->put(route('partner.profile.update'), [
+            'contact_person' => 'Tanvir Alam (Lead)',
+            'trade_domain_submitted' => '1',
+            'trade_domain' => [
+                'HVAC & Central Air Conditioning',
+                'Fire Safety & NFPA Suppression',
+            ],
+            'coverage_areas_submitted' => '1',
+            'coverage_areas' => [
+                'Gulshan',
+                'Banani',
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $partner->refresh();
+        $this->assertEquals('Tanvir Alam (Lead)', $partner->contact_person);
+        $this->assertStringContainsString('HVAC & Central Air Conditioning', $partner->trade_domain);
+        $this->assertStringContainsString('Fire Safety & NFPA Suppression', $partner->trade_domain);
+        $this->assertStringContainsString('Gulshan', $partner->coverage_areas);
+        $this->assertStringContainsString('Banani', $partner->coverage_areas);
+    }
+
+    public function test_partner_can_upload_and_remove_profile_avatar(): void
+    {
+        Storage::fake('public');
+
+        $partner = Partner::create([
+            'company_name' => 'SolarGrid Engineering',
+            'contact_person' => 'Hasibul Islam',
+            'phone' => '01712000000',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'individual',
+            'trade_domain' => 'Electrical',
+            'technicians_count' => '1-5',
+            'coverage_areas' => 'Dhaka (Dhaka)',
+        ]);
+
+        $this->actingAs($partner, 'partner');
+
+        // 1. Upload avatar
+        $fakeAvatar = UploadedFile::fake()->image('hasibul_avatar.jpg', 300, 300);
+        $response = $this->put(route('partner.profile.update'), [
+            'contact_person' => 'Hasibul Islam',
+            'avatar' => $fakeAvatar,
+        ]);
+
+        $response->assertRedirect();
+        $partner->refresh();
+        $this->assertNotNull($partner->avatar);
+        $this->assertStringStartsWith('avatars/partners/', $partner->avatar);
+        Storage::disk('public')->assertExists($partner->avatar);
+
+        // Verify profile view displays avatar image
+        $viewResponse = $this->get(route('partner.profile.index'));
+        $viewResponse->assertOk();
+        $viewResponse->assertSee($partner->avatar_url);
+
+        // 2. Remove avatar
+        $oldPath = $partner->avatar;
+        $removeResponse = $this->put(route('partner.profile.update'), [
+            'contact_person' => 'Hasibul Islam',
+            'remove_avatar' => '1',
+        ]);
+
+        $removeResponse->assertRedirect();
+        $partner->refresh();
+        $this->assertNull($partner->avatar);
+        Storage::disk('public')->assertMissing($oldPath);
+    }
+
+    public function test_customer_view_does_not_expose_partner_phone_or_internal_details(): void
+    {
+        $user = User::first();
+        $partner = Partner::create([
+            'company_name' => 'Confidential Subcontractor Ltd',
+            'contact_person' => 'Top Secret Partner Lead',
+            'phone' => '01999887766',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'company',
+            'trade_domain' => 'HVAC',
+            'technicians_count' => '1-5',
+            'coverage_areas' => 'Dhaka (Dhaka)',
+        ]);
+
+        $booking = $this->createBooking([
+            'user_id' => $user->id,
+            'partner_id' => $partner->id,
+            'assigned_team' => 'Confidential Subcontractor Ltd',
+            'partner_job_status' => 'assigned',
+            'status' => 'assigned',
+        ]);
+
+        // Customer accesses /my-bookings
+        $response = $this->actingAs($user, 'web')->get('/my-bookings');
+        $response->assertOk();
+        $response->assertDontSee('01999887766');
+        $response->assertDontSee('Confidential Subcontractor Ltd');
+        $response->assertSee('Field Crew Assigned & Confirmed', false);
+
+        // Customer accesses /my-bookings/{booking_number}
+        $detailResponse = $this->actingAs($user, 'web')->get('/my-bookings/'.$booking->booking_number);
+        $detailResponse->assertOk();
+        $detailResponse->assertDontSee('01999887766');
+        $detailResponse->assertDontSee('Confidential Subcontractor Ltd');
+    }
+
+    public function test_crew_cannot_accept_job_without_setting_price_when_price_set_later(): void
+    {
+        $partner = Partner::create([
+            'company_name' => 'Apex Cooling Solutions',
+            'contact_person' => 'Kamal Hossain',
+            'phone' => '01711229988',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'company',
+            'trade_domain' => 'HVAC',
+            'technicians_count' => '1-5',
+            'coverage_areas' => 'Dhaka (Dhaka)',
+        ]);
+
+        $booking = $this->createBooking([
+            'partner_id' => $partner->id,
+            'partner_job_status' => 'assigned',
+            'status' => 'accepted',
+            'estimated_cost' => null,
+            'final_cost' => null,
+        ]);
+
+        // Attempt to accept without agreed_price fails validation
+        $response = $this->actingAs($partner, 'partner')
+            ->post(route('partner.jobs.accept', $booking));
+        $response->assertSessionHasErrors('agreed_price');
+
+        $booking->refresh();
+        $this->assertEquals('assigned', $booking->partner_job_status);
+
+        // Successfully accepting with agreed_price sets final_cost
+        $acceptResponse = $this->actingAs($partner, 'partner')
+            ->post(route('partner.jobs.accept', $booking), [
+                'agreed_price' => 1750,
+            ]);
+        $acceptResponse->assertRedirect();
+
+        $booking->refresh();
+        $this->assertEquals('accepted', $booking->partner_job_status);
+        $this->assertEquals(1750.00, (float) $booking->final_cost);
+        $this->assertNull($booking->estimated_cost);
+    }
+
+    public function test_crew_accepting_estimated_cost_converts_it_to_final_price(): void
+    {
+        $partner = Partner::create([
+            'company_name' => 'Delta Tech Services',
+            'contact_person' => 'Faruk Ahmed',
+            'phone' => '01711339988',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'company',
+            'trade_domain' => 'HVAC',
+            'technicians_count' => '1-5',
+            'coverage_areas' => 'Dhaka (Dhaka)',
+        ]);
+
+        $booking = $this->createBooking([
+            'partner_id' => $partner->id,
+            'partner_job_status' => 'assigned',
+            'status' => 'accepted',
+            'estimated_cost' => 850.00,
+            'final_cost' => null,
+        ]);
+
+        // Crew confirms/sets final price upon accept (e.g. 900)
+        $response = $this->actingAs($partner, 'partner')
+            ->post(route('partner.jobs.accept', $booking), [
+                'agreed_price' => 900,
+            ]);
+        $response->assertRedirect();
+
+        $booking->refresh();
+        $this->assertEquals('accepted', $booking->partner_job_status);
+        $this->assertEquals(900.00, (float) $booking->final_cost);
+        // It is no longer estimated!
+        $this->assertNull($booking->estimated_cost);
+    }
+
+    public function test_crew_can_see_and_accept_job_when_final_price_already_set(): void
+    {
+        $partner = Partner::create([
+            'company_name' => 'Prime Electric Works',
+            'contact_person' => 'Sabbir Hossain',
+            'phone' => '01711449988',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'company',
+            'trade_domain' => 'HVAC',
+            'technicians_count' => '1-5',
+            'coverage_areas' => 'Dhaka (Dhaka)',
+        ]);
+
+        $booking = $this->createBooking([
+            'partner_id' => $partner->id,
+            'partner_job_status' => 'assigned',
+            'status' => 'accepted',
+            'estimated_cost' => null,
+            'final_cost' => 2500.00,
+        ]);
+
+        // Crew views the job and sees the price
+        $viewResponse = $this->actingAs($partner, 'partner')
+            ->get(route('partner.jobs.show', $booking));
+        $viewResponse->assertOk();
+        $viewResponse->assertSee('Agreed Price: ৳ 2,500.00');
+
+        // Crew accepts directly
+        $acceptResponse = $this->actingAs($partner, 'partner')
+            ->post(route('partner.jobs.accept', $booking));
+        $acceptResponse->assertRedirect();
+
+        $booking->refresh();
+        $this->assertEquals('accepted', $booking->partner_job_status);
+        $this->assertEquals(2500.00, (float) $booking->final_cost);
+    }
+
+    public function test_partner_notification_row_has_no_view_button_and_accessing_cancelled_job_does_not_throw_403(): void
+    {
+        $partner = Partner::create([
+            'company_name' => 'Safe Air Systems',
+            'contact_person' => 'Rahim',
+            'phone' => '01711009988',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'individual',
+            'trade_domain' => 'HVAC',
+            'coverage_areas' => 'Gulshan',
+        ]);
+
+        $booking = $this->createBooking([
+            'partner_id' => $partner->id,
+            'status' => 'assigned',
+        ]);
+
+        // Send cancelled notification
+        NotificationDispatcher::notifyPartnerJobCancelled($booking, 'Client requested cancellation');
+
+        // Unassign partner (e.g. order restarted or recalled)
+        $booking->update([
+            'partner_id' => null,
+            'status' => 'cancelled',
+        ]);
+
+        // 1. Partner visits notifications list
+        $response = $this->actingAs($partner, 'partner')->get(route('partner.notifications.index'));
+        $response->assertOk();
+
+        // Must see modal and row, but MUST NOT see the "View" button
+        $response->assertSee('id="notifDetailModal"', false);
+        $response->assertDontSee('>View<', false);
+        $response->assertDontSee('<span>View</span>', false);
+
+        // 2. Mark notification read via AJAX returns JSON
+        $notif = $partner->notifications()->latest()->first();
+        $ajaxResponse = $this->actingAs($partner, 'partner')->postJson(route('partner.notifications.read', $notif));
+        $ajaxResponse->assertOk();
+        $ajaxResponse->assertJson(['success' => true]);
+        $this->assertTrue($notif->fresh()->is_read);
+
+        // 3. Accessing the job route for a job where partner was notified does NOT 403
+        $jobResponse = $this->actingAs($partner, 'partner')->get(route('partner.jobs.show', $booking));
+        $jobResponse->assertRedirect(route('partner.jobs.index'));
+        $jobResponse->assertSessionHas('info');
     }
 }

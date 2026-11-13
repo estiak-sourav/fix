@@ -187,7 +187,7 @@ class AmcContractAndDynamicVideoTest extends TestCase
         $detailRes = $this->get('http://localhost/services/'.$service->slug);
         $detailRes->assertStatus(200);
         $detailRes->assertSee('Custom Quote on Inspection');
-        $detailRes->assertSee('Direct Engineering Team Coordination');
+        $detailRes->assertSee('Direct Team Coordination');
         $detailRes->assertDontSee('Starting Price:');
         $detailRes->assertDontSee('Emergency SLA Dispatch:');
     }

@@ -35,7 +35,31 @@
           </span>
         </div>
 
-        @if(!$booking->is_amc)
+        @if($booking->status === 'cancelled')
+          <!-- Prominent Cancellation Banner -->
+          <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1.75rem; display:flex; align-items:flex-start; gap:16px;">
+            <div style="width:40px; height:40px; border-radius:50%; background:#fee2e2; border:1.5px solid #fca5a5; color:#dc2626; display:flex; align-items:center; justify-content:center; font-size:1.25rem; font-weight:800; flex-shrink:0;">
+              ✕
+            </div>
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <h3 style="margin:0; font-size:1.1rem; font-weight:800; color:#991b1b;">
+                  Service Request Cancelled
+                </h3>
+                <span style="font-size:0.75rem; font-weight:700; color:#dc2626; background:#ffffff; border:1px solid #fca5a5; padding:3px 10px; border-radius:8px;">
+                  Cancelled on {{ $booking->cancelled_at ? $booking->cancelled_at->format('M d, Y • h:i A') : $booking->updated_at->format('M d, Y • h:i A') }}
+                </span>
+              </div>
+              <p style="margin:8px 0 0; color:#7f1d1d; font-size:0.875rem; line-height:1.5;">
+                @if($booking->cancellation_reason)
+                  <strong>Cancellation Reason:</strong> {{ $booking->cancellation_reason }}
+                @else
+                  This service request was cancelled. If you need any assistance or would like to schedule a new appointment, you may create a new service booking anytime.
+                @endif
+              </p>
+            </div>
+          </div>
+        @elseif(!$booking->is_amc)
           <!-- Live Progress Stepper for One-Off Services -->
           @php
             $statusOrder = ['pending_review', 'accepted', 'assigned', 'on_the_way', 'in_progress', 'completed'];
@@ -107,7 +131,7 @@
               <span style="font-size:1.5rem;">👷</span>
               <div>
                 <strong style="color:#1d4ed8; font-size:0.9rem; display:block;">Field Crew Assigned & Confirmed</strong>
-                <span style="font-size:0.82rem; color:#2563eb;">{{ $booking->assigned_team ?: ($booking->partner ? $booking->partner->company_name : 'Technician Team') }} has accepted your service booking.</span>
+                <span style="font-size:0.82rem; color:#2563eb;">A certified team has been assigned and confirmed for your service booking.</span>
               </div>
             </div>
           @elseif($booking->status === 'accepted')
@@ -146,6 +170,8 @@
                 <p style="margin:0; color:var(--primary); font-weight:700; font-size:1.1rem;">৳ {{ number_format($booking->estimated_cost, 2) }} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">(Agreed)</span></p>
               @elseif(in_array($booking->status, ['accepted', 'assigned', 'in_progress']))
                 <p style="margin:0; color:#d97706; font-weight:600;">To be billed upon completion</p>
+              @elseif($booking->status === 'cancelled')
+                <p style="margin:0; color:#dc2626; font-weight:600;">Cancelled (No charge)</p>
               @else
                 <p style="margin:0; color:var(--text-muted);">Pending phone discussion</p>
               @endif
@@ -211,10 +237,10 @@
           </div>
         @endif
 
-        @if($booking->partner || $booking->assigned_team)
+        @if($booking->partner_job_status || $booking->arrival_window)
           <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1.2rem; margin-bottom:1.5rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
-              <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Assigned Service Partner &amp; Crew</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Service Execution Status</span>
               @if($booking->partner_job_status)
                 @php
                   $pBadge = match($booking->partner_job_status) {
@@ -233,22 +259,8 @@
               @endif
             </div>
 
-            <div style="font-size:1rem; font-weight:700; color:var(--primary);">
-              {{ $booking->partner ? $booking->partner->company_name : $booking->assigned_team }}
-            </div>
-
-            @if($booking->assignedCrew)
-              <div style="font-size:0.85rem; color:#334155; margin-top:4px;">
-                👷 Lead Technician: <strong>{{ $booking->assignedCrew->name }}</strong> ({{ $booking->assignedCrew->trade_skill ?: 'Technician' }}) • 📞 <a href="tel:{{ $booking->assignedCrew->phone }}" style="color:var(--primary); font-weight:600; text-decoration:none;">{{ $booking->assignedCrew->phone }}</a>
-              </div>
-            @elseif($booking->partner)
-              <div style="font-size:0.85rem; color:#475569; margin-top:4px;">
-                Contact: {{ $booking->partner->contact_person }} • 📞 <a href="tel:{{ $booking->partner->phone }}" style="color:var(--primary); font-weight:600; text-decoration:none;">{{ $booking->partner->phone }}</a>
-              </div>
-            @endif
-
             @if($booking->arrival_window)
-              <div style="font-size:0.82rem; color:#0d9488; font-weight:600; margin-top:6px;">
+              <div style="font-size:0.85rem; color:#0d9488; font-weight:600; margin-top:8px;">
                 ⏱ Expected Arrival Slot: {{ $booking->arrival_window }}
               </div>
             @endif
@@ -308,7 +320,7 @@
                 Rate Your Service Experience
               </h3>
               <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:14px;">
-                How was the service provided by our engineering team? Your review helps us continuously improve.
+                How was the service provided by our team? Your review helps us continuously improve.
               </p>
 
               <form action="{{ route('customer.bookings.review', $booking->booking_number) }}" method="POST">

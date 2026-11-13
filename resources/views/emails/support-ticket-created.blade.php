@@ -63,7 +63,7 @@
     <div class="content">
       <div class="greeting">Hello {{ $ticket->customer_name }},</div>
       <div class="desc">
-        Your support request has been successfully logged in our system. Our engineering team has been notified and will respond shortly.
+        Your support request has been successfully logged in our system. Our team has been notified and will respond shortly.
       </div>
 
       <div class="ticket-card">
@@ -84,7 +84,7 @@
       <a href="{{ $trackUrl }}" class="cta-btn">View Your Ticket & Live Updates →</a>
 
       <div style="font-size:13px; color:#64748b; line-height:1.6;">
-        You will receive an email notification each time our engineering team posts a response. If you have additional details to add, you can reply directly on your ticket page.
+        You will receive an email notification each time our team posts a response. If you have additional details to add, you can reply directly on your ticket page.
       </div>
     </div>
 

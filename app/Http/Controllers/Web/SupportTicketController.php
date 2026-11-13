@@ -181,7 +181,7 @@ class SupportTicketController extends Controller
             ? redirect()->route('customer.tickets.show', $ticket->ticket_number)
             : redirect()->route('support.show', ['ticketNumber' => $ticket->ticket_number, 'token' => $ticket->access_token]);
 
-        return $redirectRoute->with('success', 'Your reply has been dispatched to the support engineering team.');
+        return $redirectRoute->with('success', 'Your reply has been dispatched to the support team.');
     }
 
     /**

@@ -20,6 +20,7 @@ class Partner extends Authenticatable
         'password',
         'remember_token',
         'email',
+        'avatar',
         'trade_domain',
         'technicians_count',
         'coverage_areas',
@@ -284,5 +285,34 @@ class Partner extends Authenticatable
             'suspended' => ['bg' => 'bg-danger-subtle', 'color' => '#991b1b', 'label' => 'Suspended'],
             default => ['bg' => 'bg-primary-subtle', 'color' => '#3e60d5', 'label' => ucfirst($this->status)],
         };
+    }
+
+    /**
+     * Get avatar full URL if present.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (! $this->avatar) {
+            return null;
+        }
+
+        return str_starts_with($this->avatar, 'http') ? $this->avatar : asset('storage/'.$this->avatar);
+    }
+
+    /**
+     * Get partner display initials for avatar placeholder.
+     */
+    public function getInitialsAttribute(): string
+    {
+        $name = trim($this->contact_person ?: $this->company_name);
+        $words = preg_split('/\s+/', $name);
+        if (empty($words) || empty($words[0])) {
+            return 'CR';
+        }
+        if (count($words) === 1) {
+            return strtoupper(substr($words[0], 0, 2));
+        }
+
+        return strtoupper(substr($words[0], 0, 1).substr(end($words), 0, 1));
     }
 }

@@ -8,15 +8,26 @@
         <span style="color:var(--paces-border);">/</span>
         <span style="font-size:0.82rem; color:var(--paces-text-muted);">{{ $partner->isVendor() ? 'Vendor Company' : 'Lead Technician' }}</span>
       </div>
-      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-        <h1 class="page-header-title" style="margin:0;">{{ $partner->company_name }}</h1>
-        @php $badge = $partner->status_badge; @endphp
-        <span class="badge-pill-paces {{ $badge['bg'] }}" style="color:{{ $badge['color'] }}; font-size:0.82rem; padding:4px 12px; font-weight:700;">
-          {{ $badge['label'] }}
-        </span>
-        <span class="badge-paces" style="background:{{ $partner->isVendor() ? '#f0fdf4' : '#eff6ff' }}; color:{{ $partner->isVendor() ? '#166534' : '#1d4ed8' }}; font-weight:600; font-size:0.78rem; padding:4px 10px; border-radius:6px;">
-          {{ $partner->isVendor() ? '🏢 Registered Vendor' : '👷 Individual Contractor' }}
-        </span>
+      <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <div style="width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg, var(--paces-primary) 0%, #1e293b 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:1.15rem; font-weight:700; overflow:hidden; border:2.5px solid #e2e8f0; flex-shrink:0;">
+          @if($partner->avatar_url)
+            <img src="{{ $partner->avatar_url }}" alt="{{ $partner->company_name }}" style="width:100%; height:100%; object-fit:cover; display:block;">
+          @else
+            <span>{{ $partner->initials }}</span>
+          @endif
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <h1 class="page-header-title" style="margin:0;">{{ $partner->company_name }}</h1>
+            @php $badge = $partner->status_badge; @endphp
+            <span class="badge-pill-paces {{ $badge['bg'] }}" style="color:{{ $badge['color'] }}; font-size:0.82rem; padding:4px 12px; font-weight:700;">
+              {{ $badge['label'] }}
+            </span>
+            <span class="badge-paces" style="background:{{ $partner->isVendor() ? '#f0fdf4' : '#eff6ff' }}; color:{{ $partner->isVendor() ? '#166534' : '#1d4ed8' }}; font-weight:600; font-size:0.78rem; padding:4px 10px; border-radius:6px;">
+              {{ $partner->isVendor() ? '🏢 Registered Vendor' : '👷 Individual Contractor' }}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
 

@@ -129,7 +129,7 @@ class Booking extends Model
 
     public function statusLogs(): HasMany
     {
-        return $this->hasMany(BookingStatusLog::class)->latest();
+        return $this->hasMany(BookingStatusLog::class)->latest('id');
     }
 
     public function notifications(): HasMany
@@ -267,5 +267,39 @@ class Booking extends Model
             'cancelled' => '#ef4444', // Red
             default => '#6b7280',
         };
+    }
+
+    public function getCostTypeAttribute(): string
+    {
+        if ($this->final_cost > 0) {
+            return 'final';
+        }
+        if ($this->estimated_cost > 0) {
+            return 'estimated';
+        }
+
+        return 'none';
+    }
+
+    public function getIsPriceSetLaterAttribute(): bool
+    {
+        return empty($this->estimated_cost) && empty($this->final_cost);
+    }
+
+    public function getCancellationReasonAttribute(): ?string
+    {
+        if ($this->status !== 'cancelled') {
+            return null;
+        }
+
+        $cancelLog = $this->relationLoaded('statusLogs')
+            ? $this->statusLogs->firstWhere('to_status', 'cancelled')
+            : $this->statusLogs()->where('to_status', 'cancelled')->latest('id')->first();
+
+        if ($cancelLog && $cancelLog->comment) {
+            return preg_replace('/^Order cancelled:\s*/i', '', $cancelLog->comment);
+        }
+
+        return null;
     }
 }

@@ -58,7 +58,7 @@
     <div class="content">
       <div class="greeting">Hello {{ $ticket->customer_name }},</div>
       <div class="desc">
-        Our engineering team has posted a new response to your support ticket. Please review the message below and reply on your ticket page if you have additional questions.
+        Our team has posted a new response to your support ticket. Please review the message below and reply on your ticket page if you have additional questions.
       </div>
 
       <!-- Automated No-Reply Notification Banner -->

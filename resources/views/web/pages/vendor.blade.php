@@ -201,16 +201,9 @@
 
               $tradeDomainOptions = $categoriesList;
 
-              $coverageAreaOptions = isset($activeDistricts) && $activeDistricts->isNotEmpty()
-                ? $activeDistricts->map(fn($d) => $d->name.($d->division ? " ({$d->division->name})" : ''))->all()
-                : [
-                    'Dhaka (Dhaka)',
-                    'Gazipur (Dhaka)',
-                    'Chattogram (Chattogram)',
-                    'Narayanganj (Dhaka)',
-                    'Cumilla (Chattogram)',
-                    'Sylhet (Sylhet)',
-                  ];
+              $locationsList = isset($activeDivisions) && $activeDivisions->isNotEmpty()
+                ? $activeDivisions
+                : \App\Models\Division::whereHas('districts', fn($q) => $q->where('is_active', true))->with(['districts' => fn($q) => $q->where('is_active', true)->with(['thanas' => fn($t) => $t->where('is_active', true)->orderBy('name')])->orderBy('name')])->orderBy('name')->get();
 
               $rawOldDomains = old('trade_domain', []);
               $selectedDomains = is_array($rawOldDomains) ? $rawOldDomains : array_map('trim', explode(',', (string) $rawOldDomains));
@@ -237,22 +230,93 @@
               </div>
             </div>
 
+            <!-- Operating Coverage Areas with Division/District Filters -->
             <div class="form-group" style="margin-bottom:1.5rem;">
-              <label style="display:block; margin-bottom:0.6rem; font-weight:600;">
-                Operating Coverage Areas <span class="required">*</span>
-                <span style="font-weight:400; color:#64748b; font-size:0.85rem; margin-left:6px;">(Select from FIX operating districts)</span>
-              </label>
-              <div class="competency-checkbox-grid">
-                @foreach($coverageAreaOptions as $area)
-                  @php
-                    $areaShort = explode(' (', $area)[0];
-                    $isAreaChecked = in_array($area, $selectedAreas, true) || in_array($areaShort, $selectedAreas, true);
-                  @endphp
-                  <label class="competency-checkbox-card">
-                    <input type="checkbox" name="coverage_areas[]" value="{{ $area }}" {{ $isAreaChecked ? 'checked' : '' }}>
-                    <span class="checkbox-label-text">{{ $area }}</span>
-                  </label>
-                @endforeach
+              <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:0.6rem;">
+                <label style="margin-bottom:0; font-weight:600;">
+                  Operating Coverage Areas <span class="required">*</span>
+                  <span style="font-weight:400; color:#64748b; font-size:0.85rem; margin-left:6px;">(Multi-select operating thanas/areas)</span>
+                </label>
+                <span id="vendorSelectedAreasCountBadge" style="font-size:0.8rem; font-weight:700; color:#0d9488; background:#f0fdfa; border:1px solid #ccfbf1; padding:2px 10px; border-radius:9999px;">
+                  0 Selected
+                </span>
+              </div>
+
+              <!-- Selected Areas Tag Container (Above filter) -->
+              <div style="margin-bottom:14px;">
+                <div style="font-size:0.8rem; font-weight:600; color:#64748b; margin-bottom:6px;">Selected Operating Areas:</div>
+                <div id="vendorSelectedAreasTagContainer" style="display:flex; flex-wrap:wrap; gap:6px; min-height:34px; padding:8px 10px; background:#fff; border:1px dashed #cbd5e1; border-radius:8px;">
+                  <!-- Dynamically rendered badge pills with × button -->
+                </div>
+              </div>
+
+              <!-- Division & District Filter Dropdowns -->
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:14px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:10px; padding:12px 14px;">
+                <div>
+                  <label style="font-size:0.8rem; color:#64748b; margin-bottom:4px; font-weight:600; display:block;">Division Filter</label>
+                  <select id="vendorDivisionSelect" class="form-control" style="background:#fff; font-weight:600;" onchange="onVendorDivisionChange(this.value)">
+                    <option value="">-- Select Division --</option>
+                    @forelse($locationsList as $div)
+                      <option value="{{ $div->id }}">{{ $div->name }}</option>
+                    @empty
+                      <option value="">No Active Divisions</option>
+                    @endforelse
+                  </select>
+                </div>
+
+                <div>
+                  <label style="font-size:0.8rem; color:#64748b; margin-bottom:4px; font-weight:600; display:block;">District Filter</label>
+                  <select id="vendorDistrictSelect" class="form-control" style="background:#fff; font-weight:600;" onchange="onVendorDistrictChange(this.value)" disabled>
+                    <option value="">-- Select Division First --</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Quick Selection Bar (Collapsed until district is selected) -->
+              <div id="vendorQuickSelectionBar" style="display:none; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px; font-size:0.82rem;">
+                <span style="color:#64748b; font-weight:500;">Select areas for chosen district:</span>
+                <div style="display:flex; gap:8px;">
+                  <button type="button" class="btn btn-sm" style="padding:4px 10px; font-size:0.76rem; border:1px solid #cbd5e1; background:#fff; border-radius:6px; cursor:pointer;" onclick="selectAllVendorDistrictAreas()">Select All in District</button>
+                  <button type="button" class="btn btn-sm" style="padding:4px 10px; font-size:0.76rem; border:1px solid #fca5a5; background:#fff; color:#ef4444; border-radius:6px; cursor:pointer;" onclick="deselectAllVendorDistrictAreas()">Clear District</button>
+                </div>
+              </div>
+
+              <!-- Collapsed Notice when not selected -->
+              <div id="vendorDistrictAreasCollapsedNotice" style="padding:14px 16px; background:#f8fafc; border:1.5px dashed #cbd5e1; border-radius:10px; font-size:0.84rem; color:#64748b; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px;">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span>Select a <strong>Division</strong> and <strong>District</strong> above to filter and pick coverage areas.</span>
+              </div>
+
+              <!-- Thanas / Areas Checkbox Groups (Rendered per District) -->
+              <div id="vendorDistrictAreasWrapper">
+                @forelse($locationsList as $div)
+                  @foreach($div->districts as $district)
+                    <div class="vendor-district-areas-panel" id="vendorDistrictAreasPanel_{{ $district->id }}" data-division-id="{{ $div->id }}" data-district-id="{{ $district->id }}" style="display:none;">
+                      @if($district->thanas->isEmpty())
+                        <div style="padding:14px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; font-size:0.85rem; color:#64748b; text-align:center;">
+                          No active areas/thanas configured under {{ $district->name }}.
+                        </div>
+                      @else
+                        <div class="competency-checkbox-grid">
+                          @foreach($district->thanas as $thana)
+                            @php
+                              $isThanaChecked = in_array($thana->name, $selectedAreas, true)
+                                || in_array($thana->name . ' (' . $district->name . ')', $selectedAreas, true);
+                            @endphp
+                            <label class="competency-checkbox-card">
+                              <input type="checkbox" name="coverage_areas[]" value="{{ $thana->name }}" {{ $isThanaChecked ? 'checked' : '' }} class="vendor-area-checkbox-item" data-district-id="{{ $district->id }}" data-area-name="{{ $thana->name }}" onchange="updateVendorSelectedAreasSummary()">
+                              <span class="checkbox-label-text">{{ $thana->name }}</span>
+                            </label>
+                          @endforeach
+                        </div>
+                      @endif
+                    </div>
+                  @endforeach
+                @empty
+                  <div style="padding:14px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; font-size:0.85rem; color:#64748b; text-align:center;">
+                    No active coverage areas configured.
+                  </div>
+                @endforelse
               </div>
             </div>
           </div>
@@ -315,7 +379,124 @@
   </section>
 
   <script>
+    const vendorLocationsData = @json($locationsList);
+
+    function onVendorDivisionChange(selectedDivId) {
+      const distSelect = document.getElementById('vendorDistrictSelect');
+      if (!distSelect) return;
+      distSelect.innerHTML = '';
+
+      if (!selectedDivId) {
+        distSelect.disabled = true;
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '-- Select Division First --';
+        distSelect.appendChild(opt);
+        onVendorDistrictChange('');
+        return;
+      }
+
+      const division = vendorLocationsData.find(d => String(d.id) === String(selectedDivId));
+      if (!division || !division.districts || division.districts.length === 0) {
+        distSelect.disabled = true;
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'No active districts';
+        distSelect.appendChild(opt);
+        onVendorDistrictChange('');
+        return;
+      }
+
+      distSelect.disabled = false;
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = '-- Select District --';
+      distSelect.appendChild(defaultOpt);
+
+      division.districts.forEach(dist => {
+        const opt = document.createElement('option');
+        opt.value = dist.id;
+        opt.textContent = dist.name;
+        distSelect.appendChild(opt);
+      });
+
+      onVendorDistrictChange('');
+    }
+
+    function onVendorDistrictChange(selectedDistId) {
+      let hasActivePanel = false;
+      document.querySelectorAll('.vendor-district-areas-panel').forEach(panel => {
+        if (selectedDistId && String(panel.dataset.districtId) === String(selectedDistId)) {
+          panel.style.display = 'block';
+          hasActivePanel = true;
+        } else {
+          panel.style.display = 'none';
+        }
+      });
+
+      const quickBar = document.getElementById('vendorQuickSelectionBar');
+      if (quickBar) {
+        quickBar.style.display = hasActivePanel ? 'flex' : 'none';
+      }
+
+      const notice = document.getElementById('vendorDistrictAreasCollapsedNotice');
+      if (notice) {
+        notice.style.display = hasActivePanel ? 'none' : 'flex';
+      }
+    }
+
+    function selectAllVendorDistrictAreas() {
+      const currentDistId = document.getElementById('vendorDistrictSelect')?.value;
+      const panel = document.getElementById('vendorDistrictAreasPanel_' + currentDistId);
+      if (panel) {
+        panel.querySelectorAll('.vendor-area-checkbox-item').forEach(cb => cb.checked = true);
+        updateVendorSelectedAreasSummary();
+      }
+    }
+
+    function deselectAllVendorDistrictAreas() {
+      const currentDistId = document.getElementById('vendorDistrictSelect')?.value;
+      const panel = document.getElementById('vendorDistrictAreasPanel_' + currentDistId);
+      if (panel) {
+        panel.querySelectorAll('.vendor-area-checkbox-item').forEach(cb => cb.checked = false);
+        updateVendorSelectedAreasSummary();
+      }
+    }
+
+    function updateVendorSelectedAreasSummary() {
+      const checkedBoxes = Array.from(document.querySelectorAll('.vendor-area-checkbox-item:checked'));
+      const countBadge = document.getElementById('vendorSelectedAreasCountBadge');
+      if (countBadge) {
+        countBadge.textContent = checkedBoxes.length + ' Selected';
+      }
+
+      const container = document.getElementById('vendorSelectedAreasTagContainer');
+      if (!container) return;
+
+      if (checkedBoxes.length === 0) {
+        container.innerHTML = '<span style="font-size:0.8rem; color:#94a3b8; font-style:italic;">No operating areas selected yet. Please select from the districts above.</span>';
+        return;
+      }
+
+      container.innerHTML = '';
+      checkedBoxes.forEach(cb => {
+        const areaName = cb.dataset.areaName || cb.value;
+        const pill = document.createElement('span');
+        pill.style.cssText = 'display:inline-flex; align-items:center; gap:5px; padding:3px 9px; background:#f0fdfa; border:1px solid #ccfbf1; border-radius:9999px; font-size:0.78rem; font-weight:600; color:#0d9488;';
+        pill.innerHTML = `<span>${areaName}</span><button type="button" style="background:none; border:none; color:inherit; cursor:pointer; padding:0; line-height:1; font-size:0.85rem;" title="Remove area">&times;</button>`;
+        pill.querySelector('button').onclick = function() {
+          cb.checked = false;
+          updateVendorSelectedAreasSummary();
+        };
+        container.appendChild(pill);
+      });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+      // Keep coverage filter collapsed until user selects division & district
+      onVendorDivisionChange('');
+      updateVendorSelectedAreasSummary();
+
       const form = document.querySelector('form[action="{{ route('vendor.apply') }}"]');
       if (!form) return;
       form.addEventListener('submit', function(e) {

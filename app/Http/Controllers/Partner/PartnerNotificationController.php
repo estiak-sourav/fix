@@ -21,7 +21,9 @@ class PartnerNotificationController extends Controller
 
         $filter = $request->query('filter', 'all');
 
-        $query = PartnerNotification::where('partner_id', $partner->id)->latest();
+        $query = PartnerNotification::where('partner_id', $partner->id)
+            ->with('booking.service')
+            ->latest();
 
         if ($filter === 'unread') {
             $query->unread();
@@ -38,7 +40,7 @@ class PartnerNotificationController extends Controller
     /**
      * Mark a single notification as read and optionally navigate to action URL.
      */
-    public function markAsRead(Request $request, PartnerNotification $notification): RedirectResponse
+    public function markAsRead(Request $request, PartnerNotification $notification): RedirectResponse|JsonResponse
     {
         $partner = Auth::guard('partner')->user();
 
@@ -47,6 +49,13 @@ class PartnerNotificationController extends Controller
         }
 
         $notification->markAsRead();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'unread_count' => $partner->unreadNotificationsCount(),
+            ]);
+        }
 
         if ($request->filled('redirect') && $notification->action_url) {
             return redirect($notification->action_url);

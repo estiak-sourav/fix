@@ -25,7 +25,7 @@ class FaqSeeder extends Seeder
             [
                 'category' => 'amc',
                 'question' => 'What is an Annual Maintenance Contract (AMC) and how does it help?',
-                'answer' => 'An AMC with FIX is a comprehensive agreement where our engineering team handles regular preventive inspections (HVAC, electrical, plumbing, generators, fire systems) and provides guaranteed emergency response, lowering long-term repair costs by 35-50%.',
+                'answer' => 'An AMC with FIX is a comprehensive agreement where our team handles regular preventive inspections (HVAC, electrical, plumbing, generators, fire systems) and provides guaranteed emergency response, lowering long-term repair costs by 35-50%.',
                 'order' => 3,
             ],
             [

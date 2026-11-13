@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AdminNotification;
 use App\Models\Booking;
 use App\Models\BookingStatusLog;
+use App\Models\PartnerNotification;
 use App\Services\NotificationDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,6 +62,14 @@ class PartnerJobController extends Controller
         $partner = Auth::guard('partner')->user();
 
         if ((int) $booking->partner_id !== (int) $partner->id) {
+            $wasNotified = PartnerNotification::where('partner_id', $partner->id)
+                ->where('booking_id', $booking->id)
+                ->exists();
+
+            if ($wasNotified) {
+                return redirect()->route('partner.jobs.index')->with('info', "Work Order #{$booking->booking_number} is no longer assigned to your account or has been cancelled.");
+            }
+
             abort(403, 'Unauthorized access to this booking assignment.');
         }
 
@@ -78,7 +87,7 @@ class PartnerJobController extends Controller
     /**
      * Accept newly assigned job.
      */
-    public function accept(Booking $booking): RedirectResponse
+    public function accept(Request $request, Booking $booking): RedirectResponse
     {
         $partner = Auth::guard('partner')->user();
 
@@ -86,23 +95,59 @@ class PartnerJobController extends Controller
             abort(403);
         }
 
-        $booking->update([
-            'partner_job_status' => 'accepted',
-            'status' => 'assigned',
-        ]);
+        $isPriceSetLater = ($booking->final_cost === null || $booking->final_cost <= 0) && ($booking->estimated_cost === null || $booking->estimated_cost <= 0);
+        $isEstimated = ($booking->estimated_cost > 0 && ($booking->final_cost === null || $booking->final_cost <= 0));
+
+        $priceNote = '';
+
+        if ($isPriceSetLater) {
+            $validated = $request->validate([
+                'agreed_price' => ['required', 'numeric', 'min:1'],
+            ], [
+                'agreed_price.required' => 'You must set the service price before accepting this job.',
+                'agreed_price.min' => 'Service price must be at least ৳ 1.',
+            ]);
+
+            $finalPrice = (float) $validated['agreed_price'];
+            $booking->final_cost = $finalPrice;
+            $booking->estimated_cost = null;
+            $priceNote = ' Agreed Price: ৳ '.number_format($finalPrice, 2).'.';
+        } elseif ($isEstimated) {
+            $validated = $request->validate([
+                'agreed_price' => ['required', 'numeric', 'min:1'],
+            ], [
+                'agreed_price.required' => 'Please confirm or set the final service price before accepting.',
+                'agreed_price.min' => 'Service price must be at least ৳ 1.',
+            ]);
+
+            $finalPrice = (float) $validated['agreed_price'];
+            $booking->final_cost = $finalPrice;
+            $booking->estimated_cost = null; // Converted from estimated to final price!
+            $priceNote = ' Final Price Confirmed: ৳ '.number_format($finalPrice, 2).' (converted from estimate).';
+        } elseif ($request->filled('agreed_price')) {
+            $booking->final_cost = (float) $request->input('agreed_price');
+            $priceNote = ' Agreed Price: ৳ '.number_format($booking->final_cost, 2).'.';
+        } elseif ($booking->final_cost > 0) {
+            $priceNote = ' Agreed Price: ৳ '.number_format($booking->final_cost, 2).'.';
+        }
+
+        $oldStatus = $booking->status;
+        $booking->partner_job_status = 'accepted';
+        $booking->status = 'assigned';
+        $booking->save();
 
         BookingStatusLog::create([
             'booking_id' => $booking->id,
-            'from_status' => $booking->status,
+            'from_status' => $oldStatus,
             'to_status' => 'assigned',
-            'comment' => "Partner '{$partner->company_name}' accepted the job assignment.",
+            'comment' => "Partner '{$partner->company_name}' accepted the job assignment.{$priceNote}",
             'is_customer_visible' => true,
         ]);
 
         AdminNotification::create([
             'type' => 'order_status',
             'title' => "Crew Accepted Job #{$booking->booking_number}",
-            'message' => "Partner '{$partner->company_name}' has accepted assignment for Job #{$booking->booking_number}.",
+            'message' => "Partner '{$partner->company_name}' has accepted assignment for Job #{$booking->booking_number}.{$priceNote}",
             'booking_id' => $booking->id,
             'action_url' => route('admin.bookings.show', $booking),
             'is_read' => false,
@@ -111,16 +156,17 @@ class PartnerJobController extends Controller
         NotificationDispatcher::notifyAdminSection(
             'orders',
             "Crew Accepted Job #{$booking->booking_number}",
-            "Partner '{$partner->company_name}' has accepted assignment for Job #{$booking->booking_number}.",
+            "Partner '{$partner->company_name}' has accepted assignment for Job #{$booking->booking_number}.{$priceNote}",
             route('admin.bookings.show', $booking),
             [
                 'Order' => "#{$booking->booking_number}",
                 'Partner' => $partner->company_name,
                 'Status' => 'Accepted by Crew',
+                'Confirmed Price' => $booking->final_cost > 0 ? '৳ '.number_format($booking->final_cost, 2) : 'Not Set',
             ]
         );
 
-        return back()->with('success', "Job #{$booking->booking_number} accepted successfully!");
+        return back()->with('success', "Job #{$booking->booking_number} accepted successfully!".($booking->final_cost > 0 ? ' (Final Price: ৳ '.number_format($booking->final_cost, 2).')' : ''));
     }
 
     /**

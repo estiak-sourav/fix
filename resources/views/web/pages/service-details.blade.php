@@ -180,7 +180,7 @@
             </div>
             <div style="font-size:0.9rem; margin-bottom:1rem;">
               <span style="color:var(--text-muted); display:block;">Service Dispatch:</span>
-              <strong style="color:#10b981;">Direct Engineering Team Coordination</strong>
+              <strong style="color:#10b981;">Direct Team Coordination</strong>
             </div>
             <hr style="border:none; border-top:1px solid var(--border); margin:1.25rem 0;">
             <a href="{{ route('booking.create', ['service' => $service->title]) }}" class="btn btn-accent btn-block">

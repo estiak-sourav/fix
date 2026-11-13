@@ -28,11 +28,150 @@
         </div>
       @endif
 
-      {{-- ===================== AVATAR CARD ===================== --}}
-      <div class="customer-profile-card" style="background:#ffffff; border:1px solid var(--border); border-radius:14px; padding:1.75rem 2rem; margin-bottom:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-        <div style="margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--border);">
-          <h3 style="font-size:1.1rem; font-weight:700; margin:0; color:var(--text-main);">Profile Picture</h3>
+      {{-- ===================== 1. PROFILE DETAILS VIEW (DEFAULT) ===================== --}}
+      <div id="customerProfileDetailsView" style="margin-bottom:2rem;">
+        {{-- Profile Header Card --}}
+        <div class="customer-profile-card" style="background:#ffffff; border:1px solid var(--border); border-radius:14px; padding:1.75rem 2rem; margin-bottom:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; border-bottom:1px solid var(--border); padding-bottom:1.25rem; margin-bottom:1.5rem;">
+            <div>
+              <h2 style="font-size:1.25rem; font-weight:700; margin:0 0 4px; color:var(--text-main);">My Customer Profile</h2>
+              <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">View and manage your registered client details.</p>
+            </div>
+            <button type="button" class="btn btn-accent" onclick="showCustomerEditMode()" style="display:inline-flex; align-items:center; gap:8px; padding:9px 20px; font-size:0.875rem; font-weight:700; border-radius:8px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              <span>Edit Profile</span>
+            </button>
+          </div>
+
+          {{-- Avatar and User Identity --}}
+          <div style="display:flex; align-items:center; gap:22px; flex-wrap:wrap; padding:1.25rem 1.5rem; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px;">
+            <div style="width:84px; height:84px; border-radius:50%; background:linear-gradient(135deg,var(--primary) 0%,#1e293b 100%); color:#fff; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:700; overflow:hidden; border:3px solid #e2e8f0; box-shadow:0 4px 10px rgba(0,0,0,0.08); flex-shrink:0;">
+              @if($user->avatar_url)
+                <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" style="width:100%; height:100%; object-fit:cover; object-position:center;">
+              @else
+                <span>{{ strtoupper(substr($user->name ?: 'U', 0, 1)) }}</span>
+              @endif
+            </div>
+
+            <div style="flex:1; min-width:220px;">
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:4px;">
+                <h3 style="font-size:1.2rem; font-weight:700; margin:0; color:var(--text-main);">{{ $user->name }}</h3>
+                <span style="font-size:0.75rem; font-weight:700; color:#0d9488; background:#f0fdfa; border:1px solid #ccfbf1; padding:3px 10px; border-radius:9999px;">
+                  Verified Client
+                </span>
+              </div>
+              <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; font-size:0.85rem; color:var(--text-muted); margin-top:6px;">
+                <span style="display:inline-flex; align-items:center; gap:5px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  {{ $user->phone }}
+                </span>
+                <span style="display:inline-flex; align-items:center; gap:5px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                  {{ $user->email }}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {{-- Contact & Account Information Card --}}
+        <div class="customer-profile-card" style="background:#ffffff; border:1px solid var(--border); border-radius:14px; padding:1.75rem 2rem; margin-bottom:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <div style="margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--border);">
+            <h3 style="font-size:1.1rem; font-weight:700; margin:0; color:var(--text-main);">Primary Contact Information</h3>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px;">
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px;">
+              <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Full Name</div>
+              <div style="font-size:0.95rem; font-weight:600; color:var(--text-main);">{{ $user->name }}</div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px;">
+              <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Mobile Phone</div>
+              <div style="font-size:0.95rem; font-weight:600; color:var(--text-main);">{{ $user->phone }}</div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px;">
+              <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Email Address</div>
+              <div style="font-size:0.95rem; font-weight:600; color:var(--text-main);">{{ $user->email }}</div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px;">
+              <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Company / Organization</div>
+              <div style="font-size:0.95rem; font-weight:600; color:var(--text-main);">{{ $user->company_name ?: 'Individual Customer' }}</div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; grid-column:1 / -1;">
+              <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Primary Facility Type</div>
+              <div style="font-size:0.95rem; font-weight:600; color:var(--text-main);">
+                @php
+                  $facilityLabels = [
+                    'residential' => 'Residential Apartment / House',
+                    'commercial' => 'Commercial Office / Building',
+                    'industrial' => 'Industrial / Factory / Warehouse',
+                    'retail' => 'Retail Store / Restaurant',
+                  ];
+                @endphp
+                {{ $facilityLabels[$user->property_type] ?? ($user->property_type ?: 'Residential Apartment / House') }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{-- Address Details Card --}}
+        <div class="customer-profile-card" style="background:#ffffff; border:1px solid var(--border); border-radius:14px; padding:1.75rem 2rem; margin-bottom:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <div style="margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--border);">
+            <h3 style="font-size:1.1rem; font-weight:700; margin:0; color:var(--text-main);">Address</h3>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-bottom:14px;">
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px;">
+              <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Division</div>
+              <div style="font-size:0.95rem; font-weight:600; color:var(--text-main);">{{ $user->division ?: 'Not set' }}</div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px;">
+              <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">District</div>
+              <div style="font-size:0.95rem; font-weight:600; color:var(--text-main);">{{ $user->district ?: 'Not set' }}</div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px;">
+              <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Thana / Area</div>
+              <div style="font-size:0.95rem; font-weight:600; color:var(--text-main);">{{ $user->area ?: 'Not set' }}</div>
+            </div>
+          </div>
+
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Full Street Address</div>
+            <div style="font-size:0.95rem; font-weight:500; color:var(--text-main); line-height:1.5;">
+              @if($user->default_address)
+                📍 {{ $user->default_address }}
+              @else
+                <span style="color:var(--text-muted); font-style:italic;">No street address provided yet.</span>
+              @endif
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{-- ===================== 2. PROFILE EDIT VIEW (HIDDEN BY DEFAULT) ===================== --}}
+      <div id="customerProfileEditView" style="display:none; margin-bottom:2rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">
+          <div>
+            <h2 style="font-size:1.25rem; font-weight:700; margin:0 0 4px; color:var(--text-main);">Edit Profile &amp; Settings</h2>
+            <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">Update your contact details, profile photo, and default service address.</p>
+          </div>
+          <button type="button" class="btn btn-outline-secondary" onclick="showCustomerDetailsMode()" style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; font-size:0.85rem; font-weight:600; border-radius:8px; border:1.5px solid #cbd5e1; background:#fff; cursor:pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <span>&larr; Back to Profile</span>
+          </button>
+        </div>
+
+        {{-- ===================== AVATAR CARD ===================== --}}
+        <div class="customer-profile-card" style="background:#ffffff; border:1px solid var(--border); border-radius:14px; padding:1.75rem 2rem; margin-bottom:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <div style="margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--border);">
+            <h3 style="font-size:1.1rem; font-weight:700; margin:0; color:var(--text-main);">Profile Picture</h3>
+          </div>
 
         <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
           {{-- Avatar Preview --}}
@@ -177,15 +316,55 @@
           </div>
         </div>
 
-        <button type="submit" class="btn btn-accent" style="width:100%; padding:0.95rem; font-size:1rem; font-weight:700; border-radius:10px; letter-spacing:0.01em;">
-          Save Profile Changes →
-        </button>
-      </form>
+          <div style="display:flex; gap:12px; margin-top:1.5rem;">
+            <button type="button" class="btn btn-outline-secondary" onclick="showCustomerDetailsMode()" style="flex:1; padding:0.95rem; font-size:1rem; font-weight:600; border-radius:10px; border:1px solid #cbd5e1; background:#fff; cursor:pointer;">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-accent" style="flex:2; padding:0.95rem; font-size:1rem; font-weight:700; border-radius:10px; letter-spacing:0.01em;">
+              Save Profile Changes →
+            </button>
+          </div>
+        </form>
+      </div>
 
     </div>
   </section>
 
   <script>
+    function showCustomerEditMode() {
+      const details = document.getElementById('customerProfileDetailsView');
+      const edit = document.getElementById('customerProfileEditView');
+      if (details && edit) {
+        details.style.display = 'none';
+        edit.style.display = 'block';
+        window.location.hash = 'edit';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function showCustomerDetailsMode() {
+      const details = document.getElementById('customerProfileDetailsView');
+      const edit = document.getElementById('customerProfileEditView');
+      if (details && edit) {
+        edit.style.display = 'none';
+        details.style.display = 'block';
+        if (window.location.hash === '#edit') {
+          history.replaceState(null, null, window.location.pathname);
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const hash = window.location.hash.replace('#', '');
+      const hasErrors = @json($errors->any());
+      if (urlParams.get('edit') === '1' || hash === 'edit' || hasErrors) {
+        showCustomerEditMode();
+      } else {
+        showCustomerDetailsMode();
+      }
+    });
     // Avatar upload client preview
     function handleAvatarChange(input) {
       if (input.files && input.files[0]) {

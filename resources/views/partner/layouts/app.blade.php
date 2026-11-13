@@ -663,6 +663,20 @@
             </button>
           @endif
         </form>
+
+        <!-- Partner Profile Avatar -->
+        @php
+          $partnerAuth = auth('partner')->user();
+        @endphp
+        <a href="{{ route('partner.profile.index') }}" title="{{ $partnerAuth?->contact_person ?? 'Profile Settings' }}" style="display:flex; align-items:center; text-decoration:none; margin-left:4px;">
+          <div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, var(--p-accent) 0%, var(--p-primary) 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700; overflow:hidden; border:2px solid #e2e8f0; flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            @if($partnerAuth?->avatar_url)
+              <img src="{{ $partnerAuth->avatar_url }}" alt="{{ $partnerAuth->contact_person }}" style="width:100%; height:100%; object-fit:cover; display:block;">
+            @else
+              <span>{{ $partnerAuth?->initials ?? 'CR' }}</span>
+            @endif
+          </div>
+        </a>
       </div>
     </div>
   </header>

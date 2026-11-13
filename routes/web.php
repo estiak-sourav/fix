@@ -90,6 +90,14 @@ Route::post('/book', [BookingController::class, 'store']);
 
 $vendorViewHandler = function () {
     $serviceCategories = ServiceCategory::where('is_active', true)->orderBy('order')->get();
+    $activeDivisions = Division::whereHas('districts', function ($q) {
+        $q->where('is_active', true);
+    })->with(['districts' => function ($q) {
+        $q->where('is_active', true)->with(['thanas' => function ($t) {
+            $t->where('is_active', true)->orderBy('name');
+        }])->orderBy('name');
+    }])->orderBy('name')->get();
+
     $activeDistricts = District::where('is_active', true)
         ->with(['division', 'thanas' => function ($q) {
             $q->where('is_active', true)->orderBy('name');
@@ -97,7 +105,7 @@ $vendorViewHandler = function () {
         ->orderBy('name')
         ->get();
 
-    return view('web.pages.vendor', compact('serviceCategories', 'activeDistricts'));
+    return view('web.pages.vendor', compact('serviceCategories', 'activeDivisions', 'activeDistricts'));
 };
 
 Route::get('/vendor', $vendorViewHandler)->name('vendor');

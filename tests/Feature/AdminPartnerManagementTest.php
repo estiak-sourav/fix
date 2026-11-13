@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Partner;
 use App\Models\PartnerCrew;
 use App\Models\Service;
+use App\Models\ServiceCategory;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -140,10 +141,10 @@ class AdminPartnerManagementTest extends TestCase
             ],
             'technicians_count' => '16-50',
             'coverage_areas' => [
-                'Dhaka North (Uttara, Gulshan, Banani, Mirpur)',
-                'Gazipur & Tongi Industrial Belt',
-                'Savar, Ashulia & Dhaka EPZ',
-                'Mymensingh Industrial Zone',
+                'Gulshan',
+                'Banani',
+                'Uttara',
+                'Tongi',
             ],
         ];
 
@@ -156,8 +157,8 @@ class AdminPartnerManagementTest extends TestCase
         $this->assertStringContainsString('Electrical & Substation Power', $partner->trade_domain);
         $this->assertStringContainsString('HVAC & Central Air Conditioning', $partner->trade_domain);
         $this->assertStringContainsString('Fire Safety & NFPA Suppression', $partner->trade_domain);
-        $this->assertStringContainsString('Dhaka North', $partner->coverage_areas);
-        $this->assertStringContainsString('Mymensingh Industrial Zone', $partner->coverage_areas);
+        $this->assertStringContainsString('Gulshan', $partner->coverage_areas);
+        $this->assertStringContainsString('Tongi', $partner->coverage_areas);
         $this->assertSame('pending', $partner->status);
     }
 
@@ -177,8 +178,8 @@ class AdminPartnerManagementTest extends TestCase
             ],
             'technicians_count' => '6-15',
             'coverage_areas' => [
-                'Dhaka South (Dhanmondi, Motijheel, Old Dhaka)',
-                'Narayanganj & Keraniganj Industrial Area',
+                'Gulshan',
+                'Banani',
             ],
             'status' => 'approved',
             'payout_terms' => 'bi_weekly',
@@ -196,7 +197,8 @@ class AdminPartnerManagementTest extends TestCase
         $this->assertNotNull($partner);
         $this->assertStringContainsString('Plumbing & Water Boosting Systems', $partner->trade_domain);
         $this->assertStringContainsString('Fire Safety & NFPA Suppression', $partner->trade_domain);
-        $this->assertStringContainsString('Narayanganj & Keraniganj Industrial Area', $partner->coverage_areas);
+        $this->assertStringContainsString('Gulshan', $partner->coverage_areas);
+        $this->assertStringContainsString('Banani', $partner->coverage_areas);
         $response->assertRedirect(route('admin.partners.show', $partner));
 
         // Update with new set of checkboxes
@@ -208,9 +210,9 @@ class AdminPartnerManagementTest extends TestCase
                 'Plumbing & Water Boosting Systems',
             ],
             'coverage_areas' => [
-                'Nationwide / Pan-Bangladesh Coverage',
+                'Uttara',
+                'Mirpur',
             ],
-            'other_coverage_areas' => 'DEPZ Specialized Zone',
         ]);
 
         $updateResponse = $this->actingAs($admin, 'admin')
@@ -219,8 +221,8 @@ class AdminPartnerManagementTest extends TestCase
         $partner->refresh();
         $this->assertSame('Vertex MEP Solutions Ltd', $partner->company_name);
         $this->assertStringContainsString('Electrical & Substation Power', $partner->trade_domain);
-        $this->assertStringContainsString('Nationwide / Pan-Bangladesh Coverage', $partner->coverage_areas);
-        $this->assertStringContainsString('DEPZ Specialized Zone', $partner->coverage_areas);
+        $this->assertStringContainsString('Uttara', $partner->coverage_areas);
+        $this->assertStringContainsString('Mirpur', $partner->coverage_areas);
         $updateResponse->assertRedirect(route('admin.partners.show', $partner));
     }
 
@@ -297,5 +299,76 @@ class AdminPartnerManagementTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Vendor Payables & Outstanding Disbursements', false);
         $response->assertSee('Total Pending Payables');
+    }
+
+    public function test_admin_partner_create_and_edit_reflects_dynamic_categories_and_active_districts(): void
+    {
+        $admin = Admin::first();
+
+        // 1. Create a dynamic active category & an inactive category
+        $activeCat = ServiceCategory::create([
+            'name' => 'Industrial Robotics & Automation',
+            'slug' => 'industrial-robotics-automation',
+            'is_active' => true,
+            'order' => 99,
+        ]);
+
+        $inactiveCat = ServiceCategory::create([
+            'name' => 'Legacy Discontinued Division',
+            'slug' => 'legacy-discontinued-division',
+            'is_active' => false,
+            'order' => 100,
+        ]);
+
+        // 2. View create page
+        $createResponse = $this->actingAs($admin, 'admin')
+            ->get(route('admin.partners.create'));
+
+        $createResponse->assertOk();
+        $createResponse->assertSee('Industrial Robotics & Automation');
+        $createResponse->assertDontSee('Legacy Discontinued Division');
+        $createResponse->assertSee('Gulshan');
+
+        // 3. View edit page
+        $partner = Partner::first() ?? Partner::create([
+            'company_name' => 'Legacy Partner Co',
+            'contact_person' => 'Kamal',
+            'phone' => '+8801700000000',
+            'partner_type' => 'company',
+            'trade_domain' => 'Electrical',
+            'technicians_count' => '1-5',
+            'coverage_areas' => 'Gulshan',
+            'status' => 'approved',
+        ]);
+        $editResponse = $this->actingAs($admin, 'admin')
+            ->get(route('admin.partners.edit', $partner));
+
+        $editResponse->assertOk();
+        $editResponse->assertSee('Industrial Robotics & Automation');
+        $editResponse->assertDontSee('Legacy Discontinued Division');
+        $editResponse->assertSee('Gulshan');
+    }
+
+    public function test_vendor_application_page_renders_dynamic_active_categories_and_active_districts(): void
+    {
+        $activeCat = ServiceCategory::create([
+            'name' => 'High Voltage Substation Automation',
+            'slug' => 'high-voltage-substation-automation',
+            'is_active' => true,
+            'order' => 88,
+        ]);
+
+        $inactiveCat = ServiceCategory::create([
+            'name' => 'Archived Trade Competency',
+            'slug' => 'archived-trade-competency',
+            'is_active' => false,
+            'order' => 89,
+        ]);
+
+        $response = $this->get(route('vendor'));
+        $response->assertOk();
+        $response->assertSee('High Voltage Substation Automation');
+        $response->assertDontSee('Archived Trade Competency');
+        $response->assertSee('Gulshan');
     }
 }

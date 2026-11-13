@@ -94,7 +94,7 @@
           Post a Reply to Engineering Desk
         </h3>
         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:18px;">
-          Send your reply to the engineering team. Note: Image and file uploads are disabled for security.
+          Send your reply to the team. Note: Image and file uploads are disabled for security.
         </p>
 
         @if($ticket->status === 'closed')

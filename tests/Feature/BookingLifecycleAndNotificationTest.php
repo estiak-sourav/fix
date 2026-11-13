@@ -127,20 +127,30 @@ class BookingLifecycleAndNotificationTest extends TestCase
         $this->assertEquals($partner2->id, $booking->partner_id);
         $this->assertEquals('assigned', $booking->partner_job_status);
 
-        // 5. Crew 2 accepts the assignment -> User panel now shows 'Assigned' & CMS alerted
+        // 5. Pricing Logic: Admin set price later -> Crew MUST set price before accepting assignment
+        $failAccept = $this->actingAs($partner2, 'partner')
+            ->post(route('partner.jobs.accept', $booking));
+        $failAccept->assertSessionHasErrors('agreed_price');
+
+        // Crew 2 sets agreed price and accepts the assignment -> User panel now shows 'Assigned' & CMS alerted
         $this->actingAs($partner2, 'partner')
-            ->post(route('partner.jobs.accept', $booking))
+            ->post(route('partner.jobs.accept', $booking), [
+                'agreed_price' => 2500,
+            ])
             ->assertRedirect();
 
         $booking->refresh();
         $this->assertEquals('accepted', $booking->partner_job_status);
         $this->assertEquals('assigned', $booking->status);
+        $this->assertEquals(2500.00, (float) $booking->final_cost);
+        $this->assertNull($booking->estimated_cost);
 
         $acceptNotif = AdminNotification::where('booking_id', $booking->id)
             ->where('title', 'like', '%Crew Accepted%')
             ->latest()
             ->first();
         $this->assertNotNull($acceptNotif);
+        $this->assertStringContainsString('2,500', $acceptNotif->message);
 
         // User panel verifies status is Assigned
         $userPanel = $this->actingAs($user, 'web')->get('/my-bookings');
@@ -168,36 +178,17 @@ class BookingLifecycleAndNotificationTest extends TestCase
         $userPanel->assertSee('On the Way');
         $userPanel->assertSee('Crew is on the way');
 
-        // 7. Pricing Logic: Admin set price later -> Crew MUST set price before starting work
-        // Attempting to start work without agreed_price must fail validation
-        $failResponse = $this->actingAs($partner2, 'partner')
-            ->from(route('partner.jobs.show', $booking))
-            ->post(route('partner.jobs.status', $booking), [
-                'partner_job_status' => 'in_progress',
-            ]);
-        $failResponse->assertRedirect(route('partner.jobs.show', $booking));
-        $failResponse->assertSessionHasErrors('agreed_price');
-
-        // Now Crew sets agreed price and starts work
+        // 7. Work starts on site (Price was already confirmed upon acceptance)
         $startWorkResponse = $this->actingAs($partner2, 'partner')
             ->post(route('partner.jobs.status', $booking), [
                 'partner_job_status' => 'in_progress',
-                'agreed_price' => 2500,
             ]);
         $startWorkResponse->assertRedirect();
 
         $booking->refresh();
         $this->assertEquals('in_progress', $booking->partner_job_status);
         $this->assertEquals('in_progress', $booking->status);
-        $this->assertEquals(2500, (float) $booking->estimated_cost);
-
-        // CMS notified of price set
-        $priceNotif = AdminNotification::where('booking_id', $booking->id)
-            ->where('type', 'price_updated')
-            ->latest()
-            ->first();
-        $this->assertNotNull($priceNotif);
-        $this->assertStringContainsString('2,500', $priceNotif->message);
+        $this->assertEquals(2500.00, (float) $booking->final_cost);
 
         // CMS notified of work started
         $workStartedNotif = AdminNotification::where('booking_id', $booking->id)

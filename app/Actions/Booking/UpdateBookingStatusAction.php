@@ -35,10 +35,10 @@ class UpdateBookingStatusAction
                 'assigned_team' => $data['assigned_team'] ?? $booking->assigned_team,
             ];
 
-            if (isset($data['estimated_cost'])) {
+            if (array_key_exists('estimated_cost', $data)) {
                 $updateData['estimated_cost'] = $data['estimated_cost'];
             }
-            if (isset($data['final_cost'])) {
+            if (array_key_exists('final_cost', $data)) {
                 $updateData['final_cost'] = $data['final_cost'];
             }
 

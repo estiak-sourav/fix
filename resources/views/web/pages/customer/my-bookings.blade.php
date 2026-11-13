@@ -115,7 +115,8 @@
       @else
         @php
           $runningBookings = $bookings->filter(fn ($b) => in_array($b->status, ['pending_review', 'accepted', 'assigned', 'on_the_way', 'in_progress']));
-          $completedBookings = $bookings->filter(fn ($b) => in_array($b->status, ['completed', 'cancelled']));
+          $completedBookings = $bookings->filter(fn ($b) => $b->status === 'completed');
+          $cancelledBookings = $bookings->filter(fn ($b) => $b->status === 'cancelled');
         @endphp
 
         <!-- ================================================================= -->
@@ -285,7 +286,7 @@
                         <span style="font-size:1.3rem;">👷</span>
                         <div>
                           <strong style="color:#1d4ed8; font-size:0.85rem; display:block;">Field Crew Assigned & Confirmed</strong>
-                          <span style="font-size:0.78rem; color:#2563eb;">{{ $booking->assigned_team ?: ($booking->partner ? $booking->partner->company_name : 'Technician Team') }} has accepted your service booking.</span>
+                          <span style="font-size:0.78rem; color:#2563eb;">A certified team has been assigned and confirmed for your service booking.</span>
                         </div>
                       </div>
                     @elseif($booking->status === 'accepted')
@@ -404,6 +405,71 @@
           </div>
         @endif
 
+        <!-- ================================================================= -->
+        <!-- 3. CANCELLED REQUESTS (NEVER MIXED WITH COMPLETED SERVICES)      -->
+        <!-- ================================================================= -->
+        @if($cancelledBookings->isNotEmpty())
+          <div style="margin-top: {{ ($runningBookings->isNotEmpty() || $completedBookings->isNotEmpty()) ? '2rem' : '0' }};">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,0.2);"></span>
+                <h3 style="margin:0; font-size:1.1rem; font-weight:800; color:#0f172a;">
+                  Cancelled Requests ({{ $cancelledBookings->count() }})
+                </h3>
+              </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              @foreach($cancelledBookings as $cb)
+                <div class="completed-booking-item" style="border-left: 4px solid #ef4444; background:#fff;">
+                  <!-- Left: Icon + Service info -->
+                  <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="width:42px; height:42px; border-radius:50%; background:#fef2f2; border:1.5px solid #fecaca; color:#ef4444; display:flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:800; flex-shrink:0;">
+                      ✕
+                    </div>
+
+                    <div>
+                      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span style="font-weight:800; font-size:0.95rem; color:#0f172a;">
+                          {{ $cb->service?->title ?? ($cb->amcPlan?->name ?? 'Facility Service') }}
+                        </span>
+                        <span style="font-family:monospace; font-weight:700; font-size:0.75rem; color:#dc2626; background:#fee2e2; padding:1px 6px; border-radius:4px;">
+                          #{{ $cb->booking_number }}
+                        </span>
+                      </div>
+
+                      <div style="font-size:0.78rem; color:#64748b; margin-top:3px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span>Cancelled on {{ $cb->cancelled_at ? $cb->cancelled_at->format('M d, Y • h:i A') : $cb->updated_at->format('M d, Y • h:i A') }}</span>
+                        <span>•</span>
+                        <span>📍 {{ $cb->area }}, {{ $cb->district }}</span>
+                      </div>
+
+                      @if($cb->cancellation_reason)
+                        <div style="margin-top:6px; font-size:0.78rem; color:#b91c1c; background:#fef2f2; border:1px solid #fee2e2; border-radius:6px; padding:3px 8px; display:inline-block;">
+                          <strong>Reason:</strong> {{ $cb->cancellation_reason }}
+                        </div>
+                      @endif
+                    </div>
+                  </div>
+
+                  <!-- Right: Cancelled Badge + View Details Button -->
+                  <div class="completed-item-right" style="display:flex; align-items:center; gap:16px;">
+                    <div style="text-align:right;">
+                      <span style="font-size:0.72rem; font-weight:700; color:#dc2626; background:#fef2f2; padding:3px 10px; border-radius:10px; border:1px solid #fecaca; display:inline-block;">
+                        Cancelled ✕
+                      </span>
+                    </div>
+
+                    <a href="{{ route('customer.bookings.show', $cb->booking_number) }}" class="btn btn-outline btn-sm" style="font-size:0.78rem; font-weight:700; padding:6px 12px; border-radius:6px; color:#0f172a; border-color:#cbd5e1; background:#ffffff; text-decoration:none;">
+                      <span>View Details →</span>
+                    </a>
+                  </div>
+                </div>
+              @endforeach
+            </div>
+          </div>
+        @endif
+
         <div style="margin-top:1.5rem;">
           {{ $bookings->links() }}
         </div>
@@ -452,9 +518,8 @@
             <div id="modalCompletedAt" style="font-size:0.85rem; font-weight:600; color:#1e293b; margin-top:2px;"></div>
           </div>
           <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px;">
-            <div style="font-size:0.72rem; color:#64748b; text-transform:uppercase; font-weight:700;">Assigned Crew</div>
-            <div id="modalCrew" style="font-size:0.85rem; font-weight:600; color:#1e293b; margin-top:2px;"></div>
-            <div id="modalCrewPhone" style="font-size:0.75rem; color:#2563eb; margin-top:1px;"></div>
+            <div style="font-size:0.72rem; color:#64748b; text-transform:uppercase; font-weight:700;">Service Status</div>
+            <div style="font-size:0.85rem; font-weight:700; color:#16a34a; margin-top:2px;">✓ Verified &amp; Completed</div>
           </div>
         </div>
 
@@ -502,8 +567,6 @@
           bill: "৳ {{ number_format((float) ($cb->final_cost ?: $cb->estimated_cost ?: 0), 2) }}",
           address: "{{ addslashes($cb->street_address . ', ' . $cb->area . ', ' . $cb->district) }}",
           property: "{{ ucfirst($cb->property_type) }}",
-          crew: "{{ addslashes($cb->assigned_team ?: ($cb->partner ? $cb->partner->company_name : 'FIX Verified Engineering Crew')) }}",
-          crew_phone: "{{ $cb->partner?->phone ?? '' }}",
           problem: "{{ addslashes($cb->problem_description) }}",
           has_reviewed: {{ $cb->review_rating ? 'true' : 'false' }},
           rating: {{ (int) ($cb->review_rating ?? 0) }},
@@ -523,8 +586,6 @@
       document.getElementById('modalCategory').textContent = data.category + ' • ' + data.property;
       document.getElementById('modalFinalBill').textContent = data.bill;
       document.getElementById('modalCompletedAt').textContent = data.completed_at;
-      document.getElementById('modalCrew').textContent = data.crew;
-      document.getElementById('modalCrewPhone').textContent = data.crew_phone ? '📞 ' + data.crew_phone : '';
       document.getElementById('modalAddress').textContent = '📍 ' + data.address;
       document.getElementById('modalProblem').textContent = data.problem || 'No specific description noted.';
       document.getElementById('modalFullDetailsLink').href = data.details_url;

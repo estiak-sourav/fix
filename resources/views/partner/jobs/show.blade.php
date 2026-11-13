@@ -33,20 +33,42 @@
 
   {{-- Top Action Banner for pending acceptance --}}
   @if($booking->partner_job_status === 'assigned')
-    <div class="p-card" style="border-left: 4px solid var(--p-warning); background: #fffdf5; padding: 16px 20px; margin-bottom: 20px;">
+    <div class="p-card" style="border-left: 4px solid var(--p-warning); background: #fffdf5; padding: 18px 20px; margin-bottom: 20px;">
       <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
         <div>
-          <h3 style="font-size: 0.98rem; font-weight: 700; color: #92400e; margin: 0;">New Job Assignment</h3>
-          <p style="font-size: 0.82rem; color: #78350f; margin-top: 2px;">Review details and confirm acceptance.</p>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 style="font-size: 0.98rem; font-weight: 700; color: #92400e; margin: 0;">New Job Assignment</h3>
+            @if($booking->is_price_set_later)
+              <span style="background:#fee2e2; color:#b91c1c; font-size:0.72rem; font-weight:800; padding:2px 8px; border-radius:4px;">Price Agreement Required</span>
+            @elseif($booking->estimated_cost > 0 && ! $booking->final_cost)
+              <span style="background:#dbeafe; color:#1e40af; font-size:0.72rem; font-weight:800; padding:2px 8px; border-radius:4px;">Admin Estimate: ৳ {{ number_format($booking->estimated_cost, 2) }}</span>
+            @else
+              <span style="background:#dcfce7; color:#15803d; font-size:0.72rem; font-weight:800; padding:2px 8px; border-radius:4px;">Agreed Price: ৳ {{ number_format($booking->final_cost, 2) }}</span>
+            @endif
+          </div>
+          <p style="font-size: 0.82rem; color: #78350f; margin-top: 3px;">
+            @if($booking->is_price_set_later)
+              Admin selected "Set Price Later". You must set and agree on the service price before accepting.
+            @elseif($booking->estimated_cost > 0 && ! $booking->final_cost)
+              Admin provided an estimated cost. Confirm or set the final service price to accept. Once accepted, this becomes the final price.
+            @else
+              Review job details and confirm acceptance with agreed price.
+            @endif
+          </p>
         </div>
         <div style="display: flex; gap: 8px;">
-          <form id="acceptJobForm" action="{{ route('partner.jobs.accept', $booking) }}" method="POST" style="margin: 0;">
-            @csrf
-            <button type="button" class="btn-p btn-p-primary" onclick="confirmDialog({ title: 'Accept Job #{{ $booking->booking_number }}?', text: 'Confirm accepting this service assignment.', type: 'success', confirmText: 'Accept Job', formId: 'acceptJobForm' })">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              <span>Accept Job</span>
-            </button>
-          </form>
+          <button type="button" class="btn-p btn-p-primary" onclick="document.getElementById('acceptJobModal').style.display='flex'">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>
+              @if($booking->is_price_set_later)
+                Set Price & Accept Job
+              @elseif($booking->estimated_cost > 0 && ! $booking->final_cost)
+                Confirm Final Price & Accept
+              @else
+                Accept Job (৳ {{ number_format($booking->final_cost, 0) }})
+              @endif
+            </span>
+          </button>
           <button type="button" class="btn-p btn-p-outline" style="color: #dc2626; border-color: #fca5a5;" onclick="document.getElementById('declineModal').style.display='flex'">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
             <span>Decline</span>
@@ -81,11 +103,8 @@
             <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px 14px; margin-bottom:14px;">
               <div style="font-weight:700; color:#166534; font-size:0.86rem; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Currently En Route to Customer Site</span>
+                <span>Currently Route to Customer Site</span>
               </div>
-              <p style="font-size:0.78rem; color:#15803d; margin:0;">
-                Customer has been notified that your crew is on the way. Confirm scope and start work upon arrival.
-              </p>
             </div>
 
             <form id="startWorkForm" action="{{ route('partner.jobs.status', $booking) }}" method="POST" style="margin: 0;">
@@ -96,11 +115,8 @@
                 <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px; margin-bottom:14px;">
                   <div style="font-size:0.84rem; font-weight:800; color:#92400e; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    <span>Price Agreement Required (Must Set Before Starting Work)</span>
+                    <span>Price Required (Must Set Before Starting Work)</span>
                   </div>
-                  <p style="font-size:0.76rem; color:#78350f; margin:0 0 8px;">
-                    Admin selected "Set price later". Inspect the job on-site, agree on price with the customer, and enter it below before starting work:
-                  </p>
                   <div>
                     <label class="p-label" style="font-size:0.78rem;">Agreed Service Price (৳) *</label>
                     <input type="number" step="1" min="1" name="agreed_price" class="p-input" placeholder="e.g. 1500" required value="{{ old('agreed_price') }}">
@@ -471,4 +487,93 @@
       </form>
     </div>
   </div>
+
+  {{-- Accept Job Modal --}}
+  @if($booking->partner_job_status === 'assigned')
+    <div id="acceptJobModal" class="fix-dialog-backdrop" style="display: none;" onclick="if(event.target===this) this.style.display='none'">
+      <div class="fix-dialog-box" style="text-align: left; max-width: 460px;">
+        <div class="fix-dialog-icon" style="background: #ecfdf5; color: #059669; margin: 0 auto 12px;">
+          <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+
+        <h3 class="fix-dialog-title" style="text-align: center; color: #065f46;">
+          Accept Job #{{ $booking->booking_number }}
+        </h3>
+
+        <form id="acceptJobModalForm" action="{{ route('partner.jobs.accept', $booking) }}" method="POST">
+          @csrf
+
+          @if($booking->is_price_set_later)
+            <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
+              <div style="font-size: 0.84rem; font-weight: 800; color: #92400e; margin-bottom: 3px; display: flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span>Price Agreement Required Before Acceptance</span>
+              </div>
+              <p style="font-size: 0.76rem; color: #78350f; margin: 0;">
+                Admin selected "Set Price Later". You must set the agreed service price before accepting this job assignment.
+              </p>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <label class="p-label" style="font-size: 0.82rem; font-weight: 700;">Set Service Price (৳) *</label>
+              <input type="number" step="1" min="1" name="agreed_price" id="acceptAgreedPriceInput" class="p-input" placeholder="e.g. 1500" required value="{{ old('agreed_price') }}">
+              <span style="font-size: 0.72rem; color: var(--p-muted); margin-top: 3px; display: block;">This will be saved as the confirmed final price for this work order.</span>
+            </div>
+          @elseif($booking->estimated_cost > 0 && ! $booking->final_cost)
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
+              <div style="font-size: 0.84rem; font-weight: 800; color: #1e40af; margin-bottom: 3px; display: flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span>Admin Estimated Cost: ৳ {{ number_format($booking->estimated_cost, 2) }}</span>
+              </div>
+              <p style="font-size: 0.76rem; color: #1e3a8a; margin: 0;">
+                Admin provided an estimated price. Confirm or set the final price below. Once accepted, this will no longer be an estimate—it will become the <strong>Final Agreed Price</strong>.
+              </p>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <label class="p-label" style="font-size: 0.82rem; font-weight: 700;">Final Service Price (৳) *</label>
+              <input type="number" step="1" min="1" name="agreed_price" id="acceptAgreedPriceInput" class="p-input" value="{{ old('agreed_price', round($booking->estimated_cost)) }}" required>
+              <span style="font-size: 0.72rem; color: var(--p-muted); margin-top: 3px; display: block;">Confirming acceptance locks this as the final agreed price.</span>
+            </div>
+          @else
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+              <span style="font-size: 0.72rem; color: #166534; text-transform: uppercase; font-weight: 700; display: block;">Agreed Service Price</span>
+              <div style="font-size: 1.35rem; font-weight: 800; color: #15803d; margin-top: 2px;">
+                ৳ {{ number_format($booking->final_cost, 2) }}
+              </div>
+              <p style="font-size: 0.75rem; color: #166534; margin: 4px 0 0;">
+                Fixed price agreed and set by Admin Operations.
+              </p>
+            </div>
+            <input type="hidden" name="agreed_price" value="{{ $booking->final_cost }}">
+          @endif
+
+          <div style="display: flex; justify-content: flex-end; gap: 8px;">
+            <button type="button" onclick="document.getElementById('acceptJobModal').style.display='none'" class="btn-p btn-p-outline">
+              Cancel
+            </button>
+            <button type="submit" class="btn-p btn-p-primary">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Confirm & Accept Job</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  @endif
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.location.hash === '#accept') {
+        const modal = document.getElementById('acceptJobModal');
+        if (modal) {
+          modal.style.display = 'flex';
+          const input = document.getElementById('acceptAgreedPriceInput');
+          if (input) input.focus();
+        }
+      }
+    });
+  </script>
 </x-partner.layouts.app>

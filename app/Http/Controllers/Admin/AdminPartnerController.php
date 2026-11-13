@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\District;
+use App\Models\Division;
 use App\Models\Partner;
 use App\Models\PartnerNotification;
 use App\Models\PartnerPayout;
+use App\Models\ServiceCategory;
 use App\Services\ActivityLogService;
 use App\Services\NotificationDispatcher;
 use Illuminate\Http\RedirectResponse;
@@ -63,7 +66,23 @@ class AdminPartnerController extends Controller
      */
     public function create(): View
     {
-        return view('admin.partners.create');
+        $activeCategories = ServiceCategory::where('is_active', true)->orderBy('order')->get();
+        $activeDivisions = Division::whereHas('districts', function ($q) {
+            $q->where('is_active', true);
+        })->with(['districts' => function ($q) {
+            $q->where('is_active', true)->with(['thanas' => function ($t) {
+                $t->where('is_active', true)->orderBy('name');
+            }])->orderBy('name');
+        }])->orderBy('name')->get();
+
+        $activeDistricts = District::where('is_active', true)
+            ->with(['division', 'thanas' => function ($q) {
+                $q->where('is_active', true)->orderBy('name');
+            }])
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.partners.create', compact('activeCategories', 'activeDivisions', 'activeDistricts'));
     }
 
     /**
@@ -82,7 +101,6 @@ class AdminPartnerController extends Controller
             'technicians_count' => ['required', 'string', 'max:50'],
             'coverage_areas' => ['required'],
             'coverage_areas.*' => ['string'],
-            'other_coverage_areas' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'string', 'in:approved,pending,rejected,suspended'],
             'payout_terms' => ['required', 'string', 'in:weekly,bi_weekly,monthly,per_job'],
             'earning_model' => ['nullable', 'string', 'in:commission,hourly,daily,monthly,per_job'],
@@ -105,18 +123,9 @@ class AdminPartnerController extends Controller
             ? implode(', ', array_filter($request->input('trade_domain')))
             : (string) $request->input('trade_domain');
 
-        if (is_array($request->input('coverage_areas'))) {
-            $selectedAreas = array_filter($request->input('coverage_areas'));
-            if ($request->filled('other_coverage_areas')) {
-                $selectedAreas[] = trim((string) $request->input('other_coverage_areas'));
-            }
-            $coverageAreas = implode(', ', $selectedAreas);
-        } else {
-            $coverageAreas = (string) $request->input('coverage_areas');
-            if ($request->filled('other_coverage_areas')) {
-                $coverageAreas .= ', '.trim((string) $request->input('other_coverage_areas'));
-            }
-        }
+        $coverageAreas = is_array($request->input('coverage_areas'))
+            ? implode(', ', array_values(array_unique(array_filter($request->input('coverage_areas')))))
+            : (string) $request->input('coverage_areas');
 
         $admin = Auth::guard('admin')->user();
         $isApproved = $request->input('status') === 'approved';
@@ -222,7 +231,23 @@ class AdminPartnerController extends Controller
      */
     public function edit(Partner $partner): View
     {
-        return view('admin.partners.edit', compact('partner'));
+        $activeCategories = ServiceCategory::where('is_active', true)->orderBy('order')->get();
+        $activeDivisions = Division::whereHas('districts', function ($q) {
+            $q->where('is_active', true);
+        })->with(['districts' => function ($q) {
+            $q->where('is_active', true)->with(['thanas' => function ($t) {
+                $t->where('is_active', true)->orderBy('name');
+            }])->orderBy('name');
+        }])->orderBy('name')->get();
+
+        $activeDistricts = District::where('is_active', true)
+            ->with(['division', 'thanas' => function ($q) {
+                $q->where('is_active', true)->orderBy('name');
+            }])
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.partners.edit', compact('partner', 'activeCategories', 'activeDivisions', 'activeDistricts'));
     }
 
     /**
@@ -241,7 +266,6 @@ class AdminPartnerController extends Controller
             'technicians_count' => ['required', 'string', 'max:50'],
             'coverage_areas' => ['required'],
             'coverage_areas.*' => ['string'],
-            'other_coverage_areas' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'string', 'in:approved,pending,rejected,suspended'],
             'payout_terms' => ['required', 'string', 'in:weekly,bi_weekly,monthly,per_job'],
             'earning_model' => ['nullable', 'string', 'in:commission,hourly,daily,monthly,per_job'],
@@ -264,18 +288,9 @@ class AdminPartnerController extends Controller
             ? implode(', ', array_filter($request->input('trade_domain')))
             : (string) $request->input('trade_domain');
 
-        if (is_array($request->input('coverage_areas'))) {
-            $selectedAreas = array_filter($request->input('coverage_areas'));
-            if ($request->filled('other_coverage_areas')) {
-                $selectedAreas[] = trim((string) $request->input('other_coverage_areas'));
-            }
-            $coverageAreas = implode(', ', $selectedAreas);
-        } else {
-            $coverageAreas = (string) $request->input('coverage_areas');
-            if ($request->filled('other_coverage_areas')) {
-                $coverageAreas .= ', '.trim((string) $request->input('other_coverage_areas'));
-            }
-        }
+        $coverageAreas = is_array($request->input('coverage_areas'))
+            ? implode(', ', array_values(array_unique(array_filter($request->input('coverage_areas')))))
+            : (string) $request->input('coverage_areas');
 
         $admin = Auth::guard('admin')->user();
         $wasApproved = $partner->status === 'approved';
