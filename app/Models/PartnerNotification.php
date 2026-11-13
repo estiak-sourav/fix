@@ -115,4 +115,3 @@ class PartnerNotification extends Model
         };
     }
 }
-

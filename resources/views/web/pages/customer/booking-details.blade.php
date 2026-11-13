@@ -35,6 +35,92 @@
           </span>
         </div>
 
+        @if(!$booking->is_amc)
+          <!-- Live Progress Stepper for One-Off Services -->
+          @php
+            $statusOrder = ['pending_review', 'accepted', 'assigned', 'on_the_way', 'in_progress', 'completed'];
+            $currentIdx = array_search($booking->status, $statusOrder);
+            if ($currentIdx === false) {
+                $currentIdx = ($booking->status === 'cancelled') ? -1 : 0;
+            }
+          @endphp
+
+          <div class="customer-stepper-wrap" style="margin:1rem 0 1.5rem; padding:0 0.5rem; overflow-x:auto; -webkit-overflow-scrolling:touch;">
+            <div style="display:flex; justify-content:space-between; position:relative; min-width:420px;">
+              <div style="position:absolute; top:14px; left:16px; right:16px; height:3px; background:#e2e8f0; z-index:1;"></div>
+              @if($currentIdx >= 0)
+                <div style="position:absolute; top:14px; left:16px; width:{{ ($currentIdx / (count($statusOrder) - 1)) * 100 }}%; height:3px; background:#10b981; z-index:2; transition:width 0.4s ease;"></div>
+              @endif
+
+              @foreach([
+                'pending_review' => 'Pending',
+                'accepted' => 'Accepted',
+                'assigned' => 'Assigned',
+                'on_the_way' => 'On the Way',
+                'in_progress' => 'Working',
+                'completed' => 'Completed'
+              ] as $stepKey => $stepLabel)
+                @php
+                  $stepIdx = array_search($stepKey, $statusOrder);
+                  $isPassed = $currentIdx !== false && $currentIdx >= $stepIdx;
+                  $isCurrent = $currentIdx === $stepIdx;
+                @endphp
+                <div style="position:relative; z-index:3; text-align:center; min-width:60px;">
+                  <div style="width:30px; height:30px; border-radius:50%; margin:0 auto 8px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700;
+                    background: {{ $isPassed ? '#10b981' : '#f1f5f9' }}; 
+                    color: {{ $isPassed ? '#ffffff' : '#64748b' }};
+                    border: 2px solid {{ $isPassed ? '#10b981' : '#cbd5e1' }};
+                    box-shadow: {{ $isCurrent ? '0 0 0 4px rgba(16,185,129,0.2)' : 'none' }};">
+                    @if($isPassed && !$isCurrent)
+                      ✓
+                    @else
+                      {{ $stepIdx + 1 }}
+                    @endif
+                  </div>
+                  <div style="font-size:0.75rem; font-weight:{{ $isCurrent ? '800' : '500' }}; color:{{ $isCurrent ? 'var(--primary)' : 'var(--text-muted)' }}; line-height:1.2;">
+                    {{ $stepLabel }}
+                  </div>
+                </div>
+              @endforeach
+            </div>
+          </div>
+
+          {{-- Live Real-time Status Alert Banner --}}
+          @if($booking->status === 'on_the_way')
+            <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; gap:12px;">
+              <span style="font-size:1.5rem;">🚗</span>
+              <div>
+                <strong style="color:#6d28d9; font-size:0.9rem; display:block;">Crew is on the way to your address!</strong>
+                <span style="font-size:0.82rem; color:#7c3aed;">Our technician team has started journey. {{ $booking->arrival_window ? 'Expected arrival window: ' . $booking->arrival_window : 'Heading to location.' }}</span>
+              </div>
+            </div>
+          @elseif($booking->status === 'in_progress')
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; gap:12px;">
+              <span style="font-size:1.5rem;">🔧</span>
+              <div>
+                <strong style="color:#15803d; font-size:0.9rem; display:block;">Working On Site</strong>
+                <span style="font-size:0.82rem; color:#166534;">Our engineering crew is actively servicing your facility on site.</span>
+              </div>
+            </div>
+          @elseif($booking->status === 'assigned')
+            <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; gap:12px;">
+              <span style="font-size:1.5rem;">👷</span>
+              <div>
+                <strong style="color:#1d4ed8; font-size:0.9rem; display:block;">Field Crew Assigned & Confirmed</strong>
+                <span style="font-size:0.82rem; color:#2563eb;">{{ $booking->assigned_team ?: ($booking->partner ? $booking->partner->company_name : 'Technician Team') }} has accepted your service booking.</span>
+              </div>
+            </div>
+          @elseif($booking->status === 'accepted')
+            <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; gap:12px;">
+              <span style="font-size:1.5rem;">✓</span>
+              <div>
+                <strong style="color:#0369a1; font-size:0.9rem; display:block;">Booking Accepted</strong>
+                <span style="font-size:0.82rem; color:#0284c7;">Operations headquarters accepted your booking. Dispatching technician team shortly.</span>
+              </div>
+            </div>
+          @endif
+        @endif
+
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem; margin-bottom:1.5rem; font-size:0.9rem;">
           <div>
             <strong style="color:var(--text-main); display:block; margin-bottom:4px;">Scheduled Appointment:</strong>
@@ -132,10 +218,12 @@
               @if($booking->partner_job_status)
                 @php
                   $pBadge = match($booking->partner_job_status) {
-                    'on_the_way' => ['bg' => '#f3e8ff', 'color' => '#7e22ce', 'label' => 'En Route to Address'],
+                    'on_the_way' => ['bg' => '#f3e8ff', 'color' => '#7e22ce', 'label' => 'On the Way (En Route)'],
                     'in_progress' => ['bg' => '#dcfce7', 'color' => '#15803d', 'label' => 'Working On Site'],
                     'completed' => ['bg' => '#ecfdf5', 'color' => '#047857', 'label' => 'Service Completed'],
-                    'accepted' => ['bg' => '#eff6ff', 'color' => '#1d4ed8', 'label' => 'Team Confirmed'],
+                    'accepted' => ['bg' => '#eff6ff', 'color' => '#1d4ed8', 'label' => 'Crew Assigned & Confirmed'],
+                    'assigned' => ['bg' => '#fffbeb', 'color' => '#d97706', 'label' => 'Awaiting Crew Acceptance'],
+                    'declined' => ['bg' => '#fef2f2', 'color' => '#dc2626', 'label' => 'Declined (Reassigning)'],
                     default => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Dispatched'],
                   };
                 @endphp

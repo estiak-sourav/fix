@@ -2,9 +2,11 @@
 
 namespace App\Mail;
 
+use App\Models\SiteSetting;
 use App\Models\SupportTicket;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -20,8 +22,16 @@ class SupportTicketCreatedMail extends Mailable
 
     public function envelope(): Envelope
     {
+        $siteName = SiteSetting::get('site_name', 'FIX Facility Management');
+        $noReplyEmail = SiteSetting::get('no_reply_email', 'no-reply@fix.com.bd');
+        $fromName = "{$siteName} (No-Reply)";
+
         return new Envelope(
-            subject: "Support Ticket #{$this->ticket->ticket_number} Received – FIX Helpdesk",
+            from: new Address($noReplyEmail, $fromName),
+            replyTo: [
+                new Address($noReplyEmail, 'Do Not Reply'),
+            ],
+            subject: "[No-Reply] Support Ticket #{$this->ticket->ticket_number} Received – {$siteName}",
         );
     }
 

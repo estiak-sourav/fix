@@ -182,13 +182,13 @@
     </div>
   </div>
 
-  <!-- Vendor Payables Breakdown (কাকে কত পে করতে হবে) -->
+  <!-- Vendor Payables Breakdown -->
   <div class="card-paces" style="margin-bottom:1.5rem; padding:0; overflow:hidden;">
     <div class="card-header-paces" style="padding:16px 20px; border-bottom:1px solid var(--paces-border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:#fffdf5;">
       <div>
         <div style="display:flex; align-items:center; gap:8px;">
           <h3 class="card-title-paces" style="margin:0; color:#b45309; font-size:1rem;">
-            👷 Vendor Payables & Outstanding Disbursements (কাকে কত পে করতে হবে)
+            👷 Vendor Payables & Outstanding Disbursements
           </h3>
           <span class="badge-paces" style="background:#fef3c7; color:#b45309; font-weight:700; padding:2px 10px; border-radius:12px; font-size:0.75rem;">
             {{ $vendorPayables->where('pending_due', '>', 0)->count() }} Vendors with Dues
@@ -222,7 +222,7 @@
               <th style="text-align:center;">Delivered Orders</th>
               <th style="text-align:right;">Total Earned</th>
               <th style="text-align:right;">Total Disbursed</th>
-              <th style="text-align:right;">Payable Due (বকেয়া)</th>
+              <th style="text-align:right;">Payable Due</th>
               <th style="text-align:center;">Payout Status</th>
               <th style="text-align:right;">Action</th>
             </tr>
@@ -400,7 +400,7 @@
                   </span>
                 </td>
                 <td style="text-align:right; white-space:nowrap;">
-                  <a href="{{ route('admin.bookings.show', $b) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:500; padding:6px 12px; text-decoration:none;">
+                  <a href="{{ route('admin.bookings.show', $b) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:500; padding:6px 12px; text-decoration:none; white-space:nowrap; display:inline-flex; align-items:center;">
                     View Order →
                   </a>
                 </td>

@@ -6,13 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AdminCreateSupportTicketRequest;
 use App\Http\Requests\Admin\AdminReplySupportTicketRequest;
 use App\Mail\SupportTicketAdminReplyMail;
+use App\Mail\SupportTicketCreatedMail;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
 use App\Models\User;
 use App\Services\ActivityLogService;
+use App\Services\MailConfigService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -124,6 +127,14 @@ class AdminSupportTicketController extends Controller
             'priority' => $ticket->priority,
         ]);
 
+        // Send confirmation email to customer from no-reply address
+        try {
+            MailConfigService::applyDynamicConfig();
+            Mail::to($email)->send(new SupportTicketCreatedMail($ticket, $ticket->access_token));
+        } catch (\Throwable $e) {
+            Log::error("Failed to send ticket creation email to {$email}: ".$e->getMessage());
+        }
+
         return redirect()
             ->route('admin.tickets.show', $ticket)
             ->with('success', "Support ticket #{$ticket->ticket_number} created successfully for {$email}.");
@@ -174,9 +185,17 @@ class AdminSupportTicketController extends Controller
             'status' => $ticket->status,
         ]);
 
-        // Notify customer by email when admin replies
-        Mail::to($ticket->customer_email)
-            ->send(new SupportTicketAdminReplyMail($ticket, $replyMessage, $ticket->access_token));
+        // Notify customer by no-reply email when admin replies
+        try {
+            $recipientEmail = $ticket->customer_email ?: $ticket->user?->email;
+            if ($recipientEmail) {
+                MailConfigService::applyDynamicConfig();
+                Mail::to($recipientEmail)
+                    ->send(new SupportTicketAdminReplyMail($ticket, $replyMessage, $ticket->access_token));
+            }
+        } catch (\Throwable $e) {
+            Log::error("Failed to send admin ticket reply no-reply email to {$ticket->customer_email}: ".$e->getMessage());
+        }
 
         return redirect()
             ->route('admin.tickets.show', $ticket)

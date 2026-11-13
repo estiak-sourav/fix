@@ -83,4 +83,3 @@ class PartnerNotificationController extends Controller
         return response()->json(['unread_count' => $count]);
     }
 }
-

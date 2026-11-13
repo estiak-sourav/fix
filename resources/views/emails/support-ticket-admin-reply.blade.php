@@ -61,6 +61,12 @@
         Our engineering team has posted a new response to your support ticket. Please review the message below and reply on your ticket page if you have additional questions.
       </div>
 
+      <!-- Automated No-Reply Notification Banner -->
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #64748b; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:12.5px; color:#475569; line-height:1.5;">
+        <strong style="color:#0f172a;">🔔 Automated No-Reply Notification:</strong>
+        Please do not reply directly to this email. Incoming messages to this address are not monitored. To reply to our support team, click the button below to view and update your ticket online.
+      </div>
+
       <div class="reply-card">
         <div class="from-label">Response from Engineering Desk</div>
         <div class="from-name">{{ $replyMessage->sender_name }}</div>
@@ -81,6 +87,9 @@
     </div>
 
     <div class="footer">
+      <div style="margin-bottom:8px; color:#94a3b8; font-size:11px;">
+        ⚠️ This is an automated email notification from an unmonitored no-reply address. Replies to this email will not be received.
+      </div>
       <div>© {{ date('Y') }} {{ $siteName }}. All rights reserved.</div>
       <div style="margin-top:6px;">
         Emergency Hotline: <strong>{{ \App\Models\SiteSetting::get('emergency_phone', '+880 1700-000000') }}</strong> |

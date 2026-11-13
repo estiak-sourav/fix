@@ -1,4 +1,149 @@
 <x-layouts.admin title="Work Order #{{ $booking->booking_number }} | FIX Admin">
+  <style>
+    /* Tab Navigation Styles */
+    .booking-tabs-nav {
+      display: flex;
+      gap: 6px;
+      border-bottom: 2px solid var(--paces-border);
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding-bottom: 0;
+    }
+    .booking-tab-btn {
+      padding: 10px 18px;
+      border: none;
+      background: transparent;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--paces-text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      border-radius: 6px 6px 0 0;
+    }
+    .booking-tab-btn:hover {
+      color: var(--paces-primary);
+      background: #f8fafc;
+    }
+    .booking-tab-btn.active {
+      color: var(--paces-primary);
+      border-bottom-color: var(--paces-primary);
+      font-weight: 700;
+      background: #ffffff;
+    }
+    .booking-tab-pane {
+      display: none;
+    }
+    .booking-tab-pane.active {
+      display: block;
+      animation: fadeInPaces 0.2s ease;
+    }
+    @keyframes fadeInPaces {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Visual Lifecycle Progress Tracker */
+    .lifecycle-tracker {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin-bottom: 1.25rem;
+      background: #ffffff;
+      border: 1px solid var(--paces-border);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    @media (max-width: 992px) {
+      .lifecycle-tracker {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+    }
+    @media (max-width: 576px) {
+      .lifecycle-tracker {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    .lifecycle-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      padding: 6px 4px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    .lifecycle-step.completed {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+    }
+    .lifecycle-step.active {
+      background: #eff6ff;
+      border: 2px solid #3b82f6;
+      box-shadow: 0 4px 12px rgba(59,130,246,0.15);
+    }
+    .lifecycle-step.upcoming {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      opacity: 0.65;
+    }
+    .lifecycle-step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .lifecycle-step.completed .lifecycle-step-num {
+      background: #16a34a;
+      color: #ffffff;
+    }
+    .lifecycle-step.active .lifecycle-step-num {
+      background: #3b82f6;
+      color: #ffffff;
+      animation: pulseStep 1.8s infinite;
+    }
+    @keyframes pulseStep {
+      0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); }
+      70% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    }
+    .lifecycle-step.upcoming .lifecycle-step-num {
+      background: #e2e8f0;
+      color: #64748b;
+    }
+    .lifecycle-step-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .lifecycle-step.completed .lifecycle-step-title {
+      color: #166534;
+    }
+    .lifecycle-step.active .lifecycle-step-title {
+      color: #1e40af;
+    }
+    .lifecycle-step.upcoming .lifecycle-step-title {
+      color: #64748b;
+    }
+    .lifecycle-step-sub {
+      font-size: 0.68rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+  </style>
+
   <!-- Top Navigation & Order ID Header -->
   <div class="page-header-box" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:1.25rem;">
     <div>
@@ -14,23 +159,40 @@
         <span style="font-size:0.8rem; color:var(--paces-text-muted); font-weight:400;">
           • Created {{ $booking->created_at->format('M d, Y • h:i A') }}
         </span>
+        @if($booking->is_amc || $booking->contract_status === 'active')
+          <span style="background:#f5f3ff; color:#7c3aed; border:1px solid #ddd6fe; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:12px;">
+            • AMC Agreement
+          </span>
+        @else
+          <span style="background:#f1f5f9; color:#475569; font-size:0.72rem; font-weight:600; padding:2px 8px; border-radius:12px;">
+            • Service
+          </span>
+        @endif
       </div>
     </div>
 
-    <div>
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
       @php
         $badgeClass = match($booking->status) {
           'pending_review' => 'bg-warning-subtle',
           'accepted', 'confirmed' => 'bg-primary-subtle',
-          'in_progress', 'assigned' => 'bg-info-subtle',
+          'assigned' => 'bg-info-subtle',
+          'on_the_way' => 'bg-warning-subtle',
+          'in_progress' => 'bg-info-subtle',
           'completed' => 'bg-success-subtle',
           'cancelled' => 'bg-danger-subtle',
           default => 'bg-primary-subtle'
         };
       @endphp
-      <span class="badge-pill-paces {{ $badgeClass }}" style="font-size:0.82rem; font-weight:500; text-transform:uppercase; padding:6px 14px;">
+      <span class="badge-pill-paces {{ $badgeClass }}" style="font-size:0.85rem; font-weight:700; text-transform:uppercase; padding:6px 16px;">
         ● {{ $booking->status_label }}
       </span>
+
+      @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+        <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="switchBookingTab('tab-manage-dispatch')">
+          ⚙️ Manage & Edit Dispatch
+        </button>
+      @endif
     </div>
   </div>
 
@@ -58,1819 +220,1062 @@
     </div>
   @endif
 
-  <!-- Top Warning Notice for Pending Orders (Smaller font, no icon) -->
-  @if($booking->status === 'pending_review')
-    <div class="card-paces" style="background:#fffbeb; border:1px solid #fde68a; margin-bottom:1.25rem; padding:0.9rem 1.25rem;">
-      <div>
-        <h3 style="font-size:0.92rem; font-weight:500; color:#92400e; margin:0 0 3px 0;">
-          Pending — Discuss with client before Agreement Required
-        </h3>
-        <p style="font-size:0.8rem; color:#78350f; margin:0; line-height:1.45; font-weight:400;">
-          Before accepting this work order, talk with client <strong>{{ $booking->customer_name }}</strong> over the phone at <strong>{{ $booking->customer_phone }}</strong> to confirm problem details, requirements, and service price.
-        </p>
+  @if(!auth('admin')->user()?->hasPermission('bookings.edit'))
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1rem 1.25rem; font-size:0.85rem; color:#475569; line-height:1.5; margin-bottom:1.25rem;">
+      <div style="font-weight:600; color:#1e293b; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+        <span>👁️ Read-Only Access</span>
       </div>
+      You have view-only privileges for Work Orders. Status adjustments, team dispatch, and invoice modification require Edit permissions.
     </div>
   @endif
 
-  <!-- Main 2-Column Layout: Left (Client Details & Audit Timeline) & Right (Accept/Details, wider) -->
-  <div style="display:grid; grid-template-columns:340px 1fr; gap:1.5rem; align-items:start;" class="workorder-grid">
-    
-    <!-- LEFT COLUMN: Client Details & Operational Audit Timeline -->
-    <div>
-      <!-- Client & Site Profile Card (No Registered badge) -->
-      <div class="card-paces" style="padding:1.25rem; margin-bottom:1.25rem;">
-        <div style="border-bottom:1px solid var(--paces-border); padding-bottom:0.75rem; margin-bottom:1rem;">
-          <h3 class="card-title-paces" style="font-size:0.95rem; margin:0;">Customer & Site Profile</h3>
+  <!-- ========================================================================= -->
+  <!-- 1. HIGHLIGHTED OPERATIONAL AUDIT TIMELINE BANNER                         -->
+  <!-- ========================================================================= -->
+  <div class="card-paces" style="margin-bottom:1.25rem; background:linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border:2px solid #86efac; border-radius:12px; padding:18px 22px; box-shadow:0 4px 14px rgba(22,163,74,0.08);">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:46px; height:46px; border-radius:10px; background:#16a34a; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:1.4rem; box-shadow:0 4px 10px rgba(22,163,74,0.3); flex-shrink:0;">
+          ⚡
         </div>
-
-        <!-- Full Name with Avatar -->
-        <div style="margin-bottom:12px; display:flex; align-items:center; gap:12px;">
-          @if($booking->user?->avatar_url)
-            <img src="{{ $booking->user->avatar_url }}" alt="{{ $booking->customer_name }}" style="width:42px; height:42px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
-          @else
-            <div style="width:42px; height:42px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:600; display:flex; align-items:center; justify-content:center; font-size:1.05rem; flex-shrink:0;">
-              {{ strtoupper(substr($booking->customer_name ?: 'C', 0, 1)) }}
-            </div>
-          @endif
-          <div>
-            <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">Client Name</div>
-            <div style="font-size:1.02rem; font-weight:500; color:var(--paces-text-dark); margin-top:2px;">
-              {{ $booking->customer_name }}
-            </div>
-            @if($booking->company_name)
-              <div style="font-size:0.78rem; color:var(--paces-primary); font-weight:500; margin-top:2px;">
-                🏢 {{ $booking->company_name }}
-              </div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:#15803d; letter-spacing:0.04em;">
+              Operational Audit Timeline & Status Track
+            </span>
+            <span class="badge-pill-paces" style="background:#dcfce7; color:#166534; font-size:0.72rem; font-weight:800;">
+              ● {{ $booking->status_label }}
+            </span>
+          </div>
+          <div style="font-size:1.15rem; font-weight:800; color:#0f172a; margin-top:2px;">
+            @if($booking->status === 'pending_review')
+              Awaiting Discussion with Client & Order Acceptance
+            @elseif($booking->status === 'accepted' && !$booking->partner_id)
+              Order Accepted — Field Crew / Partner Assignment Required
+            @elseif($booking->status === 'accepted' && $booking->partner_id && $booking->partner_job_status === 'assigned')
+              Assigned to {{ $booking->partner?->company_name }} — Awaiting Crew Acceptance
+            @elseif($booking->status === 'accepted' && $booking->partner_id && $booking->partner_job_status === 'accepted')
+              Crew Accepted Job — Preparing Departure to Site
+            @elseif($booking->status === 'on_the_way')
+              🚗 Crew Is On The Way to Customer Site
+            @elseif($booking->status === 'in_progress')
+              🔧 Working On Site (Service In Progress)
+            @elseif($booking->status === 'completed')
+              ✓ Work Order Completed & Delivered
+            @elseif($booking->status === 'cancelled')
+              ✕ Work Order Cancelled
+            @else
+              {{ ucfirst(str_replace('_', ' ', $booking->status)) }}
             @endif
           </div>
-        </div>
 
-        <!-- Phone with Copy Button -->
-        <div style="margin-bottom:12px;">
-          <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">Phone Number</div>
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:2px;">
-            <a href="tel:{{ $booking->customer_phone }}" style="font-size:0.9rem; font-weight:500; color:var(--paces-primary); text-decoration:none;">
-              📞 {{ $booking->customer_phone }}
-            </a>
-            <button 
-              type="button" 
-              onclick="copyToClipboard('{{ $booking->customer_phone }}', this)" 
-              class="btn-paces btn-paces-outline btn-paces-sm" 
-              style="padding:2px 8px; font-size:0.72rem; border-radius:4px;" 
-              title="Copy Phone Number"
-            >
-              📋 Copy
-            </button>
-          </div>
-        </div>
-
-        <!-- Email with Copy Button -->
-        <div style="margin-bottom:12px;">
-          <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">Email Address</div>
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:2px;">
-            <a href="mailto:{{ $booking->customer_email }}" style="font-size:0.82rem; color:var(--paces-text-dark); text-decoration:none; word-break:break-all;">
-              ✉️ {{ $booking->customer_email }}
-            </a>
-            <button 
-              type="button" 
-              onclick="copyToClipboard('{{ $booking->customer_email }}', this)" 
-              class="btn-paces btn-paces-outline btn-paces-sm" 
-              style="padding:2px 8px; font-size:0.72rem; border-radius:4px;" 
-              title="Copy Email Address"
-            >
-              📋 Copy
-            </button>
-          </div>
-        </div>
-
-        <!-- Property & Location -->
-        <div style="border-top:1px dashed var(--paces-border); padding-top:10px; margin-bottom:12px;">
-          <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">Facility Specifics</div>
-          <div style="font-size:0.85rem; font-weight:500; color:var(--paces-text-dark); margin-top:2px; text-transform:capitalize;">
-            {{ $booking->property_type }} {{ $booking->estimated_sqft ? '• ' . number_format($booking->estimated_sqft) . ' sqft' : '' }}
-          </div>
-          <div style="font-size:0.8rem; color:var(--paces-text-dark); margin-top:3px; line-height:1.4;">
-            {{ $booking->street_address }}
-          </div>
-          <div style="font-size:0.8rem; font-weight:500; color:var(--paces-primary); margin-top:2px;">
-            📍 {{ $booking->area }}, {{ $booking->district }}, {{ $booking->division }}
-          </div>
-        </div>
-
-        <!-- Requested Scope -->
-        <div style="border-top:1px dashed var(--paces-border); padding-top:10px;">
-          <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">Requested Service</div>
-          <div style="font-size:0.92rem; font-weight:500; color:var(--paces-text-dark); margin-top:2px;">
-            {{ $booking->service?->title ?? ($booking->amcPlan?->name ?? 'Custom Facility Service') }}
-          </div>
-          <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:6px; padding:8px 10px; font-size:0.8rem; color:var(--paces-text-dark); line-height:1.45; margin-top:6px; white-space:pre-line;">
-            {{ $booking->problem_description }}
-          </div>
-
-          @php
-            $attachedImages = $booking->attached_images ?? [];
-          @endphp
-          @if(!empty($attachedImages))
-            <div style="margin-top:10px; border-top:1px dashed var(--paces-border); padding-top:10px;">
-              <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                <span>Uploaded Problem Photos ({{ count($attachedImages) }})</span>
-              </div>
-              <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(70px, 1fr)); gap:8px;">
-                @foreach($attachedImages as $imgIndex => $imgUrl)
-                  <div style="position:relative; aspect-ratio:1; border-radius:8px; overflow:hidden; border:1px solid var(--paces-border); cursor:pointer; background:#0f172a;" 
-                       onclick="openImageLightbox('{{ asset($imgUrl) }}', 'Problem Photo #{{ $imgIndex + 1 }} - #{{ $booking->booking_number }}')" 
-                       title="Click to view & zoom">
-                    <img src="{{ asset($imgUrl) }}" alt="Problem Photo" style="width:100%; height:100%; object-fit:cover; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
-                    <div style="position:absolute; bottom:3px; right:4px; font-size:0.65rem; background:rgba(0,0,0,0.65); color:#fff; padding:1px 4px; border-radius:4px; pointer-events:none;">🔍</div>
-                  </div>
-                @endforeach
-              </div>
-            </div>
-          @endif
-        </div>
-
-        <!-- Phone Contact Status (if logged) -->
-        @if($booking->call_status)
-          <div style="margin-top:12px; background:{{ $booking->call_status === 'unreachable' ? '#fef2f2' : ($booking->call_status === 'connected' ? '#f0fdf4' : '#fffbeb') }}; border:1px solid {{ $booking->call_status === 'unreachable' ? '#fecaca' : ($booking->call_status === 'connected' ? '#bbf7d0' : '#fde68a') }}; border-radius:6px; padding:10px; font-size:0.8rem;">
-            <div style="font-weight:500; color:{{ $booking->call_status === 'unreachable' ? '#dc2626' : ($booking->call_status === 'connected' ? '#166534' : '#b45309') }};">
-              @if($booking->call_status === 'unreachable')
-                ⚠️ Client Marked Unreachable
-              @elseif($booking->call_status === 'connected')
-                ✓ Phone Discussion Connected
-              @else
-                ⏱️ Call Back Later / Follow-up
+          @php $latestLog = $booking->statusLogs->last(); @endphp
+          @if($latestLog)
+            <div style="font-size:0.8rem; color:#475569; margin-top:3px;">
+              <strong>Latest Audit Action:</strong> {{ $latestLog->changedByAdmin?->name ?? ($latestLog->changedByUser?->name ?? 'System Automated') }}
+              updated to <em>{{ ucfirst(str_replace('_', ' ', $latestLog->to_status)) }}</em> ({{ $latestLog->created_at->diffForHumans() }})
+              @if($latestLog->comment)
+                • <span style="color:#0f172a;">"{{ Str::limit($latestLog->comment, 95) }}"</span>
               @endif
             </div>
-            @if($booking->call_notes)
-              <div style="color:var(--paces-text-dark); margin-top:3px; font-size:0.78rem;">
-                {{ $booking->call_notes }}
+          @endif
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="switchBookingTab('tab-audit-logs')" style="font-weight:700; padding:8px 16px; background:#16a34a; border-color:#16a34a;">
+          📜 Full Audit Log ({{ $booking->statusLogs->count() }}) →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 2. VISUAL LIFECYCLE PROGRESS TRACKER                                      -->
+  <!-- ========================================================================= -->
+  @php
+    $stageRank = [
+      'pending_review' => 1,
+      'accepted' => 2,
+      'assigned' => 3,
+      'on_the_way' => 4,
+      'in_progress' => 5,
+      'completed' => 6,
+    ];
+    $activeRank = $stageRank[$booking->status] ?? 1;
+    if ($booking->status === 'accepted' && $booking->partner_id) {
+      $activeRank = 3;
+    }
+  @endphp
+
+  @if($booking->status !== 'cancelled')
+    <div class="lifecycle-tracker">
+      <!-- Step 1: Requested -->
+      <div class="lifecycle-step {{ $activeRank > 1 ? 'completed' : ($activeRank === 1 ? 'active' : 'upcoming') }}">
+        <div class="lifecycle-step-num">{{ $activeRank > 1 ? '✓' : '1' }}</div>
+        <div class="lifecycle-step-title">Requested</div>
+        <div class="lifecycle-step-sub">{{ $booking->created_at->format('M d, h:i A') }}</div>
+      </div>
+
+      <!-- Step 2: Accepted -->
+      <div class="lifecycle-step {{ $activeRank > 2 ? 'completed' : ($activeRank === 2 ? 'active' : 'upcoming') }}">
+        <div class="lifecycle-step-num">{{ $activeRank > 2 ? '✓' : '2' }}</div>
+        <div class="lifecycle-step-title">Accepted</div>
+        <div class="lifecycle-step-sub">{{ $booking->estimated_cost ? '৳'.number_format($booking->estimated_cost, 0) : ($booking->is_price_set_later ? 'Price Later' : 'Agreed') }}</div>
+      </div>
+
+      <!-- Step 3: Assigned -->
+      <div class="lifecycle-step {{ $activeRank > 3 ? 'completed' : ($activeRank === 3 ? 'active' : 'upcoming') }}">
+        <div class="lifecycle-step-num">{{ $activeRank > 3 ? '✓' : '3' }}</div>
+        <div class="lifecycle-step-title">Assigned</div>
+        <div class="lifecycle-step-sub">{{ $booking->partner ? Str::limit($booking->partner->company_name, 12) : ($booking->assigned_team ? Str::limit($booking->assigned_team, 12) : 'Awaiting') }}</div>
+      </div>
+
+      <!-- Step 4: On The Way -->
+      <div class="lifecycle-step {{ $activeRank > 4 ? 'completed' : ($activeRank === 4 ? 'active' : 'upcoming') }}">
+        <div class="lifecycle-step-num">{{ $activeRank > 4 ? '✓' : '4' }}</div>
+        <div class="lifecycle-step-title">On The Way</div>
+        <div class="lifecycle-step-sub">{{ $booking->status === 'on_the_way' ? 'En Route' : ($activeRank > 4 ? 'Arrived' : 'Transit') }}</div>
+      </div>
+
+      <!-- Step 5: Working -->
+      <div class="lifecycle-step {{ $activeRank > 5 ? 'completed' : ($activeRank === 5 ? 'active' : 'upcoming') }}">
+        <div class="lifecycle-step-num">{{ $activeRank > 5 ? '✓' : '5' }}</div>
+        <div class="lifecycle-step-title">Working</div>
+        <div class="lifecycle-step-sub">{{ $booking->status === 'in_progress' ? 'In Progress' : ($activeRank > 5 ? 'Done' : 'On-Site') }}</div>
+      </div>
+
+      <!-- Step 6: Completed -->
+      <div class="lifecycle-step {{ $activeRank === 6 ? 'completed' : 'upcoming' }}">
+        <div class="lifecycle-step-num">{{ $activeRank === 6 ? '✓' : '6' }}</div>
+        <div class="lifecycle-step-title">Completed</div>
+        <div class="lifecycle-step-sub">{{ $booking->final_cost > 0 ? '৳'.number_format($booking->final_cost, 0) : 'Final Bill' }}</div>
+      </div>
+    </div>
+  @else
+    <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:12px 16px; margin-bottom:1.25rem; display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:1.2rem; color:#dc2626;">✕</span>
+        <strong style="color:#991b1b; font-size:0.9rem;">Work Order Cancelled</strong>
+        @if($booking->cancellation_reason)
+          <span style="font-size:0.82rem; color:#7f1d1d;">• Reason: {{ $booking->cancellation_reason }}</span>
+        @endif
+      </div>
+      <span style="background:#fee2e2; color:#b91c1c; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:10px;">Cancelled</span>
+    </div>
+  @endif
+
+  <!-- ========================================================================= -->
+  <!-- 3. TAB NAVIGATION MENU BAR                                                -->
+  <!-- ========================================================================= -->
+  <div class="booking-tabs-nav">
+    <button type="button" class="booking-tab-btn active" data-tab="tab-overview" onclick="switchBookingTab('tab-overview')">
+      <span>📋 Overview & Details</span>
+    </button>
+
+    @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+      <button type="button" class="booking-tab-btn" data-tab="tab-manage-dispatch" onclick="switchBookingTab('tab-manage-dispatch')">
+        <span>⚙️ Manage & Edit Dispatch</span>
+      </button>
+    @endif
+
+    <button type="button" class="booking-tab-btn" data-tab="tab-audit-logs" onclick="switchBookingTab('tab-audit-logs')">
+      <span>📜 Operational Audit Timeline</span>
+      <span style="background:#f1f5f9; color:#475569; font-size:0.72rem; padding:2px 8px; border-radius:10px; font-weight:700;">
+        {{ $booking->statusLogs->count() }}
+      </span>
+    </button>
+
+    <!-- AMC TAB: Context-aware label (Active AMC vs Convert to AMC) -->
+    <button type="button" class="booking-tab-btn" data-tab="tab-amc-contract" onclick="switchBookingTab('tab-amc-contract')">
+      @if($booking->contract_status === 'active')
+        <span>🏢 Active AMC Contract</span>
+        <span style="background:#dcfce7; color:#166534; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:700;">Active</span>
+      @elseif($booking->is_amc)
+        <span>🏢 AMC Agreement</span>
+      @else
+        <span>🏢 Convert to AMC</span>
+      @endif
+    </button>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- TAB 1: OVERVIEW & DETAILS                                                 -->
+  <!-- ========================================================================= -->
+  <div id="tab-overview" class="booking-tab-pane active">
+    <!-- Top Warning Notice for Pending Orders -->
+    @if($booking->status === 'pending_review')
+      <div class="card-paces" style="background:#fffbeb; border:1px solid #fde68a; margin-bottom:1.25rem; padding:1rem 1.25rem; border-radius:10px;">
+        <h3 style="font-size:0.92rem; font-weight:600; color:#92400e; margin:0 0 4px 0;">
+          ⚠️ Pending Review — Discussion with Client Recommended
+        </h3>
+        <p style="font-size:0.82rem; color:#78350f; margin:0; line-height:1.45;">
+          Talk with client <strong>{{ $booking->customer_name }}</strong> at <strong>{{ $booking->customer_phone }}</strong> to confirm problem scope, preferred schedule, and agreed service price before accepting.
+        </p>
+      </div>
+    @endif
+
+    <div style="display:grid; grid-template-columns:360px 1fr; gap:1.5rem; align-items:start;" class="workorder-grid">
+      
+      <!-- LEFT: Client & Property Profile -->
+      <div>
+        <div class="card-paces" style="padding:1.25rem; margin-bottom:1.25rem;">
+          <div style="border-bottom:1px solid var(--paces-border); padding-bottom:0.75rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
+            <h3 class="card-title-paces" style="font-size:0.95rem; margin:0;">Customer & Site Profile</h3>
+            <span style="font-size:0.75rem; color:#64748b;">ID #{{ $booking->user_id }}</span>
+          </div>
+
+          <div style="margin-bottom:14px; display:flex; align-items:center; gap:12px;">
+            @if($booking->user?->avatar_url)
+              <img src="{{ $booking->user->avatar_url }}" alt="{{ $booking->customer_name }}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+            @else
+              <div style="width:44px; height:44px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:700; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">
+                {{ strtoupper(substr($booking->customer_name ?: 'C', 0, 1)) }}
+              </div>
+            @endif
+            <div>
+              <div style="font-size:1.05rem; font-weight:700; color:var(--paces-text-dark);">
+                {{ $booking->customer_name }}
+              </div>
+              @if($booking->company_name)
+                <div style="font-size:0.8rem; color:var(--paces-primary); font-weight:500;">
+                  🏢 {{ $booking->company_name }}
+                </div>
+              @endif
+              <div style="font-size:0.8rem; color:var(--paces-text-muted); margin-top:2px;">
+                <a href="tel:{{ $booking->customer_phone }}" style="color:var(--paces-primary); font-weight:600; text-decoration:none;">
+                  📞 {{ $booking->customer_phone }}
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:0.82rem; margin-bottom:12px;">
+            @if($booking->customer_email)
+              <div>
+                <span style="color:var(--paces-text-muted);">Email:</span>
+                <a href="mailto:{{ $booking->customer_email }}" style="color:var(--paces-primary); text-decoration:none; margin-left:4px;">
+                  {{ $booking->customer_email }}
+                </a>
+              </div>
+            @endif
+            <div>
+              <span style="color:var(--paces-text-muted);">Property:</span>
+              <strong style="text-transform:capitalize; margin-left:4px;">{{ $booking->property_type }}</strong>
+              @if($booking->estimated_sqft)
+                <span style="color:var(--paces-text-muted);">({{ number_format($booking->estimated_sqft) }} sq.ft)</span>
+              @endif
+            </div>
+          </div>
+
+          <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:10px 12px; margin-bottom:12px;">
+            <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Service Location</div>
+            <div style="font-size:0.85rem; font-weight:600; color:var(--paces-text-dark);">
+              📍 {{ $booking->street_address }}
+            </div>
+            <div style="font-size:0.8rem; color:var(--paces-text-muted); margin-top:2px;">
+              {{ $booking->area }}, {{ $booking->district }}, {{ $booking->division }}
+            </div>
+            <div style="margin-top:6px;">
+              <a href="https://maps.google.com/?q={{ urlencode($booking->street_address . ', ' . $booking->area . ', ' . $booking->district) }}" target="_blank" style="font-size:0.75rem; color:#2563eb; text-decoration:none; font-weight:600;">
+                ↗ Open in Google Maps
+              </a>
+            </div>
+          </div>
+
+          <!-- Problem Description & Attached Photos -->
+          <div style="border-top:1px dashed var(--paces-border); padding-top:10px;">
+            <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Requested Service Scope</div>
+            <div style="font-size:0.92rem; font-weight:700; color:var(--paces-text-dark); margin-top:2px;">
+              {{ $booking->service?->title ?? ($booking->amcPlan?->name ?? 'Custom Facility Service') }}
+            </div>
+            <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:6px; padding:8px 10px; font-size:0.8rem; color:var(--paces-text-dark); line-height:1.45; margin-top:6px; white-space:pre-line;">
+              {{ $booking->problem_description }}
+            </div>
+
+            @if(!empty($booking->problem_photos) && is_array($booking->problem_photos))
+              <div style="margin-top:10px;">
+                <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700; margin-bottom:6px;">Customer Uploaded Photos</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  @foreach($booking->problem_photos as $idx => $photo)
+                    <div style="cursor:pointer;" onclick="openImageLightbox('{{ asset($photo) }}', 'Site Photo #{{ $idx + 1 }}')">
+                      <img src="{{ asset($photo) }}" alt="Photo {{ $idx + 1 }}" style="width:55px; height:55px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;">
+                    </div>
+                  @endforeach
+                </div>
               </div>
             @endif
           </div>
-        @endif
-      </div>
-
-      <!-- OPERATIONAL AUDIT TIMELINE (Under User Info Section on Left Column) -->
-      <div class="card-paces" style="padding:1.25rem;">
-        <div style="border-bottom:1px solid var(--paces-border); padding-bottom:0.75rem; margin-bottom:1rem;">
-          <h3 class="card-title-paces" style="font-size:0.95rem; margin:0;">Operational Audit Timeline</h3>
-          <div style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:400; margin-top:2px;">Real-time dispatch log visible to client</div>
         </div>
-        
-        @if($booking->statusLogs->isEmpty())
-          <div style="text-align:center; padding:1.5rem 0.5rem; color:var(--paces-text-muted); font-size:0.82rem;">
-            No historical logs recorded yet.
-          </div>
-        @else
-          <div style="display:flex; flex-direction:column; gap:1rem; padding-left:4px;">
-            @foreach($booking->statusLogs as $log)
-              <div style="display:flex; gap:12px; font-size:0.82rem; border-left:2px solid var(--paces-primary); padding-left:12px; position:relative;">
-                <div style="position:absolute; left:-5px; top:4px; width:8px; height:8px; border-radius:50%; background:var(--paces-primary); border:1.5px solid #fff;"></div>
-                <div style="flex:1;">
-                  <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                    <span style="font-weight:500; color:var(--paces-text-dark); font-size:0.82rem;">
-                      {{ ucfirst(str_replace('_', ' ', $log->from_status)) }} ➔ {{ ucfirst(str_replace('_', ' ', $log->to_status)) }}
-                    </span>
+
+        <!-- Phone Outreach & Quick Tasks (If present) -->
+        @if($booking->outreachTasks->isNotEmpty() || $booking->status === 'pending_review')
+          <div class="card-paces" style="padding:1.25rem; margin-bottom:1.25rem;">
+            <div style="border-bottom:1px solid var(--paces-border); padding-bottom:0.75rem; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+              <h4 style="margin:0; font-size:0.88rem; font-weight:700; color:#1e293b;">Phone Outreach & Follow-ups</h4>
+              <button type="button" onclick="toggleCustomTaskBox()" class="btn-paces btn-paces-outline btn-paces-sm" style="font-size:0.72rem; padding:2px 8px;">
+                + Add Task
+              </button>
+            </div>
+
+            @if($booking->call_status)
+              <div style="font-size:0.8rem; margin-bottom:8px; padding:6px 10px; background:#f8fafc; border-radius:6px;">
+                Call Status: <strong>{{ ucfirst(str_replace('_', ' ', $booking->call_status)) }}</strong>
+                @if($booking->call_notes)
+                  <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">{{ $booking->call_notes }}</div>
+                @endif
+              </div>
+            @endif
+
+            <!-- Custom Task creation inline box -->
+            <div id="customTaskBox" style="display:none; margin-bottom:10px; padding:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px;">
+              <form action="{{ route('admin.outreach-tasks.store') }}" method="POST">
+                @csrf
+                <input type="hidden" name="booking_id" value="{{ $booking->id }}">
+                <input type="hidden" name="customer_name" value="{{ $booking->customer_name }}">
+                <input type="hidden" name="customer_phone" value="{{ $booking->customer_phone }}">
+                <input type="text" name="title" placeholder="Task title..." required class="form-control-paces" style="font-size:0.8rem; padding:4px 8px; margin-bottom:6px; width:100%;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px;">
+                  <select name="task_type" class="form-control-paces" style="font-size:0.78rem; padding:4px 6px;">
+                    <option value="follow_up">Follow-up Call</option>
+                    <option value="quotation">Send Quotation</option>
+                    <option value="inspection">Site Inspection</option>
+                  </select>
+                  <select name="priority" class="form-control-paces" style="font-size:0.78rem; padding:4px 6px;">
+                    <option value="normal">Normal</option>
+                    <option value="high">High</option>
+                    <option value="urgent">🚨 Urgent</option>
+                  </select>
+                </div>
+                <div style="text-align:right;">
+                  <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.75rem; padding:3px 10px;">Save Task</button>
+                </div>
+              </form>
+            </div>
+
+            @foreach($booking->outreachTasks as $ot)
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 8px; border:1px solid #f1f5f9; border-radius:6px; margin-bottom:4px; font-size:0.78rem;">
+                <div>
+                  <div style="font-weight:600; color:{{ $ot->status === 'completed' ? '#94a3b8' : '#1e293b' }}; text-decoration:{{ $ot->status === 'completed' ? 'line-through' : 'none' }};">
+                    {{ preg_replace('/\s*\(#[A-Za-z0-9-]+\)\s*$/', '', $ot->title) }}
                   </div>
-                  <div style="font-size:0.72rem; color:var(--paces-text-muted); margin-top:1px;">
-                    {{ $log->changedByAdmin?->name ?? ($log->changedByUser?->name ?? 'System Automated') }} • {{ $log->created_at->format('M d, Y • h:i A') }}
-                  </div>
-                  @if($log->comment)
-                    <div style="margin-top:4px; background:#f8fafc; border:1px solid var(--paces-border); border-radius:6px; padding:6px 8px; font-size:0.78rem; color:var(--paces-text-dark); line-height:1.4;">
-                      {{ $log->comment }}
-                    </div>
+                  @if($ot->due_at)
+                    <div style="font-size:0.7rem; color:#64748b;">Due: {{ $ot->due_at->diffForHumans() }}</div>
                   @endif
                 </div>
+                @if($ot->status === 'pending')
+                  <form action="{{ route('admin.outreach-tasks.complete', $ot) }}" method="POST" style="margin:0;">
+                    @csrf
+                    <button type="submit" class="btn-paces btn-paces-sm" style="padding:2px 6px; font-size:0.7rem; background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;">
+                      ✓ Done
+                    </button>
+                  </form>
+                @endif
               </div>
             @endforeach
           </div>
         @endif
       </div>
-    </div>
 
-    <!-- RIGHT COLUMN: Booking Accept / Booking Details / Edit / Complete -->
-    <div>
-      @if(!auth('admin')->user()?->hasPermission('bookings.edit'))
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1.25rem; font-size:0.85rem; color:#475569; line-height:1.5; margin-bottom:1.5rem;">
-          <div style="font-weight:500; color:#1e293b; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
-            <span>👁️ Read-Only Access</span>
-          </div>
-          You have view-only privileges for Work Orders. Status adjustments, team dispatch, and invoice modification require Edit permissions.
-        </div>
-      @endif
-
-      <!-- Annual Maintenance Contract (AMC) & Agreement Management -->
-      <div class="card-paces" style="margin-bottom:1.5rem; border:1px solid {{ $booking->contract_status === 'active' ? '#10b981' : 'var(--paces-border)' }};">
-        <div class="card-header-paces" style="background:{{ $booking->contract_status === 'active' ? '#f0fdf4' : '#f8fafc' }}; border-bottom:1px solid {{ $booking->contract_status === 'active' ? '#bbf7d0' : 'var(--paces-border)' }}; display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <div>
-              <h3 class="card-title-paces" style="margin:0; font-size:0.98rem; color:{{ $booking->contract_status === 'active' ? '#166534' : 'var(--paces-text-dark)' }};">
-                Annual Maintenance Contract (AMC) & Agreement
+      <!-- RIGHT: Active Operational Execution & Actions -->
+      <div>
+        @if($booking->status === 'pending_review' && auth('admin')->user()?->hasPermission('bookings.edit'))
+          <!-- ACCEPT WORK ORDER CARD -->
+          <div class="card-paces" style="border:2px solid #16a34a; margin-bottom:1.5rem;">
+            <div class="card-header-paces" style="background:#f0fdf4; border-bottom:1px solid #bbf7d0;">
+              <h3 class="card-title-paces" style="color:#166534; display:flex; align-items:center; gap:8px; font-size:1.05rem;">
+                <span>✓</span> Accept Work Order & Assign Dispatch
               </h3>
             </div>
-          </div>
-          @if($booking->contract_status === 'active')
-            <span class="badge-pill-paces" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-weight:600; font-size:0.75rem;">
-              Active Contract
-            </span>
-          @else
-            <span class="badge-pill-paces" style="background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; font-size:0.75rem;">
-              Contract Not Activated
-            </span>
-          @endif
-        </div>
-
-        <div class="card-body-paces" style="padding:1.25rem;">
-          @if($booking->contract_status === 'active')
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:1rem;">
-              <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:10px 12px;">
-                <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase;">AMC Package</div>
-                <strong style="font-size:0.95rem; color:var(--paces-text-dark); display:block; margin-top:2px;">
-                  {{ $booking->amcPlan?->name ?? 'Custom AMC Package' }}
-                </strong>
-                @if($booking->amcPlan?->tier)
-                  <span style="font-size:0.7rem; color:var(--paces-primary);">{{ $booking->amcPlan->tier }} Tier</span>
-                @endif
-              </div>
-
-              <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:10px 12px;">
-                <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase;">Contract Period</div>
-                <strong style="font-size:0.95rem; color:var(--paces-text-dark); display:block; margin-top:2px;">
-                  {{ $booking->contract_start_date?->format('M d, Y') }} — {{ $booking->contract_end_date?->format('M d, Y') }}
-                </strong>
-                <span style="font-size:0.7rem; color:#10b981;">Valid & Active ({{ $booking->days_remaining_in_contract }} days remaining)</span>
-              </div>
-
-              <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:10px 12px;">
-                <div style="font-size:0.72rem; color:#7c3aed; text-transform:uppercase; font-weight:700;">Recurring Billing Cycle</div>
-                <strong style="font-size:1.05rem; color:#6d28d9; display:block; margin-top:2px;">
-                  ৳ {{ number_format($booking->recurring_amount ?: $booking->final_cost, 2) }}
-                  <span style="font-size:0.75rem; font-weight:500;">/ {{ $booking->billing_cycle_label }}</span>
-                </strong>
-                <span style="font-size:0.72rem; color:#64748b;">Next Due: {{ $booking->next_billing_date ? $booking->next_billing_date->format('M d, Y') : 'Active' }}</span>
-              </div>
-
-              <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:10px 12px;">
-                <div style="font-size:0.72rem; color:#065f46; text-transform:uppercase; font-weight:700;">Collected Revenue</div>
-                <strong style="font-size:1.05rem; color:#047857; display:block; margin-top:2px;">
-                  ৳ {{ number_format($booking->collected_amc_revenue, 2) }}
-                </strong>
-                @if($booking->pending_amc_due > 0)
-                  <span style="font-size:0.72rem; color:#b45309; font-weight:600;">Due: ৳ {{ number_format($booking->pending_amc_due, 2) }}</span>
-                @else
-                  <span style="font-size:0.72rem; color:#10b981;">All Bills Paid Up to Date</span>
-                @endif
-              </div>
-            </div>
-
-            <!-- AMC Recurring Invoices & Bill Collection History -->
-            <div style="background:#ffffff; border:1px solid var(--paces-border); border-radius:10px; padding:14px; margin-bottom:1.25rem;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-                <div>
-                  <h4 style="margin:0; font-size:0.92rem; font-weight:600; color:var(--paces-text-dark); display:flex; align-items:center; gap:6px;">
-                    AMC Recurring Invoices & Collection Log
-                  </h4>
-                  <div style="font-size:0.75rem; color:var(--paces-text-muted);">Recurring billing cycles scheduled for this agreement</div>
-                </div>
-                @if(auth('admin')->user()?->hasPermission('bookings.edit'))
-                  <form action="{{ route('admin.bookings.amc-bills.generate', $booking) }}" method="POST" style="margin:0;">
-                    @csrf
-                    <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.78rem; padding:4px 10px; display:inline-flex; align-items:center; gap:4px;">
-                      <span>+ Generate Next Cycle Bill</span>
-                    </button>
-                  </form>
-                @endif
-              </div>
-
-              @if($booking->amcInvoices->isEmpty())
-                <div style="text-align:center; padding:1.5rem; color:var(--paces-text-muted); font-size:0.85rem; background:#f8fafc; border-radius:8px;">
-                  No recurring invoices recorded yet. Click "+ Generate Next Cycle Bill" above to generate the first bill.
-                </div>
-              @else
-                <div style="overflow-x:auto;">
-                  <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
-                    <thead>
-                      <tr style="background:#f8fafc; border-bottom:1px solid var(--paces-border); text-align:left; color:var(--paces-text-muted);">
-                        <th style="padding:8px 10px;">Invoice #</th>
-                        <th style="padding:8px 10px;">Cycle Label</th>
-                        <th style="padding:8px 10px;">Period</th>
-                        <th style="padding:8px 10px;">Due Date</th>
-                        <th style="padding:8px 10px;">Amount</th>
-                        <th style="padding:8px 10px;">Status</th>
-                        <th style="padding:8px 10px;">Payment Details</th>
-                        <th style="padding:8px 10px; text-align:right;">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @foreach($booking->amcInvoices as $inv)
-                        <tr style="border-bottom:1px solid var(--paces-border);">
-                          <td style="padding:8px 10px; font-weight:600; font-family:monospace; color:var(--paces-primary);">
-                            {{ $inv->invoice_number }}
-                          </td>
-                          <td style="padding:8px 10px; color:var(--paces-text-dark);">
-                            {{ $inv->billing_cycle_label }}
-                          </td>
-                          <td style="padding:8px 10px; color:var(--paces-text-muted); font-size:0.75rem;">
-                            {{ $inv->period_start?->format('M d, Y') }} — {{ $inv->period_end?->format('M d, Y') }}
-                          </td>
-                          <td style="padding:8px 10px; font-weight:500;">
-                            {{ $inv->due_date?->format('M d, Y') }}
-                          </td>
-                          <td style="padding:8px 10px; font-weight:700; color:var(--paces-text-dark);">
-                            ৳ {{ number_format($inv->amount, 2) }}
-                          </td>
-                          <td style="padding:8px 10px;">
-                            @if($inv->status === 'paid')
-                              <span class="badge-pill-paces" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-weight:600; font-size:0.72rem;">
-                                ✓ Paid
-                              </span>
-                            @elseif($inv->is_overdue)
-                              <span class="badge-pill-paces" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-weight:700; font-size:0.72rem;">
-                                ⚠️ Overdue
-                              </span>
-                            @else
-                              <span class="badge-pill-paces" style="background:#fffbeb; color:#b45309; border:1px solid #fde68a; font-weight:600; font-size:0.72rem;">
-                                Due for Collection
-                              </span>
-                            @endif
-                          </td>
-                          <td style="padding:8px 10px; font-size:0.75rem; color:var(--paces-text-muted);">
-                            @if($inv->status === 'paid')
-                              <strong style="color:var(--paces-text-dark);">{{ $inv->payment_method }}</strong>
-                              @if($inv->payment_reference) ({{ $inv->payment_reference }}) @endif
-                              <div style="color:#64748b;">Paid on {{ $inv->paid_at?->format('M d, Y') }}</div>
-                            @else
-                              <span style="color:#d97706;">Pending Collection</span>
-                            @endif
-                          </td>
-                          <td style="padding:8px 10px; text-align:right;">
-                            @if($inv->status !== 'paid' && auth('admin')->user()?->hasPermission('bookings.edit'))
-                              <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.72rem; padding:3px 8px; font-weight:600;" onclick="openCollectBillModal('{{ $inv->id }}', '{{ $inv->invoice_number }}', '{{ number_format($inv->amount, 2) }}')">
-                                Collect Bill
-                              </button>
-                            @else
-                              <span style="font-size:0.75rem; color:#10b981; font-weight:600;">✓ Settled</span>
-                            @endif
-                          </td>
-                        </tr>
-                      @endforeach
-                    </tbody>
-                  </table>
-                </div>
-              @endif
-            </div>
-
-            <!-- AMC Recurring Invoices & Bill Collection History -->
-            <div style="background:#ffffff; border:1px solid var(--paces-border); border-radius:10px; padding:14px; margin-bottom:1.25rem;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-                <div>
-                  <h4 style="margin:0; font-size:0.92rem; font-weight:600; color:var(--paces-text-dark); display:flex; align-items:center; gap:6px;">
-                    AMC Recurring Invoices & Collection Log
-                  </h4>
-                  <div style="font-size:0.75rem; color:var(--paces-text-muted);">Recurring billing cycles scheduled for this agreement</div>
-                </div>
-                @if(auth('admin')->user()?->hasPermission('bookings.edit'))
-                  <form action="{{ route('admin.bookings.amc-bills.generate', $booking) }}" method="POST" style="margin:0;">
-                    @csrf
-                    <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.78rem; padding:4px 10px; display:inline-flex; align-items:center; gap:4px;">
-                      <span>+ Generate Next Cycle Bill</span>
-                    </button>
-                  </form>
-                @endif
-              </div>
-
-              @if($booking->amcInvoices->isEmpty())
-                <div style="text-align:center; padding:1.5rem; color:var(--paces-text-muted); font-size:0.85rem; background:#f8fafc; border-radius:8px;">
-                  No recurring invoices recorded yet. Click "+ Generate Next Cycle Bill" above to generate the first bill.
-                </div>
-              @else
-                <div style="overflow-x:auto;">
-                  <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
-                    <thead>
-                      <tr style="background:#f8fafc; border-bottom:1px solid var(--paces-border); text-align:left; color:var(--paces-text-muted);">
-                        <th style="padding:8px 10px;">Invoice #</th>
-                        <th style="padding:8px 10px;">Cycle Label</th>
-                        <th style="padding:8px 10px;">Period</th>
-                        <th style="padding:8px 10px;">Due Date</th>
-                        <th style="padding:8px 10px;">Amount</th>
-                        <th style="padding:8px 10px;">Status</th>
-                        <th style="padding:8px 10px;">Payment Details</th>
-                        <th style="padding:8px 10px; text-align:right;">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @foreach($booking->amcInvoices as $inv)
-                        <tr style="border-bottom:1px solid var(--paces-border);">
-                          <td style="padding:8px 10px; font-weight:600; font-family:monospace; color:var(--paces-primary);">
-                            {{ $inv->invoice_number }}
-                          </td>
-                          <td style="padding:8px 10px; color:var(--paces-text-dark);">
-                            {{ $inv->billing_cycle_label }}
-                          </td>
-                          <td style="padding:8px 10px; color:var(--paces-text-muted); font-size:0.75rem;">
-                            {{ $inv->period_start?->format('M d, Y') }} — {{ $inv->period_end?->format('M d, Y') }}
-                          </td>
-                          <td style="padding:8px 10px; font-weight:500;">
-                            {{ $inv->due_date?->format('M d, Y') }}
-                          </td>
-                          <td style="padding:8px 10px; font-weight:700; color:var(--paces-text-dark);">
-                            ৳ {{ number_format($inv->amount, 2) }}
-                          </td>
-                          <td style="padding:8px 10px;">
-                            @if($inv->status === 'paid')
-                              <span class="badge-pill-paces" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-weight:600; font-size:0.72rem;">
-                                ✓ Paid
-                              </span>
-                            @elseif($inv->is_overdue)
-                              <span class="badge-pill-paces" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-weight:700; font-size:0.72rem;">
-                                ⚠️ Overdue
-                              </span>
-                            @else
-                              <span class="badge-pill-paces" style="background:#fffbeb; color:#b45309; border:1px solid #fde68a; font-weight:600; font-size:0.72rem;">
-                                Due for Collection
-                              </span>
-                            @endif
-                          </td>
-                          <td style="padding:8px 10px; font-size:0.75rem; color:var(--paces-text-muted);">
-                            @if($inv->status === 'paid')
-                              <strong style="color:var(--paces-text-dark);">{{ $inv->payment_method }}</strong>
-                              @if($inv->payment_reference) ({{ $inv->payment_reference }}) @endif
-                              <div style="color:#64748b;">Paid on {{ $inv->paid_at?->format('M d, Y') }}</div>
-                            @else
-                              <span style="color:#d97706;">Pending Collection</span>
-                            @endif
-                          </td>
-                          <td style="padding:8px 10px; text-align:right;">
-                            @if($inv->status !== 'paid' && auth('admin')->user()?->hasPermission('bookings.edit'))
-                              <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.72rem; padding:3px 8px; font-weight:600;" onclick="openCollectBillModal('{{ $inv->id }}', '{{ $inv->invoice_number }}', '{{ number_format($inv->amount, 2) }}')">
-                                Collect Bill
-                              </button>
-                            @else
-                              <span style="font-size:0.75rem; color:#10b981; font-weight:600;">✓ Settled</span>
-                            @endif
-                          </td>
-                        </tr>
-                      @endforeach
-                    </tbody>
-                  </table>
-                </div>
-              @endif
-            </div>
-
-            @if($booking->amc_package_notes)
-              <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:10px 12px; margin-bottom:1rem; font-size:0.82rem; color:var(--paces-text-dark);">
-                <strong style="display:block; margin-bottom:4px; font-size:0.78rem; text-transform:uppercase; color:var(--paces-text-muted);">Agreement Terms & Scope Notes:</strong>
-                {{ $booking->amc_package_notes }}
-              </div>
-            @endif
-
-            <!-- Signed Agreement Document Preview / Download -->
-            @if($booking->agreement_document_path)
-              <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:1rem;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <div>
-                    <div style="font-weight:600; font-size:0.88rem; color:#166534;">Signed Agreement Document Uploaded</div>
-                    <div style="font-size:0.75rem; color:#14532d;">Stored copy of verified contract document</div>
-                  </div>
-                </div>
-                <div style="display:flex; gap:8px;">
-                  <a href="{{ $booking->agreement_url }}" target="_blank" class="btn-paces btn-paces-primary btn-paces-sm" style="display:inline-flex; align-items:center; gap:4px; font-size:0.8rem;">
-                    <span>View Agreement Copy ↗</span>
-                  </a>
-                </div>
-              </div>
-            @endif
-
-            @if(auth('admin')->user()?->hasPermission('bookings.edit'))
-              <div style="text-align:right;">
-                <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" onclick="const f = document.getElementById('amcActivationForm'); if(f) f.style.display = f.style.display === 'none' ? 'block' : 'none';" style="font-size:0.8rem;">
-                  Update Contract Details / Re-upload Agreement
-                </button>
-              </div>
-            @endif
-          @endif
-
-          @if(auth('admin')->user()?->hasPermission('bookings.edit'))
-            <!-- AMC Activation / Update Form -->
-            <div id="amcActivationForm" style="display:{{ $booking->contract_status === 'active' ? 'none' : 'block' }}; {{ $booking->contract_status === 'active' ? 'margin-top:1rem; border-top:1px dashed var(--paces-border); padding-top:1rem;' : '' }}">
-              @if($booking->contract_status !== 'active')
-                <p style="font-size:0.825rem; color:var(--paces-text-muted); margin-bottom:1rem;">
-                  Once the initial facility inspection is complete and terms are agreed with the client, activate the AMC contract and upload a scan or photo of the signed agreement.
-                </p>
-              @endif
-
-              <form action="{{ route('admin.bookings.activate-amc', $booking) }}" method="POST" enctype="multipart/form-data">
+            
+            <div class="card-body-paces" style="padding:1.5rem;">
+              <form action="{{ route('admin.bookings.accept', $booking) }}" method="POST">
                 @csrf
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-                  <div>
-                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Select AMC Package *</label>
-                    <select name="amc_plan_id" class="form-control-paces" required>
-                      <option value="">-- Choose AMC Package --</option>
-                      @foreach($amcPlans as $plan)
-                        <option value="{{ $plan->id }}" {{ (old('amc_plan_id', $booking->amc_plan_id) == $plan->id) ? 'selected' : '' }}>
-                          {{ $plan->name }} ({{ $plan->tier }} - {{ $plan->price_period }})
-                        </option>
-                      @endforeach
-                    </select>
-                  </div>
-                  <div>
-                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Recurring Billing Cycle *</label>
-                    <select name="billing_cycle" class="form-control-paces" required>
-                      <option value="monthly" {{ old('billing_cycle', $booking->billing_cycle) === 'monthly' ? 'selected' : '' }}>Monthly (Standard Cycle)</option>
-                      <option value="half_monthly" {{ old('billing_cycle', $booking->billing_cycle) === 'half_monthly' ? 'selected' : '' }}>Bi-Weekly / Every 15 Days</option>
-                      <option value="weekly" {{ old('billing_cycle', $booking->billing_cycle) === 'weekly' ? 'selected' : '' }}>Weekly Cycle</option>
-                      <option value="daily" {{ old('billing_cycle', $booking->billing_cycle) === 'daily' ? 'selected' : '' }}>Daily Billing</option>
-                      <option value="quarterly" {{ old('billing_cycle', $booking->billing_cycle) === 'quarterly' ? 'selected' : '' }}>Quarterly (Every 3 Months)</option>
-                      <option value="yearly" {{ old('billing_cycle', $booking->billing_cycle) === 'yearly' ? 'selected' : '' }}>Yearly (Annual Settlement)</option>
-                    </select>
-                  </div>
-                </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
-                  <div>
-                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Recurring Amount / Cycle (৳) *</label>
-                    <input type="number" step="0.01" name="recurring_amount" value="{{ old('recurring_amount', $booking->recurring_amount ?: $booking->final_cost) }}" placeholder="e.g. 3000.00" class="form-control-paces" required>
-                    <span class="form-help-paces">Amount billed per recurring cycle.</span>
-                  </div>
-                  <div>
-                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Set Billing Day (1–31)</label>
-                    <input type="number" min="1" max="31" name="billing_day" value="{{ old('billing_day', $booking->billing_day ?? 1) }}" placeholder="e.g. 1" class="form-control-paces">
-                    <span class="form-help-paces">Target day of period for bill generation.</span>
-                  </div>
-                  <div>
-                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">First Bill Due Date</label>
-                    <input type="date" name="first_bill_due_date" value="{{ old('first_bill_due_date', $booking->next_billing_date?->format('Y-m-d') ?: ($booking->contract_start_date?->format('Y-m-d') ?: date('Y-m-d'))) }}" class="form-control-paces">
-                    <span class="form-help-paces">Due date for cycle #1 invoice.</span>
-                  </div>
-                </div>
-
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
-                  <div>
-                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Contract Start Date *</label>
-                    <input type="date" name="contract_start_date" value="{{ old('contract_start_date', $booking->contract_start_date?->format('Y-m-d') ?: date('Y-m-d')) }}" class="form-control-paces" required>
-                  </div>
-                  <div>
-                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Contract End Date *</label>
-                    <input type="date" name="contract_end_date" value="{{ old('contract_end_date', $booking->contract_end_date?->format('Y-m-d') ?: date('Y-m-d', strtotime('+1 year'))) }}" class="form-control-paces" required>
-                  </div>
-                  <div>
-                    <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Total Annual Commitment (৳)</label>
-                    <input type="number" step="0.01" name="contract_cost" value="{{ old('contract_cost', $booking->final_cost) }}" placeholder="e.g. 36000.00" class="form-control-paces">
-                  </div>
-                </div>
-
-                <div style="margin-bottom:12px;">
-                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Upload Signed Agreement Copy (Image or PDF)</label>
-                  <input type="file" name="agreement_file" accept="image/*,.pdf" class="form-control-paces">
-                  <span class="form-help-paces">Upload scan/photo of the signed agreement or contract PDF (Max: 10MB).</span>
-                </div>
-
-                <div style="margin-bottom:12px;">
-                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:500;">Agreement Notes / Scope Summary</label>
-                  <textarea name="amc_package_notes" class="form-control-paces" rows="3" placeholder="Key service scope deliverables, quarterly visit frequency, assigned lead team...">{{ old('amc_package_notes', $booking->amc_package_notes) }}</textarea>
-                </div>
-
-                <button type="submit" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:6px;">
-                  <span>✓ {{ $booking->contract_status === 'active' ? 'Save & Update Contract Details' : 'Activate AMC Contract' }}</span>
-                </button>
-              </form>
-            </div>
-          @elseif($booking->contract_status !== 'active')
-            <div style="font-size:0.825rem; color:var(--paces-text-muted); font-style:italic;">
-              AMC contract activation requires edit permission.
-            </div>
-          @endif
-        </div>
-      </div>
-
-      <!-- ============================================== -->
-      <!-- SECTION 1: IF STATUS IS PENDING REVIEW         -->
-      <!-- ============================================== -->
-      @if($booking->status === 'pending_review' && auth('admin')->user()?->hasPermission('bookings.edit'))
-        
-        <!-- Call Tracking Bar (Unreachable / Call Back Later / Custom Task) -->
-        <div class="card-paces" style="padding:1rem 1.25rem; margin-bottom:1.5rem; background:#f8fafc; border:1px solid #e2e8f0;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-            <div>
-              <strong style="font-size:0.88rem; color:var(--paces-text-dark); font-weight:500;">Phone Outreach & Follow-up Tasks:</strong>
-              <div style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:400;">Log contact attempt, callback request, or schedule follow-up tasks</div>
-            </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <!-- Button to open Unreachable Dropdown Form -->
-              <button type="button" onclick="toggleUnreachableBox()" class="btn-paces btn-paces-outline btn-paces-sm" style="border-color:#fca5a5; color:#dc2626; font-weight:500;">
-                ⚠️ Mark Unreachable ▼
-              </button>
-
-              <!-- Button: Call Back Later Toggle -->
-              <button type="button" onclick="toggleCallBackLaterBox()" class="btn-paces btn-paces-outline btn-paces-sm" style="border-color:#fde68a; color:#b45309; font-weight:500;">
-                ⏱️ Call Back Later ▼
-              </button>
-
-              <!-- Button: Add Custom Task -->
-              <button type="button" onclick="toggleCustomTaskBox()" class="btn-paces btn-paces-outline btn-paces-sm" style="border-color:#93c5fd; color:#1d4ed8; font-weight:500;">
-                📝 + Add Outreach Task ▼
-              </button>
-            </div>
-          </div>
-
-          <!-- Unreachable Form with Reasons Dropdown -->
-          <div id="unreachableReasonBox" style="display:none; margin-top:12px; padding-top:12px; border-top:1px dashed #cbd5e1;">
-            <form action="{{ route('admin.bookings.log-call', $booking) }}" method="POST">
-              @csrf
-              <input type="hidden" name="call_status" value="unreachable">
-              
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;">
-                <div>
-                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Select Unreachable Reason *</label>
-                  <select name="unreachable_reason" class="form-control-paces" required style="font-size:0.82rem; padding:6px 12px;">
-                    <option value="Phone Switched Off / Out of Coverage">Phone Switched Off / Out of Coverage</option>
-                    <option value="Ringing but No Answer">Ringing but No Answer</option>
-                    <option value="Busy / Call Waiting">Busy / Call Waiting</option>
-                    <option value="Number Invalid / Disconnected">Number Invalid / Disconnected</option>
-                    <option value="Call Rejected by Client">Call Rejected by Client</option>
-                    <option value="Other / Client Unavailable">Other / Client Unavailable</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Additional Note (Optional)</label>
-                  <input type="text" name="call_notes" class="form-control-paces" placeholder="e.g. Tried 2 times at 11:30 AM..." style="font-size:0.82rem; padding:6px 10px;">
-                </div>
-              </div>
-
-              <div style="display:flex; justify-content:flex-end;">
-                <button type="submit" class="btn-paces btn-paces-danger btn-paces-sm" style="font-size:0.82rem;">
-                  Save Unreachable (Auto-creates Task)
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Inline Box for Call Back Later Note -->
-          <div id="callBackLaterBox" style="display:none; margin-top:12px; padding-top:12px; border-top:1px dashed #cbd5e1;">
-            <form action="{{ route('admin.bookings.log-call', $booking) }}" method="POST">
-              @csrf
-              <input type="hidden" name="call_status" value="call_back_later">
-              
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;">
-                <div>
-                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Requested Follow-up Time *</label>
-                  <select name="callback_time" class="form-control-paces" required style="font-size:0.82rem; padding:6px 12px;">
-                    <option value="Call after 1 hour">Call after 1 hour</option>
-                    <option value="Call in the afternoon (2-4 PM)">Call in the afternoon (2-4 PM)</option>
-                    <option value="Call in the evening (6-8 PM)">Call in the evening (6-8 PM)</option>
-                    <option value="Call tomorrow morning">Call tomorrow morning</option>
-                    <option value="Client in meeting - call later">Client in meeting - call later</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Discussion Note (Optional)</label>
-                  <input type="text" name="call_notes" class="form-control-paces" placeholder="e.g. Client requested callback after budget approval..." style="font-size:0.82rem; padding:6px 10px;">
-                </div>
-              </div>
-
-              <div style="display:flex; justify-content:flex-end;">
-                <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.82rem;">
-                  Save Follow-up (Auto-creates Task)
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Inline Box for Manual Custom Outreach Task -->
-          <div id="customTaskBox" style="display:none; margin-top:12px; padding-top:12px; border-top:1px dashed #cbd5e1;">
-            <form action="{{ route('admin.outreach-tasks.store') }}" method="POST">
-              @csrf
-              <input type="hidden" name="booking_id" value="{{ $booking->id }}">
-              <input type="hidden" name="customer_name" value="{{ $booking->customer_name }}">
-              <input type="hidden" name="customer_phone" value="{{ $booking->customer_phone }}">
-
-              <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:10px; margin-bottom:8px;">
-                <div>
-                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Task Action / Title *</label>
-                  <input type="text" name="title" class="form-control-paces" placeholder="e.g. Call client regarding quotation approval" required style="font-size:0.82rem; padding:6px 10px;">
-                </div>
-                <div>
-                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Task Type *</label>
-                  <select name="task_type" class="form-control-paces" required style="font-size:0.82rem; padding:6px 10px;">
-                    <option value="follow_up">Follow-up Call</option>
-                    <option value="quotation">Send Quotation</option>
-                    <option value="inspection">Site Inspection</option>
-                    <option value="booking_confirmation">Confirmation</option>
-                    <option value="general">General Task</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Priority *</label>
-                  <select name="priority" class="form-control-paces" required style="font-size:0.82rem; padding:6px 10px;">
-                    <option value="normal" selected>Normal</option>
-                    <option value="high">High</option>
-                    <option value="urgent">🚨 Urgent</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style="display:grid; grid-template-columns:1fr 2fr; gap:10px; margin-bottom:8px;">
-                <div>
-                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Due Time (Optional)</label>
-                  <input type="datetime-local" name="due_at" class="form-control-paces" style="font-size:0.82rem; padding:6px 10px;">
-                </div>
-                <div>
-                  <label class="form-label-paces" style="font-size:0.78rem; font-weight:500;">Notes (Optional)</label>
-                  <input type="text" name="notes" class="form-control-paces" placeholder="e.g. Client requested callback before 4 PM..." style="font-size:0.82rem; padding:6px 10px;">
-                </div>
-              </div>
-
-              <div style="display:flex; justify-content:flex-end;">
-                <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.82rem;">
-                  Save Task
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Existing Outreach Tasks for this booking -->
-          @if($booking->outreachTasks->isNotEmpty())
-            <div style="margin-top:14px; padding-top:12px; border-top:1px solid #e2e8f0;">
-              <strong style="font-size:0.8rem; color:#1e293b; display:block; margin-bottom:8px;">Outreach Tasks for this Order:</strong>
-              <div style="display:flex; flex-direction:column; gap:6px;">
-                @foreach($booking->outreachTasks as $ot)
-                  <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:#ffffff; border:1px solid #edf2f7; border-radius:6px; font-size:0.8rem; gap:8px;">
-                    <div>
-                      <div style="font-weight:600; color:{{ $ot->status === 'completed' ? '#64748b' : '#1e293b' }}; text-decoration:{{ $ot->status === 'completed' ? 'line-through' : 'none' }};">
-                        {{ preg_replace('/\s*\(#[A-Za-z0-9-]+\)\s*$/', '', $ot->title) }}
-                      </div>
-                      <div style="font-size:0.72rem; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                        <span style="font-weight:500; text-transform:uppercase;">{{ $ot->type_label }}</span>
-                        @if($ot->due_at)
-                          <span>• Due: {{ $ot->due_at->diffForHumans() }}</span>
-                        @endif
-                        @if($ot->notes)
-                          <span>• Note: {{ $ot->notes }}</span>
-                        @endif
-                        @if($ot->status === 'completed')
-                          <span style="color:#16a34a; font-weight:600;">• ✓ Completed</span>
-                        @endif
-                      </div>
-                    </div>
-
-                    @if($ot->status === 'pending')
-                      <form action="{{ route('admin.outreach-tasks.complete', $ot) }}" method="POST" style="margin:0;">
-                        @csrf
-                        <button type="submit" class="btn-paces btn-paces-sm" style="padding:3px 8px; font-size:0.72rem; background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; font-weight:600; border-radius:5px; cursor:pointer;" title="Mark Task Complete">
-                          ✓ Done
-                        </button>
-                      </form>
-                    @endif
-                  </div>
-                @endforeach
-              </div>
-            </div>
-          @endif
-        </div>
-
-        <!-- Accept Work Order Card -->
-        <div class="card-paces" style="border:2px solid #16a34a; margin-bottom:1.5rem;">
-          <div class="card-header-paces" style="background:#f0fdf4; border-bottom:1px solid #bbf7d0;">
-            <h3 class="card-title-paces" style="color:#166534; display:flex; align-items:center; gap:8px;">
-              <span>✓</span> Accept Work Order & Assign Dispatch
-            </h3>
-          </div>
-          
-          <div class="card-body-paces" style="padding:1.5rem;">
-            <form action="{{ route('admin.bookings.accept', $booking) }}" method="POST">
-              @csrf
-
-              <!-- Pricing Agreement Section (Default OPEN with Radio Buttons & Estimated Checkbox) -->
-              <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:14px; margin-bottom:1.25rem;">
-                <div style="font-weight:500; font-size:0.88rem; color:var(--paces-text-dark); margin-bottom:10px;">
-                  Set Service Price Agreement
-                </div>
-
-                <!-- 2 Radio Buttons: Price (Default) vs Set Price Later -->
-                <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">
-                  <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.88rem; font-weight:500; color:var(--paces-text-dark);">
-                    <input type="radio" name="pricing_mode" value="price" id="pricingModePrice" checked onchange="togglePricingInput(this.value)" style="accent-color:var(--paces-primary); width:16px; height:16px;">
-                    <span>Price</span>
-                  </label>
-
-                  <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.88rem; font-weight:500; color:var(--paces-text-dark);">
-                    <input type="radio" name="pricing_mode" value="later" id="pricingModeLater" onchange="togglePricingInput(this.value)" style="accent-color:var(--paces-primary); width:16px; height:16px;">
-                    <span>Set Price Later</span>
-                  </label>
-                </div>
-
-                <!-- Amount Input Row with Estimated Checkbox on the right -->
-                <div id="priceAmountRow" style="display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap; padding-top:8px; border-top:1px dashed var(--paces-border);">
-                  <div>
-                    <label class="form-label-paces" for="costAmountInput" style="font-weight:500; font-size:0.82rem;">Service Amount (৳) <span style="color:#ef4444;">*</span></label>
-                    <input 
-                      type="number" 
-                      step="0.01" 
-                      name="cost_amount" 
-                      id="costAmountInput" 
-                      class="form-control-paces" 
-                      placeholder="e.g. 3500.00" 
-                      value="{{ $booking->final_cost > 0 ? $booking->final_cost : ($booking->estimated_cost > 0 ? $booking->estimated_cost : '') }}"
-                      style="width:200px;"
-                      required
-                    >
+                <!-- Pricing Agreement Section -->
+                <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:14px; margin-bottom:1.25rem;">
+                  <div style="font-weight:700; font-size:0.88rem; color:var(--paces-text-dark); margin-bottom:10px;">
+                    Service Price Agreement
                   </div>
 
-                  <div style="padding-bottom:10px;">
-                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; font-weight:500; color:var(--paces-text-dark);">
-                      <input type="checkbox" name="is_estimated" value="1" {{ $booking->estimated_cost > 0 && !$booking->final_cost ? 'checked' : '' }} style="width:16px; height:16px; accent-color:var(--paces-primary); cursor:pointer;">
-                      <span>Estimated</span>
+                  <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.88rem; font-weight:600; color:var(--paces-text-dark);">
+                      <input type="radio" name="pricing_mode" value="price" id="pricingModePrice" checked onchange="togglePricingInput(this.value)" style="accent-color:var(--paces-primary); width:16px; height:16px;">
+                      <span>Price Agreed Now</span>
+                    </label>
+
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.88rem; font-weight:600; color:var(--paces-text-dark);">
+                      <input type="radio" name="pricing_mode" value="later" id="pricingModeLater" onchange="togglePricingInput(this.value)" style="accent-color:var(--paces-primary); width:16px; height:16px;">
+                      <span>Set Price Later (Crew sets before work starts)</span>
                     </label>
                   </div>
+
+                  <div id="priceAmountRow" style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                    <div style="position:relative; width:180px;">
+                      <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-weight:700; color:var(--paces-text-muted);">৳</span>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        name="cost_amount" 
+                        id="costAmountInput" 
+                        class="form-control-paces" 
+                        value="{{ old('cost_amount', $booking->estimated_cost > 0 ? $booking->estimated_cost : '') }}" 
+                        placeholder="0.00" 
+                        style="padding-left:28px; font-weight:700; font-size:1.05rem;"
+                      >
+                    </div>
+
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; color:var(--paces-text-dark);">
+                      <input type="checkbox" name="is_estimated" id="isEstimatedCheckbox" value="1" {{ old('cost_type', $booking->cost_type) === 'estimated' ? 'checked' : '' }} onchange="toggleCostType(this.checked)" style="accent-color:var(--paces-primary); width:16px; height:16px;">
+                      <span>Estimated Price (Subject to site verification)</span>
+                    </label>
+                    <input type="hidden" name="cost_type" id="costTypeHidden" value="{{ old('cost_type', $booking->cost_type ?: 'final') }}">
+                  </div>
                 </div>
 
-                <div id="priceLaterNote" style="display:none; font-size:0.78rem; color:var(--paces-text-muted); padding-top:6px;">
-                  Price will be assessed on site and billed upon work completion.
-                </div>
-              </div>
+                <!-- Schedule & Slot -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.25rem;">
+                  <div>
+                    <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Scheduled Service Date</label>
+                    <input type="date" name="preferred_date" class="form-control-paces" value="{{ old('preferred_date', $booking->preferred_date?->format('Y-m-d')) }}">
+                  </div>
 
-              <!-- Scheduled Date & Time Slot Grid -->
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.25rem;">
-                <div>
-                  <label class="form-label-paces" style="font-weight:500; font-size:0.82rem;">Scheduled Date *</label>
-                  <input 
-                    type="date" 
-                    name="preferred_date" 
-                    class="form-control-paces" 
-                    value="{{ old('preferred_date', $booking->preferred_date?->format('Y-m-d')) }}" 
-                    required
-                  >
+                  <div>
+                    <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Arrival Window / Time Slot</label>
+                    <input type="text" name="preferred_time_slot" class="form-control-paces" value="{{ old('preferred_time_slot', $booking->preferred_time_slot) }}" placeholder="e.g. 10:00 AM - 12:00 PM">
+                  </div>
                 </div>
-                <div>
-                  <label class="form-label-paces" style="font-weight:500; font-size:0.82rem;">Time Slot *</label>
-                  <select name="preferred_time_slot" class="form-control-paces" required>
-                    @foreach(['09:00 AM - 01:00 PM', '02:00 PM - 05:00 PM', '06:00 PM - 09:00 PM', 'Immediate Emergency Dispatch'] as $slot)
-                      <option value="{{ $slot }}" {{ $booking->preferred_time_slot === $slot ? 'selected' : '' }}>
-                        {{ $slot }}
-                      </option>
-                    @endforeach
-                  </select>
-                </div>
-              </div>
 
-              <!-- Field Crew / Lead Assignment (Searchable Selection) -->
-              <div style="margin-bottom:1.25rem;">
-                <label class="form-label-paces" style="font-weight:500; font-size:0.82rem;">
-                  Assign Field Crew / Lead / Enlisted Partner
-                </label>
-                <div style="position:relative;" id="crewDropdownWrapper_accept">
-                  <div style="position:relative; display:flex; align-items:center;">
-                    <input 
-                      type="hidden" 
-                      name="partner_id" 
-                      id="partner_id_accept" 
-                      value="{{ old('partner_id', $booking->partner_id) }}"
-                    >
+                <!-- STRICT CREW DROPDOWN SELECTION -->
+                <div style="margin-bottom:1.25rem;">
+                  <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">
+                    Assign Field Crew / Partner Vendor
+                    <span style="font-weight:400; color:#64748b;">(Filtered by Service & Area)</span>
+                  </label>
+                  <div style="position:relative;" id="crewDropdownWrapper_accept">
+                    <input type="hidden" name="partner_id" id="partner_id_accept" value="{{ old('partner_id', $booking->partner_id) }}">
                     <input 
                       type="text" 
                       id="crewInput_accept" 
                       name="assigned_team" 
                       class="form-control-paces" 
-                      placeholder="Click or search contractor, technician or lead..." 
-                      value="{{ old('assigned_team', $booking->assigned_team) }}"
+                      value="{{ old('assigned_team', $booking->assigned_team) }}" 
+                      placeholder="Select approved crew..." 
                       autocomplete="off"
-                      style="padding-right:55px;"
                       onfocus="openCrewDropdown('accept')"
                       oninput="filterCrewOptions('accept')"
                     >
-                    <div style="position:absolute; right:8px; display:flex; align-items:center; gap:4px;">
-                      <button type="button" onclick="clearCrewSelection('accept')" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:1rem; padding:0 4px; display:{{ $booking->assigned_team ? 'inline' : 'none' }};" id="crewClearBtn_accept" title="Clear selection">✕</button>
-                      <button type="button" onclick="toggleCrewDropdown('accept')" style="background:none; border:none; color:#64748b; cursor:pointer; padding:2px;" title="View list">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                      </button>
-                    </div>
-                  </div>
 
-                  <!-- Searchable Dropdown List -->
-                  <div id="crewDropdownMenu_accept" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; max-height:240px; overflow-y:auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.12); z-index:9999; padding:4px 0;">
-                    <div style="padding:6px 12px; background:#f8fafc; border-bottom:1px solid #f1f5f9; font-size:0.75rem; color:#64748b; font-weight:600; text-transform:uppercase;">
-                      Select Enlisted Partner or Field Technician ({{ $fieldCrews->count() }} available)
-                    </div>
-                    <div id="crewListItems_accept">
-                      @foreach($fieldCrews as $crew)
-                        @php
-                          $compOrRole = $crew->company_name ?: $crew->role;
-                          $crewFullVal = "{$crew->name} ({$compOrRole}) - {$crew->phone}";
-                          $crewPartnerId = $crew->partner_id ?? '';
-                          $crewWarning = $crew->warning_msg ?? '';
-                        @endphp
-                        <div class="crew-option-item" 
-                             data-val="{{ strtolower($crewFullVal) }}"
-                             onclick="selectCrew('accept', '{{ addslashes($crewFullVal) }}', false, '{{ $crewPartnerId }}', '{{ addslashes($crewWarning) }}')"
-                             style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f8fafc; transition:background 0.15s ease;"
-                             onmouseover="this.style.background='#eff6ff'" 
-                             onmouseout="this.style.background='transparent'">
-                          <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div style="font-weight:600; font-size:0.85rem; color:#1e293b;">
-                              {{ $crew->name }}
-                              @if(!empty($crew->match_badge))
-                                <span style="font-size:0.68rem; font-weight:700; color:#047857; background:#ecfdf5; border:1px solid #a7f3d0; padding:1px 6px; border-radius:4px; margin-left:4px;">
-                                  {{ $crew->match_badge }}
+                    <!-- Searchable Dropdown Menu -->
+                    <div id="crewDropdownMenu_accept" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; max-height:240px; overflow-y:auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.12); z-index:9999; padding:4px 0;">
+                      <div style="padding:6px 12px; background:#f8fafc; border-bottom:1px solid #f1f5f9; font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">
+                        Available Matching Field Crews ({{ $fieldCrews->count() }})
+                      </div>
+                      <div id="crewListItems_accept">
+                        @forelse($fieldCrews as $crew)
+                          @php
+                            $compOrRole = $crew->company_name ?: $crew->role;
+                            $crewFullVal = "{$crew->name} ({$compOrRole}) - {$crew->phone}";
+                            $crewPartnerId = $crew->partner_id ?? '';
+                            $crewWarning = $crew->warning_msg ?? '';
+                          @endphp
+                          <div class="crew-option-item" 
+                               data-val="{{ strtolower($crewFullVal) }}"
+                               onclick="selectCrew('accept', '{{ addslashes($crewFullVal) }}', false, '{{ $crewPartnerId }}', '{{ addslashes($crewWarning) }}')"
+                               style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f8fafc; transition:background 0.15s ease;"
+                               onmouseover="this.style.background='#eff6ff'" 
+                               onmouseout="this.style.background='transparent'">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                              <div style="font-weight:700; font-size:0.85rem; color:#1e293b;">
+                                {{ $crew->name }}
+                                @if(!empty($crew->match_badge))
+                                  <span style="font-size:0.68rem; font-weight:700; color:#047857; background:#ecfdf5; border:1px solid #a7f3d0; padding:1px 6px; border-radius:4px; margin-left:4px;">
+                                    {{ $crew->match_badge }}
+                                  </span>
+                                @endif
+                              </div>
+                              @if(!empty($crew->avail_label))
+                                <span style="font-size:0.72rem; font-weight:600; color:{{ $crew->avail_color }}; background:#f8fafc; border:1px solid #e2e8f0; padding:1px 6px; border-radius:4px;">
+                                  {{ $crew->avail_label }}
                                 </span>
                               @endif
                             </div>
-                            @if(!empty($crew->avail_label))
-                              <span style="font-size:0.72rem; font-weight:600; color:{{ $crew->avail_color }}; background:#f8fafc; border:1px solid #e2e8f0; padding:1px 6px; border-radius:4px;">
-                                {{ $crew->avail_label }}
-                              </span>
-                            @endif
+                            <div style="font-size:0.75rem; color:#64748b; display:flex; justify-content:space-between; margin-top:2px;">
+                              <span>{{ $crew->role }}</span>
+                              <span style="color:#0284c7; font-weight:500;">📞 {{ $crew->phone }}</span>
+                            </div>
                           </div>
-                          <div style="font-size:0.75rem; color:#64748b; display:flex; justify-content:space-between; margin-top:2px;">
-                            <span>{{ $crew->role }}</span>
-                            <span style="color:#0284c7; font-weight:500;">📞 {{ $crew->phone }}</span>
+                        @empty
+                          <div style="padding:14px 12px; text-align:center; font-size:0.8rem; color:#dc2626; background:#fef2f2;">
+                            ⚠️ No crews found matching this service ({{ $booking->service?->title ?? 'Service' }}) and location ({{ $booking->area ?: ($booking->district ?: 'Area') }}).
                           </div>
-                        </div>
-                      @endforeach
+                        @endforelse
+                      </div>
                     </div>
-                    <div id="crewNoResults_accept" style="display:none; padding:12px; text-align:center; font-size:0.8rem; color:#94a3b8;">
-                      No matching crew found. Custom text will be saved.
-                    </div>
-                  </div>
-
-                  <!-- Partner Conflict Warning Banner -->
-                  <div id="crewWarning_accept" style="display:none; background:#fffbeb; border:1px solid #fde68a; color:#92400e; padding:8px 12px; border-radius:6px; font-size:0.8rem; margin-top:8px;">
-                  </div>
-
-                  <!-- Arrival Window / Slot -->
-                  <div style="margin-top:10px;">
-                    <label class="form-label-paces" style="font-weight:500; font-size:0.78rem;">
-                      Expected Arrival Window (Fluid Slot, e.g. 10:00 AM - 11:00 AM)
-                    </label>
-                    <input 
-                      type="text" 
-                      name="arrival_window" 
-                      class="form-control-paces" 
-                      placeholder="e.g. 10:00 AM - 11:00 AM (Coordinated via phone)" 
-                      value="{{ old('arrival_window', $booking->arrival_window) }}"
-                    >
-                    <span style="font-size:0.72rem; color:var(--paces-text-muted);">
-                      Arrival window notifies client when crew will arrive on site.
-                    </span>
                   </div>
                 </div>
-              </div>
 
-              <!-- Optional Customer Timeline Comment -->
-              <div style="margin-bottom:1.5rem;">
-                <label class="form-label-paces" style="font-weight:500; font-size:0.82rem;">Customer Note (Optional)</label>
-                <input 
-                  type="text" 
-                  name="comment" 
-                  class="form-control-paces" 
-                  placeholder="e.g. Phone confirmation complete. Lead crew dispatched for scheduled inspection."
-                >
-              </div>
+                <div style="margin-bottom:1.5rem;">
+                  <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Dispatch Comment (Visible in status history)</label>
+                  <textarea name="comment" class="form-control-paces" rows="2" placeholder="e.g. Scope confirmed over phone. Crew dispatched for site delivery."></textarea>
+                </div>
 
-              <button type="submit" class="btn-paces" style="background:#16a34a; color:#fff; font-weight:500; padding:10px 24px; border:none; border-radius:var(--paces-radius-sm); cursor:pointer;">
-                ✓ Confirm & Accept Work Order
-              </button>
-            </form>
-          </div>
-        </div>
-
-        <!-- Cancel Section for Pending Orders -->
-        <div class="card-paces" style="border:1px solid #fecaca; margin-bottom:1.5rem;">
-          <div class="card-header-paces" style="background:#fef2f2; border-bottom:1px solid #fecaca;">
-            <h3 class="card-title-paces" style="color:#dc2626; font-size:0.95rem;">✕ Cancel This Work Order</h3>
-          </div>
-          <div class="card-body-paces" style="padding:1.25rem;">
-            <form action="{{ route('admin.bookings.cancel', $booking) }}" method="POST" onsubmit="return confirm('Cancel this work order?');">
-              @csrf
-              <div style="margin-bottom:10px;">
-                <label class="form-label-paces" style="font-size:0.82rem; font-weight:500;">Cancellation Reason <span style="color:#ef4444;">*</span></label>
-                <textarea name="cancellation_reason" class="form-control-paces" rows="4" placeholder="e.g. Client requested cancellation or duplicate request..." required></textarea>
-              </div>
-              <button type="submit" class="btn-paces" style="background:#dc2626; color:#fff; font-weight:500; font-size:0.85rem; border:none; padding:8px 16px; border-radius:var(--paces-radius-sm); cursor:pointer;">
-                ✕ Confirm Cancellation
-              </button>
-            </form>
-          </div>
-        </div>
-
-      <!-- ============================================== -->
-      <!-- SECTION 2: IF ORDER IS ACCEPTED / IN PROGRESS  -->
-      <!-- ============================================== -->
-      @else
-        <!-- Booking Details Card (Clean Presentation with Edit Button) -->
-        <div class="card-paces" style="margin-bottom:1.5rem;">
-          <div class="card-header-paces" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--paces-border); padding-bottom:1rem;">
-            <div>
-              <h3 class="card-title-paces" style="margin:0;">Booking Details</h3>
-              <div style="font-size:0.8rem; color:var(--paces-text-muted);">Current operational execution state</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f1f5f9; padding-top:14px;">
+                  <div style="font-size:0.78rem; color:#64748b;">
+                    Client and crew will be notified upon acceptance.
+                  </div>
+                  <button type="submit" class="btn-paces btn-paces-primary" style="background:#16a34a; border-color:#16a34a; padding:8px 22px; font-weight:700;">
+                    ✓ Accept Work Order & Dispatch
+                  </button>
+                </div>
+              </form>
             </div>
-            
-            <div style="display:flex; gap:8px;">
+          </div>
+        @else
+          <!-- CURRENT OPERATIONAL EXECUTION CARD -->
+          <div class="card-paces" style="margin-bottom:1.5rem;">
+            <div class="card-header-paces" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--paces-border); padding-bottom:1rem;">
+              <div>
+                <h3 class="card-title-paces" style="margin:0; font-size:1.05rem;">Current Execution State</h3>
+                <div style="font-size:0.78rem; color:var(--paces-text-muted);">Real-time dispatch and field delivery status</div>
+              </div>
+
               @if(auth('admin')->user()?->hasPermission('bookings.edit'))
-                <button type="button" onclick="toggleEditOrderModal()" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:500; display:inline-flex; align-items:center; gap:6px;">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                  <span>Edit Order</span>
+                <button type="button" onclick="switchBookingTab('tab-manage-dispatch')" class="btn-paces btn-paces-outline btn-paces-sm" style="font-weight:600;">
+                  ✏️ Edit / Reassign
                 </button>
               @endif
             </div>
-          </div>
 
-          <div class="card-body-paces" style="padding:1.5rem;">
-            <!-- Summary Metric Grid -->
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem; margin-bottom:1.5rem;">
-              <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px;">
-                <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">Scheduled Date & Slot</div>
-                <div style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin-top:2px;">
-                  {{ $booking->preferred_date?->format('M d, Y') }}
+            <div class="card-body-paces" style="padding:1.5rem;">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem; margin-bottom:1.5rem;">
+                <!-- Schedule -->
+                <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px;">
+                  <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Scheduled Date & Slot</div>
+                  <div style="font-size:1rem; font-weight:700; color:var(--paces-text-dark); margin-top:2px;">
+                    {{ $booking->preferred_date?->format('M d, Y') ?? 'Not Set' }}
+                  </div>
+                  <div style="font-size:0.8rem; color:var(--paces-text-muted); margin-top:2px;">Slot: {{ $booking->preferred_time_slot ?: 'Flexible' }}</div>
                 </div>
-                <div style="font-size:0.8rem; color:var(--paces-text-muted);">Slot: {{ $booking->preferred_time_slot }}</div>
-              </div>
 
-              <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                  <span style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">Assigned Field Crew</span>
-                  @if($booking->partner_job_status)
-                    @php
-                      $admPartnerBadge = match($booking->partner_job_status) {
-                        'assigned' => ['bg' => '#fffbeb', 'color' => '#d97706', 'label' => 'Awaiting Acceptance'],
-                        'accepted' => ['bg' => '#eff6ff', 'color' => '#2563eb', 'label' => 'Accepted'],
-                        'on_the_way' => ['bg' => '#f3e8ff', 'color' => '#7e22ce', 'label' => 'En Route'],
-                        'in_progress' => ['bg' => '#f0fdfa', 'color' => '#0d9488', 'label' => 'In Progress'],
-                        'completed' => ['bg' => '#ecfdf5', 'color' => '#047857', 'label' => 'Completed'],
-                        'declined' => ['bg' => '#fef2f2', 'color' => '#dc2626', 'label' => 'Declined'],
-                        default => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => ucfirst($booking->partner_job_status)],
-                      };
-                    @endphp
-                    <span style="background:{{ $admPartnerBadge['bg'] }}; color:{{ $admPartnerBadge['color'] }}; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:12px;">
-                      {{ $admPartnerBadge['label'] }}
-                    </span>
-                  @endif
-                </div>
-                <div style="font-size:0.95rem; font-weight:600; color:var(--paces-primary);">
+                <!-- Assigned Crew -->
+                <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px;">
+                  <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Assigned Crew</div>
                   @if($booking->partner)
-                    <a href="{{ route('admin.partners.show', $booking->partner) }}" style="color:var(--paces-primary); text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
-                      <span>{{ $booking->partner->company_name }}</span>
-                      <span style="font-size:0.8rem; font-weight:400; color:var(--paces-text-muted);">({{ $booking->partner->contact_person }})</span>
-                    </a>
-                    <div style="font-size:0.78rem; color:var(--paces-text-muted); margin-top:2px;">
-                      📞 <a href="tel:{{ $booking->partner->phone }}" style="color:inherit; text-decoration:none;">{{ $booking->partner->phone }}</a>
-                      @if($booking->partner->trade_domain)
-                        • {{ $booking->partner->trade_domain }}
-                      @endif
+                    <div style="font-size:0.95rem; font-weight:700; color:var(--paces-text-dark); margin-top:2px;">
+                      {{ $booking->partner->company_name }}
                     </div>
-                    @if($booking->assignedCrew)
-                      <div style="font-size:0.78rem; color:#0f766e; font-weight:600; margin-top:3px;">
-                        👷 Technician: {{ $booking->assignedCrew->name }} ({{ $booking->assignedCrew->trade_skill ?: 'Tech' }}) • {{ $booking->assignedCrew->phone }}
+                    <div style="font-size:0.78rem; color:var(--paces-text-muted);">
+                      📞 {{ $booking->partner->phone }}
+                    </div>
+                    @if($booking->partner_job_status)
+                      <div style="margin-top:4px;">
+                        <span style="font-size:0.72rem; font-weight:700; padding:2px 6px; border-radius:4px; background:#eff6ff; color:#2563eb;">
+                          Crew Status: {{ ucfirst(str_replace('_', ' ', $booking->partner_job_status)) }}
+                        </span>
                       </div>
                     @endif
-                    <div style="font-size:0.76rem; color:#b45309; margin-top:4px; font-weight:600;">
-                      💰 Model: {{ $booking->partner->earning_model_label }} ({{ $booking->partner->formatted_rate }})
-                      • Est. Payout: ৳ {{ number_format($booking->partner->calculateBookingEarning($booking), 2) }}
+                  @elseif($booking->assigned_team)
+                    <div style="font-size:0.95rem; font-weight:700; color:var(--paces-text-dark); margin-top:2px;">
+                      {{ $booking->assigned_team }}
                     </div>
                   @else
-                    {{ $booking->assigned_team ?: 'Awaiting Team Dispatch' }}
-                  @endif
-                </div>
-              </div>
-
-              <!-- Vendor Payout Settlement Card -->
-              @if($booking->partner || $booking->partner_payout_amount)
-                @php
-                  $payoutAmt = (float) ($booking->partner_payout_amount ?? ($booking->partner ? $booking->partner->calculateBookingEarning($booking) : 0));
-                  $payoutStatus = $booking->partner_payout_status ?: 'unpaid';
-                  $payoutBadge = match($payoutStatus) {
-                    'paid' => ['bg' => '#ecfdf5', 'color' => '#047857', 'label' => 'Paid'],
-                    'processing' => ['bg' => '#eff6ff', 'color' => '#2563eb', 'label' => 'Processing'],
-                    default => ['bg' => '#fef2f2', 'color' => '#b91c1c', 'label' => 'Unpaid / Due'],
-                  };
-                @endphp
-                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <span style="font-size:0.72rem; color:#92400e; text-transform:uppercase; font-weight:700;">Vendor Payout Settlement</span>
-                    <span style="background:{{ $payoutBadge['bg'] }}; color:{{ $payoutBadge['color'] }}; font-size:0.72rem; font-weight:800; padding:2px 8px; border-radius:12px; border:1px solid currentColor;">
-                      {{ $payoutBadge['label'] }}
-                    </span>
-                  </div>
-
-                  <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:2px;">
-                    <div>
-                      <div style="font-size:1.2rem; font-weight:800; color:#b45309;">
-                        ৳ {{ number_format($payoutAmt, 2) }}
-                      </div>
-                      <div style="font-size:0.75rem; color:#92400e; margin-top:2px;">
-                        @if($booking->partner_payout_status === 'paid' && $booking->partner_payout_paid_at)
-                          Settled: {{ $booking->partner_payout_paid_at->format('M d, Y') }} via {{ strtoupper($booking->partner_payout_method ?: 'Bank') }}
-                          @if($booking->partner_payout_reference)
-                            <span style="color:#64748b;">(Ref: {{ $booking->partner_payout_reference }})</span>
-                          @endif
-                        @else
-                          Disbursement Pending
-                        @endif
-                      </div>
-                    </div>
-
-                    @if(auth('admin')->user()?->hasPermission('bookings.edit'))
-                      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="padding:4px 10px; font-size:0.78rem;" onclick="openPayoutModal()">
-                        Update Payout
-                      </button>
-                    @endif
-                  </div>
-
-                  @if($booking->partner_payout_notes)
-                    <div style="font-size:0.75rem; color:#78350f; background:#fef3c7; border-radius:6px; padding:6px 10px; margin-top:8px;">
-                      <strong>Note:</strong> {{ $booking->partner_payout_notes }}
+                    <div style="font-size:0.85rem; color:#dc2626; font-weight:600; margin-top:2px;">
+                      ⚠️ No crew assigned yet
                     </div>
                   @endif
                 </div>
-              @endif
 
-              @if($booking->is_amc)
-                <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:12px;">
-                  <div style="font-size:0.72rem; color:#7c3aed; text-transform:uppercase; font-weight:700;">AMC Recurring Billing</div>
-                  <div style="font-size:1.15rem; font-weight:700; color:#6d28d9; margin-top:2px;">
-                    ৳ {{ number_format($booking->recurring_amount ?: $booking->final_cost, 2) }}
-                    <span style="font-size:0.75rem; color:#7c3aed; font-weight:500;">/ {{ $booking->billing_cycle_label }}</span>
-                  </div>
-                  <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">
-                    Next Due: {{ $booking->next_billing_date ? $booking->next_billing_date->format('M d, Y') : 'Active' }}
-                  </div>
-                </div>
-              @else
+                <!-- Pricing -->
                 <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px;">
-                  <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:500;">One-Off Final Bill</div>
-                  <div style="font-size:1.15rem; font-weight:500; color:var(--paces-success); margin-top:2px;">
-                    @if($booking->final_cost > 0)
-                      ৳ {{ number_format($booking->final_cost, 2) }} <span style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:400;">(Invoiced)</span>
-                    @elseif($booking->estimated_cost > 0)
-                      ৳ {{ number_format($booking->estimated_cost, 2) }} <span style="font-size:0.75rem; color:var(--paces-text-muted); font-weight:400;">(Agreed Estimate)</span>
-                    @else
-                      <span style="font-size:0.88rem; color:#d97706; font-weight:500;">Billed upon completion</span>
-                    @endif
+                  <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Service Pricing</div>
+                  <div style="font-size:1.15rem; font-weight:800; color:var(--paces-text-dark); margin-top:2px;">
+                    ৳ {{ number_format((float) ($booking->final_cost ?: $booking->estimated_cost ?: 0), 2) }}
+                  </div>
+                  <div style="font-size:0.78rem; color:var(--paces-text-muted);">
+                    {{ $booking->final_cost > 0 ? 'Final Invoiced Bill' : ($booking->is_price_set_later ? 'Billed Upon Completion' : 'Agreed Price') }}
                   </div>
                 </div>
-              @endif
-            </div>
-
-            <!-- Completion Banner & Feedback (If Completed) -->
-            @if($booking->status === 'completed')
-              <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:1.25rem; margin-bottom:1.5rem;">
-                <div style="display:flex; align-items:center; gap:8px; color:#166534; font-weight:500; font-size:1rem; margin-bottom:6px;">
-                  <span>✓</span> Work Order Completed
-                </div>
-                @if($booking->completion_feedback)
-                  <div style="font-size:0.88rem; color:#14532d; line-height:1.5; margin-bottom:8px;">
-                    <strong>Operations Remarks for Client:</strong> "{{ $booking->completion_feedback }}"
-                  </div>
-                @endif
-                @if(!empty($booking->completion_photos) && is_array($booking->completion_photos) && count($booking->completion_photos) > 0)
-                  <div style="margin-top:10px; border-top:1px dashed #bbf7d0; padding-top:10px;">
-                    <div style="font-size:0.82rem; font-weight:700; color:#166534; margin-bottom:8px;">
-                      📸 Completion Proof Photos (Uploaded by Field Crew):
-                    </div>
-                    <div style="display:flex; flex-wrap:wrap; gap:8px;">
-                      @foreach($booking->completion_photos as $cImg)
-                        <a href="{{ asset(str_starts_with($cImg, 'storage/') ? $cImg : 'storage/' . $cImg) }}" target="_blank">
-                          <img src="{{ asset(str_starts_with($cImg, 'storage/') ? $cImg : 'storage/' . $cImg) }}" alt="Proof" style="width:72px; height:72px; object-fit:cover; border-radius:6px; border:2px solid #16a34a;">
-                        </a>
-                      @endforeach
-                    </div>
-                  </div>
-                @endif
-                @if($booking->partner_notes)
-                  <div style="font-size:0.82rem; color:#14532d; margin-top:8px;">
-                    <strong>Partner Field Notes:</strong> "{{ $booking->partner_notes }}"
-                  </div>
-                @endif
               </div>
 
-              <!-- Client Review & Rating Display (If Submitted) -->
-              @if($booking->review_rating)
-                <div style="background:#ffffff; border:1px solid #fed7aa; border-radius:8px; padding:1.25rem; margin-bottom:1.5rem;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <div style="font-weight:500; color:#9a3412; font-size:0.95rem;">
-                      Client Review & Rating
-                    </div>
-                    <div style="color:#f59e0b; font-size:1.1rem;">
-                      @for($i = 1; $i <= 5; $i++)
-                        {{ $i <= $booking->review_rating ? '★' : '☆' }}
-                      @endfor
-                      <span style="font-size:0.85rem; font-weight:500; color:var(--paces-text-dark); margin-left:4px;">({{ $booking->review_rating }}/5)</span>
-                    </div>
+              <!-- State-specific Action Prompts -->
+              @if($booking->status === 'in_progress' && auth('admin')->user()?->hasPermission('bookings.edit'))
+                <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:10px; padding:16px; margin-bottom:1rem;">
+                  <div style="font-weight:700; color:#166534; font-size:0.95rem; margin-bottom:8px;">
+                    🔧 Service is Currently In Progress
                   </div>
-                  <div style="font-size:0.88rem; color:var(--paces-text-dark); line-height:1.5;">
-                    "{{ $booking->review_comment }}"
-                  </div>
-                  <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-top:6px;">
-                    Submitted by {{ $booking->customer_name }} • {{ $booking->reviewed_at?->format('M d, Y • h:i A') }}
-                  </div>
-                </div>
-              @endif
-
-            <!-- Complete Order Action Box (Only if assigned team is present) -->
-            @elseif(in_array($booking->status, ['accepted', 'assigned', 'in_progress']) && auth('admin')->user()?->hasPermission('bookings.edit'))
-              @if(!empty($booking->assigned_team))
-                <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:1.25rem; margin-bottom:1rem;">
-                  <h4 style="font-size:0.95rem; font-weight:500; color:var(--paces-text-dark); margin:0 0 8px;">
-                    Mark Work Order as Completed
-                  </h4>
-                  <p style="font-size:0.8rem; color:var(--paces-text-muted); margin-bottom:12px;">
-                    Provide final completion feedback / remarks for the customer. The customer will then be invited to submit their service rating and review.
-                  </p>
-
                   <form action="{{ route('admin.bookings.complete', $booking) }}" method="POST">
                     @csrf
-                    <div style="margin-bottom:12px;">
-                      <label class="form-label-paces" style="font-size:0.82rem; font-weight:500;">
-                        Completion Remarks / Feedback for Client <span style="color:#ef4444;">*</span>
-                      </label>
-                      <textarea 
-                        name="completion_feedback" 
-                        class="form-control-paces" 
-                        rows="2" 
-                        placeholder="e.g. Servicing complete. Substation capacitors tested and operational. 90-day maintenance warranty issued." 
-                        required
-                      ></textarea>
-                    </div>
-
-                    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
                       <div>
-                        <label class="form-label-paces" style="font-size:0.82rem; font-weight:500;">Final Invoiced Bill (৳)</label>
-                        <input 
-                          type="number" 
-                          step="0.01" 
-                          name="final_cost" 
-                          class="form-control-paces" 
-                          value="{{ $booking->final_cost > 0 ? $booking->final_cost : ($booking->estimated_cost > 0 ? $booking->estimated_cost : '') }}" 
-                          placeholder="e.g. 4500.00" 
-                          style="width:180px;"
-                        >
+                        <label style="font-size:0.78rem; font-weight:600; color:#374151; display:block;">Final Invoiced Bill (৳) *</label>
+                        <input type="number" step="0.01" name="final_cost" required value="{{ $booking->final_cost > 0 ? $booking->final_cost : ($booking->estimated_cost > 0 ? $booking->estimated_cost : '') }}" class="form-control-paces" style="width:160px; font-weight:700;">
+                      </div>
+                      <div style="flex:1;">
+                        <label style="font-size:0.78rem; font-weight:600; color:#374151; display:block;">Completion Feedback / Remarks</label>
+                        <input type="text" name="completion_feedback" placeholder="Work verified on site..." class="form-control-paces" style="width:100%;">
                       </div>
                     </div>
-
-                    <button type="submit" class="btn-paces" style="background:#16a34a; color:#fff; font-weight:500; font-size:0.85rem; padding:8px 18px; border:none; border-radius:6px; cursor:pointer;">
-                      ✓ Mark Completed
+                    <button type="submit" class="btn-paces btn-paces-primary" style="background:#16a34a; border-color:#16a34a; font-weight:700;">
+                      ✓ Mark Work Completed
                     </button>
                   </form>
                 </div>
-              @else
-                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:1.25rem; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="font-size:1.4rem;">⚠️</span>
-                    <div>
-                      <div style="font-weight:600; font-size:0.88rem; color:#92400e;">Team Assignment Required Before Completion</div>
-                      <div style="font-size:0.8rem; color:#b45309; margin-top:2px;">You must assign a field crew or lead technician before marking this work order as completed.</div>
+              @endif
+
+              @if($booking->status === 'completed' && $booking->partner)
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                  <div>
+                    <div style="font-weight:700; font-size:0.9rem; color:#1e293b;">Partner Settlement Share</div>
+                    <div style="font-size:0.8rem; color:#64748b;">
+                      Partner Due: <strong>৳{{ number_format((float) ($booking->partner_payout_amount ?? $booking->partner->calculateBookingEarning($booking)), 2) }}</strong>
+                      • Status: <span style="font-weight:700;">{{ ucfirst($booking->partner_payout_status ?: 'unpaid') }}</span>
                     </div>
                   </div>
-                  <button type="button" onclick="toggleEditOrderModal()" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:600;">
-                    Assign Crew Now
-                  </button>
+                  <a href="{{ route('admin.partners.show', $booking->partner) }}#tab-payouts" class="btn-paces btn-paces-primary btn-paces-sm">
+                    Manage Partner Balance Payout →
+                  </a>
                 </div>
               @endif
+            </div>
+          </div>
+        @endif
+
+        <!-- NON-AMC CONVERT BANNER (Only on normal service requests, not cluttering the front!) -->
+        @if(!$booking->is_amc && $booking->contract_status !== 'active')
+          <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:1.5rem;">
+            <div>
+              <div style="font-size:0.88rem; font-weight:700; color:#334155;">
+                🏢 Convert to Annual Maintenance Contract (AMC)
+              </div>
+              <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">
+                Client requested an on-demand service. If after site inspection terms are agreed for an annual contract, you can activate AMC terms.
+              </div>
+            </div>
+            <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" onclick="switchBookingTab('tab-amc-contract')" style="font-weight:700;">
+              Open AMC Setup →
+            </button>
+          </div>
+        @endif
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- TAB 2: MANAGE & EDIT DISPATCH                                             -->
+  <!-- ========================================================================= -->
+  @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+    <div id="tab-manage-dispatch" class="booking-tab-pane">
+      <div class="card-paces" style="margin-bottom:1.5rem;">
+        <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:1rem; margin-bottom:1.25rem;">
+          <h3 class="card-title-paces" style="margin:0; font-size:1.1rem;">Modify Work Order Details</h3>
+          <p style="margin:3px 0 0; font-size:0.8rem; color:var(--paces-text-muted);">Update status, dispatch lead, scheduled date, costs, and internal operational logs.</p>
+        </div>
+
+        <form action="{{ route('admin.bookings.update', $booking) }}" method="POST">
+          @csrf
+          @method('PUT')
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.25rem;">
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Work Order Status *</label>
+              <select name="status" class="form-control-paces" id="workOrderStatusSelect" required>
+                @foreach(['pending_review' => 'Pending Review', 'accepted' => 'Accepted', 'assigned' => 'Assigned', 'on_the_way' => 'On The Way', 'in_progress' => 'In Progress (Working)', 'completed' => 'Completed', 'cancelled' => 'Cancelled'] as $stKey => $stLbl)
+                  <option value="{{ $stKey }}" {{ $booking->status === $stKey ? 'selected' : '' }}>
+                    {{ $stLbl }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+
+            <!-- STRICT CREW DROPDOWN (Edit mode) -->
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Assigned Field Crew / Lead</label>
+              <div style="position:relative;" id="crewDropdownWrapper_edit">
+                <input type="hidden" name="partner_id" id="partner_id_edit" value="{{ old('partner_id', $booking->partner_id) }}">
+                <input 
+                  type="text" 
+                  id="crewInput_edit" 
+                  name="assigned_team" 
+                  class="form-control-paces" 
+                  value="{{ old('assigned_team', $booking->assigned_team) }}" 
+                  placeholder="Select approved crew..." 
+                  autocomplete="off"
+                  onfocus="openCrewDropdown('edit')"
+                  oninput="filterCrewOptions('edit')"
+                >
+
+                <div id="crewDropdownMenu_edit" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; max-height:260px; overflow-y:auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.12); z-index:9999; padding:4px 0;">
+                  <div style="padding:6px 12px; background:#f8fafc; border-bottom:1px solid #f1f5f9; font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">
+                    Select Enlisted Partner or Field Technician ({{ $fieldCrews->count() }} available)
+                  </div>
+                  <div id="crewListItems_edit">
+                    @forelse($fieldCrews as $crew)
+                      @php
+                        $compOrRole = $crew->company_name ?: $crew->role;
+                        $crewFullVal = "{$crew->name} ({$compOrRole}) - {$crew->phone}";
+                        $crewPartnerId = $crew->partner_id ?? '';
+                        $crewWarning = $crew->warning_msg ?? '';
+                      @endphp
+                      <div class="crew-option-item" 
+                           data-val="{{ strtolower($crewFullVal) }}"
+                           onclick="selectCrew('edit', '{{ addslashes($crewFullVal) }}', true, '{{ $crewPartnerId }}', '{{ addslashes($crewWarning) }}')"
+                           style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f8fafc; transition:background 0.15s ease;"
+                           onmouseover="this.style.background='#eff6ff'" 
+                           onmouseout="this.style.background='transparent'">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <div style="font-weight:700; font-size:0.85rem; color:#1e293b;">
+                            {{ $crew->name }}
+                            @if(!empty($crew->match_badge))
+                              <span style="font-size:0.68rem; font-weight:700; color:#047857; background:#ecfdf5; border:1px solid #a7f3d0; padding:1px 6px; border-radius:4px; margin-left:4px;">
+                                {{ $crew->match_badge }}
+                              </span>
+                            @endif
+                          </div>
+                          @if(!empty($crew->avail_label))
+                            <span style="font-size:0.72rem; font-weight:600; color:{{ $crew->avail_color }}; background:#f8fafc; border:1px solid #e2e8f0; padding:1px 6px; border-radius:4px;">
+                              {{ $crew->avail_label }}
+                            </span>
+                          @endif
+                        </div>
+                        <div style="font-size:0.75rem; color:#64748b; display:flex; justify-content:space-between; margin-top:2px;">
+                          <span>{{ $crew->role }}</span>
+                          <span style="color:#0284c7; font-weight:500;">📞 {{ $crew->phone }}</span>
+                        </div>
+                      </div>
+                    @empty
+                      <div style="padding:14px 12px; text-align:center; font-size:0.8rem; color:#dc2626; background:#fef2f2;">
+                        ⚠️ No crews found matching this service ({{ $booking->service?->title ?? 'Service' }}) and location ({{ $booking->area ?: ($booking->district ?: 'Area') }}).
+                      </div>
+                    @endforelse
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.25rem;">
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Scheduled Service Date</label>
+              <input type="date" name="preferred_date" class="form-control-paces" value="{{ old('preferred_date', $booking->preferred_date?->format('Y-m-d')) }}">
+            </div>
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Arrival Window / Time Slot</label>
+              <input type="text" name="preferred_time_slot" class="form-control-paces" value="{{ old('preferred_time_slot', $booking->preferred_time_slot) }}">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.25rem;">
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Estimated Cost (৳)</label>
+              <input type="number" step="0.01" name="estimated_cost" class="form-control-paces" value="{{ old('estimated_cost', $booking->estimated_cost) }}">
+            </div>
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Final Invoiced Bill (৳)</label>
+              <input type="number" step="0.01" name="final_cost" class="form-control-paces" value="{{ old('final_cost', $booking->final_cost) }}">
+            </div>
+          </div>
+
+          <div style="margin-bottom:1.25rem;">
+            <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Update Comment (Visible in audit log)</label>
+            <textarea name="comment" class="form-control-paces" rows="2" placeholder="Reason for change or update note..."></textarea>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f1f5f9; padding-top:14px;">
+            <button type="button" onclick="document.getElementById('cancelSectionBox').style.display = document.getElementById('cancelSectionBox').style.display === 'none' ? 'block' : 'none'" class="btn-paces btn-paces-outline btn-paces-sm" style="color:#dc2626; border-color:#fca5a5;">
+              ✕ Cancel Work Order...
+            </button>
+            <button type="submit" class="btn-paces btn-paces-primary" style="padding:8px 20px; font-weight:700;">
+              Save & Update Work Order
+            </button>
+          </div>
+        </form>
+
+        <!-- Cancel Section -->
+        <div id="cancelSectionBox" style="display:none; margin-top:16px; padding:16px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px;">
+          <form action="{{ route('admin.bookings.cancel', $booking) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this work order?');">
+            @csrf
+            <h4 style="margin:0 0 8px 0; font-size:0.92rem; color:#991b1b; font-weight:700;">Cancel This Work Order</h4>
+            <div style="margin-bottom:10px;">
+              <label style="font-size:0.78rem; font-weight:600; color:#374151; display:block;">Cancellation Reason *</label>
+              <textarea name="cancellation_reason" required class="form-control-paces" rows="2" placeholder="e.g. Client requested cancellation or duplicate request..."></textarea>
+            </div>
+            <div style="text-align:right;">
+              <button type="submit" class="btn-paces" style="background:#dc2626; color:#ffffff; font-weight:700; padding:6px 16px; border:none; border-radius:6px; cursor:pointer;">
+                Confirm Cancellation
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  @endif
+
+  <!-- ========================================================================= -->
+  <!-- TAB 3: OPERATIONAL AUDIT TIMELINE (COMPREHENSIVE AUDIT TRAIL)             -->
+  <!-- ========================================================================= -->
+  <div id="tab-audit-logs" class="booking-tab-pane">
+    <div class="card-paces" style="margin-bottom:1.5rem; padding:20px;">
+      <div style="border-bottom:1px solid var(--paces-border); padding-bottom:1rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h3 class="card-title-paces" style="margin:0; font-size:1.1rem;">Operational Audit Timeline</h3>
+        </div>
+        <span class="badge-paces" style="background:#f1f5f9; color:#475569; font-size:0.78rem; padding:4px 12px; border-radius:12px; font-weight:700;">
+          Total Logs: {{ $booking->statusLogs->count() }}
+        </span>
+      </div>
+
+      @if($booking->statusLogs->isEmpty())
+        <div style="text-align:center; padding:3rem 1rem; color:var(--paces-text-muted);">
+          <div style="font-size:2rem; margin-bottom:8px;">📜</div>
+          <div style="font-weight:600; font-size:0.95rem; color:#475569;">No Operational Logs Recorded</div>
+          <p style="font-size:0.8rem; margin:4px 0 0;">Status changes and dispatch events will be recorded here automatically.</p>
+        </div>
+      @else
+        <div style="display:flex; flex-direction:column; gap:14px; position:relative; padding-left:10px;">
+          @foreach($booking->statusLogs->reverse() as $log)
+            <div style="display:flex; gap:16px; font-size:0.85rem; border-left:3px solid var(--paces-primary); padding-left:16px; position:relative;">
+              <div style="position:absolute; left:-7px; top:4px; width:11px; height:11px; border-radius:50%; background:var(--paces-primary); border:2px solid #ffffff;"></div>
+              
+              <div style="flex:1; background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-weight:700; color:var(--paces-primary); font-size:0.9rem;">
+                      {{ ucfirst(str_replace('_', ' ', $log->from_status)) }} ➔ {{ ucfirst(str_replace('_', ' ', $log->to_status)) }}
+                    </span>
+                    <span style="background:#f1f5f9; color:#475569; font-size:0.7rem; font-weight:700; padding:2px 6px; border-radius:4px;">
+                      {{ $log->created_at->diffForHumans() }}
+                    </span>
+                  </div>
+                  <span style="font-size:0.75rem; color:#64748b;">
+                    {{ $log->created_at->format('M d, Y • h:i A') }}
+                  </span>
+                </div>
+
+                <div style="font-size:0.8rem; color:#475569; margin-top:4px;">
+                  Changed by: <strong>{{ $log->changedByAdmin?->name ?? ($log->changedByUser?->name ?? 'System Automated') }}</strong>
+                  @if($log->changedByAdmin)
+                    <span style="color:#2563eb; font-size:0.72rem; margin-left:4px;">(Admin Operations)</span>
+                  @endif
+                </div>
+
+                @if($log->comment)
+                  <div style="margin-top:8px; background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:8px 12px; font-size:0.82rem; color:#1e293b; line-height:1.45;">
+                    {{ $log->comment }}
+                  </div>
+                @endif
+              </div>
+            </div>
+          @endforeach
+        </div>
+      @endif
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- TAB 4: AMC CONTRACT & AGREEMENT / CONVERT TO AMC                          -->
+  <!-- ========================================================================= -->
+  <div id="tab-amc-contract" class="booking-tab-pane">
+    <div class="card-paces" style="margin-bottom:1.5rem; padding:20px; border:1px solid {{ $booking->contract_status === 'active' ? '#10b981' : 'var(--paces-border)' }};">
+      <div style="border-bottom:1px solid var(--paces-border); padding-bottom:1rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h3 class="card-title-paces" style="margin:0; font-size:1.1rem; color:{{ $booking->contract_status === 'active' ? '#166534' : 'var(--paces-text-dark)' }};">
+            Annual Maintenance Contract (AMC) & Agreement
+          </h3>
+        </div>
+
+        @if($booking->contract_status === 'active')
+          <span class="badge-pill-paces" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-weight:700; font-size:0.82rem; padding:4px 12px;">
+            Active Contract
+          </span>
+        @else
+          <span class="badge-pill-paces" style="background:#f1f5f9; color:#64748b; font-size:0.82rem; padding:4px 12px;">
+            Contract Not Activated
+          </span>
+        @endif
+      </div>
+
+      <!-- If Active Contract -->
+      @if($booking->contract_status === 'active')
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:1.5rem;">
+          <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px;">
+            <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">AMC Package</div>
+            <strong style="font-size:1rem; color:var(--paces-text-dark); display:block; margin-top:2px;">
+              {{ $booking->amcPlan?->name ?? 'Corporate Enterprise AMC' }}
+            </strong>
+            @if($booking->amcPlan?->tier)
+              <span style="font-size:0.72rem; color:var(--paces-primary);">{{ $booking->amcPlan->tier }} Tier</span>
+            @endif
+          </div>
+
+          <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px;">
+            <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Contract Period</div>
+            <div style="font-size:0.88rem; font-weight:600; color:var(--paces-text-dark); margin-top:2px;">
+              {{ $booking->contract_start_date?->format('M d, Y') ?? 'Start' }} – {{ $booking->contract_end_date?->format('M d, Y') ?? 'Ongoing' }}
+            </div>
+            <div style="font-size:0.72rem; color:var(--paces-text-muted);">{{ $booking->days_remaining_in_contract }} days remaining</div>
+          </div>
+
+          <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:12px;">
+            <div style="font-size:0.72rem; color:#065f46; text-transform:uppercase; font-weight:700;">Collected Revenue</div>
+            <strong style="font-size:1.15rem; color:#047857; display:block; margin-top:2px;">
+              ৳ {{ number_format($booking->collected_amc_revenue, 2) }}
+            </strong>
+            @if($booking->pending_amc_due > 0)
+              <span style="font-size:0.72rem; color:#b45309; font-weight:600;">Due: ৳ {{ number_format($booking->pending_amc_due, 2) }}</span>
+            @else
+              <span style="font-size:0.72rem; color:#10b981;">All Bills Paid Up to Date</span>
             @endif
           </div>
         </div>
 
-        <!-- Collapsible / Editable Form Modal (Toggled via "Edit Order" button - Contains BOTH Edit & Cancel) -->
-        <div id="editOrderSection" style="display:none; margin-bottom:1.5rem;">
-          <div class="card-paces" style="border:2px solid var(--paces-primary);">
-            <div class="card-header-paces" style="display:flex; justify-content:space-between; align-items:center;">
-              <h3 class="card-title-paces" style="margin:0;">Modify Work Order Details</h3>
-              <button type="button" onclick="toggleEditOrderModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--paces-text-muted);">✕</button>
+        @if($booking->agreement_document_path)
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700; font-size:0.88rem; color:#1e293b;">Signed Agreement Document</div>
+              <div style="font-size:0.75rem; color:#64748b;">Uploaded agreement contract copy</div>
             </div>
-            <div class="card-body-paces" style="padding:1.5rem;">
-              <form action="{{ route('admin.bookings.update', $booking) }}" method="POST">
-                @csrf
-                @method('PUT')
-
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.25rem;">
-                  <div>
-                    <label class="form-label-paces" style="font-weight:500;">
-                      Work Order Status
-                      <span id="statusAutoBadge" style="display:none; font-size:0.7rem; color:#10b981; font-weight:700; margin-left:6px;">✓ Auto Changed to In Progress</span>
-                    </label>
-                    <select name="status" class="form-control-paces" id="workOrderStatusSelect" required style="transition:border-color 0.25s, box-shadow 0.25s;">
-                      @foreach(['pending_review' => 'Pending', 'accepted' => 'Accepted', 'assigned' => 'Assigned', 'in_progress' => 'In Progress', 'completed' => 'Completed', 'cancelled' => 'Cancelled'] as $stKey => $stLbl)
-                        <option value="{{ $stKey }}" {{ $booking->status === $stKey ? 'selected' : '' }}>
-                          {{ $stLbl }}
-                        </option>
-                      @endforeach
-                    </select>
-                  </div>
-
-                  <div>
-                    <label class="form-label-paces" style="font-weight:500;">Assigned Field Crew / Lead</label>
-                    <div style="position:relative;" id="crewDropdownWrapper_edit">
-                      <div style="position:relative; display:flex; align-items:center;">
-                        <input 
-                          type="hidden" 
-                          name="partner_id" 
-                          id="partner_id_edit" 
-                          value="{{ old('partner_id', $booking->partner_id) }}"
-                        >
-                        <input 
-                          type="text" 
-                          id="crewInput_edit" 
-                          name="assigned_team" 
-                          class="form-control-paces" 
-                          value="{{ old('assigned_team', $booking->assigned_team) }}" 
-                          placeholder="Search contractor, technician or lead..."
-                          autocomplete="off"
-                          style="padding-right:55px;"
-                          onfocus="openCrewDropdown('edit')"
-                          oninput="filterCrewOptions('edit')"
-                        >
-                        <div style="position:absolute; right:8px; display:flex; align-items:center; gap:4px;">
-                          <button type="button" onclick="clearCrewSelection('edit')" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:1rem; padding:0 4px; display:{{ $booking->assigned_team ? 'inline' : 'none' }};" id="crewClearBtn_edit" title="Clear selection">✕</button>
-                          <button type="button" onclick="toggleCrewDropdown('edit')" style="background:none; border:none; color:#64748b; cursor:pointer; padding:2px;" title="View list">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                          </button>
-                        </div>
-                      </div>
-
-                      <!-- Searchable Dropdown List -->
-                      <div id="crewDropdownMenu_edit" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; max-height:260px; overflow-y:auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.12); z-index:9999; padding:4px 0;">
-                        <div style="padding:6px 12px; background:#f8fafc; border-bottom:1px solid #f1f5f9; font-size:0.75rem; color:#64748b; font-weight:600; text-transform:uppercase;">
-                          Select Enlisted Partner or Field Technician ({{ $fieldCrews->count() }} available)
-                        </div>
-                        <div id="crewListItems_edit">
-                          @foreach($fieldCrews as $crew)
-                            @php
-                              $compOrRole = $crew->company_name ?: $crew->role;
-                              $crewFullVal = "{$crew->name} ({$compOrRole}) - {$crew->phone}";
-                              $crewPartnerId = $crew->partner_id ?? '';
-                              $crewWarning = $crew->warning_msg ?? '';
-                            @endphp
-                            <div class="crew-option-item" 
-                                 data-val="{{ strtolower($crewFullVal) }}"
-                                 onclick="selectCrew('edit', '{{ addslashes($crewFullVal) }}', true, '{{ $crewPartnerId }}', '{{ addslashes($crewWarning) }}')"
-                                 style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f8fafc; transition:background 0.15s ease;"
-                                 onmouseover="this.style.background='#eff6ff'" 
-                                 onmouseout="this.style.background='transparent'">
-                              <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div style="font-weight:600; font-size:0.85rem; color:#1e293b;">
-                                  {{ $crew->name }}
-                                  @if(!empty($crew->match_badge))
-                                    <span style="font-size:0.68rem; font-weight:700; color:#047857; background:#ecfdf5; border:1px solid #a7f3d0; padding:1px 6px; border-radius:4px; margin-left:4px;">
-                                      {{ $crew->match_badge }}
-                                    </span>
-                                  @endif
-                                </div>
-                                @if(!empty($crew->avail_label))
-                                  <span style="font-size:0.72rem; font-weight:600; color:{{ $crew->avail_color }}; background:#f8fafc; border:1px solid #e2e8f0; padding:1px 6px; border-radius:4px;">
-                                    {{ $crew->avail_label }}
-                                  </span>
-                                @endif
-                              </div>
-                              <div style="font-size:0.75rem; color:#64748b; display:flex; justify-content:space-between; margin-top:2px;">
-                                <span>{{ $crew->role }}</span>
-                                <span style="color:#0284c7; font-weight:500;">📞 {{ $crew->phone }}</span>
-                              </div>
-                            </div>
-                          @endforeach
-                        </div>
-                        <div id="crewNoResults_edit" style="display:none; padding:12px; text-align:center; font-size:0.8rem; color:#94a3b8;">
-                          No matching crew found. Custom text will be saved.
-                        </div>
-                      </div>
-
-                      <!-- Partner Conflict Warning Notice -->
-                      <div id="crewWarning_edit" style="display:none; background:#fffbeb; border:1px solid #fde68a; color:#92400e; padding:8px 12px; border-radius:6px; font-size:0.8rem; margin-top:8px;">
-                      </div>
-
-                      <!-- Arrival Window -->
-                      <div style="margin-top:10px;">
-                        <label class="form-label-paces" style="font-weight:500; font-size:0.78rem;">
-                          Arrival Window Slot (e.g. 10:00 AM - 11:00 AM)
-                        </label>
-                        <input 
-                          type="text" 
-                          name="arrival_window" 
-                          class="form-control-paces" 
-                          placeholder="e.g. 10:00 AM - 11:00 AM" 
-                          value="{{ old('arrival_window', $booking->arrival_window) }}"
-                        >
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.25rem;">
-                  <div>
-                    <label class="form-label-paces" style="font-weight:500;">Agreed Estimated Cost (৳)</label>
-                    <input type="number" step="0.01" name="estimated_cost" class="form-control-paces" value="{{ old('estimated_cost', $booking->estimated_cost) }}">
-                  </div>
-
-                  <div>
-                    <label class="form-label-paces" style="font-weight:500;">Final Invoiced Bill (৳)</label>
-                    <input type="number" step="0.01" name="final_cost" class="form-control-paces" value="{{ old('final_cost', $booking->final_cost) }}">
-                  </div>
-                </div>
-
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.25rem;">
-                  <div>
-                    <label class="form-label-paces" style="font-weight:500;">Scheduled Date</label>
-                    <input type="date" name="preferred_date" class="form-control-paces" value="{{ old('preferred_date', $booking->preferred_date?->format('Y-m-d')) }}">
-                  </div>
-
-                  <div>
-                    <label class="form-label-paces" style="font-weight:500;">Time Slot</label>
-                    <select name="preferred_time_slot" class="form-control-paces">
-                      @foreach(['09:00 AM - 01:00 PM', '02:00 PM - 05:00 PM', '06:00 PM - 09:00 PM', 'Immediate Emergency Dispatch'] as $slot)
-                        <option value="{{ $slot }}" {{ $booking->preferred_time_slot === $slot ? 'selected' : '' }}>
-                          {{ $slot }}
-                        </option>
-                      @endforeach
-                    </select>
-                  </div>
-                </div>
-
-                <div style="margin-bottom:1.25rem;">
-                  <label class="form-label-paces" style="font-weight:500;">Internal Admin Notes</label>
-                  <textarea name="admin_notes" class="form-control-paces" rows="5" placeholder="Internal remarks...">{{ old('admin_notes', $booking->admin_notes) }}</textarea>
-                </div>
-
-                <div style="margin-bottom:1.5rem;">
-                  <label class="form-label-paces" style="font-weight:500;">Customer Note (Optional)</label>
-                  <input type="text" name="comment" class="form-control-paces" placeholder="Optional update note for customer live timeline...">
-                </div>
-
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <div style="display:flex; gap:10px;">
-                    <button type="submit" class="btn-paces btn-paces-primary" style="font-weight:500; padding:8px 20px;">
-                      Save Updates
-                    </button>
-                    <button type="button" onclick="toggleEditOrderModal()" class="btn-paces btn-paces-outline" style="padding:8px 16px;">
-                      Close
-                    </button>
-                  </div>
-                </div>
-              </form>
-
-              <!-- Cancel Section is INSIDE Edit Order section (Item 13) -->
-              @if($booking->status !== 'cancelled' && $booking->status !== 'completed' && auth('admin')->user()?->hasPermission('bookings.edit'))
-                <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px dashed #fca5a5;">
-                  <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:1.25rem;">
-                    <h4 style="color:#dc2626; font-size:0.92rem; font-weight:500; margin:0 0 6px;">
-                      ✕ Cancel This Work Order
-                    </h4>
-                    <p style="font-size:0.78rem; color:#991b1b; margin:0 0 10px;">
-                      Cancelling will notify the client and free up the assigned technician.
-                    </p>
-                    <form action="{{ route('admin.bookings.cancel', $booking) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this work order?');">
-                      @csrf
-                      <div style="margin-bottom:10px;">
-                        <textarea name="cancellation_reason" class="form-control-paces" rows="4" placeholder="State reason for cancellation..." required></textarea>
-                      </div>
-                      <button type="submit" class="btn-paces" style="background:#dc2626; color:#fff; font-weight:500; font-size:0.82rem; border:none; padding:7px 16px; border-radius:var(--paces-radius-sm); cursor:pointer;">
-                        ✕ Confirm Cancellation
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              @endif
-            </div>
+            <a href="{{ asset($booking->agreement_document_path) }}" target="_blank" class="btn-paces btn-paces-primary btn-paces-sm">
+              View Agreement Copy ↗
+            </a>
           </div>
-        </div>
+        @endif
 
+        <!-- Invoices List -->
+        <div style="margin-bottom:1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h4 style="margin:0; font-size:0.95rem; font-weight:700; color:#1e293b;">Recurring Invoices & Collection Log</h4>
+            @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+              <form action="{{ route('admin.bookings.amc-bills.generate', $booking) }}" method="POST" style="margin:0;">
+                @csrf
+                <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm">
+                  + Generate Next Cycle Bill
+                </button>
+              </form>
+            @endif
+          </div>
+
+          @if($booking->amcInvoices->isEmpty())
+            <div style="text-align:center; padding:1.5rem; color:var(--paces-text-muted); font-size:0.82rem; background:#f8fafc; border-radius:8px;">
+              No recurring invoices generated yet.
+            </div>
+          @else
+            <div class="table-responsive-paces">
+              <table class="table-paces">
+                <thead>
+                  <tr>
+                    <th>Invoice #</th>
+                    <th>Billing Cycle</th>
+                    <th>Due Date</th>
+                    <th style="text-align:right;">Amount (৳)</th>
+                    <th style="text-align:center;">Status</th>
+                    <th style="text-align:right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($booking->amcInvoices as $inv)
+                    <tr>
+                      <td style="font-weight:700; font-family:monospace; color:var(--paces-primary);">{{ $inv->invoice_number }}</td>
+                      <td>{{ $inv->billing_period_label }}</td>
+                      <td style="font-size:0.8rem;">{{ $inv->due_date?->format('M d, Y') }}</td>
+                      <td style="text-align:right; font-weight:700;">৳ {{ number_format($inv->amount, 2) }}</td>
+                      <td style="text-align:center;">
+                        <span style="font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:4px; background:{{ $inv->status === 'paid' ? '#ecfdf5' : '#fffbeb' }}; color:{{ $inv->status === 'paid' ? '#047857' : '#b45309' }};">
+                          {{ ucfirst($inv->status) }}
+                        </span>
+                      </td>
+                      <td style="text-align:right;">
+                        @if($inv->status !== 'paid' && auth('admin')->user()?->hasPermission('bookings.edit'))
+                          <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openCollectBillModal('{{ $inv->id }}', '{{ $inv->invoice_number }}', '{{ number_format($inv->amount, 2) }}')">
+                            Collect Bill
+                          </button>
+                        @endif
+                      </td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+          @endif
+        </div>
       @endif
 
+      <!-- AMC Activation / Update Form -->
+      @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+        <div style="border-top:1px dashed var(--paces-border); padding-top:1.25rem;">
+          <h4 style="margin:0 0 8px 0; font-size:0.95rem; font-weight:700; color:#1e293b;">
+            {{ $booking->contract_status === 'active' ? 'Update AMC Contract Details' : 'Activate AMC Contract for this Customer' }}
+          </h4>
+          <p style="font-size:0.8rem; color:var(--paces-text-muted); margin-bottom:1rem;">
+            Select an AMC package, contract billing cycle, and upload signed agreement document scan.
+          </p>
+
+          <form action="{{ route('admin.bookings.activate-amc', $booking) }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+              <div>
+                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Select AMC Package *</label>
+                <select name="amc_plan_id" class="form-control-paces" required>
+                  <option value="">-- Choose AMC Package --</option>
+                  @foreach($amcPlans as $plan)
+                    <option value="{{ $plan->id }}" {{ (old('amc_plan_id', $booking->amc_plan_id) == $plan->id) ? 'selected' : '' }}>
+                      {{ $plan->name }} ({{ $plan->tier }} - {{ $plan->price_period }})
+                    </option>
+                  @endforeach
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Billing Cycle *</label>
+                <select name="billing_cycle" class="form-control-paces" required>
+                  @foreach(['monthly' => 'Monthly Invoicing', 'quarterly' => 'Quarterly Invoicing', 'half_yearly' => 'Half-Yearly (Every 6 Months)', 'annually' => 'Annual (One-time Lump Sum)'] as $cycleKey => $cycleLabel)
+                    <option value="{{ $cycleKey }}" {{ (old('billing_cycle', $booking->billing_cycle) == $cycleKey) ? 'selected' : '' }}>
+                      {{ $cycleLabel }}
+                    </option>
+                  @endforeach
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-bottom:12px;">
+              <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Upload Signed Agreement Copy (PDF / Image)</label>
+              <input type="file" name="agreement_document" class="form-control-paces" accept=".pdf,.png,.jpg,.jpeg">
+            </div>
+
+            <div style="margin-bottom:14px;">
+              <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Contract Notes & Service Deliverables</label>
+              <textarea name="amc_package_notes" class="form-control-paces" rows="2" placeholder="Key service scope deliverables, quarterly visit frequency...">{{ old('amc_package_notes', $booking->amc_package_notes) }}</textarea>
+            </div>
+
+            <button type="submit" class="btn-paces btn-paces-primary" style="font-weight:700;">
+              ✓ {{ $booking->contract_status === 'active' ? 'Save & Update Contract Details' : 'Activate AMC Contract' }}
+            </button>
+          </form>
+        </div>
+      @endif
     </div>
   </div>
 
-  <style>
-    @media (max-width: 900px) {
-      .workorder-grid {
-        grid-template-columns: 1fr !important;
-      }
-    }
-  </style>
-
-  <script>
-    function copyToClipboard(text, btn) {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(() => {
-          const original = btn.innerText;
-          btn.innerText = '✓ Copied!';
-          btn.style.color = '#16a34a';
-          setTimeout(() => {
-            btn.innerText = original;
-            btn.style.color = '';
-          }, 1800);
-        });
-      } else {
-        const temp = document.createElement('input');
-        temp.value = text;
-        document.body.appendChild(temp);
-        temp.select();
-        document.execCommand('copy');
-        document.body.removeChild(temp);
-        btn.innerText = '✓ Copied!';
-        setTimeout(() => { btn.innerText = '📋 Copy'; }, 1800);
-      }
-    }
-
-    function togglePricingInput(mode) {
-      const row = document.getElementById('priceAmountRow');
-      const note = document.getElementById('priceLaterNote');
-      const input = document.getElementById('costAmountInput');
-      if (mode === 'price') {
-        row.style.display = 'flex';
-        note.style.display = 'none';
-        if (input) input.required = true;
-      } else {
-        row.style.display = 'none';
-        note.style.display = 'block';
-        if (input) {
-          input.required = false;
-          input.value = '';
-        }
-      }
-    }
-
-    function toggleUnreachableBox() {
-      const box = document.getElementById('unreachableReasonBox');
-      const cbBox = document.getElementById('callBackLaterBox');
-      const cBox = document.getElementById('customTaskBox');
-      if (box) {
-        box.style.display = box.style.display === 'none' ? 'block' : 'none';
-        if (cbBox) cbBox.style.display = 'none';
-        if (cBox) cBox.style.display = 'none';
-      }
-    }
-
-    function toggleCallBackLaterBox() {
-      const cbBox = document.getElementById('callBackLaterBox');
-      const box = document.getElementById('unreachableReasonBox');
-      const cBox = document.getElementById('customTaskBox');
-      if (cbBox) {
-        cbBox.style.display = cbBox.style.display === 'none' ? 'block' : 'none';
-        if (box) box.style.display = 'none';
-        if (cBox) cBox.style.display = 'none';
-      }
-    }
-
-    function toggleCustomTaskBox() {
-      const cBox = document.getElementById('customTaskBox');
-      const box = document.getElementById('unreachableReasonBox');
-      const cbBox = document.getElementById('callBackLaterBox');
-      if (cBox) {
-        cBox.style.display = cBox.style.display === 'none' ? 'block' : 'none';
-        if (box) box.style.display = 'none';
-        if (cbBox) cbBox.style.display = 'none';
-      }
-    }
-
-    function toggleEditOrderModal() {
-      const el = document.getElementById('editOrderSection');
-      if (el) {
-        el.style.display = el.style.display === 'none' ? 'block' : 'none';
-        if (el.style.display === 'block') {
-          el.scrollIntoView({ behavior: 'smooth' });
-        }
-      }
-    }
-
-    // Searchable Crew Selection & Auto Status Change
-    function selectCrew(prefix, value, autoChangeStatus, partnerId, warningMsg) {
-      const input = document.getElementById('crewInput_' + prefix);
-      const clearBtn = document.getElementById('crewClearBtn_' + prefix);
-      const partnerInput = document.getElementById('partner_id_' + prefix);
-      const warningBox = document.getElementById('crewWarning_' + prefix);
-
-      if (input) {
-        input.value = value;
-      }
-      if (clearBtn) {
-        clearBtn.style.display = value ? 'inline' : 'none';
-      }
-      if (partnerInput) {
-        partnerInput.value = partnerId || '';
-      }
-      if (warningBox) {
-        if (warningMsg) {
-          warningBox.innerHTML = '<strong>Notice:</strong> ' + warningMsg;
-          warningBox.style.display = 'block';
-        } else {
-          warningBox.style.display = 'none';
-        }
-      }
-      closeCrewDropdown(prefix);
-
-      // Work Order Status automatic change
-      if (autoChangeStatus && value) {
-        const statusSelect = document.getElementById('workOrderStatusSelect');
-        const badge = document.getElementById('statusAutoBadge');
-        if (statusSelect) {
-          statusSelect.value = 'in_progress';
-          statusSelect.style.borderColor = '#10b981';
-          statusSelect.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.25)';
-          if (badge) {
-            badge.style.display = 'inline';
-          }
-          setTimeout(() => {
-            statusSelect.style.borderColor = '';
-            statusSelect.style.boxShadow = '';
-          }, 2000);
-        }
-      }
-    }
-
-    function clearCrewSelection(prefix) {
-      const input = document.getElementById('crewInput_' + prefix);
-      const clearBtn = document.getElementById('crewClearBtn_' + prefix);
-      const partnerInput = document.getElementById('partner_id_' + prefix);
-      const warningBox = document.getElementById('crewWarning_' + prefix);
-
-      if (input) {
-        input.value = '';
-        input.focus();
-      }
-      if (clearBtn) {
-        clearBtn.style.display = 'none';
-      }
-      if (partnerInput) {
-        partnerInput.value = '';
-      }
-      if (warningBox) {
-        warningBox.style.display = 'none';
-      }
-      openCrewDropdown(prefix);
-      filterCrewOptions(prefix);
-    }
-
-    function openCrewDropdown(prefix) {
-      const menu = document.getElementById('crewDropdownMenu_' + prefix);
-      if (menu) {
-        menu.style.display = 'block';
-        filterCrewOptions(prefix);
-      }
-    }
-
-    function closeCrewDropdown(prefix) {
-      const menu = document.getElementById('crewDropdownMenu_' + prefix);
-      if (menu) menu.style.display = 'none';
-    }
-
-    function toggleCrewDropdown(prefix) {
-      const menu = document.getElementById('crewDropdownMenu_' + prefix);
-      if (menu) {
-        if (menu.style.display === 'block') {
-          menu.style.display = 'none';
-        } else {
-          openCrewDropdown(prefix);
-          document.getElementById('crewInput_' + prefix)?.focus();
-        }
-      }
-    }
-
-    function filterCrewOptions(prefix) {
-      const input = document.getElementById('crewInput_' + prefix);
-      const filter = (input ? input.value : '').toLowerCase().trim();
-      const container = document.getElementById('crewListItems_' + prefix);
-      const noResults = document.getElementById('crewNoResults_' + prefix);
-      const clearBtn = document.getElementById('crewClearBtn_' + prefix);
-
-      if (clearBtn) {
-        clearBtn.style.display = filter ? 'inline' : 'none';
-      }
-
-      if (!container) return;
-      const items = container.getElementsByClassName('crew-option-item');
-      let visibleCount = 0;
-
-      for (let i = 0; i < items.length; i++) {
-        const text = items[i].getAttribute('data-val').toLowerCase();
-        if (!filter || text.includes(filter)) {
-          items[i].style.display = 'block';
-          visibleCount++;
-        } else {
-          items[i].style.display = 'none';
-        }
-      }
-
-      if (noResults) {
-        noResults.style.display = visibleCount === 0 ? 'block' : 'none';
-      }
-    }
-
-    document.addEventListener('click', function(e) {
-      ['edit', 'accept'].forEach(function(prefix) {
-        const wrapper = document.getElementById('crewDropdownWrapper_' + prefix);
-        if (wrapper && !wrapper.contains(e.target)) {
-          closeCrewDropdown(prefix);
-        }
-      });
-    });
-
-    // Image Lightbox & Zoom Functions
-    let currentZoom = 1;
-    let isDragging = false;
-    let startX = 0, startY = 0;
-    let translateX = 0, translateY = 0;
-
-    function openImageLightbox(src, caption) {
-      const modal = document.getElementById('imageLightboxModal');
-      const img = document.getElementById('lightboxImage');
-      const cap = document.getElementById('lightboxCaption');
-      if (!modal || !img) return;
-
-      img.src = src;
-      if (cap) cap.textContent = caption || 'Problem Photo';
-      resetLightboxZoom();
-      modal.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeImageLightbox() {
-      const modal = document.getElementById('imageLightboxModal');
-      if (modal) modal.style.display = 'none';
-      document.body.style.overflow = '';
-      resetLightboxZoom();
-    }
-
-    function closeLightboxOnBackdrop(e) {
-      if (e.target.id === 'imageLightboxModal' || e.target.id === 'lightboxViewport') {
-        closeImageLightbox();
-      }
-    }
-
-    function zoomLightbox(delta) {
-      currentZoom = Math.max(0.5, Math.min(4, currentZoom + delta));
-      updateLightboxTransform();
-    }
-
-    function resetLightboxZoom() {
-      currentZoom = 1;
-      translateX = 0;
-      translateY = 0;
-      updateLightboxTransform();
-    }
-
-    function updateLightboxTransform() {
-      const img = document.getElementById('lightboxImage');
-      const level = document.getElementById('lightboxZoomLevel');
-      if (img) {
-        img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
-      }
-      if (level) {
-        level.textContent = Math.round(currentZoom * 100) + '%';
-      }
-    }
-
-    function wheelZoomLightbox(e) {
-      e.preventDefault();
-      const delta = e.deltaY < 0 ? 0.2 : -0.2;
-      zoomLightbox(delta);
-    }
-
-    function startDragLightbox(e) {
-      if (currentZoom <= 1) return;
-      isDragging = true;
-      startX = e.clientX - translateX;
-      startY = e.clientY - translateY;
-      const vp = document.getElementById('lightboxViewport');
-      if (vp) vp.style.cursor = 'grabbing';
-    }
-
-    function doDragLightbox(e) {
-      if (!isDragging) return;
-      translateX = e.clientX - startX;
-      translateY = e.clientY - startY;
-      updateLightboxTransform();
-    }
-
-    function stopDragLightbox() {
-      isDragging = false;
-      const vp = document.getElementById('lightboxViewport');
-      if (vp) vp.style.cursor = 'grab';
-    }
-
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        closeImageLightbox();
-      }
-    });
-  </script>
+  <!-- ========================================================================= -->
+  <!-- MODALS (Image Lightbox, Collect AMC Bill, Payout Settlement)               -->
+  <!-- ========================================================================= -->
 
   <!-- Interactive Image Lightbox Modal with Zoom & Pan -->
   <div id="imageLightboxModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.92); z-index:99999; backdrop-filter:blur(6px); align-items:center; justify-content:center; flex-direction:column; padding:20px;" onclick="closeLightboxOnBackdrop(event)">
-    <!-- Lightbox Toolbar -->
     <div style="position:absolute; top:18px; right:20px; display:flex; align-items:center; gap:10px; z-index:100000;">
       <div style="background:rgba(255,255,255,0.15); border-radius:8px; padding:4px 8px; display:flex; align-items:center; gap:8px; color:#fff; font-size:0.85rem;">
-        <button type="button" onclick="zoomLightbox(-0.25)" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem; font-weight:700; padding:2px 8px;" title="Zoom Out">−</button>
+        <button type="button" onclick="zoomLightbox(-0.25)" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem; font-weight:700; padding:2px 8px;">−</button>
         <span id="lightboxZoomLevel" style="font-weight:600; min-width:44px; text-align:center;">100%</span>
-        <button type="button" onclick="zoomLightbox(0.25)" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem; font-weight:700; padding:2px 8px;" title="Zoom In">+</button>
-        <button type="button" onclick="resetLightboxZoom()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:0.8rem; padding:2px 6px;" title="Reset Zoom">Reset</button>
+        <button type="button" onclick="zoomLightbox(0.25)" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem; font-weight:700; padding:2px 8px;">+</button>
       </div>
-      <button type="button" onclick="closeImageLightbox()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Close (Esc)">✕</button>
+      <button type="button" onclick="closeImageLightbox()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
     </div>
 
     <div style="position:absolute; top:20px; left:24px; color:#f8fafc; font-weight:600; font-size:0.95rem; z-index:100000;" id="lightboxCaption">
       Problem Photo
     </div>
 
-    <!-- Image Container with smooth transform and drag -->
-    <div style="width:100%; height:100%; max-width:92vw; max-height:86vh; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; cursor:grab;" id="lightboxViewport" onmousedown="startDragLightbox(event)" onmousemove="doDragLightbox(event)" onmouseup="stopDragLightbox()" onmouseleave="stopDragLightbox()" onwheel="wheelZoomLightbox(event)">
+    <div style="width:100%; height:100%; max-width:92vw; max-height:86vh; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; cursor:grab;" id="lightboxViewport">
       <img id="lightboxImage" src="" alt="Zoomable View" style="max-width:100%; max-height:100%; object-fit:contain; transform-origin:center center; transition:transform 0.15s ease-out; user-select:none; pointer-events:none;">
     </div>
   </div>
@@ -1905,8 +1310,8 @@
         </div>
 
         <div style="margin-bottom:1rem;">
-          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Transaction / Cheque Reference</label>
-          <input type="text" name="payment_reference" placeholder="e.g. TrxID 9H82J1 or Cheque #12345" class="form-control-paces">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Transaction Reference</label>
+          <input type="text" name="payment_reference" placeholder="e.g. TrxID 9H82J1" class="form-control-paces">
         </div>
 
         <div style="margin-bottom:1rem;">
@@ -1916,7 +1321,7 @@
 
         <div style="margin-bottom:1.25rem;">
           <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Receipt Notes</label>
-          <textarea name="notes" rows="2" placeholder="Received by manager, deposit slip filed..." class="form-control-paces"></textarea>
+          <textarea name="notes" rows="2" placeholder="Received notes..." class="form-control-paces"></textarea>
         </div>
 
         <div style="display:flex; justify-content:flex-end; gap:8px;">
@@ -1929,7 +1334,110 @@
     </div>
   </div>
 
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT CONTROLLERS                                                    -->
+  <!-- ========================================================================= -->
   <script>
+    // Tab switching controller
+    function switchBookingTab(tabId) {
+      document.querySelectorAll('.booking-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+      });
+      document.querySelectorAll('.booking-tab-pane').forEach(pane => {
+        pane.classList.toggle('active', pane.id === tabId);
+      });
+      if (history.replaceState) {
+        history.replaceState(null, null, '#' + tabId.replace('tab-', ''));
+      }
+    }
+
+    // Pricing input toggles
+    function togglePricingInput(val) {
+      const row = document.getElementById('priceAmountRow');
+      if (row) {
+        row.style.display = (val === 'later') ? 'none' : 'flex';
+      }
+    }
+
+    function toggleCostType(isEst) {
+      const hidden = document.getElementById('costTypeHidden');
+      if (hidden) hidden.value = isEst ? 'estimated' : 'final';
+    }
+
+    // Custom Task & Outreach Forms
+    function toggleCustomTaskBox() {
+      const box = document.getElementById('customTaskBox');
+      if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Searchable Crew Dropdown Logic
+    function openCrewDropdown(prefix) {
+      const menu = document.getElementById('crewDropdownMenu_' + prefix);
+      if (menu) menu.style.display = 'block';
+    }
+
+    function closeCrewDropdown(prefix) {
+      const menu = document.getElementById('crewDropdownMenu_' + prefix);
+      if (menu) menu.style.display = 'none';
+    }
+
+    function filterCrewOptions(prefix) {
+      const input = document.getElementById('crewInput_' + prefix);
+      const query = (input?.value || '').toLowerCase().trim();
+      const items = document.querySelectorAll('#crewListItems_' + prefix + ' .crew-option-item');
+
+      items.forEach(el => {
+        const val = el.getAttribute('data-val') || '';
+        el.style.display = val.includes(query) ? 'block' : 'none';
+      });
+    }
+
+    function selectCrew(prefix, value, autoChangeStatus, partnerId, warningMsg) {
+      const input = document.getElementById('crewInput_' + prefix);
+      const partnerInput = document.getElementById('partner_id_' + prefix);
+      if (input) input.value = value;
+      if (partnerInput) partnerInput.value = partnerId;
+      closeCrewDropdown(prefix);
+    }
+
+    // Image Lightbox
+    let currentZoom = 1;
+    function openImageLightbox(src, caption) {
+      const modal = document.getElementById('imageLightboxModal');
+      const img = document.getElementById('lightboxImage');
+      const cap = document.getElementById('lightboxCaption');
+      if (modal && img) {
+        img.src = src;
+        if (cap) cap.textContent = caption || 'Site Photo';
+        modal.style.display = 'flex';
+        resetLightboxZoom();
+      }
+    }
+    function closeImageLightbox() {
+      const modal = document.getElementById('imageLightboxModal');
+      if (modal) modal.style.display = 'none';
+    }
+    function closeLightboxOnBackdrop(e) {
+      if (e.target.id === 'imageLightboxModal' || e.target.id === 'lightboxViewport') {
+        closeImageLightbox();
+      }
+    }
+    function zoomLightbox(delta) {
+      currentZoom = Math.min(Math.max(currentZoom + delta, 0.5), 3);
+      const img = document.getElementById('lightboxImage');
+      const lvl = document.getElementById('lightboxZoomLevel');
+      if (img) img.style.transform = `scale(${currentZoom})`;
+      if (lvl) lvl.textContent = Math.round(currentZoom * 100) + '%';
+    }
+    function resetLightboxZoom() {
+      currentZoom = 1;
+      const img = document.getElementById('lightboxImage');
+      const lvl = document.getElementById('lightboxZoomLevel');
+      if (img) img.style.transform = 'scale(1)';
+      if (lvl) lvl.textContent = '100%';
+    }
+
+    // AMC Bill Modal
     function openCollectBillModal(invoiceId, invoiceNumber, amountFormatted) {
       const modal = document.getElementById('collectAmcBillModal');
       const form = document.getElementById('collectAmcBillForm');
@@ -1946,81 +1454,25 @@
       const modal = document.getElementById('collectAmcBillModal');
       if (modal) modal.style.display = 'none';
     }
-  </script>
 
-  <!-- Vendor Payout Settlement Modal -->
-  <div id="payoutSettlementModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center; padding:16px;">
-    <div style="background:#ffffff; border-radius:14px; max-width:480px; width:100%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2); border:1px solid var(--paces-border); overflow:hidden;">
-      <div style="padding:1.25rem 1.5rem; border-bottom:1px solid var(--paces-border); display:flex; justify-content:space-between; align-items:center; background:#fffbeb;">
-        <div>
-          <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:#78350f;">Vendor Payout Settlement</h3>
-          <div style="font-size:0.75rem; color:#92400e; margin-top:2px;">Work Order #{{ $booking->booking_number }} • {{ $booking->partner?->company_name ?? 'Vendor' }}</div>
-        </div>
-        <button type="button" onclick="closePayoutModal()" style="background:none; border:none; color:#64748b; font-size:1.2rem; cursor:pointer;">✕</button>
-      </div>
+    // Close crew dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      ['accept', 'edit'].forEach(prefix => {
+        const wrapper = document.getElementById('crewDropdownWrapper_' + prefix);
+        if (wrapper && !wrapper.contains(e.target)) {
+          closeCrewDropdown(prefix);
+        }
+      });
+    });
 
-      <form method="POST" action="{{ route('admin.bookings.partner-payout', $booking) }}" style="padding:1.5rem;">
-        @csrf
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1rem;">
-          <div>
-            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Payout Amount (৳) *</label>
-            <input type="number" step="0.01" name="partner_payout_amount" value="{{ old('partner_payout_amount', $booking->partner_payout_amount ?? ($booking->partner ? $booking->partner->calculateBookingEarning($booking) : 0)) }}" class="form-control-paces" required>
-          </div>
-          <div>
-            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Payout Status *</label>
-            <select name="partner_payout_status" class="form-control-paces" required>
-              <option value="unpaid" {{ old('partner_payout_status', $booking->partner_payout_status) === 'unpaid' ? 'selected' : '' }}>Unpaid / Due</option>
-              <option value="processing" {{ old('partner_payout_status', $booking->partner_payout_status) === 'processing' ? 'selected' : '' }}>Processing</option>
-              <option value="paid" {{ old('partner_payout_status', $booking->partner_payout_status) === 'paid' ? 'selected' : '' }}>Paid / Disbursed</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1rem;">
-          <div>
-            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Disbursement Method</label>
-            <select name="partner_payout_method" class="form-control-paces">
-              <option value="bank" {{ old('partner_payout_method', $booking->partner_payout_method) === 'bank' ? 'selected' : '' }}>Bank Transfer / Cheque</option>
-              <option value="bkash" {{ old('partner_payout_method', $booking->partner_payout_method) === 'bkash' ? 'selected' : '' }}>bKash</option>
-              <option value="nagad" {{ old('partner_payout_method', $booking->partner_payout_method) === 'nagad' ? 'selected' : '' }}>Nagad</option>
-              <option value="rocket" {{ old('partner_payout_method', $booking->partner_payout_method) === 'rocket' ? 'selected' : '' }}>Rocket</option>
-              <option value="cash" {{ old('partner_payout_method', $booking->partner_payout_method) === 'cash' ? 'selected' : '' }}>Cash Handover</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Paid Date</label>
-            <input type="date" name="partner_payout_paid_at" value="{{ old('partner_payout_paid_at', $booking->partner_payout_paid_at ? $booking->partner_payout_paid_at->format('Y-m-d') : date('Y-m-d')) }}" class="form-control-paces">
-          </div>
-        </div>
-
-        <div style="margin-bottom:1rem;">
-          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Txn ID / Cheque Reference</label>
-          <input type="text" name="partner_payout_reference" value="{{ old('partner_payout_reference', $booking->partner_payout_reference) }}" placeholder="e.g. TrxID 9H82J1 or Cheque #12345" class="form-control-paces">
-        </div>
-
-        <div style="margin-bottom:1.25rem;">
-          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Settlement Remarks</label>
-          <textarea name="partner_payout_notes" rows="2" placeholder="Remarks or notes for this payout..." class="form-control-paces">{{ old('partner_payout_notes', $booking->partner_payout_notes) }}</textarea>
-        </div>
-
-        <div style="display:flex; justify-content:flex-end; gap:8px;">
-          <button type="button" onclick="closePayoutModal()" class="btn-paces btn-paces-outline btn-paces-sm">Cancel</button>
-          <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:600; padding:6px 16px;">
-            ✓ Save Settlement
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    function openPayoutModal() {
-      const modal = document.getElementById('payoutSettlementModal');
-      if (modal) modal.style.display = 'flex';
-    }
-    function closePayoutModal() {
-      const modal = document.getElementById('payoutSettlementModal');
-      if (modal) modal.style.display = 'none';
-    }
+    // Check URL hash on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && document.getElementById('tab-' + hash)) {
+        switchBookingTab('tab-' + hash);
+      } else {
+        switchBookingTab('tab-overview');
+      }
+    });
   </script>
 </x-layouts.admin>

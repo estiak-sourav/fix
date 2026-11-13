@@ -1,8 +1,7 @@
-<x-layouts.admin title="Service Coverage & Locations | FIX Admin">
+<x-layouts.admin title="Coverage & Locations | FIX Admin">
   <div class="page-header-box" style="margin-bottom:1.25rem;">
     <div>
-      <h1 class="page-header-title">Service Coverage & Locations</h1>
-      <p class="page-header-subtitle">Control which districts FIX operates in, manage thanas/areas, and define live client booking & vendor coverage zones</p>
+      <h1 class="page-header-title">Coverage & Locations</h1>
     </div>
   </div>
 

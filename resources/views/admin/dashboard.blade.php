@@ -1361,6 +1361,171 @@
 
   </div>
 
+  <!-- Pending Crew Withdrawal Requests Alert Section -->
+  @if($pendingPayoutRequests->isNotEmpty())
+    <div class="card-paces" style="margin-bottom:1.5rem; border:1px solid #fed7aa; background:#fffbeb; padding:20px; border-radius:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px; border-bottom:1px solid #fde68a; padding-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:8px; background:#fef3c7; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
+            🔔
+          </div>
+          <div>
+            <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:#9a3412;">
+              Pending Crew Payout Requests ({{ $pendingPayoutRequests->count() }})
+            </h3>
+            <p style="margin:2px 0 0; font-size:0.78rem; color:#b45309;">
+              Field crews have submitted balance withdrawal requests awaiting admin approval and disbursement.
+            </p>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:0.88rem; font-weight:800; background:#ffedd5; color:#9a3412; padding:5px 12px; border-radius:12px;">
+            Total Requested: ৳ {{ number_format($pendingPayoutRequests->sum('amount'), 2) }}
+          </span>
+          <a href="{{ route('admin.partners.index', ['filter' => 'payable']) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#ea580c; border-color:#ea580c;">
+            View All Payable Crews →
+          </a>
+        </div>
+      </div>
+
+      <div class="table-responsive-paces">
+        <table class="table-paces" style="background:#ffffff; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:#fef3c7;">
+              <th>Request #</th>
+              <th>Crew / Partner</th>
+              <th>Requested At</th>
+              <th style="text-align:right;">Amount</th>
+              <th>Receiving Method</th>
+              <th>Crew Notes</th>
+              <th style="text-align:right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($pendingPayoutRequests as $preq)
+              <tr>
+                <td style="font-weight:700; font-family:monospace; color:#9a3412;">
+                  #{{ $preq->payout_number }}
+                </td>
+                <td>
+                  <div style="font-weight:600; color:#1e293b;">{{ $preq->partner?->company_name ?? 'Field Crew' }}</div>
+                  <div style="font-size:0.75rem; color:#64748b;">📞 {{ $preq->partner?->phone }}</div>
+                </td>
+                <td style="font-size:0.8rem; color:#64748b;">
+                  {{ $preq->requested_at ? $preq->requested_at->diffForHumans() : $preq->created_at->diffForHumans() }}
+                </td>
+                <td style="text-align:right; font-weight:800; font-size:0.95rem; color:#b45309;">
+                  ৳ {{ number_format((float) $preq->amount, 2) }}
+                </td>
+                <td style="font-size:0.82rem;">
+                  {{ $preq->payment_method_details ?: ($preq->paymentMethod?->formatted_method ?? 'Direct Disbursement') }}
+                </td>
+                <td style="font-size:0.78rem; color:#64748b; max-width:180px;">
+                  {{ $preq->partner_notes ?: '—' }}
+                </td>
+                <td style="text-align:right;">
+                  <a href="{{ route('admin.partners.show', $preq->partner_id) }}#tab-payouts" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#ea580c; border-color:#ea580c; padding:4px 10px; font-size:0.78rem;">
+                    Review & Pay →
+                  </a>
+                </td>
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    </div>
+  @endif
+
+  <!-- Top Outstanding Payable Crews -->
+  <div class="card-paces" style="margin-bottom:1.5rem;">
+    <div class="card-header-paces" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h3 class="card-title-paces" style="margin:0; font-size:1.05rem;">
+          Outstanding Payable
+        </h3>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        @if($totalPayableBalance > 0)
+          <span style="font-size:0.82rem; font-weight:800; background:#fee2e2; color:#dc2626; padding:4px 12px; border-radius:12px;">
+            Total Outstanding: ৳ {{ number_format($totalPayableBalance, 2) }}
+          </span>
+        @endif
+        <a href="{{ route('admin.partners.index', ['filter' => 'payable']) }}" class="btn-paces btn-paces-outline btn-paces-sm">
+          View All Crews →
+        </a>
+      </div>
+    </div>
+
+    @if($topPayableCrews->isEmpty())
+      <div style="text-align:center; padding:2.5rem 1rem; color:var(--paces-text-muted);">
+        <div style="font-size:2rem; margin-bottom:6px;">✓</div>
+        <div style="font-weight:600; color:#166534; font-size:0.95rem;">All Crew Balances Fully Settled</div>
+        <p style="font-size:0.8rem; margin:2px 0 0;">No field crews have outstanding payable dues at this time.</p>
+      </div>
+    @else
+      <div class="table-responsive-paces">
+        <table class="table-paces">
+          <thead>
+            <tr>
+              <th>Crew / Partner Company</th>
+              <th>Trade Domain</th>
+              <th>Workforce</th>
+              <th style="text-align:right;">Lifetime Earned</th>
+              <th style="text-align:right;">Total Paid Out</th>
+              <th style="text-align:right;">Payable Balance</th>
+              <th style="text-align:right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($topPayableCrews as $crew)
+              <tr>
+                <td>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:34px; height:34px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:700; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0;">
+                      {{ strtoupper(substr($crew->company_name, 0, 1)) }}
+                    </div>
+                    <div>
+                      <div style="font-weight:600; color:var(--paces-text-dark); font-size:0.88rem;">
+                        {{ $crew->company_name }}
+                      </div>
+                      <div style="font-size:0.75rem; color:var(--paces-text-muted);">
+                        👤 {{ $crew->contact_person }} • 📞 {{ $crew->phone }}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span style="font-weight:500; font-size:0.82rem; color:var(--paces-text-dark);">
+                    {{ $crew->trade_domain }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge-pill-paces bg-primary-subtle" style="font-size:0.75rem;">
+                    {{ $crew->technicians_count }} Techs
+                  </span>
+                </td>
+                <td style="text-align:right; font-weight:600; font-size:0.88rem;">
+                  ৳ {{ number_format($crew->total_earned, 2) }}
+                </td>
+                <td style="text-align:right; font-weight:600; font-size:0.88rem; color:#15803d;">
+                  ৳ {{ number_format($crew->total_paid, 2) }}
+                </td>
+                <td style="text-align:right; font-weight:800; font-size:0.95rem; color:#dc2626;">
+                  ৳ {{ number_format($crew->payable_balance, 2) }}
+                </td>
+                <td style="text-align:right;">
+                  <a href="{{ route('admin.partners.show', $crew) }}#tab-payouts" class="btn-paces btn-paces-primary btn-paces-sm" style="padding:4px 10px; font-size:0.78rem;">
+                    Pay Crew →
+                  </a>
+                </td>
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    @endif
+  </div>
+
   <!-- Recent Inbound Work Orders (Table Card) -->
   <div class="card-paces">
     <div class="card-header-paces">
@@ -1389,7 +1554,7 @@
               <th>Location</th>
               <th>Cost (৳)</th>
               <th>Status</th>
-              <th style="text-align:right;">Actions</th>
+              <th style="text-align:right; white-space:nowrap;">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -1440,8 +1605,8 @@
                     {{ ucfirst(str_replace('_', ' ', $b->status)) }}
                   </span>
                 </td>
-                <td style="text-align:right;">
-                  <a href="{{ route('admin.bookings.show', $b) }}" class="btn-paces btn-paces-primary btn-paces-sm">
+                <td style="text-align:right; white-space:nowrap;">
+                  <a href="{{ route('admin.bookings.show', $b) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="white-space:nowrap; display:inline-flex; align-items:center;">
                     View Order →
                   </a>
                 </td>

@@ -42,6 +42,7 @@ Route::middleware(['auth.partner'])->group(function () {
         Route::post('/{booking}/decline', [PartnerJobController::class, 'decline'])->name('decline');
         Route::post('/{booking}/status', [PartnerJobController::class, 'updateStatus'])->name('status');
         Route::post('/{booking}/crew', [PartnerJobController::class, 'assignInternalCrew'])->name('crew');
+        Route::post('/{booking}/price', [PartnerJobController::class, 'updatePrice'])->name('price');
     });
 
     // Availability & Leave Schedules
@@ -59,8 +60,12 @@ Route::middleware(['auth.partner'])->group(function () {
         Route::delete('/{crew}', [PartnerCrewController::class, 'destroy'])->name('destroy');
     });
 
-    // Payouts & Earnings
+    // Payouts & Earnings & Payment Methods
     Route::get('/payouts', [PartnerPayoutController::class, 'index'])->name('payouts.index');
+    Route::post('/payouts/request', [PartnerPayoutController::class, 'requestPayout'])->name('payouts.request');
+    Route::post('/payment-methods', [PartnerPayoutController::class, 'storePaymentMethod'])->name('payment-methods.store');
+    Route::delete('/payment-methods/{paymentMethod}', [PartnerPayoutController::class, 'destroyPaymentMethod'])->name('payment-methods.destroy');
+    Route::post('/payment-methods/{paymentMethod}/default', [PartnerPayoutController::class, 'setDefaultPaymentMethod'])->name('payment-methods.default');
 
     // In-App Notification Center
     Route::prefix('notifications')->name('notifications.')->group(function () {

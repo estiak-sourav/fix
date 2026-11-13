@@ -896,6 +896,7 @@
       text-decoration: none;
       border: 1px solid transparent;
       transition: all 0.2s;
+      white-space: nowrap;
     }
     .btn-paces-primary {
       background: var(--paces-primary);

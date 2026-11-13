@@ -90,6 +90,9 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
         Route::put('/{partner}/approve', [AdminPartnerController::class, 'approve'])->name('approve')->middleware('admin.can:users.edit');
         Route::put('/{partner}/status', [AdminPartnerController::class, 'updateStatus'])->name('status')->middleware('admin.can:users.edit');
         Route::delete('/{partner}', [AdminPartnerController::class, 'destroy'])->name('destroy')->middleware('admin.can:users.edit');
+        Route::post('/{partner}/payouts', [AdminPartnerController::class, 'disbursePayout'])->name('payouts.disburse')->middleware('admin.can:users.edit');
+        Route::post('/payouts/{payout}/approve', [AdminPartnerController::class, 'approvePayoutRequest'])->name('payouts.approve')->middleware('admin.can:users.edit');
+        Route::post('/payouts/{payout}/reject', [AdminPartnerController::class, 'rejectPayoutRequest'])->name('payouts.reject')->middleware('admin.can:users.edit');
     });
 
     // Bookings Management (Work Orders & Bookings)

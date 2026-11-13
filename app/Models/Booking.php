@@ -233,8 +233,9 @@ class Booking extends Model
         return match ($this->status) {
             'pending_review' => 'Pending',
             'accepted' => 'Accepted',
-            'assigned' => 'Team Assigned',
-            'in_progress' => 'In Progress',
+            'assigned' => 'Assigned',
+            'on_the_way' => 'Crew on the way',
+            'in_progress' => 'Working',
             'completed' => 'Completed',
             'cancelled' => 'Cancelled',
             default => ucfirst(str_replace('_', ' ', $this->status)),
@@ -260,6 +261,7 @@ class Booking extends Model
             'pending_review' => '#f59e0b', // Amber
             'accepted' => '#3b82f6', // Blue
             'assigned' => '#8b5cf6', // Indigo/Purple
+            'on_the_way' => '#9333ea', // Purple
             'in_progress' => '#06b6d4', // Cyan
             'completed' => '#10b981', // Green
             'cancelled' => '#ef4444', // Red

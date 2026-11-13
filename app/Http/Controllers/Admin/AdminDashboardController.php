@@ -12,6 +12,7 @@ use App\Models\Booking;
 use App\Models\DailyAnalytics;
 use App\Models\OutreachTask;
 use App\Models\Partner;
+use App\Models\PartnerPayout;
 use App\Models\Service;
 use App\Models\SupportTicket;
 use App\Models\User;
@@ -604,6 +605,21 @@ class AdminDashboardController extends Controller
             ->latest('updated_at')
             ->first();
 
+        // 7. Pending Crew Payout Requests
+        $pendingPayoutRequests = PartnerPayout::where('status', 'pending')
+            ->with(['partner', 'paymentMethod'])
+            ->latest('requested_at')
+            ->get();
+
+        // 8. Top Payable Crews (Outstanding Dues Balance)
+        $allPayablePartners = Partner::with(['user', 'bookings'])
+            ->get()
+            ->filter(fn (Partner $p) => $p->payable_balance > 0)
+            ->sortByDesc(fn (Partner $p) => $p->payable_balance);
+
+        $totalPayableBalance = (float) $allPayablePartners->sum(fn ($p) => $p->payable_balance);
+        $topPayableCrews = $allPayablePartners->take(5)->values();
+
         return view('admin.dashboard', compact(
             'stats',
             'metricChart',
@@ -623,7 +639,10 @@ class AdminDashboardController extends Controller
             'taskUsers',
             'topSellingDynamic',
             'latestSupportTicket',
-            'amcCollectionAlert'
+            'amcCollectionAlert',
+            'pendingPayoutRequests',
+            'topPayableCrews',
+            'totalPayableBalance'
         ));
     }
 
@@ -866,7 +885,7 @@ class AdminDashboardController extends Controller
 
         $servicesList = Service::where('is_active', true)->orderBy('title')->get(['id', 'title']);
 
-        // Vendor Payables Breakdown (Who is owed how much / কাকে কত পে করতে হবে)
+        // Vendor Payables Breakdown (Who is owed how much)
         $vendorPayables = Partner::whereHas('bookings', function ($q) {
             $q->where('status', 'completed');
         })

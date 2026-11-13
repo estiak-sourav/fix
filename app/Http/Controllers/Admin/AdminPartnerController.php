@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
+use App\Models\PartnerNotification;
+use App\Models\PartnerPayout;
 use App\Services\ActivityLogService;
 use App\Services\NotificationDispatcher;
 use Illuminate\Http\RedirectResponse;
@@ -38,6 +40,11 @@ class AdminPartnerController extends Controller
             });
         }
 
+        if ($request->query('filter') === 'payable' || $status === 'payable') {
+            $payablePartnerIds = Partner::all()->filter(fn ($p) => $p->payable_balance > 0)->pluck('id');
+            $query->whereIn('id', $payablePartnerIds);
+        }
+
         $partners = $query->paginate(15)->withQueryString();
 
         $stats = [
@@ -45,6 +52,7 @@ class AdminPartnerController extends Controller
             'pending' => Partner::where('status', 'pending')->count(),
             'approved' => Partner::where('status', 'approved')->count(),
             'rejected' => Partner::where('status', 'rejected')->count(),
+            'payable' => Partner::all()->filter(fn ($p) => $p->payable_balance > 0)->count(),
         ];
 
         return view('admin.partners.index', compact('partners', 'status', 'search', 'stats'));
@@ -162,21 +170,25 @@ class AdminPartnerController extends Controller
             'crews' => function ($q) {
                 $q->withCount('bookings')->latest();
             },
+            'paymentMethods',
+            'payouts' => function ($q) {
+                $q->with(['paymentMethod', 'processedByAdmin'])->latest();
+            },
         ]);
+
+        $partner->ensureDefaultPaymentMethod();
 
         $completedBookings = $partner->bookings->where('status', 'completed');
 
-        $totalEarned = (float) $completedBookings->sum(function ($b) use ($partner) {
-            return (float) ($b->partner_payout_amount ?? $partner->calculateBookingEarning($b));
-        });
+        $totalEarned = $partner->total_earned;
+        $totalPaid = $partner->total_paid;
+        $pendingDue = $partner->payable_balance;
+        $payoutHistory = $partner->payouts;
+        $pendingPayoutRequests = $partner->payouts->where('status', 'pending');
+        $paymentMethods = $partner->paymentMethods;
 
-        $totalPaid = (float) $completedBookings->where('partner_payout_status', 'paid')->sum(function ($b) use ($partner) {
-            return (float) ($b->partner_payout_amount ?? $partner->calculateBookingEarning($b));
-        });
-
-        $pendingDue = max(0.0, $totalEarned - $totalPaid);
         $unsettledCount = $completedBookings->where('partner_payout_status', '!=', 'paid')->count();
-        $activeJobsCount = $partner->bookings->whereIn('status', ['pending_review', 'accepted', 'assigned', 'in_progress'])->count();
+        $activeJobsCount = $partner->bookings->whereIn('status', ['pending_review', 'accepted', 'assigned', 'on_the_way', 'in_progress'])->count();
         $totalJobsCount = $partner->bookings->count();
         $completedJobsCount = $completedBookings->count();
 
@@ -198,7 +210,10 @@ class AdminPartnerController extends Controller
             'avgRating',
             'reviewsCount',
             'crewsCount',
-            'activeCrewsCount'
+            'activeCrewsCount',
+            'payoutHistory',
+            'pendingPayoutRequests',
+            'paymentMethods'
         ));
     }
 
@@ -410,5 +425,153 @@ class AdminPartnerController extends Controller
         ActivityLogService::logPartner('partner.delete', "Deleted partner record for '{$name}'.");
 
         return redirect()->route('admin.partners.index')->with('success', "Partner '{$name}' deleted.");
+    }
+
+    /**
+     * Disburse custom payout amount from partner's unpaid balance.
+     */
+    public function disbursePayout(Request $request, Partner $partner): RedirectResponse
+    {
+        $balance = $partner->payable_balance;
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:1', 'max:'.$balance],
+            'partner_payment_method_id' => ['nullable', 'exists:partner_payment_methods,id'],
+            'custom_payment_method' => ['nullable', 'string', 'max:150'],
+            'transaction_reference' => ['nullable', 'string', 'max:100'],
+            'admin_notes' => ['nullable', 'string', 'max:500'],
+        ], [
+            'amount.max' => 'Disbursement amount cannot exceed the crew\'s current unpaid balance of ৳'.number_format($balance, 2),
+            'amount.min' => 'Disbursement amount must be at least ৳ 1.00',
+        ]);
+
+        $amount = (float) $validated['amount'];
+        $method = ! empty($validated['partner_payment_method_id'])
+            ? $partner->paymentMethods()->find($validated['partner_payment_method_id'])
+            : null;
+
+        $methodDetails = $method
+            ? $method->formatted_method
+            : ($validated['custom_payment_method'] ?? 'Direct Cash / Bank Settlement');
+
+        $payout = PartnerPayout::create([
+            'payout_number' => PartnerPayout::generatePayoutNumber(),
+            'partner_id' => $partner->id,
+            'partner_payment_method_id' => $method?->id,
+            'amount' => $amount,
+            'status' => 'paid',
+            'payment_method_details' => $methodDetails,
+            'transaction_reference' => $validated['transaction_reference'] ?? null,
+            'admin_notes' => $validated['admin_notes'] ?? null,
+            'requested_at' => now(),
+            'paid_at' => now(),
+            'processed_by_admin_id' => Auth::guard('admin')->id(),
+        ]);
+
+        // If the crew has an open pending payout request, settle it if covered
+        $pendingPayout = $partner->payouts()->where('status', 'pending')->first();
+        if ($pendingPayout && (float) $pendingPayout->amount <= $amount) {
+            $pendingPayout->update([
+                'status' => 'paid',
+                'paid_at' => now(),
+                'processed_by_admin_id' => Auth::guard('admin')->id(),
+                'transaction_reference' => $validated['transaction_reference'] ?? $pendingPayout->transaction_reference,
+                'admin_notes' => 'Settled via lump-sum balance disbursement payout #'.$payout->payout_number,
+            ]);
+        }
+
+        // Notify Partner in-app
+        PartnerNotification::create([
+            'partner_id' => $partner->id,
+            'type' => 'payout_disbursed',
+            'title' => 'Payment Disbursed: ৳'.number_format($amount, 2),
+            'message' => 'Admin has disbursed ৳'.number_format($amount, 2)." to your balance via {$methodDetails}."
+                .(! empty($payout->transaction_reference) ? " (TrxID: {$payout->transaction_reference})" : '')
+                .' Remaining unpaid balance: ৳'.number_format($partner->fresh()->payable_balance, 2).'.',
+            'action_url' => route('partner.payouts.index'),
+            'is_read' => false,
+        ]);
+
+        // Dispatch alert to admin payments section
+        NotificationDispatcher::notifyAdminSection(
+            'payments',
+            "Payout Disbursed to {$partner->company_name}",
+            'Disbursed ৳'.number_format($amount, 2)." to {$partner->company_name}. Remaining balance: ৳".number_format($partner->fresh()->payable_balance, 2).'.',
+            route('admin.partners.show', $partner).'#tab-payouts'
+        );
+
+        ActivityLogService::logPartner('partner.payout', 'Disbursed ৳'.number_format($amount, 2)." to {$partner->company_name} (Payout #{$payout->payout_number}).", $partner);
+
+        return redirect()->route('admin.partners.show', $partner)
+            ->with('success', 'Disbursed ৳'.number_format($amount, 2)." to {$partner->company_name}. Remaining unpaid balance is ৳".number_format($partner->fresh()->payable_balance, 2).'.');
+    }
+
+    /**
+     * Approve and mark a partner withdrawal request as paid.
+     */
+    public function approvePayoutRequest(Request $request, PartnerPayout $payout): RedirectResponse
+    {
+        $validated = $request->validate([
+            'transaction_reference' => ['nullable', 'string', 'max:100'],
+            'admin_notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $partner = $payout->partner;
+
+        $payout->update([
+            'status' => 'paid',
+            'paid_at' => now(),
+            'processed_by_admin_id' => Auth::guard('admin')->id(),
+            'transaction_reference' => $validated['transaction_reference'] ?? $payout->transaction_reference,
+            'admin_notes' => $validated['admin_notes'] ?? $payout->admin_notes,
+        ]);
+
+        $remainingBalance = $partner->fresh()->payable_balance;
+
+        PartnerNotification::create([
+            'partner_id' => $partner->id,
+            'type' => 'payout_approved',
+            'title' => 'Payout Approved: ৳'.number_format((float) $payout->amount, 2),
+            'message' => "Your payout request #{$payout->payout_number} for ৳".number_format((float) $payout->amount, 2).' has been approved and paid.'
+                .(! empty($payout->transaction_reference) ? " (Trx: {$payout->transaction_reference})" : '')
+                .' Remaining unpaid balance: ৳'.number_format($remainingBalance, 2).'.',
+            'action_url' => route('partner.payouts.index'),
+            'is_read' => false,
+        ]);
+
+        ActivityLogService::logPartner('partner.payout_approved', "Approved withdrawal request #{$payout->payout_number} for ৳".number_format((float) $payout->amount, 2)." to {$partner->company_name}.", $partner);
+
+        return back()->with('success', "Payout request #{$payout->payout_number} for ৳".number_format((float) $payout->amount, 2).' approved and disbursed.');
+    }
+
+    /**
+     * Reject a partner withdrawal request.
+     */
+    public function rejectPayoutRequest(Request $request, PartnerPayout $payout): RedirectResponse
+    {
+        $validated = $request->validate([
+            'rejection_reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $partner = $payout->partner;
+
+        $payout->update([
+            'status' => 'rejected',
+            'admin_notes' => $validated['rejection_reason'],
+            'processed_by_admin_id' => Auth::guard('admin')->id(),
+        ]);
+
+        PartnerNotification::create([
+            'partner_id' => $partner->id,
+            'type' => 'payout_rejected',
+            'title' => 'Payout Request Rejected',
+            'message' => "Your payout request #{$payout->payout_number} for ৳".number_format((float) $payout->amount, 2).' was rejected by admin. Reason: '.$validated['rejection_reason'],
+            'action_url' => route('partner.payouts.index'),
+            'is_read' => false,
+        ]);
+
+        ActivityLogService::logPartner('partner.payout_rejected', "Rejected payout request #{$payout->payout_number} of {$partner->company_name}. Reason: {$validated['rejection_reason']}", $partner);
+
+        return back()->with('info', "Payout request #{$payout->payout_number} has been rejected.");
     }
 }

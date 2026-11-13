@@ -58,7 +58,7 @@
     <!-- Payable Due Card -->
     <div class="card-paces" style="margin-bottom:0; padding:14px 18px; border-left:4px solid {{ $pendingDue > 0 ? '#dc2626' : '#16a34a' }};">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:0.75rem; font-weight:700; color:var(--paces-text-muted); text-transform:uppercase;">Payable Due (বকেয়া)</span>
+        <span style="font-size:0.75rem; font-weight:700; color:var(--paces-text-muted); text-transform:uppercase;">Payable Due</span>
         <span style="font-size:1.1rem;">💰</span>
       </div>
       <div style="font-size:1.45rem; font-weight:800; color:{{ $pendingDue > 0 ? '#dc2626' : '#16a34a' }}; margin:4px 0 2px;">
@@ -295,7 +295,7 @@
         <h3 class="card-title-paces" style="font-size:0.95rem; margin-bottom:14px;">Payable & Earnings Ledger Summary</h3>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px;">
           <div style="background:#f8fafc; border:1px solid var(--paces-border); padding:12px; border-radius:8px;">
-            <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Total Earned by Partner</div>
+            <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Total Earned by Crew</div>
             <div style="font-size:1.35rem; font-weight:800; color:var(--paces-primary); margin-top:4px;">৳ {{ number_format($totalEarned, 2) }}</div>
           </div>
           <div style="background:#f8fafc; border:1px solid var(--paces-border); padding:12px; border-radius:8px;">
@@ -306,12 +306,12 @@
 
         <div style="background:{{ $pendingDue > 0 ? '#fef2f2' : '#f0fdf4' }}; border:1px solid {{ $pendingDue > 0 ? '#fecaca' : '#bbf7d0' }}; border-radius:10px; padding:16px; display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-size:0.78rem; font-weight:700; color:{{ $pendingDue > 0 ? '#991b1b' : '#166534' }}; text-transform:uppercase;">Current Payable Due (বকেয়া)</div>
-            <div style="font-size:1.65rem; font-weight:900; color:{{ $pendingDue > 0 ? '#dc2626' : '#16a34a' }};">
+            <div style="font-size:0.78rem; font-weight:700; color:{{ $pendingDue > 0 ? '#991b1b' : '#166534' }}; text-transform:uppercase;">Current Payable Balance</div>
+            <div style="font-size:1.75rem; font-weight:900; color:{{ $pendingDue > 0 ? '#dc2626' : '#16a34a' }};">
               ৳ {{ number_format($pendingDue, 2) }}
             </div>
             <div style="font-size:0.75rem; color:{{ $pendingDue > 0 ? '#b91c1c' : '#15803d' }}; margin-top:2px;">
-              {{ $unsettledCount }} completed jobs awaiting disbursement
+              {{ $completedJobsCount }} total completed jobs • Any amount can be paid from this balance
             </div>
           </div>
           @if($pendingDue > 0)
@@ -326,10 +326,10 @@
         </div>
       </div>
 
-      <!-- Configured Disbursement & Bank Account Info -->
+      <!-- Configured Disbursement & Payment Methods Info -->
       <div class="card-paces" style="margin-bottom:0; padding:20px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-          <h3 class="card-title-paces" style="font-size:0.95rem; margin:0;">Disbursement & Banking Method</h3>
+          <h3 class="card-title-paces" style="font-size:0.95rem; margin:0;">Saved Payment & Receiving Methods</h3>
           <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" onclick="switchPartnerTab('tab-admin-setup')" style="font-size:0.75rem; padding:3px 8px;">
             Edit Terms ⚙️
           </button>
@@ -350,101 +350,317 @@
           </div>
         </div>
 
-        <div style="border-top:1px dashed var(--paces-border); padding-top:12px; margin-bottom:14px;">
-          <span style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Disbursement Schedule</span>
-          <div style="font-size:0.9rem; font-weight:600; color:var(--paces-text-dark); margin-top:2px;">
-            📅 {{ ucfirst(str_replace('_', ' ', $partner->payout_terms ?? 'bi_weekly')) }}
+        <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px; max-height:160px; overflow-y:auto;">
+          <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700; margin-bottom:8px;">
+            Crew's Registered Payment Methods ({{ $paymentMethods->count() }})
           </div>
-        </div>
-
-        <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px;">
-          <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700; margin-bottom:6px;">
-            {{ $partner->payment_method === 'bank' ? '🏦 Official Bank Destination' : '📱 MFS Mobile Wallet' }}
-          </div>
-          @if($partner->payment_method === 'bank' && !empty($partner->bank_name))
-            <div style="font-size:0.92rem; font-weight:700; color:var(--paces-text-dark);">{{ $partner->bank_name }}</div>
-            <div style="font-size:0.8rem; color:var(--paces-text-dark); margin-top:2px;">A/C Holder: <strong>{{ $partner->account_holder }}</strong></div>
-            <div style="font-size:0.82rem; color:var(--paces-primary); font-family:monospace; margin-top:2px;">Account #: <strong>{{ $partner->account_number }}</strong></div>
-            @if($partner->branch_name)
-              <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-top:2px;">Branch/Routing: {{ $partner->branch_name }}</div>
-            @endif
-          @elseif(!empty($partner->mfs_number))
-            <div style="font-size:0.92rem; font-weight:700; color:#d97706;">
-              {{ strtoupper($partner->payment_method) }}: {{ $partner->mfs_number }}
+          @forelse($paymentMethods as $pm)
+            <div style="padding:6px 8px; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <span style="font-weight:600; font-size:0.82rem; color:#1e293b;">{{ $pm->formatted_method }}</span>
+                @if($pm->is_default)
+                  <span style="background:#dbeafe; color:#1d4ed8; font-size:0.68rem; font-weight:700; padding:1px 6px; border-radius:4px; margin-left:4px;">Default</span>
+                @endif
+              </div>
+              <span style="font-size:0.75rem; color:#64748b; font-family:monospace;">{{ $pm->account_number }}</span>
             </div>
-            <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-top:2px;">Direct wallet / merchant disbursement</div>
-          @else
-            <div style="font-size:0.82rem; color:#b45309; font-weight:600;">
-              ⚠️ Banking details not yet configured. Please set them up in Admin Setup tab.
+          @empty
+            <div style="font-size:0.8rem; color:#94a3b8; text-align:center; padding:8px;">
+              No payment methods registered by crew yet.
             </div>
-          @endif
+          @endforelse
         </div>
       </div>
     </div>
 
-    <!-- Outstanding Completed Bookings (Need Payment Settlement) -->
-    @if($unsettledCount > 0)
-      <div class="card-paces" style="margin-bottom:1.5rem; padding:0; overflow:hidden; border:1px solid #fecaca;">
-        <div class="card-header-paces" style="padding:14px 20px; background:#fef2f2; border-bottom:1px solid #fecaca; display:flex; justify-content:space-between; align-items:center;">
+    <!-- PENDING PAYOUT REQUESTS FROM CREW -->
+    @if($pendingPayoutRequests->isNotEmpty())
+      <div class="card-paces" style="margin-bottom:1.5rem; border:1px solid #fed7aa; background:#fffbeb; padding:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
           <div>
-            <h4 style="margin:0; font-size:0.92rem; color:#991b1b; font-weight:700;">
-              ⚠️ Unsettled Completed Jobs (Disbursement Due)
+            <h4 style="margin:0; font-size:1rem; color:#9a3412; font-weight:700;">
+              🔔 Pending Withdrawal / Payout Requests ({{ $pendingPayoutRequests->count() }})
             </h4>
-            <p style="margin:2px 0 0; font-size:0.78rem; color:#b91c1c;">These work orders are completed by the partner and awaiting admin payout settlement.</p>
+            <p style="margin:2px 0 0; font-size:0.78rem; color:#c2410c;">
+              This crew has requested a payout disbursement from their earned balance.
+            </p>
           </div>
-          <span style="font-size:0.85rem; font-weight:800; color:#991b1b;">
-            Due: ৳ {{ number_format($pendingDue, 2) }}
+          <span style="font-size:0.85rem; font-weight:800; background:#ffedd5; color:#9a3412; padding:4px 10px; border-radius:12px;">
+            Total Requested: ৳ {{ number_format((float) $pendingPayoutRequests->sum('amount'), 2) }}
           </span>
         </div>
 
-        <div class="table-responsive-paces">
-          <table class="table-paces">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Service</th>
-                <th>Completed Date</th>
-                <th>Location</th>
-                <th style="text-align:right;">Billed Total</th>
-                <th style="text-align:right;">Partner Share Due</th>
-                <th style="text-align:right;">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach($partner->bookings->where('status', 'completed')->where('partner_payout_status', '!=', 'paid') as $ub)
-                @php
-                  $pShare = (float) ($ub->partner_payout_amount ?? $partner->calculateBookingEarning($ub));
-                @endphp
-                <tr>
-                  <td>
-                    <a href="{{ route('admin.bookings.show', $ub) }}" style="font-weight:700; color:var(--paces-primary); font-family:monospace; text-decoration:none;">
-                      #{{ $ub->booking_number }}
-                    </a>
-                  </td>
-                  <td>{{ $ub->service?->title ?? 'Facility Service' }}</td>
-                  <td style="font-size:0.8rem; color:var(--paces-text-muted);">
-                    {{ $ub->completed_at ? $ub->completed_at->format('M d, Y') : $ub->created_at->format('M d, Y') }}
-                  </td>
-                  <td style="font-size:0.82rem;">📍 {{ $ub->area }}</td>
-                  <td style="text-align:right; font-weight:600;">৳ {{ number_format((float) ($ub->final_cost ?: $ub->estimated_cost ?: 0), 2) }}</td>
-                  <td style="text-align:right; font-weight:800; color:#dc2626;">৳ {{ number_format($pShare, 2) }}</td>
-                  <td style="text-align:right;">
-                    <a href="{{ route('admin.bookings.show', $ub) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="padding:4px 10px; font-size:0.78rem;">
-                      Settle Payout →
-                    </a>
-                  </td>
-                </tr>
-              @endforeach
-            </tbody>
-          </table>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          @foreach($pendingPayoutRequests as $req)
+            <div style="background:#ffffff; border:1px solid #fbd38d; border-radius:8px; padding:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+                <div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-weight:700; font-size:0.9rem; color:#1e293b; font-family:monospace;">#{{ $req->payout_number }}</span>
+                    <span style="background:#fef3c7; color:#b45309; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:4px;">Pending Review</span>
+                    <span style="font-size:0.75rem; color:#64748b;">Requested {{ $req->requested_at?->diffForHumans() ?? 'recently' }}</span>
+                  </div>
+                  <div style="margin-top:6px; font-size:0.84rem; color:#334155;">
+                    Receiving Method: <strong>{{ $req->payment_method_details ?: ($req->paymentMethod?->formatted_method ?? 'Not specified') }}</strong>
+                  </div>
+                  @if($req->partner_notes)
+                    <div style="margin-top:4px; font-size:0.78rem; color:#64748b; font-style:italic;">
+                      Note from crew: "{{ $req->partner_notes }}"
+                    </div>
+                  @endif
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:1.4rem; font-weight:800; color:#b45309;">
+                    ৳ {{ number_format((float) $req->amount, 2) }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action buttons and inline forms -->
+              <div style="margin-top:14px; padding-top:12px; border-top:1px dashed #fed7aa; display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+                <!-- Reject Button & Modal toggle -->
+                <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" style="color:#dc2626; border-color:#fca5a5;" onclick="document.getElementById('rejectForm_{{ $req->id }}').style.display = document.getElementById('rejectForm_{{ $req->id }}').style.display === 'none' ? 'block' : 'none'">
+                  ✕ Reject Request
+                </button>
+
+                <!-- Approve & Mark as Paid toggle -->
+                <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#16a34a; border-color:#16a34a;" onclick="document.getElementById('approveForm_{{ $req->id }}').style.display = document.getElementById('approveForm_{{ $req->id }}').style.display === 'none' ? 'block' : 'none'">
+                  ✓ Approve & Mark as Paid
+                </button>
+              </div>
+
+              <!-- Inline Approve Form -->
+              <div id="approveForm_{{ $req->id }}" style="display:none; margin-top:12px; padding:12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px;">
+                <form action="{{ route('admin.partners.payouts.approve', $req) }}" method="POST">
+                  @csrf
+                  <div style="font-size:0.82rem; font-weight:700; color:#166534; margin-bottom:8px;">
+                    Approve Payout for ৳{{ number_format((float) $req->amount, 2) }}
+                  </div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;">
+                    <div>
+                      <label style="display:block; font-size:0.72rem; font-weight:600; color:#374151;">Transaction Reference / TrxID</label>
+                      <input type="text" name="transaction_reference" class="form-control-paces" placeholder="e.g. 9J47X90LA" style="padding:6px 10px; font-size:0.8rem; width:100%;">
+                    </div>
+                    <div>
+                      <label style="display:block; font-size:0.72rem; font-weight:600; color:#374151;">Admin Note (Optional)</label>
+                      <input type="text" name="admin_notes" class="form-control-paces" placeholder="e.g. Sent via bKash Merchant API" style="padding:6px 10px; font-size:0.8rem; width:100%;">
+                    </div>
+                  </div>
+                  <div style="text-align:right;">
+                    <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#16a34a; border-color:#16a34a; padding:6px 14px;">
+                      Confirm Approval & Mark as Paid
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Inline Reject Form -->
+              <div id="rejectForm_{{ $req->id }}" style="display:none; margin-top:12px; padding:12px; background:#fef2f2; border:1px solid #fecaca; border-radius:6px;">
+                <form action="{{ route('admin.partners.payouts.reject', $req) }}" method="POST">
+                  @csrf
+                  <div style="font-size:0.82rem; font-weight:700; color:#991b1b; margin-bottom:8px;">
+                    Reject Payout Request #{{ $req->payout_number }}
+                  </div>
+                  <div style="margin-bottom:8px;">
+                    <label style="display:block; font-size:0.72rem; font-weight:600; color:#374151;">Rejection Reason <span style="color:#dc2626;">*</span></label>
+                    <input type="text" name="rejection_reason" required class="form-control-paces" placeholder="e.g. Incorrect account number or pending audit" style="padding:6px 10px; font-size:0.8rem; width:100%;">
+                  </div>
+                  <div style="text-align:right;">
+                    <button type="submit" class="btn-paces btn-paces-danger btn-paces-sm" style="padding:6px 14px;">
+                      Confirm Rejection
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          @endforeach
         </div>
       </div>
     @endif
 
-    <!-- All Historical Payout Settlement Table -->
+    <!-- DISBURSE PAYMENT FROM BALANCE CARD (Admin can pay ANY custom amount from balance) -->
+    <div class="card-paces" style="margin-bottom:1.5rem; padding:20px; border:1px solid var(--paces-border); background:#ffffff;">
+      <div style="border-bottom:1px solid var(--paces-border); padding-bottom:12px; margin-bottom:16px;">
+        <h4 style="margin:0; font-size:1.05rem; font-weight:700; color:var(--paces-text-dark);">
+          💵 Disburse Payment from Balance
+        </h4>
+        <p style="margin:4px 0 0; font-size:0.8rem; color:var(--paces-text-muted);">
+          Admin can pay any custom amount (full or partial) from the crew's outstanding payable balance. The remaining unpaid amount will automatically adjust in their balance.
+        </p>
+      </div>
+
+      @if($pendingDue > 0)
+        <form action="{{ route('admin.partners.payouts.disburse', $partner) }}" method="POST">
+          @csrf
+
+          <!-- Quick Balance Helpers -->
+          <div style="margin-bottom:14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase;">Quick Fill:</span>
+            <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" style="font-size:0.75rem; padding:3px 10px; background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;" onclick="setDisburseAmount({{ $pendingDue }})">
+              Full Balance (৳{{ number_format($pendingDue, 2) }})
+            </button>
+            @foreach([500, 1000, 2000, 5000, 10000] as $chipAmt)
+              @if($chipAmt < $pendingDue)
+                <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" style="font-size:0.75rem; padding:3px 10px;" onclick="setDisburseAmount({{ $chipAmt }})">
+                  ৳ {{ number_format($chipAmt) }}
+                </button>
+              @endif
+            @endforeach
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px;">
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">
+                Disbursement Amount (৳) <span style="color:#dc2626;">*</span>
+              </label>
+              <div style="position:relative;">
+                <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-weight:700; color:#64748b;">৳</span>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  min="1" 
+                  max="{{ $pendingDue }}" 
+                  id="disburse_amount_input"
+                  name="amount" 
+                  required 
+                  value="{{ old('amount', $pendingDue) }}" 
+                  class="form-control-paces" 
+                  style="padding-left:28px; font-size:1rem; font-weight:700;"
+                >
+              </div>
+              <div style="font-size:0.72rem; color:#64748b; margin-top:4px;">
+                Max payable balance: ৳{{ number_format($pendingDue, 2) }}
+              </div>
+            </div>
+
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">
+                Receiving Payment Method
+              </label>
+              <select name="partner_payment_method_id" id="disburse_method_select" class="form-control-paces" style="font-size:0.85rem;" onchange="toggleCustomMethod(this.value)">
+                @foreach($paymentMethods as $pm)
+                  <option value="{{ $pm->id }}" {{ $pm->is_default ? 'selected' : '' }}>
+                    {{ $pm->formatted_method }}{{ $pm->is_default ? ' ★ (Default)' : '' }}
+                  </option>
+                @endforeach
+                <option value="">-- Custom / Direct Cash Handover / Other --</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Custom payment method text (visible if Other is selected or no methods exist) -->
+          <div id="customMethodWrapper" style="display:{{ $paymentMethods->isEmpty() ? 'block' : 'none' }}; margin-bottom:14px;">
+            <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Custom Payment Method Name</label>
+            <input type="text" name="custom_payment_method" class="form-control-paces" placeholder="e.g. Direct Cash Handover at Office, Bank Transfer" style="font-size:0.85rem;">
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Transaction Reference / TrxID</label>
+              <input type="text" name="transaction_reference" class="form-control-paces" placeholder="e.g. bKash TrxID, Bank Vchr #, Cheque #" style="font-size:0.85rem;">
+            </div>
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Admin Notes (Optional)</label>
+              <input type="text" name="admin_notes" class="form-control-paces" placeholder="e.g. Mid-month balance disbursal" style="font-size:0.85rem;">
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f1f5f9; padding-top:14px;">
+            <div style="font-size:0.78rem; color:#64748b;">
+              ⚠️ Remaining balance after payment will immediately reflect on both Admin & Crew portals.
+            </div>
+            <button type="submit" class="btn-paces btn-paces-primary" style="background:#16a34a; border-color:#16a34a; padding:8px 20px; font-weight:700;">
+              Confirm & Disburse Payment
+            </button>
+          </div>
+        </form>
+      @else
+        <div style="text-align:center; padding:1.5rem; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px;">
+          <div style="font-size:1.8rem; margin-bottom:6px;">✓</div>
+          <div style="font-weight:700; color:#166534; font-size:0.95rem;">Crew Balance is Fully Settled</div>
+          <div style="font-size:0.8rem; color:#15803d; margin-top:2px;">There are no outstanding payable dues for this partner at this moment.</div>
+        </div>
+      @endif
+    </div>
+
+    <!-- ALL HISTORICAL DISBURSED PAYOUT TRANSACTIONS TABLE -->
+    <div class="card-paces" style="margin-bottom:1.5rem; padding:0; overflow:hidden;">
+      <div class="card-header-paces" style="padding:16px 20px; border-bottom:1px solid var(--paces-border); display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h3 class="card-title-paces" style="margin:0;">Disbursed Payout Transactions History</h3>
+          <p class="card-subtitle-paces" style="margin:2px 0 0;">Record of all payment disbursements made to this partner from balance</p>
+        </div>
+        <span class="badge-paces" style="background:#f1f5f9; color:#475569; font-size:0.75rem; padding:3px 10px;">
+          Total Disbursed: ৳ {{ number_format($totalPaid, 2) }}
+        </span>
+      </div>
+      <div class="table-responsive-paces">
+        <table class="table-paces">
+          <thead>
+            <tr>
+              <th>Payout #</th>
+              <th>Date & Time</th>
+              <th style="text-align:right;">Amount Paid</th>
+              <th>Payment Method</th>
+              <th style="text-align:center;">Status</th>
+              <th>Transaction TrxID</th>
+              <th>Processed By</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            @forelse($payoutHistory as $pay)
+              <tr>
+                <td style="font-family:monospace; font-weight:700; color:var(--paces-primary);">
+                  #{{ $pay->payout_number }}
+                </td>
+                <td style="font-size:0.8rem; color:var(--paces-text-muted);">
+                  {{ $pay->paid_at ? $pay->paid_at->format('M d, Y h:i A') : $pay->created_at->format('M d, Y') }}
+                </td>
+                <td style="text-align:right; font-weight:800; color:#16a34a; font-size:0.92rem;">
+                  ৳ {{ number_format((float) $pay->amount, 2) }}
+                </td>
+                <td style="font-size:0.82rem;">
+                  {{ $pay->payment_method_details ?: ($pay->paymentMethod?->formatted_method ?? 'Direct Settlement') }}
+                </td>
+                <td style="text-align:center;">
+                  @php $badge = $pay->status_badge; @endphp
+                  <span style="background:{{ $badge['bg'] }}; color:{{ $badge['color'] }}; font-weight:700; font-size:0.72rem; padding:3px 10px; border-radius:12px; display:inline-block;">
+                    {{ $badge['label'] }}
+                  </span>
+                </td>
+                <td style="font-family:monospace; font-size:0.8rem; color:#475569;">
+                  {{ $pay->transaction_reference ?: '—' }}
+                </td>
+                <td style="font-size:0.8rem; color:#64748b;">
+                  {{ $pay->processedByAdmin?->name ?? 'Admin' }}
+                </td>
+                <td style="font-size:0.78rem; color:#64748b; max-width:180px;">
+                  {{ $pay->admin_notes ?: ($pay->partner_notes ?: '—') }}
+                </td>
+              </tr>
+            @empty
+              <tr>
+                <td colspan="8" style="text-align:center; padding:2rem; color:var(--paces-text-muted);">
+                  No payout transactions disbursed yet.
+                </td>
+              </tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CONTRIBUTING COMPLETED JOBS (Earning Ledger) -->
     <div class="card-paces" style="padding:0; overflow:hidden;">
-      <div class="card-header-paces" style="padding:16px 20px; border-bottom:1px solid var(--paces-border);">
-        <h3 class="card-title-paces" style="margin:0;">All Payout History & Transaction Logs</h3>
+      <div class="card-header-paces" style="padding:16px 20px; border-bottom:1px solid var(--paces-border); display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h3 class="card-title-paces" style="margin:0;">Completed Jobs Contributing to Earned Balance</h3>
+          <p class="card-subtitle-paces" style="margin:2px 0 0;">Work orders completed by this crew that generated the total earned amount</p>
+        </div>
+        <span class="badge-paces" style="background:#f1f5f9; color:#475569; font-size:0.75rem; padding:3px 10px;">
+          Total Earned: ৳ {{ number_format($totalEarned, 2) }}
+        </span>
       </div>
       <div class="table-responsive-paces">
         <table class="table-paces">
@@ -452,19 +668,17 @@
             <tr>
               <th>Order ID</th>
               <th>Service</th>
-              <th>Date</th>
+              <th>Completed Date</th>
+              <th>Location</th>
               <th style="text-align:right;">Order Cost</th>
-              <th style="text-align:right;">Partner Share</th>
-              <th style="text-align:center;">Payout Status</th>
-              <th>Payout Reference / Trx</th>
+              <th style="text-align:right;">Partner Share Earned</th>
               <th style="text-align:right;">Action</th>
             </tr>
           </thead>
           <tbody>
-            @forelse($partner->bookings as $b)
+            @forelse($partner->bookings->where('status', 'completed') as $b)
               @php
                 $pShare = (float) ($b->partner_payout_amount ?? $partner->calculateBookingEarning($b));
-                $pSt = $b->partner_payout_status ?: 'unpaid';
               @endphp
               <tr>
                 <td>
@@ -476,30 +690,19 @@
                 <td style="font-size:0.8rem; color:var(--paces-text-muted);">
                   {{ $b->completed_at ? $b->completed_at->format('M d, Y') : $b->created_at->format('M d, Y') }}
                 </td>
+                <td style="font-size:0.82rem;">📍 {{ $b->area ?: ($b->district ?: '—') }}</td>
                 <td style="text-align:right; font-weight:600;">৳ {{ number_format((float) ($b->final_cost ?: $b->estimated_cost ?: 0), 2) }}</td>
-                <td style="text-align:right; font-weight:700; color:#b45309;">৳ {{ number_format($pShare, 2) }}</td>
-                <td style="text-align:center;">
-                  @if($pSt === 'paid')
-                    <span class="badge-paces" style="background:#dcfce7; color:#166534; font-weight:700; font-size:0.72rem; padding:3px 10px; border-radius:12px;">✓ Paid</span>
-                  @elseif($pSt === 'processing')
-                    <span class="badge-paces" style="background:#eff6ff; color:#2563eb; font-weight:700; font-size:0.72rem; padding:3px 10px; border-radius:12px;">Processing</span>
-                  @else
-                    <span class="badge-paces" style="background:#fee2e2; color:#dc2626; font-weight:700; font-size:0.72rem; padding:3px 10px; border-radius:12px;">Due / Unpaid</span>
-                  @endif
-                </td>
-                <td style="font-size:0.8rem; font-family:monospace; color:var(--paces-text-muted);">
-                  {{ $b->partner_payout_reference ?: '—' }}
-                </td>
-                <td style="text-align:right;">
-                  <a href="{{ route('admin.bookings.show', $b) }}" class="btn-paces btn-paces-outline btn-paces-sm" style="padding:4px 8px; font-size:0.78rem;">
+                <td style="text-align:right; font-weight:700; color:#059669;">৳ {{ number_format($pShare, 2) }}</td>
+                <td style="text-align:right; white-space:nowrap;">
+                  <a href="{{ route('admin.bookings.show', $b) }}" class="btn-paces btn-paces-outline btn-paces-sm" style="padding:4px 8px; font-size:0.78rem; white-space:nowrap; display:inline-flex; align-items:center;">
                     View Order →
                   </a>
                 </td>
               </tr>
             @empty
               <tr>
-                <td colspan="8" style="text-align:center; padding:2rem; color:var(--paces-text-muted);">
-                  No historical payout records found.
+                <td colspan="7" style="text-align:center; padding:2rem; color:var(--paces-text-muted);">
+                  No completed work orders on record yet.
                 </td>
               </tr>
             @endforelse
@@ -934,6 +1137,21 @@
 
         row.style.display = (matchesStatus && matchesQuery) ? '' : 'none';
       });
+    }
+
+    function setDisburseAmount(amt) {
+      const inp = document.getElementById('disburse_amount_input');
+      if (inp) {
+        inp.value = parseFloat(amt).toFixed(2);
+        inp.focus();
+      }
+    }
+
+    function toggleCustomMethod(val) {
+      const wrapper = document.getElementById('customMethodWrapper');
+      if (wrapper) {
+        wrapper.style.display = (val === '' || val === null) ? 'block' : 'none';
+      }
     }
 
     function updateEarningRateUI(model) {

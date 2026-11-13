@@ -296,7 +296,6 @@ class AdminPartnerManagementTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Vendor Payables & Outstanding Disbursements', false);
-        $response->assertSee('কাকে কত পে করতে হবে');
         $response->assertSee('Total Pending Payables');
     }
 }

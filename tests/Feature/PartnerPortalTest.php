@@ -218,6 +218,7 @@ class PartnerPortalTest extends TestCase
         $this->actingAs($partner, 'partner')
             ->post(route('partner.jobs.status', $booking), [
                 'partner_job_status' => 'in_progress',
+                'agreed_price' => 1500,
             ])->assertRedirect();
 
         $booking->refresh();

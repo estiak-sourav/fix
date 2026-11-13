@@ -70,7 +70,9 @@ class PartnerJobController extends Controller
             ? $partner->crews()->where('is_active', true)->get()
             : collect();
 
-        return view('partner.jobs.show', compact('partner', 'booking', 'internalCrews'));
+        $isPriceSetLater = (($booking->estimated_cost === null || $booking->estimated_cost <= 0) && ($booking->final_cost === null || $booking->final_cost <= 0));
+
+        return view('partner.jobs.show', compact('partner', 'booking', 'internalCrews', 'isPriceSetLater'));
     }
 
     /**
@@ -97,6 +99,27 @@ class PartnerJobController extends Controller
             'is_customer_visible' => true,
         ]);
 
+        AdminNotification::create([
+            'type' => 'order_status',
+            'title' => "Crew Accepted Job #{$booking->booking_number}",
+            'message' => "Partner '{$partner->company_name}' has accepted assignment for Job #{$booking->booking_number}.",
+            'booking_id' => $booking->id,
+            'action_url' => route('admin.bookings.show', $booking),
+            'is_read' => false,
+        ]);
+
+        NotificationDispatcher::notifyAdminSection(
+            'orders',
+            "Crew Accepted Job #{$booking->booking_number}",
+            "Partner '{$partner->company_name}' has accepted assignment for Job #{$booking->booking_number}.",
+            route('admin.bookings.show', $booking),
+            [
+                'Order' => "#{$booking->booking_number}",
+                'Partner' => $partner->company_name,
+                'Status' => 'Accepted by Crew',
+            ]
+        );
+
         return back()->with('success', "Job #{$booking->booking_number} accepted successfully!");
     }
 
@@ -116,19 +139,20 @@ class PartnerJobController extends Controller
         $booking->update([
             'partner_job_status' => 'declined',
             'partner_notes' => 'Declined: '.$reason,
+            'status' => 'accepted',
         ]);
 
         BookingStatusLog::create([
             'booking_id' => $booking->id,
             'from_status' => $booking->status,
-            'to_status' => $booking->status,
-            'comment' => "Partner '{$partner->company_name}' declined assignment: {$reason}",
+            'to_status' => 'accepted',
+            'comment' => "Partner '{$partner->company_name}' declined assignment: {$reason}. Awaiting admin reassignment.",
             'is_customer_visible' => false,
         ]);
 
         AdminNotification::create([
             'type' => 'emergency_alert',
-            'title' => "Partner Declined Job #{$booking->booking_number}",
+            'title' => "Crew Declined Job #{$booking->booking_number}",
             'message' => "Partner '{$partner->company_name}' declined assignment: {$reason}. Immediate reassignment required.",
             'booking_id' => $booking->id,
             'action_url' => route('admin.bookings.show', $booking),
@@ -165,6 +189,8 @@ class PartnerJobController extends Controller
 
         $request->validate([
             'partner_job_status' => ['required', 'string', 'in:on_the_way,in_progress,completed'],
+            'agreed_price' => ['nullable', 'numeric', 'min:0'],
+            'price_notes' => ['nullable', 'string', 'max:500'],
             'partner_notes' => ['nullable', 'string', 'max:1000'],
             'partner_worked_hours' => ['nullable', 'numeric', 'min:0.25', 'max:100'],
             'completion_photos.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
@@ -182,10 +208,112 @@ class PartnerJobController extends Controller
         }
 
         if ($newJobStatus === 'on_the_way') {
+            $updateData['status'] = 'on_the_way';
             $comment = "Technician/Crew from '{$partner->company_name}' is currently on the way to the service address.";
+
+            AdminNotification::create([
+                'type' => 'order_status',
+                'title' => "Crew Started Journey for Job #{$booking->booking_number}",
+                'message' => "Partner '{$partner->company_name}' has started journey and is on the way to customer address.",
+                'booking_id' => $booking->id,
+                'action_url' => route('admin.bookings.show', $booking),
+                'is_read' => false,
+            ]);
+
+            NotificationDispatcher::notifyAdminSection(
+                'orders',
+                "Crew Started Journey for Job #{$booking->booking_number}",
+                "Partner '{$partner->company_name}' has started journey and is on the way to customer address for Job #{$booking->booking_number}.",
+                route('admin.bookings.show', $booking),
+                [
+                    'Order' => "#{$booking->booking_number}",
+                    'Partner' => $partner->company_name,
+                    'Status' => 'En Route / On The Way',
+                ]
+            );
         } elseif ($newJobStatus === 'in_progress') {
+            $isInitialPrice = (($booking->estimated_cost === null || $booking->estimated_cost <= 0) && ($booking->final_cost === null || $booking->final_cost <= 0));
+
+            // Mandatory price check if price was set to "later"
+            if ($isInitialPrice) {
+                if (! $request->filled('agreed_price') || (float) $request->input('agreed_price') <= 0) {
+                    return back()->withErrors([
+                        'agreed_price' => 'Admin selected "Set price later". You must set and agree on the service price with the customer before starting work.',
+                    ]);
+                }
+            }
+
+            // Handle price set or updated
+            if ($request->filled('agreed_price') && (float) $request->input('agreed_price') > 0) {
+                $newPrice = (float) $request->input('agreed_price');
+                $oldPrice = (float) ($booking->final_cost ?? $booking->estimated_cost ?? 0);
+
+                if ($isInitialPrice || abs($oldPrice - $newPrice) > 0.01) {
+                    $updateData['estimated_cost'] = $newPrice;
+
+                    $priceTitle = $isInitialPrice
+                        ? "Price Set by Crew for Job #{$booking->booking_number}"
+                        : "Price Updated by Crew for Job #{$booking->booking_number}";
+
+                    $priceMsg = $isInitialPrice
+                        ? "Partner '{$partner->company_name}' agreed on and set service price to ৳".number_format($newPrice, 2).' before starting work.'
+                        : "Partner '{$partner->company_name}' updated service price from ৳".number_format($oldPrice, 2).' to ৳'.number_format($newPrice, 2).($request->filled('price_notes') ? ' • Reason: '.$request->input('price_notes') : '');
+
+                    AdminNotification::create([
+                        'type' => 'price_updated',
+                        'title' => $priceTitle,
+                        'message' => $priceMsg,
+                        'booking_id' => $booking->id,
+                        'action_url' => route('admin.bookings.show', $booking),
+                        'is_read' => false,
+                    ]);
+
+                    NotificationDispatcher::notifyAdminSection(
+                        'orders',
+                        $priceTitle,
+                        $priceMsg,
+                        route('admin.bookings.show', $booking),
+                        [
+                            'Order' => "#{$booking->booking_number}",
+                            'Partner' => $partner->company_name,
+                            'New Price' => '৳ '.number_format($newPrice, 2),
+                            'Previous Price' => $oldPrice > 0 ? '৳ '.number_format($oldPrice, 2) : 'Not Set',
+                        ]
+                    );
+
+                    BookingStatusLog::create([
+                        'booking_id' => $booking->id,
+                        'from_status' => $booking->status,
+                        'to_status' => $booking->status,
+                        'comment' => $priceMsg,
+                        'is_customer_visible' => true,
+                    ]);
+                }
+            }
+
             $updateData['status'] = 'in_progress';
             $comment = "Service work started on site by '{$partner->company_name}'.";
+
+            AdminNotification::create([
+                'type' => 'order_status',
+                'title' => "Work Started on Job #{$booking->booking_number}",
+                'message' => "Partner '{$partner->company_name}' has started work on site.",
+                'booking_id' => $booking->id,
+                'action_url' => route('admin.bookings.show', $booking),
+                'is_read' => false,
+            ]);
+
+            NotificationDispatcher::notifyAdminSection(
+                'orders',
+                "Work Started on Job #{$booking->booking_number}",
+                "Partner '{$partner->company_name}' has started work on site for Job #{$booking->booking_number}.",
+                route('admin.bookings.show', $booking),
+                [
+                    'Order' => "#{$booking->booking_number}",
+                    'Partner' => $partner->company_name,
+                    'Status' => 'Working / In Progress',
+                ]
+            );
         } elseif ($newJobStatus === 'completed') {
             $updateData['status'] = 'completed';
             $updateData['completed_at'] = now();
@@ -240,6 +368,64 @@ class PartnerJobController extends Controller
         ]);
 
         return back()->with('success', "Work status updated to '".ucwords(str_replace('_', ' ', $newJobStatus))."'!");
+    }
+
+    /**
+     * Crew reviews and updates agreed price.
+     */
+    public function updatePrice(Request $request, Booking $booking): RedirectResponse
+    {
+        $partner = Auth::guard('partner')->user();
+
+        if ((int) $booking->partner_id !== (int) $partner->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'agreed_price' => ['required', 'numeric', 'min:1'],
+            'price_notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $newPrice = (float) $validated['agreed_price'];
+        $oldPrice = (float) ($booking->final_cost ?? $booking->estimated_cost ?? 0);
+
+        $booking->update([
+            'estimated_cost' => $newPrice,
+        ]);
+
+        $priceMsg = "Partner '{$partner->company_name}' updated service price to ৳".number_format($newPrice, 2).($oldPrice > 0 ? ' (Previous: ৳'.number_format($oldPrice, 2).')' : '').($validated['price_notes'] ? ' • Reason: '.$validated['price_notes'] : '');
+
+        AdminNotification::create([
+            'type' => 'price_updated',
+            'title' => "Price Revised by Crew for Job #{$booking->booking_number}",
+            'message' => $priceMsg,
+            'booking_id' => $booking->id,
+            'action_url' => route('admin.bookings.show', $booking),
+            'is_read' => false,
+        ]);
+
+        NotificationDispatcher::notifyAdminSection(
+            'orders',
+            "Price Revised for Job #{$booking->booking_number}",
+            $priceMsg,
+            route('admin.bookings.show', $booking),
+            [
+                'Order' => "#{$booking->booking_number}",
+                'Partner' => $partner->company_name,
+                'New Price' => '৳ '.number_format($newPrice, 2),
+                'Previous Price' => $oldPrice > 0 ? '৳ '.number_format($oldPrice, 2) : 'Not Set',
+            ]
+        );
+
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'from_status' => $booking->status,
+            'to_status' => $booking->status,
+            'comment' => $priceMsg,
+            'is_customer_visible' => true,
+        ]);
+
+        return back()->with('success', 'Service price updated to ৳'.number_format($newPrice, 2).' successfully.');
     }
 
     /**

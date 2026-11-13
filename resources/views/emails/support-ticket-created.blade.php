@@ -89,6 +89,9 @@
     </div>
 
     <div class="footer">
+      <div style="margin-bottom:8px; color:#94a3b8; font-size:11px;">
+        ⚠️ This is an automated email notification from an unmonitored no-reply address.
+      </div>
       <div>© {{ date('Y') }} {{ $siteName }}. All rights reserved.</div>
       <div style="margin-top:6px;">
         Emergency Hotline: <strong>{{ \App\Models\SiteSetting::get('emergency_phone', '+880 1700-000000') }}</strong> |

@@ -78,15 +78,63 @@
               </button>
             </form>
           @elseif($booking->partner_job_status === 'on_the_way')
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px 14px; margin-bottom:14px;">
+              <div style="font-weight:700; color:#166534; font-size:0.86rem; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Currently En Route to Customer Site</span>
+              </div>
+              <p style="font-size:0.78rem; color:#15803d; margin:0;">
+                Customer has been notified that your crew is on the way. Confirm scope and start work upon arrival.
+              </p>
+            </div>
+
             <form id="startWorkForm" action="{{ route('partner.jobs.status', $booking) }}" method="POST" style="margin: 0;">
               @csrf
               <input type="hidden" name="partner_job_status" value="in_progress">
-              <button type="button" class="btn-p btn-p-success" style="width: 100%; padding: 11px; font-size: 0.9rem;" onclick="confirmDialog({ title: 'Start Work On Site?', text: 'Confirm team has arrived and started work.', type: 'success', confirmText: 'Confirm In Progress', formId: 'startWorkForm' })">
+
+              @if($isPriceSetLater)
+                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px; margin-bottom:14px;">
+                  <div style="font-size:0.84rem; font-weight:800; color:#92400e; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span>Price Agreement Required (Must Set Before Starting Work)</span>
+                  </div>
+                  <p style="font-size:0.76rem; color:#78350f; margin:0 0 8px;">
+                    Admin selected "Set price later". Inspect the job on-site, agree on price with the customer, and enter it below before starting work:
+                  </p>
+                  <div>
+                    <label class="p-label" style="font-size:0.78rem;">Agreed Service Price (৳) *</label>
+                    <input type="number" step="1" min="1" name="agreed_price" class="p-input" placeholder="e.g. 1500" required value="{{ old('agreed_price') }}">
+                  </div>
+                </div>
+              @else
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; margin-bottom:14px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:0.75rem; color:var(--p-muted); text-transform:uppercase; font-weight:700;">Agreed Price:</span>
+                    <strong style="color:var(--p-primary); font-size:0.95rem;">৳ {{ number_format($booking->final_cost ?? $booking->estimated_cost ?? 0, 2) }}</strong>
+                  </div>
+                  <div style="margin-top:8px;">
+                    <label class="p-label" style="font-size:0.72rem; margin-bottom:2px;">Adjust Price if on-site scope changed (Optional):</label>
+                    <input type="number" step="1" min="1" name="agreed_price" class="p-input" style="padding:6px 10px; font-size:0.82rem;" placeholder="Enter new price if revised" value="{{ old('agreed_price') }}">
+                  </div>
+                </div>
+              @endif
+
+              <button type="button" class="btn-p btn-p-success" style="width: 100%; padding: 11px; font-size: 0.9rem;" onclick="confirmDialog({ title: 'Start Work On Site?', text: 'Confirm crew has arrived, agreed on scope and price with client, and started work.', type: 'success', confirmText: 'Confirm In Progress', formId: 'startWorkForm' })">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
                 <span>Arrived & Start Work (In Progress)</span>
               </button>
             </form>
           @elseif($booking->partner_job_status === 'in_progress')
+            <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 12px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <span style="font-size:0.72rem; color:#1e40af; text-transform:uppercase; font-weight:700;">Service Price:</span>
+                <strong style="display:block; color:#1e3a8a; font-size:1.05rem;">৳ {{ number_format($booking->final_cost ?? $booking->estimated_cost ?? 0, 2) }}</strong>
+              </div>
+              <button type="button" onclick="document.getElementById('priceUpdateModal').style.display='flex'" class="btn-p btn-p-outline" style="font-size:0.76rem; padding:4px 10px;">
+                Edit Price
+              </button>
+            </div>
+
             <form id="completeJobForm" action="{{ route('partner.jobs.status', $booking) }}" method="POST" enctype="multipart/form-data" style="margin: 0;">
               @csrf
               <input type="hidden" name="partner_job_status" value="completed">
@@ -321,10 +369,17 @@
 
       {{-- Financial Summary --}}
       <div class="p-card">
-        <h3 class="p-card-title" style="margin-bottom: 12px;">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-          <span>Earnings Summary</span>
-        </h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 class="p-card-title" style="margin: 0;">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            <span>Earnings Summary</span>
+          </h3>
+          @if(in_array($booking->partner_job_status, ['accepted', 'on_the_way', 'in_progress']))
+            <button type="button" onclick="document.getElementById('priceUpdateModal').style.display='flex'" class="btn-p btn-p-outline" style="font-size: 0.72rem; padding: 3px 8px;">
+              {{ ($booking->final_cost > 0 || $booking->estimated_cost > 0) ? 'Update Price' : 'Set Price' }}
+            </button>
+          @endif
+        </div>
         <div style="display: flex; justify-content: space-between; font-size: 0.84rem; margin-bottom: 8px;">
           <span style="color: var(--p-muted);">Earning Model:</span>
           <span style="font-weight: 700; color: var(--p-primary);">{{ $partner->earning_model_label }}</span>
@@ -372,6 +427,45 @@
           </button>
           <button type="button" class="btn-p btn-p-danger" onclick="confirmDialog({ title: 'Confirm Decline?', text: 'Are you sure you want to decline this job assignment?', type: 'danger', confirmText: 'Confirm Decline', formId: 'declineJobForm' })">
             Decline Job
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {{-- Price Review & Update Modal --}}
+  <div id="priceUpdateModal" class="fix-dialog-backdrop" style="display: none;" onclick="if(event.target===this) this.style.display='none'">
+    <div class="fix-dialog-box" style="text-align: left; max-width: 440px;">
+      <div class="fix-dialog-icon" style="background: #ecfdf5; color: #059669; margin: 0 auto 12px;">
+        <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+      </div>
+      <h3 class="fix-dialog-title" style="text-align: center; color: #065f46;">
+        {{ ($booking->final_cost > 0 || $booking->estimated_cost > 0) ? 'Revise Service Price' : 'Set Service Price' }}
+      </h3>
+      <p class="fix-dialog-text" style="text-align: center; margin-bottom: 14px;">
+        {{ ($booking->final_cost > 0 || $booking->estimated_cost > 0) 
+            ? 'Current price is ৳ ' . number_format($booking->final_cost ?: $booking->estimated_cost, 2) . '. You can review and update the price based on on-site inspection:' 
+            : 'Admin selected "Set price later". Agree on price with customer before work starts:' }}
+      </p>
+
+      <form id="priceUpdateModalForm" action="{{ route('partner.jobs.price', $booking) }}" method="POST">
+        @csrf
+        <div style="margin-bottom: 12px;">
+          <label class="p-label" style="font-size: 0.82rem; font-weight: 700;">Agreed Service Price (৳) *</label>
+          <input type="number" step="1" min="1" name="agreed_price" class="p-input" value="{{ old('agreed_price', $booking->final_cost ?: $booking->estimated_cost ?: '') }}" placeholder="e.g. 1500" required>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label class="p-label" style="font-size: 0.82rem;">Price Revision Notes (Optional)</label>
+          <textarea name="price_notes" class="p-input" rows="2" placeholder="e.g. Additional materials required, agreed with client over phone."></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button type="button" onclick="document.getElementById('priceUpdateModal').style.display='none'" class="btn-p btn-p-outline">
+            Cancel
+          </button>
+          <button type="button" class="btn-p btn-p-success" onclick="confirmDialog({ title: 'Confirm Price Update?', text: 'Submit agreed price of ৳ ' + (document.querySelector('#priceUpdateModalForm input[name=agreed_price]').value || '0') + ' to dispatch?', type: 'success', confirmText: 'Save Price', formId: 'priceUpdateModalForm' })">
+            Save Price
           </button>
         </div>
       </form>

@@ -51,7 +51,7 @@
       <div>
         <span style="font-size:0.8rem; font-weight:500; color:#b91c1c; text-transform:uppercase;">Unread Alerts</span>
       </div>
-      <div style="font-size:1.6rem; font-weight:500; color:#dc2626; margin-top:4px; line-height:1.2;">
+      <div id="unreadAlertsCount" style="font-size:1.6rem; font-weight:500; color:#dc2626; margin-top:4px; line-height:1.2;">
         {{ $stats['unread_alerts'] }}
       </div>
     </div>
@@ -125,19 +125,49 @@
           @php
             $isEmergency = $n->type === 'emergency_alert';
             $isBooking = $n->type === 'new_booking';
+            $isPrice = $n->type === 'price_updated';
+            $b = $n->booking;
           @endphp
-          <div style="
-            display:flex;
-            align-items:flex-start;
-            justify-content:space-between;
-            gap:16px;
-            padding:14px 18px;
-            border-radius:var(--paces-radius-sm);
-            border: 1px solid {{ !$n->is_read ? '#fecaca' : 'var(--paces-border)' }};
-            background: {{ !$n->is_read ? '#fef2f2' : '#ffffff' }};
-            border-left: 4px solid {{ !$n->is_read ? '#ef4444' : ($isEmergency ? 'var(--paces-danger)' : ($isBooking ? 'var(--paces-primary)' : '#94a3b8')) }};
-            transition: all 0.2s ease;
-          ">
+          <div 
+            class="notification-item-card"
+            data-id="{{ $n->id }}"
+            data-read-url="{{ route('admin.notifications.read', $n) }}"
+            data-is-read="{{ $n->is_read ? '1' : '0' }}"
+            data-title="{{ $n->title }}"
+            data-message="{{ $n->message }}"
+            data-type="{{ $n->type }}"
+            data-type-label="{{ ucwords(str_replace('_', ' ', $n->type)) }}"
+            data-created-human="{{ $n->created_at->diffForHumans() }}"
+            data-created-formatted="{{ $n->created_at->format('M d, Y • h:i:s A') }}"
+            data-action-url="{{ $n->action_url ?: ($n->booking_id ? route('admin.bookings.show', $n->booking_id) : '') }}"
+            data-has-booking="{{ $b ? '1' : '0' }}"
+            @if($b)
+              data-booking-number="#{{ $b->booking_number }}"
+              data-booking-customer="{{ $b->customer_name }}"
+              data-booking-phone="{{ $b->customer_phone }}"
+              data-booking-location="{{ $b->area }}, {{ $b->district }}"
+              data-booking-service="{{ $b->service?->title ?? $b->amcPlan?->name ?? 'Facility Service' }}"
+              data-booking-status="{{ $b->status_label }}"
+              data-booking-price="{{ $b->final_cost > 0 ? '৳ ' . number_format($b->final_cost, 2) : ($b->estimated_cost > 0 ? '৳ ' . number_format($b->estimated_cost, 2) : 'Pending / Set Later') }}"
+              data-booking-url="{{ route('admin.bookings.show', $b) }}"
+            @endif
+            onclick="handleNotificationClick(this, event)"
+            style="
+              display:flex;
+              align-items:flex-start;
+              justify-content:space-between;
+              gap:16px;
+              padding:14px 18px;
+              border-radius:var(--paces-radius-sm);
+              border: 1px solid {{ !$n->is_read ? '#fecaca' : 'var(--paces-border)' }};
+              background: {{ !$n->is_read ? '#fef2f2' : '#ffffff' }};
+              border-left: 4px solid {{ !$n->is_read ? '#ef4444' : ($isEmergency ? 'var(--paces-danger)' : ($isBooking ? 'var(--paces-primary)' : ($isPrice ? '#10b981' : '#94a3b8'))) }};
+              cursor: pointer;
+              transition: all 0.2s ease;
+            "
+            onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.06)'; this.style.transform='translateY(-1px)';"
+            onmouseout="this.style.boxShadow='none'; this.style.transform='none';"
+          >
             <div style="display:flex; gap:14px; align-items:flex-start; flex:1; min-width:0;">
               <!-- Message Details -->
               <div style="flex:1; min-width:0;">
@@ -145,19 +175,21 @@
                   <strong style="font-size:0.92rem; color:var(--paces-text-dark); font-weight:500;">{{ $n->title }}</strong>
                   
                   @if(!$n->is_read)
-                    <span class="badge-pill-paces" style="background:#fee2e2; color:#b91c1c; font-size:0.68rem; padding:2px 8px; font-weight:500;">
+                    <span class="badge-pill-paces notif-unread-pill" style="background:#fee2e2; color:#b91c1c; font-size:0.68rem; padding:2px 8px; font-weight:500;">
                       UNREAD
                     </span>
                   @endif
 
                   @if($isEmergency)
                     <span class="badge-pill-paces bg-danger-subtle" style="font-size:0.68rem; padding:2px 8px;">URGENT</span>
+                  @elseif($isPrice)
+                    <span class="badge-pill-paces bg-success-subtle" style="font-size:0.68rem; padding:2px 8px;">PRICE</span>
                   @endif
 
                   @if($n->booking)
-                    <a href="{{ route('admin.bookings.show', $n->booking_id) }}" class="badge-pill-paces bg-primary-subtle" style="font-size:0.72rem; text-decoration:none; font-family:monospace;">
+                    <span class="badge-pill-paces bg-primary-subtle" style="font-size:0.72rem; text-decoration:none; font-family:monospace;">
                       #{{ $n->booking->booking_number }}
-                    </a>
+                    </span>
                   @endif
                 </div>
 
@@ -180,21 +212,12 @@
             <!-- Actions -->
             <div style="display:flex; gap:8px; align-items:center; flex-shrink:0;">
               @if($n->booking_id)
-                <a href="{{ route('admin.bookings.show', $n->booking_id) }}" class="btn-paces btn-paces-primary btn-paces-sm">
-                  View Order
+                <a href="{{ route('admin.bookings.show', $n->booking_id) }}" onclick="event.stopPropagation();" class="btn-paces btn-paces-primary btn-paces-sm" style="white-space:nowrap; display:inline-flex; align-items:center;">
+                  View Order →
                 </a>
               @endif
 
-              @if(!$n->is_read)
-                <form action="{{ route('admin.notifications.read', $n) }}" method="POST" style="margin:0;">
-                  @csrf
-                  <button type="submit" class="btn-paces btn-paces-outline btn-paces-sm" title="Mark as Read">
-                    ✓ Read
-                  </button>
-                </form>
-              @endif
-
-              <form action="{{ route('admin.notifications.destroy', $n) }}" method="POST" data-confirm="Are you sure you want to permanently delete this notification?" data-confirm-title="Delete Notification?" data-confirm-btn="Delete" style="margin:0;">
+              <form action="{{ route('admin.notifications.destroy', $n) }}" method="POST" onclick="event.stopPropagation();" data-confirm="Are you sure you want to permanently delete this notification?" data-confirm-title="Delete Notification?" data-confirm-btn="Delete" style="margin:0;">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn-paces btn-paces-outline btn-paces-sm" title="Delete notification" style="color:#ef4444;">
@@ -211,4 +234,212 @@
       </div>
     @endif
   </div>
+
+  <!-- Notification Details Modal Popup -->
+  <div id="notificationDetailsModal" class="modal-backdrop-paces" style="display:none;" onclick="if(event.target===this) closeNotificationModal();">
+    <div class="modal-dialog-paces" style="max-width:540px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);" onclick="event.stopPropagation();">
+      <div class="modal-header-paces" style="background:#f8fafc; border-bottom:1px solid var(--paces-border); padding:16px 20px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); display:flex; align-items:center; justify-content:center; font-size:1.1rem;" id="modalNotifIcon">
+            🔔
+          </div>
+          <div>
+            <h3 class="modal-title-paces" id="modalNotifTitle" style="font-size:1.05rem; font-weight:600; color:var(--paces-text-dark); line-height:1.3;">
+              Notification Details
+            </h3>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:3px;">
+              <span id="modalNotifTypeBadge" class="badge-pill-paces bg-primary-subtle" style="font-size:0.7rem; font-weight:600;">Alert</span>
+              <span id="modalNotifTime" style="font-size:0.75rem; color:var(--paces-text-muted);">Just now</span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeNotificationModal()" aria-label="Close" style="font-size:1.4rem; line-height:1; color:#94a3b8; cursor:pointer; background:none; border:none;">
+          &times;
+        </button>
+      </div>
+
+      <div class="modal-body-paces" style="padding:20px; overflow-y:auto; max-height:calc(85vh - 130px);">
+        <!-- Full Message Description -->
+        <div style="background:#ffffff; border:1px solid var(--paces-border); border-radius:8px; padding:14px 16px; margin-bottom:16px;">
+          <label style="font-size:0.75rem; font-weight:600; text-transform:uppercase; color:var(--paces-text-muted); display:block; margin-bottom:6px;">
+            Notification Message
+          </label>
+          <p id="modalNotifMessage" style="font-size:0.92rem; color:#334155; line-height:1.6; margin:0; white-space:pre-wrap;">
+            Message body
+          </p>
+        </div>
+
+        <!-- Linked Work Order Details (if present) -->
+        <div id="modalBookingSection" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px 16px; margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #e2e8f0; padding-bottom:8px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:0.9rem;">📋</span>
+              <strong style="font-size:0.85rem; color:var(--paces-text-dark);">Linked Work Order</strong>
+              <span id="modalBookingNumber" style="font-family:monospace; font-weight:700; color:var(--paces-primary); font-size:0.85rem;">#DHK-00000</span>
+            </div>
+            <span id="modalBookingStatus" class="badge-pill-paces bg-info-subtle" style="font-size:0.72rem; font-weight:600;">Status</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.82rem;">
+            <div>
+              <span style="color:var(--paces-text-muted); display:block; font-size:0.72rem; text-transform:uppercase;">Service:</span>
+              <strong id="modalBookingService" style="color:var(--paces-text-dark); display:block; margin-top:1px;">General Service</strong>
+            </div>
+            <div>
+              <span style="color:var(--paces-text-muted); display:block; font-size:0.72rem; text-transform:uppercase;">Agreed / Est. Price:</span>
+              <strong id="modalBookingPrice" style="color:#059669; display:block; margin-top:1px;">৳ 0.00</strong>
+            </div>
+            <div>
+              <span style="color:var(--paces-text-muted); display:block; font-size:0.72rem; text-transform:uppercase;">Customer:</span>
+              <span id="modalBookingCustomer" style="color:var(--paces-text-dark); font-weight:500;">Client Name</span>
+            </div>
+            <div>
+              <span style="color:var(--paces-text-muted); display:block; font-size:0.72rem; text-transform:uppercase;">Phone:</span>
+              <a id="modalBookingPhone" href="tel:" style="color:var(--paces-primary); font-weight:600; text-decoration:none;">01700000000</a>
+            </div>
+            <div style="grid-column:1 / -1;">
+              <span style="color:var(--paces-text-muted); display:block; font-size:0.72rem; text-transform:uppercase;">Location Address:</span>
+              <span id="modalBookingLocation" style="color:var(--paces-text-dark);">Area, District</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-paces" style="background:#f8fafc; border-top:1px solid var(--paces-border); padding:12px 20px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <span style="font-size:0.75rem; color:#16a34a; font-weight:500; display:inline-flex; align-items:center; gap:4px;">
+          ✓ Marked as Read
+        </span>
+
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" onclick="closeNotificationModal()">
+            Close
+          </button>
+          <a id="modalActionBtn" href="#" class="btn-paces btn-paces-primary btn-paces-sm" style="display:none; text-decoration:none;">
+            View Work Order Details →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function handleNotificationClick(card, event) {
+      if (!card) return;
+
+      const notifId = card.dataset.id;
+      const readUrl = card.dataset.readUrl;
+      const isRead = card.dataset.isRead === '1';
+
+      // 1. Mark as read in database if unread
+      if (!isRead) {
+        card.dataset.isRead = '1';
+        card.style.background = '#ffffff';
+        card.style.borderColor = 'var(--paces-border)';
+        
+        // Remove unread pill
+        const unreadPill = card.querySelector('.notif-unread-pill');
+        if (unreadPill) unreadPill.remove();
+
+        // Decrement unread counter on index page
+        const unreadMetric = document.getElementById('unreadAlertsCount');
+        if (unreadMetric) {
+          let cur = parseInt(unreadMetric.innerText.replace(/[^0-9]/g, ''), 10) || 0;
+          if (cur > 0) unreadMetric.innerText = cur - 1;
+        }
+
+        // Decrement topbar badge
+        const topbarBadge = document.getElementById('topbarAlertBadge');
+        if (topbarBadge) {
+          let cur = parseInt(topbarBadge.innerText.replace(/[^0-9]/g, ''), 10) || 0;
+          if (cur > 0) topbarBadge.innerText = cur - 1;
+        }
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (readUrl && csrfToken) {
+          fetch(readUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': csrfToken,
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          }).catch(() => {});
+        }
+      }
+
+      // 2. Populate modal details
+      const title = card.dataset.title || 'Notification Details';
+      const msg = card.dataset.message || '';
+      const type = card.dataset.type || '';
+      const typeLabel = card.dataset.typeLabel || 'Alert';
+      const timeHuman = card.dataset.createdHuman || '';
+      const timeFormatted = card.dataset.createdFormatted || '';
+      const actionUrl = card.dataset.actionUrl || '';
+      const hasBooking = card.dataset.hasBooking === '1';
+
+      document.getElementById('modalNotifTitle').innerText = title;
+      document.getElementById('modalNotifMessage').innerText = msg;
+      document.getElementById('modalNotifTime').innerText = `${timeHuman} • ${timeFormatted}`;
+
+      const typeBadge = document.getElementById('modalNotifTypeBadge');
+      typeBadge.innerText = typeLabel;
+      if (type === 'emergency_alert') {
+        typeBadge.className = 'badge-pill-paces bg-danger-subtle';
+        document.getElementById('modalNotifIcon').innerText = '🚨';
+        document.getElementById('modalNotifIcon').style.background = '#fee2e2';
+        document.getElementById('modalNotifIcon').style.color = '#dc2626';
+      } else if (type === 'price_updated') {
+        typeBadge.className = 'badge-pill-paces bg-success-subtle';
+        document.getElementById('modalNotifIcon').innerText = '💰';
+        document.getElementById('modalNotifIcon').style.background = '#dcfce7';
+        document.getElementById('modalNotifIcon').style.color = '#15803d';
+      } else {
+        typeBadge.className = 'badge-pill-paces bg-primary-subtle';
+        document.getElementById('modalNotifIcon').innerText = '🔔';
+        document.getElementById('modalNotifIcon').style.background = 'var(--paces-primary-subtle)';
+        document.getElementById('modalNotifIcon').style.color = 'var(--paces-primary)';
+      }
+
+      const bookingSec = document.getElementById('modalBookingSection');
+      if (hasBooking) {
+        bookingSec.style.display = 'block';
+        document.getElementById('modalBookingNumber').innerText = card.dataset.bookingNumber || '';
+        document.getElementById('modalBookingService').innerText = card.dataset.bookingService || '';
+        document.getElementById('modalBookingPrice').innerText = card.dataset.bookingPrice || '';
+        document.getElementById('modalBookingCustomer').innerText = card.dataset.bookingCustomer || '';
+        document.getElementById('modalBookingLocation').innerText = card.dataset.bookingLocation || '';
+        
+        const phoneEl = document.getElementById('modalBookingPhone');
+        phoneEl.innerText = card.dataset.bookingPhone || '';
+        phoneEl.href = 'tel:' + (card.dataset.bookingPhone || '');
+
+        document.getElementById('modalBookingStatus').innerText = card.dataset.bookingStatus || '';
+      } else {
+        bookingSec.style.display = 'none';
+      }
+
+      const actionBtn = document.getElementById('modalActionBtn');
+      if (actionUrl) {
+        actionBtn.style.display = 'inline-block';
+        actionBtn.href = actionUrl;
+        actionBtn.innerText = hasBooking ? 'View Work Order Details →' : 'Open Link →';
+      } else {
+        actionBtn.style.display = 'none';
+      }
+
+      // 3. Show modal
+      const modal = document.getElementById('notificationDetailsModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeNotificationModal() {
+      const modal = document.getElementById('notificationDetailsModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeNotificationModal();
+    });
+  </script>
 </x-layouts.admin>

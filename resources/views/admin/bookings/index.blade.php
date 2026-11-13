@@ -219,9 +219,6 @@
                 <td>
                   @if($b->is_amc)
                     <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px; flex-wrap:wrap;">
-                      <span style="font-size:0.68rem; font-weight:700; text-transform:uppercase; background:#f5f3ff; color:#7c3aed; border:1px solid #ef0b0bff; padding:1px 6px; border-radius:4px;">
-                        🏢 AMC Contract
-                      </span>
                       <span style="font-size:0.72rem; color:#475569; font-weight:600;">
                         {{ $b->billing_cycle_label }} • ৳ {{ number_format($b->recurring_amount ?: $b->final_cost, 0) }}
                       </span>
@@ -230,11 +227,6 @@
                       {{ $b->amcPlan?->name ?? 'Annual Maintenance Plan' }}
                     </div>
                   @else
-                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;">
-                      <span style="font-size:0.68rem; font-weight:600; text-transform:uppercase; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; padding:1px 5px; border-radius:4px;">
-                        🛠️ One-Off Service
-                      </span>
-                    </div>
                     <div style="font-weight:500; color:var(--paces-text-dark);">
                       {{ $b->service?->title ?? 'General Facility Service' }}
                     </div>

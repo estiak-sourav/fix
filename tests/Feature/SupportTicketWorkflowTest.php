@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Mail\SupportTicketAdminReplyMail;
 use App\Models\Admin;
 use App\Models\SupportTicket;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class SupportTicketWorkflowTest extends TestCase
@@ -407,5 +409,37 @@ class SupportTicketWorkflowTest extends TestCase
     {
         $response = $this->get('/contact');
         $response->assertRedirect('/#contact');
+    }
+
+    /**
+     * 12. Test Admin reply sends automated no-reply email notification to customer.
+     */
+    public function test_admin_reply_sends_no_reply_email_to_customer(): void
+    {
+        Mail::fake();
+
+        $admin = Admin::first();
+        $ticket = SupportTicket::factory()->create([
+            'customer_name' => 'Tariq Rahman',
+            'customer_email' => 'tariq@enterprise.com',
+            'status' => 'open',
+            'subject' => 'HVAC Chiller Pressure Drop',
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')->post(route('admin.tickets.reply', $ticket), [
+            'message' => 'Our field engineering team will visit on site today.',
+            'status' => 'in_progress',
+        ]);
+
+        $response->assertRedirect(route('admin.tickets.show', $ticket));
+
+        Mail::assertSent(SupportTicketAdminReplyMail::class, function (SupportTicketAdminReplyMail $mail) {
+            $this->assertTrue($mail->hasTo('tariq@enterprise.com'));
+            $this->assertTrue($mail->hasFrom('no-reply@fix.com.bd'));
+            $this->assertTrue($mail->hasReplyTo('no-reply@fix.com.bd'));
+            $this->assertStringContainsString('No-Reply', $mail->envelope()->subject);
+
+            return true;
+        });
     }
 }

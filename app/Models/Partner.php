@@ -89,9 +89,91 @@ class Partner extends Authenticatable
         return $this->hasMany(PartnerNotification::class)->latest();
     }
 
+    public function paymentMethods(): HasMany
+    {
+        return $this->hasMany(PartnerPaymentMethod::class)->orderByDesc('is_default')->latest();
+    }
+
+    public function payouts(): HasMany
+    {
+        return $this->hasMany(PartnerPayout::class)->latest();
+    }
+
+    public function getTotalEarnedAttribute(): float
+    {
+        if ($this->earning_model === 'monthly') {
+            return (float) ($this->payout_rate ?? 0);
+        }
+
+        $completedBookings = $this->bookings()
+            ->where(function ($q) {
+                $q->where('status', 'completed')
+                    ->orWhere('partner_job_status', 'completed');
+            })
+            ->get();
+
+        return (float) $completedBookings->sum(function ($b) {
+            return $this->calculateBookingEarning($b);
+        });
+    }
+
+    public function getTotalPaidAttribute(): float
+    {
+        $payoutSum = (float) $this->payouts()->where('status', 'paid')->sum('amount');
+
+        // Also include any legacy bookings marked as paid where no payout transaction exists
+        if ($payoutSum === 0.0) {
+            $legacySum = (float) $this->bookings()
+                ->where('partner_payout_status', 'paid')
+                ->where(function ($q) {
+                    $q->where('status', 'completed')
+                        ->orWhere('partner_job_status', 'completed');
+                })
+                ->get()
+                ->sum(function ($b) {
+                    return (float) ($b->partner_payout_amount ?? $this->calculateBookingEarning($b));
+                });
+
+            return $legacySum;
+        }
+
+        return $payoutSum;
+    }
+
+    public function getPayableBalanceAttribute(): float
+    {
+        return max(0.0, (float) ($this->total_earned - $this->total_paid));
+    }
+
     public function unreadNotificationsCount(): int
     {
         return $this->notifications()->where('is_read', false)->count();
+    }
+
+    public function ensureDefaultPaymentMethod(): ?PartnerPaymentMethod
+    {
+        if ($this->paymentMethods()->exists()) {
+            return $this->paymentMethods()->where('is_default', true)->first() ?: $this->paymentMethods()->first();
+        }
+
+        if ($this->payment_method) {
+            $isMfs = in_array($this->payment_method, ['bkash', 'nagad', 'rocket']);
+            $accNum = $isMfs ? ($this->mfs_number ?: $this->phone) : $this->account_number;
+
+            if ($accNum) {
+                return $this->paymentMethods()->create([
+                    'method_type' => $this->payment_method,
+                    'account_number' => $accNum,
+                    'account_name' => $this->account_holder ?: $this->company_name,
+                    'number_type' => 'personal',
+                    'bank_name' => $this->bank_name,
+                    'branch_name' => $this->branch_name,
+                    'is_default' => true,
+                ]);
+            }
+        }
+
+        return null;
     }
 
     public function isVendor(): bool

@@ -85,7 +85,7 @@ class BookingFlowTest extends TestCase
         $response->assertSee('3. Preferred Schedule');
     }
 
-    public function test_assigning_crew_automatically_advances_status_to_in_progress(): void
+    public function test_booking_lifecycle_from_accept_to_assigned_and_working(): void
     {
         $admin = Admin::first();
         $user = User::first();
@@ -111,21 +111,52 @@ class BookingFlowTest extends TestCase
             'status' => 'pending_review',
         ]);
 
-        // Accept and assign crew
+        // Customer sees Pending initially
+        $initialResponse = $this->actingAs($user, 'web')->get('/my-bookings');
+        $initialResponse->assertStatus(200);
+        $initialResponse->assertSee('Pending');
+
+        // 1. Admin accepts order -> Status becomes 'accepted'
         $this->actingAs($admin, 'admin')->post(route('admin.bookings.accept', $booking), [
-            'assigned_team' => 'Delta HVAC Engineering & Industrial Solutions — Engr. Kamrul Hasan - 01711223344',
             'pricing_mode' => 'price',
             'cost_amount' => 5000,
         ]);
 
         $booking->refresh();
-        $this->assertEquals('in_progress', $booking->status);
-        $this->assertEquals('Delta HVAC Engineering & Industrial Solutions — Engr. Kamrul Hasan - 01711223344', $booking->assigned_team);
+        $this->assertEquals('accepted', $booking->status);
 
-        // Verify customer tracking page shows In Progress status
-        $trackerResponse = $this->actingAs($user, 'web')->get('http://localhost/my-bookings');
-        $trackerResponse->assertStatus(200);
-        $trackerResponse->assertSee('In Progress');
+        // Verify customer tracking page shows Accepted status
+        $acceptedResponse = $this->actingAs($user, 'web')->get('/my-bookings');
+        $acceptedResponse->assertStatus(200);
+        $acceptedResponse->assertSee('Accepted');
+
+        // 2. Booking status is updated when assigned
+        $booking->update([
+            'assigned_team' => 'Delta HVAC Engineering & Industrial Solutions — Engr. Kamrul Hasan - 01711223344',
+            'status' => 'assigned',
+        ]);
+
+        $assignedResponse = $this->actingAs($user, 'web')->get('/my-bookings');
+        $assignedResponse->assertStatus(200);
+        $assignedResponse->assertSee('Assigned');
+
+        // 3. Crew starts journey -> on_the_way
+        $booking->update([
+            'status' => 'on_the_way',
+            'partner_job_status' => 'on_the_way',
+        ]);
+        $onTheWayResponse = $this->actingAs($user, 'web')->get('/my-bookings');
+        $onTheWayResponse->assertStatus(200);
+        $onTheWayResponse->assertSee('On the Way');
+
+        // 4. Crew starts work -> in_progress (Working)
+        $booking->update([
+            'status' => 'in_progress',
+            'partner_job_status' => 'in_progress',
+        ]);
+        $workingResponse = $this->actingAs($user, 'web')->get('/my-bookings');
+        $workingResponse->assertStatus(200);
+        $workingResponse->assertSee('Working');
 
         // Verify booking details page shows assigned field team
         $detailsResponse = $this->actingAs($user, 'web')->get(route('customer.bookings.show', $booking->booking_number));

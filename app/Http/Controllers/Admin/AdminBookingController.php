@@ -134,6 +134,7 @@ class AdminBookingController extends Controller
             'pending' => Booking::where('status', 'pending_review')->count(),
             'accepted' => Booking::where('status', 'accepted')->count(),
             'assigned' => Booking::where('status', 'assigned')->count(),
+            'on_the_way' => Booking::where('status', 'on_the_way')->count(),
             'in_progress' => Booking::where('status', 'in_progress')->count(),
             'completed' => Booking::where('status', 'completed')->count(),
             'cancelled' => Booking::where('status', 'cancelled')->count(),
@@ -268,42 +269,33 @@ class AdminBookingController extends Controller
         }
 
         $crewOptions = collect();
-        // Dropdown: Only show vendors that service that area & trade domain
-        if ($matchingPartners->isNotEmpty()) {
-            foreach ($matchingPartners as $m) {
-                $m->match_badge = '✓ Matched Area & Trade';
-                $crewOptions->push($m);
-            }
-        } else {
-            // Fallback: If no partner matches both, show area or domain matching partners
-            foreach ($otherPartners as $op) {
-                $badges = [];
-                if ($op->is_area_match) {
-                    $badges[] = 'Area Match';
-                }
-                if ($op->is_domain_match) {
-                    $badges[] = 'Trade Match';
-                }
-                $op->match_badge = ! empty($badges) ? implode(' & ', $badges) : 'Unmatched';
-                $crewOptions->push($op);
-            }
+        // Dropdown: Strictly only show crews that service this domain AND operate in this area
+        foreach ($matchingPartners as $m) {
+            $m->match_badge = '✓ Matched Area & Trade';
+            $crewOptions->push($m);
         }
 
-        foreach ($fieldCrews as $u) {
-            $crewOptions->push((object) [
-                'partner_id' => null,
-                'name' => $u->name,
-                'phone' => $u->phone,
-                'role' => ucfirst($u->role),
-                'company_name' => $u->company_name,
-                'is_partner' => false,
-                'is_full_match' => true,
-                'match_badge' => 'Internal Staff',
-                'avail_status' => 'available',
-                'avail_label' => 'Staff Crew',
-                'avail_color' => '#64748b',
-                'warning_msg' => null,
-            ]);
+        // If booking already has an assigned partner not in the match list, keep them visible as currently assigned
+        if ($booking->partner_id && ! $crewOptions->contains('partner_id', $booking->partner_id)) {
+            $assignedPartner = Partner::find($booking->partner_id);
+            if ($assignedPartner) {
+                $crewOptions->prepend((object) [
+                    'partner_id' => $assignedPartner->id,
+                    'name' => "{$assignedPartner->company_name} — {$assignedPartner->contact_person}",
+                    'phone' => $assignedPartner->phone,
+                    'role' => ($assignedPartner->isVendor() ? 'Vendor Agency' : 'Individual Solo Crew')." • {$assignedPartner->trade_domain}",
+                    'company_name' => $assignedPartner->company_name,
+                    'is_partner' => true,
+                    'is_area_match' => false,
+                    'is_domain_match' => false,
+                    'is_full_match' => false,
+                    'avail_status' => 'busy',
+                    'avail_label' => 'Currently Assigned',
+                    'avail_color' => '#3b82f6',
+                    'warning_msg' => null,
+                    'match_badge' => 'Currently Assigned',
+                ]);
+            }
         }
 
         $amcPlans = AmcPlan::where('is_active', true)->orderBy('order')->get();
@@ -568,7 +560,7 @@ class AdminBookingController extends Controller
         if (! $partner) {
             $assignedTeam = ! empty($validated['assigned_team']) ? trim($validated['assigned_team']) : $booking->assigned_team;
         }
-        $status = ! empty($assignedTeam) ? 'in_progress' : 'accepted';
+        $status = 'accepted';
 
         $payload = [
             'status' => $status,
@@ -697,7 +689,7 @@ class AdminBookingController extends Controller
     public function update(Request $request, Booking $booking, UpdateBookingStatusAction $action): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => ['required', 'string', 'in:pending_review,accepted,assigned,in_progress,completed,cancelled'],
+            'status' => ['required', 'string', 'in:pending_review,accepted,assigned,on_the_way,in_progress,completed,cancelled'],
             'estimated_cost' => ['nullable', 'numeric', 'min:0'],
             'final_cost' => ['nullable', 'numeric', 'min:0'],
             'assigned_team' => ['nullable', 'string', 'max:255'],
@@ -740,7 +732,7 @@ class AdminBookingController extends Controller
         $partner = ! empty($validated['partner_id']) ? Partner::find($validated['partner_id']) : null;
         if ($partner) {
             $directUpdates['partner_id'] = $partner->id;
-            if ($oldPartnerId !== (int) $partner->id) {
+            if ($oldPartnerId !== (int) $partner->id || $booking->partner_job_status === 'declined') {
                 $directUpdates['partner_job_status'] = 'assigned';
                 $directUpdates['partner_assigned_at'] = now();
             }
@@ -754,11 +746,6 @@ class AdminBookingController extends Controller
         }
 
         $newStatus = $validated['status'];
-
-        // Auto change status to in_progress if crew is assigned and order was pending, accepted or assigned
-        if (! empty($assignedTeam) && in_array($newStatus, ['pending_review', 'accepted', 'assigned'])) {
-            $newStatus = 'in_progress';
-        }
 
         $payload = [
             'status' => $newStatus,

@@ -90,4 +90,3 @@ class AmcInvoice extends Model
         };
     }
 }
-

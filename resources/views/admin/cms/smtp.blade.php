@@ -122,10 +122,18 @@
           </div>
         </div>
 
-        <div style="margin-bottom:1.5rem;">
-          <label class="form-label-paces">Sender From Name *</label>
-          <input type="text" name="mail_from_name" value="{{ \App\Models\SiteSetting::get('mail_from_name', config('mail.from.name', 'FIX Operations')) }}" class="form-control-paces" placeholder="FIX Operations" required>
-          <span class="form-help-paces">Display name that recipients see in their inbox.</span>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.5rem;">
+          <div>
+            <label class="form-label-paces">Sender From Name *</label>
+            <input type="text" name="mail_from_name" value="{{ \App\Models\SiteSetting::get('mail_from_name', config('mail.from.name', 'FIX Operations')) }}" class="form-control-paces" placeholder="FIX Operations" required>
+            <span class="form-help-paces">Display name that recipients see in their inbox.</span>
+          </div>
+
+          <div>
+            <label class="form-label-paces">No-Reply Email Address</label>
+            <input type="email" name="no_reply_email" value="{{ \App\Models\SiteSetting::get('no_reply_email', 'no-reply@fix.com.bd') }}" class="form-control-paces" placeholder="no-reply@fix.com.bd">
+            <span class="form-help-paces">Used as the sender for automated support ticket notifications.</span>
+          </div>
         </div>
 
         @if(auth('admin')->user()?->hasPermission('settings.edit'))

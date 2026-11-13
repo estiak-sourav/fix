@@ -1,8 +1,7 @@
 <x-layouts.admin title="Partners & Field Crews | FIX Admin">
   <div class="page-header-box" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
     <div>
-      <h1 class="page-header-title">Enlisted Partners & Field Crew Network</h1>
-      <p class="page-header-subtitle">Manage certified contractors, specialized technical partners, and active field dispatch crews</p>
+      <h1 class="page-header-title">Partners & Field Crews</h1>
     </div>
     <div>
       <a href="{{ route('admin.partners.create') }}" class="btn-paces btn-paces-primary" style="display:inline-flex; align-items:center; gap:6px;">
@@ -64,14 +63,17 @@
     <div class="card-header-paces" style="flex-wrap:wrap; gap:14px; border-bottom:1px solid var(--paces-border); padding-bottom:1rem; margin-bottom:1rem;">
       <!-- Status Tabs -->
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <a href="{{ route('admin.partners.index') }}" class="btn-paces {{ $status === 'all' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm">
+        <a href="{{ route('admin.partners.index') }}" class="btn-paces {{ $status === 'all' && request('filter') !== 'payable' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm">
           All ({{ $stats['total'] }})
         </a>
         <a href="{{ route('admin.partners.index', ['status' => 'pending']) }}" class="btn-paces {{ $status === 'pending' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm">
           Pending Approvals ({{ $stats['pending'] }})
         </a>
-        <a href="{{ route('admin.partners.index', ['status' => 'approved']) }}" class="btn-paces {{ $status === 'approved' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm">
+        <a href="{{ route('admin.partners.index', ['status' => 'approved']) }}" class="btn-paces {{ $status === 'approved' && request('filter') !== 'payable' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm">
           Approved Crews ({{ $stats['approved'] }})
+        </a>
+        <a href="{{ route('admin.partners.index', ['filter' => 'payable']) }}" class="btn-paces {{ request('filter') === 'payable' || $status === 'payable' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm" style="{{ request('filter') === 'payable' || $status === 'payable' ? 'background:#dc2626; border-color:#dc2626;' : 'color:#dc2626; border-color:#fca5a5;' }}">
+          💰 Due Balance ({{ $stats['payable'] }})
         </a>
         <a href="{{ route('admin.partners.index', ['status' => 'rejected']) }}" class="btn-paces {{ $status === 'rejected' ? 'btn-paces-primary' : 'btn-paces-outline' }} btn-paces-sm">
           Rejected ({{ $stats['rejected'] }})
@@ -167,8 +169,15 @@
                       {{ $p->payment_method ? strtoupper($p->payment_method) : 'Bank' }} • {{ $p->payout_terms }}
                     </div>
                     <div style="font-size:0.72rem; color:var(--paces-text-muted);">
-                      Rate: {{ $p->commission_rate }}%
+                      Rate: {{ $p->formatted_rate }}
                     </div>
+                    @if($p->payable_balance > 0)
+                      <div style="margin-top:4px;">
+                        <span style="background:#fee2e2; color:#dc2626; font-size:0.72rem; font-weight:800; padding:2px 6px; border-radius:4px; display:inline-block;">
+                          Due: ৳{{ number_format($p->payable_balance, 0) }}
+                        </span>
+                      </div>
+                    @endif
                   @else
                     <span style="font-size:0.75rem; color:#d97706; font-weight:500;">
                       Pending Setup
