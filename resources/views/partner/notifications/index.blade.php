@@ -1,4 +1,25 @@
 <x-partner.layouts.app :title="'Notifications'">
+  <style>
+    .partner-notif-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--p-border);
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .partner-notif-row:hover {
+      background: #f1f5f9 !important;
+    }
+    .partner-notif-row:active {
+      background: #e2e8f0 !important;
+    }
+  </style>
+
   <div style="margin-bottom: 20px;">
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
       <div style="display: flex; align-items: center; gap: 10px;">
@@ -52,8 +73,9 @@
           @php
             $badge = $notif->type_badge;
             $isUnread = ! $notif->is_read;
+            $itemTargetUrl = route('partner.notifications.read', $notif) . '?redirect=1';
           @endphp
-          <div style="padding: 16px 20px; border-bottom: 1px solid var(--p-border); display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; background: {{ $isUnread ? '#f8fafc' : '#ffffff' }}; border-left: {{ $isUnread ? '4px solid var(--p-accent)' : '4px solid transparent' }}; transition: background 0.15s ease;">
+          <a href="{{ $itemTargetUrl }}" class="partner-notif-row" style="background: {{ $isUnread ? '#f8fafc' : '#ffffff' }}; border-left: {{ $isUnread ? '4px solid var(--p-accent)' : '4px solid transparent' }};">
             <div style="display: flex; align-items: flex-start; gap: 12px; min-width: 0; flex: 1;">
               <!-- Icon -->
               <div style="width: 38px; height: 38px; border-radius: 10px; background: {{ $badge['bg'] }}; border: 1px solid {{ $badge['border'] }}; color: {{ $badge['color'] }}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
@@ -92,29 +114,14 @@
               </div>
             </div>
 
-            <!-- Actions -->
-            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-              @if($notif->action_url)
-                <form action="{{ route('partner.notifications.read', $notif) }}" method="POST" style="margin: 0;">
-                  @csrf
-                  <input type="hidden" name="redirect" value="1">
-                  <button type="submit" class="btn-p btn-p-primary" style="padding: 6px 12px; font-size: 0.78rem;">
-                    <span>View</span>
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                  </button>
-                </form>
-              @endif
-
-              @if($isUnread)
-                <form action="{{ route('partner.notifications.read', $notif) }}" method="POST" style="margin: 0;">
-                  @csrf
-                  <button type="submit" class="btn-p btn-p-outline" style="padding: 6px 10px; font-size: 0.76rem;" title="Mark as read">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </button>
-                </form>
-              @endif
+            <!-- View Action Indicator (No Done Button) -->
+            <div style="display: flex; align-items: center; flex-shrink: 0; margin-top: 4px;">
+              <span class="btn-p btn-p-primary" style="padding: 6px 12px; font-size: 0.78rem; pointer-events: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">
+                <span>View</span>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </span>
             </div>
-          </div>
+          </a>
         @endforeach
       </div>
 

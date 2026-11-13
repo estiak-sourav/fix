@@ -42,13 +42,6 @@
 
       <!-- Display Picture (DP) Card -->
       <div class="card-paces">
-        <div class="card-header-paces">
-          <h2 style="font-size:1.05rem; font-weight:500; margin:0; color:var(--paces-text); display:flex; align-items:center; gap:8px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v8"></path><path d="M8 12h8"></path></svg>
-            Display Picture (Avatar / DP)
-          </h2>
-        </div>
-
         <div class="card-body-paces" style="padding:1.5rem;">
           <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
             <!-- DP Preview Box -->
@@ -66,7 +59,7 @@
             <!-- Upload Controls -->
             <div style="flex:1; min-width:240px;">
               <label for="adminAvatarInput" style="display:block; font-weight:500; font-size:0.875rem; margin-bottom:6px; color:var(--paces-text);">
-                Upload New Display Picture
+                Upload Profile Picture
               </label>
               <input 
                 type="file" 

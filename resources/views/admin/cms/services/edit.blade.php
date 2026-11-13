@@ -45,17 +45,12 @@
             <img src="{{ $service->thumbnail_url }}" alt="Preview" 
               style="width:130px; height:85px; object-fit:cover; border-radius:10px; border:1px solid var(--paces-border); box-shadow:var(--paces-shadow);">
           </div>
-          <div style="flex:1; min-width:240px;">
-            <label class="form-label-paces">
-              Upload New Main Photo from Computer
-            </label>
+          <div style="flex:1; min-width:240px;">  
             <input type="file" name="thumbnail_file" accept="image/*" class="form-control-paces">
-            <span class="form-help-paces">Selecting an image replaces the current primary thumbnail with your uploaded local photo.</span>
             <div style="display:flex; align-items:flex-start; gap:8px; margin-top:10px; padding:8px 12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; font-size:0.8rem; color:#1e40af;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
               <div>
                 <strong>Recommended Dimensions:</strong> 800 × 500 px (16:10 or 16:9 ratio, JPG/PNG/WebP).<br>
-                <span style="color:#2563eb; font-size:0.75rem;">💡 Images of any resolution or aspect ratio can be uploaded. On the website, images are automatically centered and presented with professional fixed-ratio cropping.</span>
               </div>
             </div>
           </div>
@@ -90,14 +85,12 @@
         @endif
 
         <div>
-          <label class="form-label-paces">Upload Additional Gallery Photos</label>
           <input type="file" name="service_photos[]" multiple accept="image/*" class="form-control-paces">
           <span class="form-help-paces">You can upload up to 5 photos total for this service to showcase actual completed work.</span>
           <div style="display:flex; align-items:flex-start; gap:8px; margin-top:10px; padding:8px 12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; font-size:0.8rem; color:#1e40af;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
             <div>
               <strong>Recommended Gallery Dimensions:</strong> 800 × 600 px (4:3 or 16:9 ratio).<br>
-              <span style="color:#2563eb; font-size:0.75rem;">💡 You can upload images of any resolution. They will be displayed with professional fixed-ratio thumbnails and preview modals on the service details page.</span>
             </div>
           </div>
         </div>

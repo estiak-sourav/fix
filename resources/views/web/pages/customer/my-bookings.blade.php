@@ -349,7 +349,6 @@
                   Completed Services ({{ $completedBookings->count() }})
                 </h3>
               </div>
-              <span style="font-size:0.78rem; color:#64748b;">Tap on any completed service to view full modal details</span>
             </div>
 
             <div style="display:flex; flex-direction:column; gap:10px;">

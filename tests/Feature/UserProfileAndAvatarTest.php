@@ -225,7 +225,7 @@ class UserProfileAndAvatarTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('My Profile & Display Picture', false);
         $response->assertSee($this->admin->name);
-        $response->assertSee('Display Picture (Avatar / DP)', false);
+        $response->assertSee('Upload Profile Picture', false);
     }
 
     /**

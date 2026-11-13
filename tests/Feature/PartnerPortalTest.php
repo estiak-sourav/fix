@@ -513,10 +513,10 @@ class PartnerPortalTest extends TestCase
         $response->assertSee("New Job Assigned: #{$booking->booking_number}");
         $response->assertSee('Time changed to 4:00 PM');
 
-        // 4. Mark single notification as read
+        // 4. Tap single notification item (marks as read and redirects to target)
         $notif = $partner->notifications()->first();
-        $readResponse = $this->post(route('partner.notifications.read', $notif));
-        $readResponse->assertRedirect();
+        $readResponse = $this->get(route('partner.notifications.read', $notif).'?redirect=1');
+        $readResponse->assertRedirect($notif->action_url);
         $this->assertTrue($notif->fresh()->is_read);
         $this->assertEquals(1, $partner->unreadNotificationsCount());
 

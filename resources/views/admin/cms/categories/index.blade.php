@@ -2,7 +2,6 @@
   <div class="page-header-box" style="margin-bottom:1.25rem;">
     <div>
       <h1 class="page-header-title">Service Categories</h1>
-      <p class="page-header-subtitle">Manage facility service classifications, trade domains, ordering, and publication status</p>
     </div>
     <div style="display:flex; gap:10px; align-items:center;">
       @if(auth('admin')->user()?->hasPermission('services.edit'))
@@ -46,7 +45,7 @@
     <div class="card-header-paces" style="flex-wrap:wrap; gap:12px;">
       <div>
         <h3 class="card-title-paces">All Service Categories ({{ $categories->count() }})</h3>
-        <p class="card-subtitle-paces" style="margin-top:2px;">Dynamic trade domains used in vendor applications, customer bookings, and catalog groupings</p>
+
       </div>
     </div>
 

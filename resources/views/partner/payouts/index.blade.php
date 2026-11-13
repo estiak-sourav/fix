@@ -3,7 +3,6 @@
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
       <div>
         <h1 style="font-size: 1.45rem; font-weight: 800; color: var(--p-primary); letter-spacing: -0.02em; margin: 0;">Earnings & Payouts</h1>
-        <p style="font-size: 0.82rem; color: var(--p-muted); margin: 3px 0 0;">Manage your job earnings, request balance payouts, and configure multiple receiving payment methods.</p>
       </div>
 
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -43,13 +42,11 @@
     <div class="p-card p-stat-card">
       <span class="p-stat-label">Total Net Earned</span>
       <div class="p-stat-value" style="color: var(--p-primary);">৳ {{ number_format($totalEarned, 2) }}</div>
-      <div style="font-size: 0.72rem; color: var(--p-muted); margin-top: 4px;">Lifetime delivery earnings</div>
     </div>
 
     <div class="p-card p-stat-card">
       <span class="p-stat-label">Disbursed / Paid</span>
       <div class="p-stat-value" style="color: #15803d;">৳ {{ number_format($totalPaid, 2) }}</div>
-      <div style="font-size: 0.72rem; color: #15803d; margin-top: 4px;">Disbursed by Admin</div>
     </div>
 
     <div class="p-card p-stat-card">
@@ -81,7 +78,6 @@
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
           <span>Saved Receiving Payment Methods</span>
         </h3>
-        <p style="font-size: 0.78rem; color: var(--p-muted); margin: 3px 0 0;">Add multiple payment methods (bKash, Nagad, Rocket, Bank). Mark whether MFS numbers are Personal or Agent.</p>
       </div>
 
       <button type="button" class="btn-p btn-p-outline" onclick="openModal('addPaymentMethodModal')" style="font-size: 0.78rem; padding: 6px 12px;">
@@ -164,7 +160,6 @@
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
           <span>Withdrawal & Payout Requests</span>
         </h3>
-        <p style="font-size: 0.78rem; color: var(--p-muted); margin: 3px 0 0;">History of payment requests submitted to Admin and balance settlement disbursements.</p>
       </div>
 
       @if($pendingDue > 0)

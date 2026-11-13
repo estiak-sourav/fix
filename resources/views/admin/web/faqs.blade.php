@@ -51,9 +51,6 @@
         <h3 class="card-title-paces" style="margin:0;">
           FAQs Knowledgebase List ({{ $faqs->total() }})
         </h3>
-        <p style="margin:3px 0 0; font-size:0.82rem; color:var(--paces-text-muted);">
-          All published questions, answers, and category groupings for the public help center
-        </p>
       </div>
     </div>
 
