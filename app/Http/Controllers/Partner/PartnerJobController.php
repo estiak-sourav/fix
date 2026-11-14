@@ -95,40 +95,18 @@ class PartnerJobController extends Controller
             abort(403);
         }
 
-        $isPriceSetLater = ($booking->final_cost === null || $booking->final_cost <= 0) && ($booking->estimated_cost === null || $booking->estimated_cost <= 0);
-        $isEstimated = ($booking->estimated_cost > 0 && ($booking->final_cost === null || $booking->final_cost <= 0));
-
         $priceNote = '';
 
-        if ($isPriceSetLater) {
-            $validated = $request->validate([
-                'agreed_price' => ['required', 'numeric', 'min:1'],
-            ], [
-                'agreed_price.required' => 'You must set the service price before accepting this job.',
-                'agreed_price.min' => 'Service price must be at least ৳ 1.',
-            ]);
-
-            $finalPrice = (float) $validated['agreed_price'];
-            $booking->final_cost = $finalPrice;
-            $booking->estimated_cost = null;
-            $priceNote = ' Agreed Price: ৳ '.number_format($finalPrice, 2).'.';
-        } elseif ($isEstimated) {
-            $validated = $request->validate([
-                'agreed_price' => ['required', 'numeric', 'min:1'],
-            ], [
-                'agreed_price.required' => 'Please confirm or set the final service price before accepting.',
-                'agreed_price.min' => 'Service price must be at least ৳ 1.',
-            ]);
-
-            $finalPrice = (float) $validated['agreed_price'];
-            $booking->final_cost = $finalPrice;
-            $booking->estimated_cost = null; // Converted from estimated to final price!
-            $priceNote = ' Final Price Confirmed: ৳ '.number_format($finalPrice, 2).' (converted from estimate).';
-        } elseif ($request->filled('agreed_price')) {
+        if ($request->filled('agreed_price') && (float) $request->input('agreed_price') > 0) {
             $booking->final_cost = (float) $request->input('agreed_price');
+            $booking->estimated_cost = null;
             $priceNote = ' Agreed Price: ৳ '.number_format($booking->final_cost, 2).'.';
         } elseif ($booking->final_cost > 0) {
             $priceNote = ' Agreed Price: ৳ '.number_format($booking->final_cost, 2).'.';
+        } elseif ($booking->estimated_cost > 0) {
+            $priceNote = ' Estimated Price: ৳ '.number_format($booking->estimated_cost, 2).'.';
+        } else {
+            $priceNote = ' Price to be agreed and set before work starts on site.';
         }
 
         $oldStatus = $booking->status;
@@ -140,7 +118,7 @@ class PartnerJobController extends Controller
             'booking_id' => $booking->id,
             'from_status' => $oldStatus,
             'to_status' => 'assigned',
-            'comment' => "Partner '{$partner->company_name}' accepted the job assignment.{$priceNote}",
+            'comment' => "Work order confirmed and scheduled for service.{$priceNote}",
             'is_customer_visible' => true,
         ]);
 
@@ -255,7 +233,7 @@ class PartnerJobController extends Controller
 
         if ($newJobStatus === 'on_the_way') {
             $updateData['status'] = 'on_the_way';
-            $comment = "Technician/Crew from '{$partner->company_name}' is currently on the way to the service address.";
+            $comment = 'Technician team is currently on the way to the service address.';
 
             AdminNotification::create([
                 'type' => 'order_status',
@@ -279,6 +257,7 @@ class PartnerJobController extends Controller
             );
         } elseif ($newJobStatus === 'in_progress') {
             $isInitialPrice = (($booking->estimated_cost === null || $booking->estimated_cost <= 0) && ($booking->final_cost === null || $booking->final_cost <= 0));
+            $isEstimated = ($booking->estimated_cost > 0 && ($booking->final_cost === null || $booking->final_cost <= 0));
 
             // Mandatory price check if price was set to "later"
             if ($isInitialPrice) {
@@ -294,16 +273,17 @@ class PartnerJobController extends Controller
                 $newPrice = (float) $request->input('agreed_price');
                 $oldPrice = (float) ($booking->final_cost ?? $booking->estimated_cost ?? 0);
 
-                if ($isInitialPrice || abs($oldPrice - $newPrice) > 0.01) {
-                    $updateData['estimated_cost'] = $newPrice;
+                if ($isInitialPrice || $isEstimated || abs($oldPrice - $newPrice) > 0.01) {
+                    $updateData['final_cost'] = $newPrice;
+                    $updateData['estimated_cost'] = null;
 
                     $priceTitle = $isInitialPrice
                         ? "Price Set by Crew for Job #{$booking->booking_number}"
-                        : "Price Updated by Crew for Job #{$booking->booking_number}";
+                        : ($isEstimated ? "Final Price Confirmed by Crew for Job #{$booking->booking_number}" : "Price Updated by Crew for Job #{$booking->booking_number}");
 
                     $priceMsg = $isInitialPrice
-                        ? "Partner '{$partner->company_name}' agreed on and set service price to ৳".number_format($newPrice, 2).' before starting work.'
-                        : "Partner '{$partner->company_name}' updated service price from ৳".number_format($oldPrice, 2).' to ৳'.number_format($newPrice, 2).($request->filled('price_notes') ? ' • Reason: '.$request->input('price_notes') : '');
+                        ? "Partner '{$partner->company_name}' agreed on and set final service price to ৳".number_format($newPrice, 2).' before starting work.'
+                        : ($isEstimated ? "Partner '{$partner->company_name}' confirmed final service price as ৳".number_format($newPrice, 2).' (converted from estimate).' : "Partner '{$partner->company_name}' updated service price from ৳".number_format($oldPrice, 2).' to ৳'.number_format($newPrice, 2).($request->filled('price_notes') ? ' • Reason: '.$request->input('price_notes') : ''));
 
                     AdminNotification::create([
                         'type' => 'price_updated',
@@ -322,7 +302,7 @@ class PartnerJobController extends Controller
                         [
                             'Order' => "#{$booking->booking_number}",
                             'Partner' => $partner->company_name,
-                            'New Price' => '৳ '.number_format($newPrice, 2),
+                            'Confirmed Final Price' => '৳ '.number_format($newPrice, 2),
                             'Previous Price' => $oldPrice > 0 ? '৳ '.number_format($oldPrice, 2) : 'Not Set',
                         ]
                     );
@@ -331,14 +311,17 @@ class PartnerJobController extends Controller
                         'booking_id' => $booking->id,
                         'from_status' => $booking->status,
                         'to_status' => $booking->status,
-                        'comment' => $priceMsg,
+                        'comment' => 'Final service price confirmed: ৳'.number_format($newPrice, 2).'.',
                         'is_customer_visible' => true,
                     ]);
                 }
+            } elseif ($isEstimated) {
+                $updateData['final_cost'] = $booking->estimated_cost;
+                $updateData['estimated_cost'] = null;
             }
 
             $updateData['status'] = 'in_progress';
-            $comment = "Service work started on site by '{$partner->company_name}'.";
+            $comment = 'Service work started on site.';
 
             AdminNotification::create([
                 'type' => 'order_status',
@@ -363,7 +346,7 @@ class PartnerJobController extends Controller
         } elseif ($newJobStatus === 'completed') {
             $updateData['status'] = 'completed';
             $updateData['completed_at'] = now();
-            $comment = "Service work successfully completed by '{$partner->company_name}'.";
+            $comment = 'Service work successfully completed on site.';
 
             if ($request->filled('partner_worked_hours')) {
                 $updateData['partner_worked_hours'] = (float) $request->input('partner_worked_hours');
@@ -467,7 +450,7 @@ class PartnerJobController extends Controller
             'booking_id' => $booking->id,
             'from_status' => $booking->status,
             'to_status' => $booking->status,
-            'comment' => $priceMsg,
+            'comment' => 'Service price updated to ৳'.number_format($newPrice, 2).'.',
             'is_customer_visible' => true,
         ]);
 

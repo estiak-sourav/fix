@@ -94,8 +94,11 @@
           <li><a href="{{ route('home') }}#services">Our Services</a></li>
           <li><a href="{{ route('home') }}#amc">AMC Packages</a></li>
           <li><a href="{{ route('booking.create') }}">Book a Service</a></li>
-          <li><a href="{{ route('vendor') }}">Become a Partner</a></li>
+          @guest
+            <li><a href="{{ route('vendor') }}">Become a Partner</a></li>
+          @endguest
           <li><a href="{{ route('partner.login') }}">Partner Portal Login</a></li>
+          <li><a href="{{ route('partner.policy') }}">Crew Policies &amp; SOP</a></li>
         </ul>
       </div>
 
@@ -170,6 +173,7 @@
         <a href="{{ route('privacy') }}">Privacy Policy</a>
         <a href="{{ route('terms') }}">Terms of Service</a>
         <a href="{{ route('sla') }}">SLA & Guarantee</a>
+        <a href="{{ route('partner.policy') }}">Crew Policies &amp; Terms</a>
       </div>
     </div>
   </div>

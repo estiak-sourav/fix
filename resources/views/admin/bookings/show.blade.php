@@ -160,11 +160,11 @@
           • Created {{ $booking->created_at->format('M d, Y • h:i A') }}
         </span>
         @if($booking->is_amc || $booking->contract_status === 'active')
-          <span style="background:#f5f3ff; color:#7c3aed; border:1px solid #ddd6fe; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:12px;">
+          <span class="badge-paces" style="background:#f5f3ff; color:#7c3aed; border:1px solid #ddd6fe; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:12px; white-space:nowrap !important; flex-shrink:0 !important;">
             • AMC Agreement
           </span>
         @else
-          <span style="background:#f1f5f9; color:#475569; font-size:0.72rem; font-weight:600; padding:2px 8px; border-radius:12px;">
+          <span class="badge-paces" style="background:#f1f5f9; color:#475569; font-size:0.72rem; font-weight:600; padding:2px 8px; border-radius:12px; white-space:nowrap !important; flex-shrink:0 !important;">
             • Service
           </span>
         @endif
@@ -356,7 +356,7 @@
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
-        <span style="background:#fee2e2; color:#b91c1c; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:10px;">Cancelled</span>
+        <span class="badge-paces" style="background:#fee2e2; color:#b91c1c; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:10px; white-space:nowrap !important; flex-shrink:0 !important;">Cancelled</span>
         @if(auth('admin')->user()?->hasPermission('bookings.edit'))
           <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#16a34a; border-color:#16a34a; font-weight:700; display:inline-flex; align-items:center; gap:6px;" onclick="document.getElementById('restartWorkOrderModal').style.display='flex'">
             <span>🔄 Re-start Work Order</span>
@@ -382,7 +382,7 @@
 
     <button type="button" class="booking-tab-btn" data-tab="tab-audit-logs" onclick="switchBookingTab('tab-audit-logs')">
       <span>📜 Operational Audit Timeline</span>
-      <span style="background:#f1f5f9; color:#475569; font-size:0.72rem; padding:2px 8px; border-radius:10px; font-weight:700;">
+      <span class="badge-paces" style="background:#f1f5f9; color:#475569; font-size:0.72rem; padding:2px 8px; border-radius:10px; font-weight:700; white-space:nowrap !important; flex-shrink:0 !important;">
         {{ $booking->statusLogs->count() }}
       </span>
     </button>
@@ -1098,7 +1098,7 @@
         <div>
           <h3 class="card-title-paces" style="margin:0; font-size:1.1rem;">Operational Audit Timeline</h3>
         </div>
-        <span class="badge-paces" style="background:#f1f5f9; color:#475569; font-size:0.78rem; padding:4px 12px; border-radius:12px; font-weight:700;">
+        <span class="badge-paces" style="background:#f1f5f9; color:#475569; font-size:0.78rem; padding:4px 12px; border-radius:12px; font-weight:700; white-space:nowrap !important; flex-shrink:0 !important;">
           Total Logs: {{ $booking->statusLogs->count() }}
         </span>
       </div>

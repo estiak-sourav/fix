@@ -56,7 +56,7 @@
             <div style="flex:1; min-width:220px;">
               <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:4px;">
                 <h3 style="font-size:1.2rem; font-weight:700; margin:0; color:var(--text-main);">{{ $user->name }}</h3>
-                <span style="font-size:0.75rem; font-weight:700; color:#0d9488; background:#f0fdfa; border:1px solid #ccfbf1; padding:3px 10px; border-radius:9999px;">
+                <span class="badge" style="font-size:0.75rem; font-weight:700; color:#0d9488; background:#f0fdfa; border:1px solid #ccfbf1; padding:3px 10px; border-radius:9999px; white-space:nowrap !important; flex-shrink:0 !important;">
                   Verified Client
                 </span>
               </div>

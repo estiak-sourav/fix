@@ -881,6 +881,8 @@
       border-radius: 20px;
       font-size: 0.75rem;
       font-weight: 500;
+      white-space: nowrap !important;
+      flex-shrink: 0;
     }
 
     /* Buttons */
@@ -896,7 +898,8 @@
       text-decoration: none;
       border: 1px solid transparent;
       transition: all 0.2s;
-      white-space: nowrap;
+      white-space: nowrap !important;
+      flex-shrink: 0;
     }
     .btn-paces-primary {
       background: var(--paces-primary);
@@ -1043,6 +1046,8 @@
       text-decoration: none;
       border: 1px solid transparent;
       transition: all 0.2s;
+      white-space: nowrap !important;
+      flex-shrink: 0;
     }
     .btn-admin-primary {
       background: var(--paces-primary);
@@ -1087,6 +1092,69 @@
       border-radius: 20px;
       font-size: 0.75rem;
       font-weight: 500;
+      white-space: nowrap !important;
+      flex-shrink: 0;
+    }
+
+    /* Single-line enforcement for all badges and buttons across Admin */
+    .badge-pill-paces,
+    .badge-paces,
+    .status-badge,
+    .brand-badge,
+    .nav-badge,
+    .topbar-badge,
+    .metric-icon-badge,
+    .badge-req,
+    .badge-open,
+    .booking-tab-btn,
+    .partner-tab-btn,
+    .page-filter-btn,
+    .task-action-btn,
+    .btn-paces,
+    .btn-admin,
+    .btn-topbar-toggle,
+    .btn-topbar-chime,
+    .btn-topbar-site,
+    .btn-sidebar-collapse,
+    .btn,
+    .badge,
+    .tag,
+    .pill,
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [class*="badge"],
+    [class*="btn"],
+    [class*="pill"],
+    [class*="tag"],
+    span[style*="border-radius: 9999px"],
+    span[style*="border-radius:9999px"],
+    span[style*="border-radius: 20px"],
+    span[style*="border-radius:20px"],
+    span[style*="border-radius: 12px"],
+    span[style*="border-radius:12px"],
+    span[style*="border-radius: 10px"],
+    span[style*="border-radius:10px"],
+    span[style*="border-radius: 8px"],
+    span[style*="border-radius:8px"],
+    span[style*="border-radius: 6px"],
+    span[style*="border-radius:6px"] {
+      white-space: nowrap !important;
+      flex-shrink: 0 !important;
+      word-break: keep-all !important;
+    }
+    .badge-pill-paces *,
+    .badge-paces *,
+    .status-badge *,
+    .btn-paces *,
+    .btn *,
+    .badge *,
+    button *,
+    [class*="badge"] *,
+    [class*="btn"] * {
+      white-space: nowrap !important;
+      word-break: keep-all !important;
     }
 
     /* Toast Notification Banner */

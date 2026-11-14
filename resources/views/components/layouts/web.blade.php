@@ -39,6 +39,19 @@
 
   <!-- Core Stylesheet (100% Preserved) -->
   <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
+  <style>
+    /* Strict universal single-line rule for all badges, pills, tags, and buttons across customer portal and public web */
+    .badge, .btn, .tab-btn, .faq-cat-btn, .tag, .pill, .status-badge, button, input[type="button"], input[type="submit"], input[type="reset"], [class*="badge"], [class*="btn"], [class*="pill"], [class*="tag"],
+    span[style*="border-radius: 9999px"], span[style*="border-radius:9999px"], span[style*="border-radius: 20px"], span[style*="border-radius:20px"], span[style*="border-radius: 12px"], span[style*="border-radius:12px"], span[style*="border-radius: 10px"], span[style*="border-radius:10px"], span[style*="border-radius: 8px"], span[style*="border-radius:8px"], span[style*="border-radius: 6px"], span[style*="border-radius:6px"] {
+      white-space: nowrap !important;
+      flex-shrink: 0 !important;
+      word-break: keep-all !important;
+    }
+    .badge *, .btn *, .tag *, .pill *, button *, [class*="badge"] *, [class*="btn"] *, [class*="pill"] *, [class*="tag"] * {
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+    }
+  </style>
 
   <!-- JSON-LD Structured Data for Local Business SEO -->
   <script type="application/ld+json">

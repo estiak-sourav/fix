@@ -29,7 +29,9 @@
     </nav>
 
     <div class="nav-actions" style="margin-left: 1.75rem; flex-shrink: 0;">
-      <a href="{{ route('vendor') }}" class="btn btn-vendor-nav">Become a Partner</a>
+      @guest
+        <a href="{{ route('vendor') }}" class="btn btn-vendor-nav">Become a Partner</a>
+      @endguest
 
       @auth
         <div class="nav-dropdown-item user-menu" style="position: relative; flex-shrink: 0;">
@@ -123,8 +125,8 @@
       </li>
     @else
       <li><a href="javascript:void(0)" onclick="openAuthModal()" class="drawer-link" style="color:var(--accent); font-weight:700;">Sign In with OTP</a></li>
+      <li><a href="{{ route('vendor') }}" class="drawer-link" style="color:var(--primary); font-weight:600;">Become a Partner</a></li>
     @endauth
-    <li><a href="{{ route('vendor') }}" class="drawer-link" style="color:var(--primary); font-weight:600;">Become a Partner</a></li>
   </ul>
   <div class="drawer-footer">
     <a href="{{ route('booking.create') }}" class="btn btn-accent btn-block">Book a Service Now</a>

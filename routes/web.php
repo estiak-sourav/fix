@@ -157,6 +157,7 @@ Route::prefix('auth')->name('auth.')->group(function () {
 Route::middleware('auth:web')->prefix('my-bookings')->name('customer.')->group(function () {
     Route::get('/', [CustomerPortalController::class, 'myBookings'])->name('bookings');
     Route::get('/{bookingNumber}', [CustomerPortalController::class, 'showBooking'])->name('bookings.show');
+    Route::post('/{bookingNumber}/cancel', [CustomerPortalController::class, 'cancelBooking'])->name('bookings.cancel');
     Route::post('/{bookingNumber}/review', [CustomerPortalController::class, 'submitReview'])->name('bookings.review');
 });
 

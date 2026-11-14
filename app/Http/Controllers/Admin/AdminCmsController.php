@@ -515,6 +515,16 @@ class AdminCmsController extends Controller
                     'legal_sla',
                 ],
             ],
+            'crew_policy' => [
+                'name' => 'Crew & Partner Policies',
+                'badge' => 'Crew Policies',
+                'keys' => [
+                    'partner_terms',
+                    'partner_work_policy',
+                    'partner_privacy',
+                    'partner_payout_policy',
+                ],
+            ],
             'support' => [
                 'name' => 'Support Helpdesk Page',
                 'badge' => 'Support Helpdesk',
@@ -930,8 +940,16 @@ class AdminCmsController extends Controller
             }
         }
 
-        // 11. Legal & Compliance Policies (Privacy, Terms, SLA)
-        if (in_array($content->section_key, ['legal_privacy', 'legal_terms', 'legal_sla'])) {
+        // 11. Legal & Compliance Policies (Privacy, Terms, SLA, Crew Policies)
+        if (in_array($content->section_key, [
+            'legal_privacy',
+            'legal_terms',
+            'legal_sla',
+            'partner_terms',
+            'partner_work_policy',
+            'partner_privacy',
+            'partner_payout_policy',
+        ])) {
             if ($request->has('legal_sections')) {
                 $sections = [];
                 foreach ($request->input('legal_sections', []) as $sec) {

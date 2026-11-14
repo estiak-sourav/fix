@@ -486,6 +486,146 @@ class SiteCmsSeeder extends Seeder
                     ],
                 ],
             ],
+            // 20. Crew & Partner - Terms & Conditions
+            [
+                'section_key' => 'partner_terms',
+                'title' => 'Crew & Partner Terms of Service',
+                'subtitle' => 'Operational terms, dispatch acceptance standards, technician obligations, and platform partnership agreements.',
+                'badge' => 'CREW CONTRACT',
+                'button_text' => null,
+                'button_url' => null,
+                'secondary_button_text' => null,
+                'secondary_button_url' => null,
+                'media_path' => null,
+                'media_type' => 'text',
+                'meta_data' => [
+                    'sections' => [
+                        [
+                            'heading' => '1. Contractor Onboarding & Identity Verification',
+                            'body' => 'All field crew and partner technicians must submit valid National ID (NID) or Passport, verified trade licenses, technical certifications, and pass mandatory police background clearance prior to account activation and work order dispatch.',
+                        ],
+                        [
+                            'heading' => '2. Work Order Acceptance & Arrival SLAs',
+                            'body' => 'Once an assigned or open work order is accepted through the Partner Portal, the technician is expected to arrive at the designated customer facility within the agreed arrival window. Delays exceeding 15 minutes must be communicated immediately through the dispatch desk.',
+                        ],
+                        [
+                            'heading' => '3. Standard Tooling, PPE & Identification',
+                            'body' => 'Crew members must arrive equipped with certified multi-meters, insulated hand tools, high-visibility FIX uniform vests, safety footwear, and an active digital or physical FIX photo ID badge prominently displayed at all times.',
+                        ],
+                        [
+                            'heading' => '4. Transparent Quotations & Authentic Spare Parts',
+                            'body' => 'Only genuine replacement components approved by FIX and accepted by the client may be installed. Unreported surcharges, off-platform cash transactions, or deceptive scope expansion are strictly prohibited and will result in immediate contract cancellation.',
+                        ],
+                        [
+                            'heading' => '5. Non-Circumvention & Client Exclusivity',
+                            'body' => 'Field crew members and subcontracted partners agree not to solicit or accept direct off-platform service engagements from FIX residential or corporate clients introduced through the platform for a period of 12 months following assignment.',
+                        ],
+                    ],
+                ],
+            ],
+            // 21. Crew & Partner - Work Policy & Safety SOP
+            [
+                'section_key' => 'partner_work_policy',
+                'title' => 'Crew Work Policy & Safety SOP',
+                'subtitle' => 'Standard operating procedures, BNBC electrical and HVAC safety compliance, customer etiquette, and site conduct.',
+                'badge' => 'SAFETY & CONDUCT',
+                'button_text' => null,
+                'button_url' => null,
+                'secondary_button_text' => null,
+                'secondary_button_url' => null,
+                'media_path' => null,
+                'media_type' => 'text',
+                'meta_data' => [
+                    'sections' => [
+                        [
+                            'heading' => '1. Uniform Code & Professional Appearance',
+                            'body' => 'All technicians must present a neat, professional appearance wearing the company-issued FIX uniform vest, clean safety shoes, and photo badge. Personal Protective Equipment (PPE) including helmets, goggles, and cut-resistant gloves must be worn according to the job hazards.',
+                        ],
+                        [
+                            'heading' => '2. Electrical & Mechanical Lockout/Tagout (LOTO)',
+                            'body' => 'Before servicing high-voltage distribution panels, industrial chillers, or pressurized hydraulic lines, technicians must enforce strict Lockout/Tagout procedures. De-energized circuits must be tested with calibrated voltage detectors before physical contact.',
+                        ],
+                        [
+                            'heading' => '3. Site Cleanliness & Property Protection',
+                            'body' => 'Protective drop cloths must be laid beneath equipment before servicing ceiling AC units, conduits, or plumbing fixtures. Following service completion, the work area must be vacuumed, degreased, and left cleaner than originally found.',
+                        ],
+                        [
+                            'heading' => '4. Customer Etiquette & Code of Conduct',
+                            'body' => 'Communicate with facility managers and homeowners courteously and professionally. Always explain diagnostic findings and receive client approval before starting repairs. Smoking, chewing betel leaf/tobacco, resting on client furniture, or using residential facilities is strictly prohibited.',
+                        ],
+                        [
+                            'heading' => '5. Zero-Tolerance Safety Violations',
+                            'body' => 'Reporting to work under the influence of alcohol or narcotics, engaging in verbal or physical confrontation, theft, or deliberate safety bypass results in instantaneous contract termination, security blacklisting, and referral to law enforcement.',
+                        ],
+                    ],
+                ],
+            ],
+            // 22. Crew & Partner - Privacy & Confidentiality Policy
+            [
+                'section_key' => 'partner_privacy',
+                'title' => 'Crew Privacy & Data Protection Policy',
+                'subtitle' => 'Guidelines governing technician personal data, dispatch location telemetry, and strict client confidentiality standards.',
+                'badge' => 'PRIVACY & SECURITY',
+                'button_text' => null,
+                'button_url' => null,
+                'secondary_button_text' => null,
+                'secondary_button_url' => null,
+                'media_path' => null,
+                'media_type' => 'text',
+                'meta_data' => [
+                    'sections' => [
+                        [
+                            'heading' => '1. Technician Personal Data Protection',
+                            'body' => 'FIX securely stores contractor identity verification documents, bank account details, payout histories, and background check records in encrypted storage. This information is processed exclusively for payroll, compliance, and regulatory audits.',
+                        ],
+                        [
+                            'heading' => '2. Real-Time Dispatch GPS Telemetry',
+                            'body' => 'Location telemetry is collected through mobile devices solely while a technician has an active work order in "En Route" or "In Progress" status. This data is used to provide accurate client arrival times and ensure lone-worker safety during emergency dispatches.',
+                        ],
+                        [
+                            'heading' => '3. Strict Client Non-Disclosure & Privacy',
+                            'body' => 'Technicians are granted temporary access to client addresses, contact numbers, and building entry instructions solely for job fulfillment. Crew members are strictly forbidden from photographing private residential spaces, recording conversations, or disclosing client details to third parties.',
+                        ],
+                        [
+                            'heading' => '4. Financial & Payout Record Confidentiality',
+                            'body' => 'Individual partner earnings, commission rates, incentive bonuses, and payout requests are treated as confidential financial records and will never be disclosed to other partners or unauthorized staff.',
+                        ],
+                    ],
+                ],
+            ],
+            // 23. Crew & Partner - Payout & Earnings Settlement Policy
+            [
+                'section_key' => 'partner_payout_policy',
+                'title' => 'Crew Payout & Earnings Settlement Policy',
+                'subtitle' => 'Rules governing job earnings, commission splits, payout withdrawal thresholds, processing turnaround, and warranty reserves.',
+                'badge' => 'PAYOUT & EARNINGS',
+                'button_text' => null,
+                'button_url' => null,
+                'secondary_button_text' => null,
+                'secondary_button_url' => null,
+                'media_path' => null,
+                'media_type' => 'text',
+                'meta_data' => [
+                    'sections' => [
+                        [
+                            'heading' => '1. Earning Accrual & Transparent Breakdown',
+                            'body' => 'Work order earnings are credited to the partner\'s available balance immediately upon digital customer sign-off and administrative job closure. The payout ledger reflects net earnings after agreed platform revenue shares.',
+                        ],
+                        [
+                            'heading' => '2. Minimum Payout Threshold & Request Cycles',
+                            'body' => 'Partners may request withdrawal of accumulated earnings anytime the available balance reaches or exceeds ৳500. Payout requests submitted on business days before 4:00 PM are processed within 24 to 48 hours.',
+                        ],
+                        [
+                            'heading' => '3. Supported Receiving Methods',
+                            'body' => 'Disbursements can be routed to verified Mobile Financial Services (bKash, Nagad, Rocket, Upay) or direct Electronic Fund Transfer (BEFTN/NPSB) to registered Bangladeshi commercial bank accounts. Technicians may set a preferred primary payout method in Settings.',
+                        ],
+                        [
+                            'heading' => '4. 30-Day Workmanship Warranty Recalls & Deductions',
+                            'body' => 'Under our 30-day workmanship guarantee, if a client experiences a recurring service failure caused by technician assembly or installation defect, the original crew is dispatched for complimentary rectification. Negligent failures or unfulfilled recalls may result in adjustment against pending payouts.',
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         foreach ($contents as $content) {

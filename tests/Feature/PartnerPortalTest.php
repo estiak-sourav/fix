@@ -697,16 +697,18 @@ class PartnerPortalTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('01999887766');
         $response->assertDontSee('Confidential Subcontractor Ltd');
-        $response->assertSee('Field Crew Assigned & Confirmed', false);
+        $response->assertDontSee('Secret HVAC Services');
+        $response->assertSee('Service Confirmed & Scheduled', false);
 
         // Customer accesses /my-bookings/{booking_number}
         $detailResponse = $this->actingAs($user, 'web')->get('/my-bookings/'.$booking->booking_number);
         $detailResponse->assertOk();
         $detailResponse->assertDontSee('01999887766');
         $detailResponse->assertDontSee('Confidential Subcontractor Ltd');
+        $detailResponse->assertDontSee('Secret HVAC Services');
     }
 
-    public function test_crew_cannot_accept_job_without_setting_price_when_price_set_later(): void
+    public function test_crew_can_accept_job_when_price_set_later_and_must_set_price_before_starting_work(): void
     {
         $partner = Partner::create([
             'company_name' => 'Apex Cooling Solutions',
@@ -728,28 +730,37 @@ class PartnerPortalTest extends TestCase
             'final_cost' => null,
         ]);
 
-        // Attempt to accept without agreed_price fails validation
+        // 1. Crew can accept job without setting price when set to later
         $response = $this->actingAs($partner, 'partner')
             ->post(route('partner.jobs.accept', $booking));
-        $response->assertSessionHasErrors('agreed_price');
-
-        $booking->refresh();
-        $this->assertEquals('assigned', $booking->partner_job_status);
-
-        // Successfully accepting with agreed_price sets final_cost
-        $acceptResponse = $this->actingAs($partner, 'partner')
-            ->post(route('partner.jobs.accept', $booking), [
-                'agreed_price' => 1750,
-            ]);
-        $acceptResponse->assertRedirect();
+        $response->assertRedirect();
 
         $booking->refresh();
         $this->assertEquals('accepted', $booking->partner_job_status);
+        $this->assertTrue($booking->is_price_set_later);
+
+        // 2. Before starting work, crew must set agreed price
+        $failStart = $this->actingAs($partner, 'partner')
+            ->post(route('partner.jobs.status', $booking), [
+                'partner_job_status' => 'in_progress',
+            ]);
+        $failStart->assertSessionHasErrors('agreed_price');
+
+        // 3. Crew sets price before starting work, which sets final_cost
+        $startResponse = $this->actingAs($partner, 'partner')
+            ->post(route('partner.jobs.status', $booking), [
+                'partner_job_status' => 'in_progress',
+                'agreed_price' => 1750,
+            ]);
+        $startResponse->assertRedirect();
+
+        $booking->refresh();
+        $this->assertEquals('in_progress', $booking->partner_job_status);
         $this->assertEquals(1750.00, (float) $booking->final_cost);
         $this->assertNull($booking->estimated_cost);
     }
 
-    public function test_crew_accepting_estimated_cost_converts_it_to_final_price(): void
+    public function test_crew_starting_work_on_estimated_cost_converts_it_to_final_price(): void
     {
         $partner = Partner::create([
             'company_name' => 'Delta Tech Services',
@@ -771,15 +782,21 @@ class PartnerPortalTest extends TestCase
             'final_cost' => null,
         ]);
 
-        // Crew confirms/sets final price upon accept (e.g. 900)
+        // Crew accepts directly without mandatory price
+        $this->actingAs($partner, 'partner')
+            ->post(route('partner.jobs.accept', $booking))
+            ->assertRedirect();
+
+        // Crew confirms/sets final price when starting work (e.g. 900)
         $response = $this->actingAs($partner, 'partner')
-            ->post(route('partner.jobs.accept', $booking), [
+            ->post(route('partner.jobs.status', $booking), [
+                'partner_job_status' => 'in_progress',
                 'agreed_price' => 900,
             ]);
         $response->assertRedirect();
 
         $booking->refresh();
-        $this->assertEquals('accepted', $booking->partner_job_status);
+        $this->assertEquals('in_progress', $booking->partner_job_status);
         $this->assertEquals(900.00, (float) $booking->final_cost);
         // It is no longer estimated!
         $this->assertNull($booking->estimated_cost);
@@ -870,5 +887,282 @@ class PartnerPortalTest extends TestCase
         $jobResponse = $this->actingAs($partner, 'partner')->get(route('partner.jobs.show', $booking));
         $jobResponse->assertRedirect(route('partner.jobs.index'));
         $jobResponse->assertSessionHas('info');
+    }
+
+    public function test_admin_can_update_and_remove_crew_avatar(): void
+    {
+        Storage::fake('public');
+        $admin = Admin::first();
+
+        $partner = Partner::create([
+            'company_name' => 'Apex Cooling Solutions',
+            'contact_person' => 'Tanvir',
+            'phone' => '01712345678',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'company',
+            'trade_domain' => 'HVAC',
+            'coverage_areas' => 'Gulshan',
+        ]);
+
+        $file = UploadedFile::fake()->image('avatar.jpg', 300, 300);
+
+        // 1. Admin uploads avatar
+        $response = $this->actingAs($admin, 'admin')->post(route('admin.partners.avatar.update', $partner), [
+            'avatar' => $file,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $partner->refresh();
+        $this->assertNotNull($partner->avatar);
+        Storage::disk('public')->assertExists($partner->avatar);
+
+        // 2. Admin removes avatar
+        $removeResponse = $this->actingAs($admin, 'admin')->post(route('admin.partners.avatar.update', $partner), [
+            'remove_avatar' => 1,
+        ]);
+
+        $removeResponse->assertRedirect();
+        $removeResponse->assertSessionHas('success');
+        $partner->refresh();
+        $this->assertNull($partner->avatar);
+    }
+
+    public function test_admin_and_crew_can_manage_multiple_payment_methods(): void
+    {
+        $admin = Admin::first();
+
+        $partner = Partner::create([
+            'company_name' => 'Volt Master Tech',
+            'contact_person' => 'Kamal',
+            'phone' => '01811223344',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'individual',
+            'trade_domain' => 'Electrical',
+            'coverage_areas' => 'Dhanmondi',
+        ]);
+
+        // 1. Admin adds bKash payment method (default)
+        $resp1 = $this->actingAs($admin, 'admin')->post(route('admin.partners.payment-methods.store', $partner), [
+            'method_type' => 'bkash',
+            'account_number' => '01811223344',
+            'account_name' => 'Kamal Hossain',
+            'number_type' => 'personal',
+            'is_default' => 1,
+        ]);
+        $resp1->assertRedirect(route('admin.partners.show', $partner));
+        $resp1->assertSessionHas('success');
+
+        $bkash = $partner->paymentMethods()->first();
+        $this->assertNotNull($bkash);
+        $this->assertEquals('bkash', $bkash->method_type);
+        $this->assertTrue($bkash->is_default);
+
+        // 2. Admin adds Bank payment method
+        $resp2 = $this->actingAs($admin, 'admin')->post(route('admin.partners.payment-methods.store', $partner), [
+            'method_type' => 'bank',
+            'account_number' => '1029384756',
+            'account_name' => 'Volt Master Tech',
+            'number_type' => 'merchant',
+            'bank_name' => 'City Bank PLC',
+            'branch_name' => 'Dhanmondi',
+            'routing_number' => '225271829',
+            'is_default' => 0,
+        ]);
+        $resp2->assertRedirect(route('admin.partners.show', $partner));
+
+        $this->assertEquals(2, $partner->paymentMethods()->count());
+        $bank = $partner->paymentMethods()->where('method_type', 'bank')->first();
+        $this->assertFalse($bank->is_default);
+
+        // 3. Admin sets Bank as default
+        $patchResp = $this->actingAs($admin, 'admin')->patch(route('admin.partners.payment-methods.default', [$partner, $bank]));
+        $patchResp->assertRedirect(route('admin.partners.show', $partner));
+        $this->assertTrue($bank->fresh()->is_default);
+        $this->assertFalse($bkash->fresh()->is_default);
+
+        // 4. Admin deletes bKash method
+        $delResp = $this->actingAs($admin, 'admin')->delete(route('admin.partners.payment-methods.destroy', [$partner, $bkash]));
+        $delResp->assertRedirect(route('admin.partners.show', $partner));
+        $this->assertEquals(1, $partner->paymentMethods()->count());
+        $this->assertTrue($bank->fresh()->is_default);
+    }
+
+    public function test_crew_requests_payout_with_selected_dropdown_method_and_admin_disburses_with_default(): void
+    {
+        $admin = Admin::first();
+
+        $partner = Partner::create([
+            'company_name' => 'Smart Electro Care',
+            'contact_person' => 'Shakil',
+            'phone' => '01911998877',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'individual',
+            'trade_domain' => 'Electrical',
+            'coverage_areas' => 'Banani',
+            'earning_model' => 'commission',
+            'commission_rate' => 20.00,
+        ]);
+
+        // Add 2 payment methods: Nagad (default) and bKash
+        $nagad = $partner->paymentMethods()->create([
+            'method_type' => 'nagad',
+            'account_number' => '01911998877',
+            'account_name' => 'Shakil Ahmed',
+            'number_type' => 'personal',
+            'is_default' => true,
+        ]);
+
+        $bkash = $partner->paymentMethods()->create([
+            'method_type' => 'bkash',
+            'account_number' => '01711223399',
+            'account_name' => 'Shakil Ahmed',
+            'number_type' => 'personal',
+            'is_default' => false,
+        ]);
+
+        // Complete a booking to generate payable balance
+        $booking = $this->createBooking([
+            'partner_id' => $partner->id,
+            'status' => 'completed',
+            'final_cost' => 10000.00,
+            'partner_payout_amount' => 2000.00,
+        ]);
+
+        $this->assertEquals(2000.00, $partner->payable_balance);
+
+        // 1. Crew requests payout selecting bKash from dropdown
+        $crewReq = $this->actingAs($partner, 'partner')->post(route('partner.payouts.request'), [
+            'amount' => 800.00,
+            'partner_payment_method_id' => $bkash->id,
+            'partner_notes' => 'Please send to my personal bKash',
+        ]);
+
+        $crewReq->assertRedirect(route('partner.payouts.index'));
+        $payoutReq = $partner->payouts()->where('status', 'pending')->first();
+        $this->assertNotNull($payoutReq);
+        $this->assertEquals(800.00, (float) $payoutReq->amount);
+        $this->assertEquals($bkash->id, $payoutReq->partner_payment_method_id);
+        $this->assertStringContainsStringIgnoringCase('bKash', $payoutReq->payment_method_details);
+
+        // 2. Admin disburses direct payment without selecting method -> defaults to Nagad (default)
+        $adminDisburse = $this->actingAs($admin, 'admin')->post(route('admin.partners.payouts.disburse', $partner), [
+            'amount' => 500.00,
+            'partner_payment_method_id' => '', // Empty: system defaults to default method
+            'transaction_reference' => 'NAGAD12345',
+        ]);
+
+        $adminDisburse->assertRedirect(route('admin.partners.show', $partner));
+        $directPayout = $partner->payouts()->where('status', 'paid')->latest()->first();
+        $this->assertNotNull($directPayout);
+        $this->assertEquals(500.00, (float) $directPayout->amount);
+        $this->assertEquals($nagad->id, $directPayout->partner_payment_method_id);
+        $this->assertStringContainsStringIgnoringCase('Nagad', $directPayout->payment_method_details);
+    }
+
+    public function test_payment_method_adding_moved_from_payouts_to_settings_menu(): void
+    {
+        $partner = Partner::create([
+            'company_name' => 'Metro Plumbing Experts',
+            'contact_person' => 'Jamil',
+            'phone' => '01611002233',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'individual',
+            'trade_domain' => 'Plumbing',
+            'coverage_areas' => 'Mirpur',
+        ]);
+
+        // 1. Visit Payouts page: Add modal and add button MUST NOT exist, Settings link MUST exist
+        $payoutsResponse = $this->actingAs($partner, 'partner')->get(route('partner.payouts.index'));
+        $payoutsResponse->assertOk();
+        $payoutsResponse->assertDontSee('+ Add Another Method');
+        $payoutsResponse->assertDontSee('id="addPaymentMethodModal"', false);
+        $payoutsResponse->assertSee(route('partner.profile.index').'#payout');
+
+        // 2. Visit Settings page: Add payment method modal, edit modal, and button MUST exist
+        $settingsResponse = $this->actingAs($partner, 'partner')->get(route('partner.profile.index'));
+        $settingsResponse->assertOk();
+        $settingsResponse->assertSee('id="addPaymentMethodModal"', false);
+        $settingsResponse->assertSee('id="editPaymentMethodModal"', false);
+        $settingsResponse->assertSee('Add Payment Method');
+
+        // 3. Crew adds new payment method from Settings
+        $addResponse = $this->actingAs($partner, 'partner')->post(route('partner.payment-methods.store'), [
+            'method_type' => 'bkash',
+            'number_type' => 'personal',
+            'account_number' => '01611002233',
+            'account_name' => 'Jamil Hossain',
+            'is_default' => 1,
+        ]);
+        $addResponse->assertRedirect();
+        $this->assertDatabaseHas('partner_payment_methods', [
+            'partner_id' => $partner->id,
+            'method_type' => 'bkash',
+            'account_number' => '01611002233',
+            'is_default' => 1,
+        ]);
+
+        $bkash = $partner->paymentMethods()->first();
+
+        // 4. Crew updates existing payment method
+        $updateResponse = $this->actingAs($partner, 'partner')->put(route('partner.payment-methods.update', $bkash), [
+            'method_type' => 'bkash',
+            'number_type' => 'merchant',
+            'account_number' => '01611002299',
+            'account_name' => 'Jamil Hossain Updated',
+            'is_default' => 1,
+        ]);
+        $updateResponse->assertRedirect();
+        $this->assertDatabaseHas('partner_payment_methods', [
+            'id' => $bkash->id,
+            'number_type' => 'merchant',
+            'account_number' => '01611002299',
+            'account_name' => 'Jamil Hossain Updated',
+        ]);
+
+        // 5. Admin updates partner's payment method
+        $admin = Admin::first();
+        $adminUpdateResponse = $this->actingAs($admin, 'admin')->put(route('admin.partners.payment-methods.update', [$partner, $bkash]), [
+            'method_type' => 'bkash',
+            'number_type' => 'agent',
+            'account_number' => '01611008888',
+            'account_name' => 'Jamil Agent Account',
+            'is_default' => 1,
+        ]);
+        $adminUpdateResponse->assertRedirect(route('admin.partners.show', $partner));
+        $this->assertDatabaseHas('partner_payment_methods', [
+            'id' => $bkash->id,
+            'number_type' => 'agent',
+            'account_number' => '01611008888',
+            'account_name' => 'Jamil Agent Account',
+        ]);
+    }
+
+    public function test_partner_settings_displays_crew_policies_and_terms(): void
+    {
+        $partner = Partner::create([
+            'company_name' => 'Fast Fix Tech',
+            'contact_person' => 'Faruk',
+            'phone' => '01899112233',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'individual',
+            'trade_domain' => 'Electrical',
+            'coverage_areas' => 'Dhanmondi',
+        ]);
+
+        $response = $this->actingAs($partner, 'partner')->get(route('partner.profile.index'));
+        $response->assertOk();
+        $response->assertSee('Policies &amp; Terms', false);
+        $response->assertSee('id="tab-policies"', false);
+        $response->assertSee('Crew Policies, Safety SOP &amp; Terms', false);
+        $response->assertSee('Contractor Onboarding &amp; Identity Verification', false);
+        $response->assertSee('Zero-Tolerance Safety Violations', false);
+        $response->assertSee('Real-Time Dispatch GPS Telemetry', false);
+        $response->assertSee('Minimum Payout Threshold &amp; Request Cycles', false);
     }
 }

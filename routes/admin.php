@@ -91,6 +91,11 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
         Route::put('/{partner}/status', [AdminPartnerController::class, 'updateStatus'])->name('status')->middleware('admin.can:users.edit');
         Route::delete('/{partner}', [AdminPartnerController::class, 'destroy'])->name('destroy')->middleware('admin.can:users.edit');
         Route::post('/{partner}/payouts', [AdminPartnerController::class, 'disbursePayout'])->name('payouts.disburse')->middleware('admin.can:users.edit');
+        Route::post('/{partner}/avatar', [AdminPartnerController::class, 'updateAvatar'])->name('avatar.update')->middleware('admin.can:users.edit');
+        Route::post('/{partner}/payment-methods', [AdminPartnerController::class, 'storePaymentMethod'])->name('payment-methods.store')->middleware('admin.can:users.edit');
+        Route::put('/{partner}/payment-methods/{paymentMethod}', [AdminPartnerController::class, 'updatePaymentMethod'])->name('payment-methods.update')->middleware('admin.can:users.edit');
+        Route::delete('/{partner}/payment-methods/{paymentMethod}', [AdminPartnerController::class, 'destroyPaymentMethod'])->name('payment-methods.destroy')->middleware('admin.can:users.edit');
+        Route::patch('/{partner}/payment-methods/{paymentMethod}/default', [AdminPartnerController::class, 'setDefaultPaymentMethod'])->name('payment-methods.default')->middleware('admin.can:users.edit');
         Route::post('/payouts/{payout}/approve', [AdminPartnerController::class, 'approvePayoutRequest'])->name('payouts.approve')->middleware('admin.can:users.edit');
         Route::post('/payouts/{payout}/reject', [AdminPartnerController::class, 'rejectPayoutRequest'])->name('payouts.reject')->middleware('admin.can:users.edit');
     });

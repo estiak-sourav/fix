@@ -30,6 +30,8 @@
       align-items: center;
       gap: 6px;
       transition: all 0.15s ease;
+      white-space: nowrap !important;
+      flex-shrink: 0 !important;
     }
     .page-filter-btn:hover {
       background: #f8fafc;
@@ -163,6 +165,10 @@
           <span>Legal & Policies</span>
           <span style="font-size:0.7rem; padding:1px 6px; border-radius:10px; background:#f1f5f9; color:#64748b;">3</span>
         </button>
+        <button type="button" class="page-filter-btn" onclick="setPageFilter('crew_policy', this)">
+          <span>Crew & Partner Policies</span>
+          <span style="font-size:0.7rem; padding:1px 6px; border-radius:10px; background:#f1f5f9; color:#64748b;">4</span>
+        </button>
         <button type="button" class="page-filter-btn" onclick="setPageFilter('support', this)">
           <span>Support Helpdesk</span>
           <span style="font-size:0.7rem; padding:1px 6px; border-radius:10px; background:#f1f5f9; color:#64748b;">1</span>
@@ -201,6 +207,10 @@
       'legal_privacy' => '1. Privacy Policy & Data Protection',
       'legal_terms' => '2. Terms of Service & General Conditions',
       'legal_sla' => '3. Service Level Agreement (SLA) & Guarantee',
+      'partner_terms' => '1. Crew Terms of Service & Obligations',
+      'partner_work_policy' => '2. Crew Work Policy & Safety SOP',
+      'partner_privacy' => '3. Crew Privacy & Client Confidentiality',
+      'partner_payout_policy' => '4. Crew Payout & Settlement Rules',
       'support_desk' => '1. Support Helpdesk & Ticket Portal',
       'about_hero' => '1. About Us Hero & Enterprise Metrics',
       'about_overview' => '2. Mission, Vision, Values & Company Milestones',
@@ -223,6 +233,10 @@
       'legal_privacy' => \App\Models\SiteSetting::mainSiteUrl('privacy#legal-content'),
       'legal_terms' => \App\Models\SiteSetting::mainSiteUrl('terms#legal-content'),
       'legal_sla' => \App\Models\SiteSetting::mainSiteUrl('sla#legal-content'),
+      'partner_terms' => \App\Models\SiteSetting::mainSiteUrl('partner/policy#partner_terms'),
+      'partner_work_policy' => \App\Models\SiteSetting::mainSiteUrl('partner/policy#partner_work_policy'),
+      'partner_privacy' => \App\Models\SiteSetting::mainSiteUrl('partner/policy#partner_privacy'),
+      'partner_payout_policy' => \App\Models\SiteSetting::mainSiteUrl('partner/policy#partner_payout_policy'),
       'support_desk' => \App\Models\SiteSetting::mainSiteUrl('support#support-portal'),
       'about_hero' => \App\Models\SiteSetting::mainSiteUrl('about#overview'),
       'about_overview' => \App\Models\SiteSetting::mainSiteUrl('about#overview'),
@@ -1048,17 +1062,25 @@
                 </div>
               @endif
 
-              <!-- 9. Legal Policy Clauses Controls -->
-              @if(in_array($content->section_key, ['legal_privacy', 'legal_terms', 'legal_sla']))
+              <!-- 9. Legal Policy & Crew Policy Clauses Controls -->
+              @if(in_array($content->section_key, ['legal_privacy', 'legal_terms', 'legal_sla', 'partner_terms', 'partner_work_policy', 'partner_privacy', 'partner_payout_policy']))
                 <div style="border-top:1px dashed var(--paces-border); padding-top:1rem; margin-bottom:1rem;">
-                  <strong style="display:block; font-size:0.875rem; margin-bottom:0.75rem; color:#1e293b;">Policy Sections & Clauses</strong>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                    <strong style="font-size:0.875rem; color:#1e293b;">Policy Sections & Clauses</strong>
+                    <button type="button" class="btn-paces btn-paces-outline" style="font-size:0.75rem; padding:4px 10px;" onclick="addLegalClause({{ $content->id }})">
+                      + Add New Clause
+                    </button>
+                  </div>
                   <div style="display:flex; flex-direction:column; gap:12px;" id="legalSectionsContainer_{{ $content->id }}">
                     @foreach($meta['sections'] ?? [
                       ['heading' => '1. Scope of Services', 'body' => 'Details of services provided.'],
                       ['heading' => '2. Safety & Operational Standards', 'body' => 'Compliance protocols and guarantees.']
                     ] as $sIdx => $sec)
-                      <div style="background:#f8fafc; border:1px solid var(--paces-border); padding:10px 12px; border-radius:8px;">
-                        <label class="form-label-paces">Clause #{{ $sIdx + 1 }} Heading</label>
+                      <div class="legal-clause-card" style="background:#f8fafc; border:1px solid var(--paces-border); padding:10px 12px; border-radius:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                          <label class="form-label-paces" style="margin-bottom:0;">Clause #{{ $sIdx + 1 }} Heading</label>
+                          <button type="button" onclick="this.closest('.legal-clause-card').remove()" style="background:none; border:none; color:#ef4444; font-size:0.75rem; cursor:pointer; font-weight:600;" title="Remove this clause">Remove</button>
+                        </div>
                         <input type="text" name="legal_sections[{{ $sIdx }}][heading]" value="{{ $sec['heading'] ?? '' }}" class="form-control-paces" style="font-weight:600; margin-bottom:6px;">
                         <label class="form-label-paces">Clause Content / Policy Text</label>
                         <textarea name="legal_sections[{{ $sIdx }}][body]" class="form-control-paces" rows="4">{{ $sec['body'] ?? '' }}</textarea>
@@ -1348,6 +1370,25 @@
           return;
         }
       }
+    }
+
+    function addLegalClause(contentId) {
+      const container = document.getElementById('legalSectionsContainer_' + contentId);
+      if (!container) return;
+      const count = container.querySelectorAll('.legal-clause-card').length;
+      const card = document.createElement('div');
+      card.className = 'legal-clause-card';
+      card.style.cssText = 'background:#f8fafc; border:1px solid var(--paces-border); padding:10px 12px; border-radius:8px;';
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <label class="form-label-paces" style="margin-bottom:0;">Clause #${count + 1} Heading</label>
+          <button type="button" onclick="this.closest('.legal-clause-card').remove()" style="background:none; border:none; color:#ef4444; font-size:0.75rem; cursor:pointer; font-weight:600;" title="Remove this clause">Remove</button>
+        </div>
+        <input type="text" name="legal_sections[${count}][heading]" placeholder="e.g. ${count + 1}. Clause Title" class="form-control-paces" style="font-weight:600; margin-bottom:6px;">
+        <label class="form-label-paces">Clause Content / Policy Text</label>
+        <textarea name="legal_sections[${count}][body]" placeholder="Enter detailed policy text..." class="form-control-paces" rows="4"></textarea>
+      `;
+      container.appendChild(card);
     }
 
     window.addEventListener('click', function(e) {

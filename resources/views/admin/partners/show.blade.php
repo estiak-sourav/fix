@@ -9,12 +9,17 @@
         <span style="font-size:0.82rem; color:var(--paces-text-muted);">{{ $partner->isVendor() ? 'Vendor Company' : 'Lead Technician' }}</span>
       </div>
       <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-        <div style="width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg, var(--paces-primary) 0%, #1e293b 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:1.15rem; font-weight:700; overflow:hidden; border:2.5px solid #e2e8f0; flex-shrink:0;">
-          @if($partner->avatar_url)
-            <img src="{{ $partner->avatar_url }}" alt="{{ $partner->company_name }}" style="width:100%; height:100%; object-fit:cover; display:block;">
-          @else
-            <span>{{ $partner->initials }}</span>
-          @endif
+        <div style="position:relative; width:54px; height:54px; flex-shrink:0;">
+          <div style="width:54px; height:54px; border-radius:50%; background:linear-gradient(135deg, var(--paces-primary) 0%, #1e293b 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:1.15rem; font-weight:700; overflow:hidden; border:2.5px solid #e2e8f0;">
+            @if($partner->avatar_url)
+              <img src="{{ $partner->avatar_url }}" alt="{{ $partner->company_name }}" style="width:100%; height:100%; object-fit:cover; display:block;">
+            @else
+              <span>{{ $partner->initials }}</span>
+            @endif
+          </div>
+          <button type="button" onclick="openAdminAvatarModal()" title="Change Profile Picture" style="position:absolute; bottom:-3px; right:-3px; width:22px; height:22px; border-radius:50%; background:var(--paces-primary); color:#ffffff; border:2px solid #ffffff; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; box-shadow:0 1px 3px rgba(0,0,0,0.25);">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          </button>
         </div>
         <div>
           <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
@@ -339,11 +344,16 @@
 
       <!-- Configured Disbursement & Payment Methods Info -->
       <div class="card-paces" style="margin-bottom:0; padding:20px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-          <h3 class="card-title-paces" style="font-size:0.95rem; margin:0;">Saved Payment & Receiving Methods</h3>
-          <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" onclick="switchPartnerTab('tab-admin-setup')" style="font-size:0.75rem; padding:3px 8px;">
-            Edit Terms ⚙️
-          </button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:8px; flex-wrap:wrap;">
+          <h3 class="card-title-paces" style="font-size:0.95rem; margin:0;">Saved Payment &amp; Receiving Methods</h3>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="openAddPaymentMethodModal()" style="font-size:0.75rem; padding:4px 10px; display:inline-flex; align-items:center; gap:4px;">
+              <span>+ Add Method</span>
+            </button>
+            <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" onclick="switchPartnerTab('tab-admin-setup')" style="font-size:0.75rem; padding:4px 8px;">
+              Edit Terms ⚙️
+            </button>
+          </div>
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
@@ -361,23 +371,59 @@
           </div>
         </div>
 
-        <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px; max-height:160px; overflow-y:auto;">
-          <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700; margin-bottom:8px;">
-            Crew's Registered Payment Methods ({{ $paymentMethods->count() }})
+        <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px; max-height:220px; overflow-y:auto;">
+          <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+            <span>Registered Payment Methods ({{ $paymentMethods->count() }})</span>
+            <span style="font-size:0.68rem; color:#64748b; font-weight:normal;">Default method is auto-selected for direct payouts</span>
           </div>
           @forelse($paymentMethods as $pm)
-            <div style="padding:6px 8px; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-              <div>
-                <span style="font-weight:600; font-size:0.82rem; color:#1e293b;">{{ $pm->formatted_method }}</span>
-                @if($pm->is_default)
-                  <span style="background:#dbeafe; color:#1d4ed8; font-size:0.68rem; font-weight:700; padding:1px 6px; border-radius:4px; margin-left:4px;">Default</span>
-                @endif
+            <div style="padding:8px 10px; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+              <div style="min-width:0; flex:1;">
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <span style="font-weight:700; font-size:0.85rem; color:#1e293b;">{{ $pm->formatted_method }}</span>
+                  @if($pm->is_default)
+                    <span class="badge-paces" style="background:#dbeafe; color:#1d4ed8; font-size:0.68rem; font-weight:800; padding:2px 7px; border-radius:4px; white-space:nowrap !important; flex-shrink:0 !important;">★ Default</span>
+                  @endif
+                </div>
+                <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">
+                  <span>Acc: <strong style="font-family:monospace; color:#0f172a;">{{ $pm->account_number }}</strong></span>
+                  @if($pm->account_name)
+                    <span> • {{ $pm->account_name }}</span>
+                  @endif
+                  @if($pm->bank_name)
+                    <span> • {{ $pm->bank_name }}{{ $pm->branch_name ? ' ('.$pm->branch_name.')' : '' }}</span>
+                  @endif
+                </div>
               </div>
-              <span style="font-size:0.75rem; color:#64748b; font-family:monospace;">{{ $pm->account_number }}</span>
+              <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                <button type="button" 
+                  onclick='openAdminEditPaymentMethodModal(@json($pm))' 
+                  class="btn-paces btn-paces-outline btn-paces-sm" 
+                  title="Edit payment method" 
+                  style="font-size:0.7rem; padding:3px 8px;">
+                  Edit
+                </button>
+                @if(! $pm->is_default)
+                  <form id="adminDefaultPmForm_{{ $pm->id }}" action="{{ route('admin.partners.payment-methods.default', [$partner, $pm]) }}" method="POST" style="margin:0;">
+                    @csrf
+                    @method('PATCH')
+                    <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" title="Set as default receiving method" style="font-size:0.7rem; padding:3px 8px; white-space:nowrap !important; flex-shrink:0 !important;" onclick="openAdminConfirmModal({ title:'Set Default Method?', message:'Set {{ $pm->formatted_method }} as the primary default payout target for this crew?', confirmText:'Set Default', confirmColor:'var(--paces-primary)', iconType:'warning', onConfirm: () => document.getElementById('adminDefaultPmForm_{{ $pm->id }}').submit() })">
+                      Make Default
+                    </button>
+                  </form>
+                @endif
+                <form id="adminDeletePmForm_{{ $pm->id }}" action="{{ route('admin.partners.payment-methods.destroy', [$partner, $pm]) }}" method="POST" style="margin:0;">
+                  @csrf
+                  @method('DELETE')
+                  <button type="button" class="btn-paces btn-paces-danger btn-paces-sm" title="Delete payment method" style="font-size:0.7rem; padding:3px 7px; background:#fef2f2; border-color:#fecaca; color:#dc2626; white-space:nowrap !important; flex-shrink:0 !important;" onclick="openAdminConfirmModal({ title:'Delete Payment Method?', message:'Are you sure you want to delete this payment method ({{ $pm->formatted_method }}) for {{ $partner->contact_person }}?', confirmText:'Delete Method', confirmColor:'#dc2626', onConfirm: () => document.getElementById('adminDeletePmForm_{{ $pm->id }}').submit() })">
+                    ✕
+                  </button>
+                </form>
+              </div>
             </div>
           @empty
-            <div style="font-size:0.8rem; color:#94a3b8; text-align:center; padding:8px;">
-              No payment methods registered by crew yet.
+            <div style="font-size:0.8rem; color:#94a3b8; text-align:center; padding:12px;">
+              No payment methods registered yet. Click <strong>+ Add Method</strong> to add bKash, Nagad, Rocket, or Bank details.
             </div>
           @endforelse
         </div>
@@ -1229,5 +1275,274 @@
         switchPartnerTab('tab-work-history');
       }
     });
+
+    // Modals Logic
+    function openAdminAvatarModal() {
+      const modal = document.getElementById('adminAvatarModal');
+      if (modal) modal.style.display = 'flex';
+    }
+    function closeAdminAvatarModal() {
+      const modal = document.getElementById('adminAvatarModal');
+      if (modal) modal.style.display = 'none';
+    }
+    function openAddPaymentMethodModal() {
+      const modal = document.getElementById('adminPaymentMethodModal');
+      if (modal) modal.style.display = 'flex';
+    }
+    function closeAddPaymentMethodModal() {
+      const modal = document.getElementById('adminPaymentMethodModal');
+      if (modal) modal.style.display = 'none';
+    }
+    function toggleModalPaymentType(val) {
+      const bankFields = document.getElementById('modalBankFields');
+      if (bankFields) {
+        bankFields.style.display = (val === 'bank') ? 'block' : 'none';
+      }
+    }
+
+    function openAdminEditPaymentMethodModal(pm) {
+      const form = document.getElementById('adminEditPaymentMethodForm');
+      form.action = '/admin/partners/{{ $partner->id }}/payment-methods/' + pm.id;
+      document.getElementById('admin_edit_method_type').value = pm.method_type;
+      toggleAdminEditPaymentType(pm.method_type);
+      document.getElementById('admin_edit_number_type').value = pm.number_type || 'personal';
+      document.getElementById('admin_edit_account_number').value = pm.account_number || '';
+      document.getElementById('admin_edit_account_name').value = pm.account_name || '';
+      document.getElementById('admin_edit_bank_name').value = pm.bank_name || '';
+      document.getElementById('admin_edit_branch_name').value = pm.branch_name || '';
+      document.getElementById('admin_edit_routing_number').value = pm.routing_number || '';
+      document.getElementById('admin_edit_is_default').checked = !!pm.is_default;
+      document.getElementById('adminEditPaymentMethodModal').style.display = 'flex';
+    }
+
+    function closeAdminEditPaymentMethodModal() {
+      const modal = document.getElementById('adminEditPaymentMethodModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function toggleAdminEditPaymentType(val) {
+      const bankFields = document.getElementById('adminEditModalBankFields');
+      if (bankFields) {
+        bankFields.style.display = (val === 'bank') ? 'block' : 'none';
+      }
+    }
   </script>
+
+  <!-- ========================================================================= -->
+  <!-- ADMIN AVATAR QUICK UPDATE MODAL                                           -->
+  <!-- ========================================================================= -->
+  <div id="adminAvatarModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:99999; backdrop-filter:blur(3px); align-items:center; justify-content:center; padding:16px;" onclick="if(event.target===this) closeAdminAvatarModal()">
+    <div style="background:#ffffff; border-radius:12px; max-width:440px; width:100%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2); overflow:hidden; border:1px solid #e2e8f0;">
+      <div style="padding:16px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+        <h4 style="margin:0; font-size:1rem; font-weight:700; color:var(--paces-primary);">
+          📷 Update Profile Picture
+        </h4>
+        <button type="button" onclick="closeAdminAvatarModal()" style="background:none; border:none; font-size:1.25rem; color:#94a3b8; cursor:pointer; line-height:1;">✕</button>
+      </div>
+
+      <form action="{{ route('admin.partners.avatar.update', $partner) }}" method="POST" enctype="multipart/form-data" style="margin:0;">
+        @csrf
+        <div style="padding:20px;">
+          <div style="text-align:center; margin-bottom:18px;">
+            <div style="width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg, var(--paces-primary) 0%, #1e293b 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:700; overflow:hidden; border:3px solid #cbd5e1; margin:0 auto 10px;">
+              @if($partner->avatar_url)
+                <img src="{{ $partner->avatar_url }}" alt="{{ $partner->company_name }}" style="width:100%; height:100%; object-fit:cover;">
+              @else
+                <span>{{ $partner->initials }}</span>
+              @endif
+            </div>
+            <div style="font-weight:700; font-size:0.92rem; color:#1e293b;">{{ $partner->company_name }}</div>
+            <span style="font-size:0.75rem; color:#64748b;">{{ $partner->contact_person }}</span>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label class="form-label-paces" style="font-weight:600; font-size:0.82rem; margin-bottom:6px; display:block;">Select New Photo</label>
+            <input type="file" name="avatar" class="form-control-paces" accept="image/jpeg,image/png,image/jpg,image/webp">
+            <span style="font-size:0.72rem; color:#64748b; margin-top:4px; display:block;">JPG, PNG or WEBP (max 5MB).</span>
+          </div>
+
+          @if($partner->avatar)
+            <div style="margin-top:10px; background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:8px 12px;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; color:#991b1b; cursor:pointer; margin:0;">
+                <input type="checkbox" name="remove_avatar" value="1" style="accent-color:#dc2626; width:16px; height:16px;">
+                <span>Remove current profile picture and use initials</span>
+              </label>
+            </div>
+          @endif
+        </div>
+
+        <div style="padding:14px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" onclick="closeAdminAvatarModal()" class="btn-paces btn-paces-outline btn-paces-sm">Cancel</button>
+          <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:700;">Save Photo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- ADMIN ADD PAYMENT METHOD MODAL                                            -->
+  <!-- ========================================================================= -->
+  <div id="adminPaymentMethodModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:99999; backdrop-filter:blur(3px); align-items:center; justify-content:center; padding:16px;" onclick="if(event.target===this) closeAddPaymentMethodModal()">
+    <div style="background:#ffffff; border-radius:12px; max-width:480px; width:100%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2); overflow:hidden; border:1px solid #e2e8f0;">
+      <div style="padding:16px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+        <div>
+          <h4 style="margin:0; font-size:1.02rem; font-weight:700; color:var(--paces-primary);">
+            + Add Payout / Receiving Method
+          </h4>
+          <span style="font-size:0.75rem; color:#64748b;">For {{ $partner->company_name }}</span>
+        </div>
+        <button type="button" onclick="closeAddPaymentMethodModal()" style="background:none; border:none; font-size:1.25rem; color:#94a3b8; cursor:pointer; line-height:1;">✕</button>
+      </div>
+
+      <form action="{{ route('admin.partners.payment-methods.store', $partner) }}" method="POST" style="margin:0;">
+        @csrf
+        <div style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Method Type <span style="color:#ef4444;">*</span></label>
+              <select name="method_type" class="form-control-paces" required onchange="toggleModalPaymentType(this.value)">
+                <option value="bkash">bKash (MFS)</option>
+                <option value="nagad">Nagad (MFS)</option>
+                <option value="rocket">Rocket (MFS)</option>
+                <option value="upay">Upay (MFS)</option>
+                <option value="bank">Bank Transfer</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Wallet / Number Type <span style="color:#ef4444;">*</span></label>
+              <select name="number_type" class="form-control-paces" required>
+                <option value="personal">Personal</option>
+                <option value="merchant">Merchant</option>
+                <option value="agent">Agent</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Account / Mobile Number <span style="color:#ef4444;">*</span></label>
+            <input type="text" name="account_number" class="form-control-paces" required placeholder="e.g. 01700-000000 or Account No" value="{{ old('account_number') }}">
+          </div>
+
+          <div>
+            <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Account Holder Name <span style="color:#ef4444;">*</span></label>
+            <input type="text" name="account_name" class="form-control-paces" required placeholder="e.g. {{ $partner->contact_person }}" value="{{ old('account_name', $partner->contact_person) }}">
+          </div>
+
+          <!-- Bank-Specific Fields -->
+          <div id="modalBankFields" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px;">
+            <div style="margin-bottom:10px;">
+              <label class="form-label-paces" style="font-weight:600; font-size:0.78rem;">Bank Name</label>
+              <input type="text" name="bank_name" class="form-control-paces" placeholder="e.g. Dutch-Bangla Bank PLC, BRAC Bank" style="font-size:0.82rem;">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div>
+                <label class="form-label-paces" style="font-weight:600; font-size:0.78rem;">Branch Name</label>
+                <input type="text" name="branch_name" class="form-control-paces" placeholder="e.g. Mirpur-1 Branch" style="font-size:0.82rem;">
+              </div>
+              <div>
+                <label class="form-label-paces" style="font-weight:600; font-size:0.78rem;">Routing Number</label>
+                <input type="text" name="routing_number" class="form-control-paces" placeholder="9-digit routing" style="font-size:0.82rem;">
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; color:#1e293b; cursor:pointer;">
+              <input type="checkbox" name="is_default" value="1" {{ $paymentMethods->isEmpty() ? 'checked' : '' }} style="accent-color:var(--paces-primary); width:16px; height:16px;">
+              <span style="font-weight:600;">Set as default receiving method</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="padding:14px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" onclick="closeAddPaymentMethodModal()" class="btn-paces btn-paces-outline btn-paces-sm">Cancel</button>
+          <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:700;">+ Save Payment Method</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- ADMIN EDIT PAYMENT METHOD MODAL                                           -->
+  <!-- ========================================================================= -->
+  <div id="adminEditPaymentMethodModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:99999; backdrop-filter:blur(3px); align-items:center; justify-content:center; padding:16px;" onclick="if(event.target===this) closeAdminEditPaymentMethodModal()">
+    <div style="background:#ffffff; border-radius:12px; max-width:480px; width:100%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2); overflow:hidden; border:1px solid #e2e8f0;">
+      <div style="padding:16px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+        <div>
+          <h4 style="margin:0; font-size:1.02rem; font-weight:700; color:var(--paces-primary);">
+            Edit Payout / Receiving Method
+          </h4>
+          <span style="font-size:0.75rem; color:#64748b;">For {{ $partner->company_name }}</span>
+        </div>
+        <button type="button" onclick="closeAdminEditPaymentMethodModal()" style="background:none; border:none; font-size:1.25rem; color:#94a3b8; cursor:pointer; line-height:1;">✕</button>
+      </div>
+
+      <form id="adminEditPaymentMethodForm" method="POST" style="margin:0;">
+        @csrf
+        @method('PUT')
+        <div style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Method Type <span style="color:#ef4444;">*</span></label>
+              <select name="method_type" id="admin_edit_method_type" class="form-control-paces" required onchange="toggleAdminEditPaymentType(this.value)">
+                <option value="bkash">bKash (MFS)</option>
+                <option value="nagad">Nagad (MFS)</option>
+                <option value="rocket">Rocket (MFS)</option>
+                <option value="upay">Upay (MFS)</option>
+                <option value="bank">Bank Transfer</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Wallet / Number Type <span style="color:#ef4444;">*</span></label>
+              <select name="number_type" id="admin_edit_number_type" class="form-control-paces" required>
+                <option value="personal">Personal</option>
+                <option value="merchant">Merchant</option>
+                <option value="agent">Agent</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Account / Mobile Number <span style="color:#ef4444;">*</span></label>
+            <input type="text" name="account_number" id="admin_edit_account_number" class="form-control-paces" required placeholder="e.g. 01700-000000 or Account No">
+          </div>
+
+          <div>
+            <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Account Holder Name <span style="color:#ef4444;">*</span></label>
+            <input type="text" name="account_name" id="admin_edit_account_name" class="form-control-paces" required placeholder="e.g. Account name">
+          </div>
+
+          <!-- Bank-Specific Fields -->
+          <div id="adminEditModalBankFields" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px;">
+            <div style="margin-bottom:10px;">
+              <label class="form-label-paces" style="font-weight:600; font-size:0.78rem;">Bank Name</label>
+              <input type="text" name="bank_name" id="admin_edit_bank_name" class="form-control-paces" placeholder="e.g. Dutch-Bangla Bank PLC, BRAC Bank" style="font-size:0.82rem;">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div>
+                <label class="form-label-paces" style="font-weight:600; font-size:0.78rem;">Branch Name</label>
+                <input type="text" name="branch_name" id="admin_edit_branch_name" class="form-control-paces" placeholder="e.g. Mirpur-1 Branch" style="font-size:0.82rem;">
+              </div>
+              <div>
+                <label class="form-label-paces" style="font-weight:600; font-size:0.78rem;">Routing Number</label>
+                <input type="text" name="routing_number" id="admin_edit_routing_number" class="form-control-paces" placeholder="9-digit routing" style="font-size:0.82rem;">
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; color:#1e293b; cursor:pointer;">
+              <input type="checkbox" name="is_default" id="admin_edit_is_default" value="1" style="accent-color:var(--paces-primary); width:16px; height:16px;">
+              <span style="font-weight:600;">Set as default receiving method</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="padding:14px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" onclick="closeAdminEditPaymentMethodModal()" class="btn-paces btn-paces-outline btn-paces-sm">Cancel</button>
+          <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:700;">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </x-layouts.admin>

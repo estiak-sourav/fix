@@ -167,11 +167,11 @@
                       <div style="font-weight:500; color:#1e293b;">{{ $ticket->customer_name }}</div>
                       <div style="font-size:0.78rem; color:#64748b;">{{ $ticket->customer_email }}</div>
                       @if($ticket->user)
-                        <span style="display:inline-block; font-size:0.68rem; font-weight:500; background:#e0e7ff; color:#3730a3; padding:1px 6px; border-radius:10px; margin-top:2px;">
+                        <span class="badge-paces" style="display:inline-block; font-size:0.68rem; font-weight:500; background:#e0e7ff; color:#3730a3; padding:1px 6px; border-radius:10px; margin-top:2px; white-space:nowrap !important; flex-shrink:0 !important;">
                           Registered Client
                         </span>
                       @else
-                        <span style="display:inline-block; font-size:0.68rem; font-weight:500; background:#f1f5f9; color:#64748b; padding:1px 6px; border-radius:10px; margin-top:2px;">
+                        <span class="badge-paces" style="display:inline-block; font-size:0.68rem; font-weight:500; background:#f1f5f9; color:#64748b; padding:1px 6px; border-radius:10px; margin-top:2px; white-space:nowrap !important; flex-shrink:0 !important;">
                           Guest Email
                         </span>
                       @endif
@@ -191,9 +191,9 @@
 
                 <!-- Priority -->
                 <td style="padding:14px 16px;">
-                  <span style="font-size:0.72rem; font-weight:500; text-transform:uppercase; padding:2px 8px; border-radius:12px;
+                  <span class="badge-paces" style="font-size:0.72rem; font-weight:500; text-transform:uppercase; padding:2px 8px; border-radius:12px;
                     background:{{ $ticket->priority === 'urgent' ? '#fee2e2' : ($ticket->priority === 'high' ? '#ffedd5' : '#f8fafc') }};
-                    color:{{ $ticket->priority === 'urgent' ? '#dc2626' : ($ticket->priority === 'high' ? '#ea580c' : '#64748b') }}; border:1px solid #e2e8f0;">
+                    color:{{ $ticket->priority === 'urgent' ? '#dc2626' : ($ticket->priority === 'high' ? '#ea580c' : '#64748b') }}; border:1px solid #e2e8f0; white-space:nowrap !important; flex-shrink:0 !important;">
                     {{ ucfirst($ticket->priority) }}
                   </span>
                 </td>

@@ -237,7 +237,7 @@
                   Operating Coverage Areas <span class="required">*</span>
                   <span style="font-weight:400; color:#64748b; font-size:0.85rem; margin-left:6px;">(Multi-select operating thanas/areas)</span>
                 </label>
-                <span id="vendorSelectedAreasCountBadge" style="font-size:0.8rem; font-weight:700; color:#0d9488; background:#f0fdfa; border:1px solid #ccfbf1; padding:2px 10px; border-radius:9999px;">
+                <span id="vendorSelectedAreasCountBadge" class="badge" style="font-size:0.8rem; font-weight:700; color:#0d9488; background:#f0fdfa; border:1px solid #ccfbf1; padding:2px 10px; border-radius:9999px; white-space:nowrap !important; flex-shrink:0 !important;">
                   0 Selected
                 </span>
               </div>
@@ -482,7 +482,7 @@
       checkedBoxes.forEach(cb => {
         const areaName = cb.dataset.areaName || cb.value;
         const pill = document.createElement('span');
-        pill.style.cssText = 'display:inline-flex; align-items:center; gap:5px; padding:3px 9px; background:#f0fdfa; border:1px solid #ccfbf1; border-radius:9999px; font-size:0.78rem; font-weight:600; color:#0d9488;';
+        pill.style.cssText = 'display:inline-flex; align-items:center; gap:5px; padding:3px 9px; background:#f0fdfa; border:1px solid #ccfbf1; border-radius:9999px; font-size:0.78rem; font-weight:600; color:#0d9488; white-space:nowrap !important; flex-shrink:0 !important;';
         pill.innerHTML = `<span>${areaName}</span><button type="button" style="background:none; border:none; color:inherit; cursor:pointer; padding:0; line-height:1; font-size:0.85rem;" title="Remove area">&times;</button>`;
         pill.querySelector('button').onclick = function() {
           cb.checked = false;

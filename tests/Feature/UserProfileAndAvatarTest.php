@@ -433,4 +433,24 @@ class UserProfileAndAvatarTest extends TestCase
         $this->assertNull($this->user->district);
         $this->assertNull($this->user->area);
     }
+
+    public function test_become_a_partner_is_hidden_when_client_user_is_logged_in(): void
+    {
+        // 1. As guest, 'Become a Partner' button is visible in navbar
+        $guestResponse = $this->get(route('home'));
+        $guestResponse->assertOk();
+        $guestResponse->assertSee('btn-vendor-nav', false);
+        $guestResponse->assertSee(route('vendor'));
+
+        // 2. As authenticated client user, 'Become a Partner' button and nav links are hidden
+        $authResponse = $this->actingAs($this->user)->get(route('customer.profile'));
+        $authResponse->assertOk();
+        $authResponse->assertDontSee('btn-vendor-nav', false);
+        $authResponse->assertDontSee('Become a Partner');
+
+        // Also on home page, the nav button is not rendered for auth user
+        $homeAuthResponse = $this->actingAs($this->user)->get(route('home'));
+        $homeAuthResponse->assertOk();
+        $homeAuthResponse->assertDontSee('btn-vendor-nav', false);
+    }
 }

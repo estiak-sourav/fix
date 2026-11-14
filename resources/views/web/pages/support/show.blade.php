@@ -18,16 +18,16 @@
             <h1 style="font-size:1.85rem; font-weight:800; color:#ffffff; margin:0;">
               Ticket #{{ $ticket->ticket_number }}
             </h1>
-            <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:20px;
+            <span class="badge" style="font-size:0.8rem; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:20px;
               background:{{ $ticket->status === 'closed' ? 'rgba(241,245,249,0.15)' : ($ticket->status === 'in_progress' ? 'rgba(254,243,199,0.2)' : 'rgba(224,242,254,0.2)') }};
               color:{{ $ticket->status === 'closed' ? '#94a3b8' : ($ticket->status === 'in_progress' ? '#fcd34d' : '#7dd3fc') }};
-              border:1px solid rgba(255,255,255,0.15);">
+              border:1px solid rgba(255,255,255,0.15); white-space:nowrap !important; flex-shrink:0 !important;">
               ● {{ ucfirst(str_replace('_', ' ', $ticket->status)) }}
             </span>
-            <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:20px;
+            <span class="badge" style="font-size:0.8rem; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:20px;
               background:{{ $ticket->priority === 'urgent' ? 'rgba(254,226,226,0.2)' : ($ticket->priority === 'high' ? 'rgba(255,237,213,0.2)' : 'rgba(248,250,252,0.1)') }};
               color:{{ $ticket->priority === 'urgent' ? '#fca5a5' : ($ticket->priority === 'high' ? '#fdba74' : '#94a3b8') }};
-              border:1px solid rgba(255,255,255,0.15);">
+              border:1px solid rgba(255,255,255,0.15); white-space:nowrap !important; flex-shrink:0 !important;">
               Priority: {{ ucfirst($ticket->priority) }}
             </span>
           </div>

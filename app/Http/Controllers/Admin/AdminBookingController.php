@@ -662,6 +662,10 @@ class AdminBookingController extends Controller
      */
     public function cancel(Request $request, Booking $booking, UpdateBookingStatusAction $action): RedirectResponse
     {
+        if ($booking->status === 'cancelled') {
+            return redirect()->back()->with('info', 'This work order is already cancelled.');
+        }
+
         $validated = $request->validate([
             'cancellation_reason' => ['required', 'string', 'max:1000'],
         ]);

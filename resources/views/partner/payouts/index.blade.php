@@ -6,11 +6,6 @@
       </div>
 
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button type="button" class="btn-p btn-p-outline" onclick="openModal('addPaymentMethodModal')">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M12 5v14M5 12h14"></path></svg>
-          <span>+ Add Payment Method</span>
-        </button>
-
         @if($pendingDue > 0)
           <button type="button" class="btn-p btn-p-primary" onclick="openModal('requestPayoutModal')">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
@@ -80,19 +75,20 @@
         </h3>
       </div>
 
-      <button type="button" class="btn-p btn-p-outline" onclick="openModal('addPaymentMethodModal')" style="font-size: 0.78rem; padding: 6px 12px;">
-        + Add Another Method
-      </button>
+      <a href="{{ route('partner.profile.index') }}#payout" class="btn-p btn-p-outline" style="font-size: 0.78rem; padding: 6px 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <span>⚙️ Manage in Settings</span>
+      </a>
     </div>
 
     @if($paymentMethods->isEmpty())
       <div style="text-align: center; padding: 32px 16px; color: var(--p-muted); background: #f8fafc; border-radius: 8px;">
         <div style="font-size: 2rem; margin-bottom: 8px;">💳</div>
         <div style="font-weight: 600; color: #475569; font-size: 0.92rem;">No Saved Payment Methods</div>
-        <p style="font-size: 0.8rem; margin: 4px 0 12px;">Add your bKash, Nagad, Rocket, or Bank account so Admin can disburse your earned payments.</p>
-        <button type="button" class="btn-p btn-p-primary btn-p-sm" onclick="openModal('addPaymentMethodModal')">
-          Add Payment Method Now
-        </button>
+        <p style="font-size: 0.8rem; margin: 4px 0 12px;">Add your bKash, Nagad, Rocket, or Bank account in Settings to receive earned payments.</p>
+        <a href="{{ route('partner.profile.index') }}#payout" class="btn-p btn-p-primary btn-p-sm" style="text-decoration: none;">
+          Go to Settings to Add Method →
+        </a>
       </div>
     @else
       <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
@@ -109,15 +105,6 @@
                   </span>
                 @endif
               </div>
-
-              <!-- Delete button -->
-              <form action="{{ route('partner.payment-methods.destroy', $method) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this payment method?')">
-                @csrf
-                @method('DELETE')
-                <button type="submit" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 4px; font-size: 0.85rem;" title="Delete Method">
-                  ✕
-                </button>
-              </form>
             </div>
 
             <div style="font-size: 1rem; font-family: monospace; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
@@ -133,17 +120,6 @@
             @if($method->method_type === 'bank' && $method->branch_name)
               <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">
                 Branch: {{ $method->branch_name }} {{ $method->routing_number ? '• Routing: '.$method->routing_number : '' }}
-              </div>
-            @endif
-
-            @if(!$method->is_default)
-              <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
-                <form action="{{ route('partner.payment-methods.default', $method) }}" method="POST">
-                  @csrf
-                  <button type="submit" style="background: none; border: none; color: var(--p-accent); font-size: 0.75rem; font-weight: 700; cursor: pointer; padding: 0;">
-                    ☆ Set as Primary Receiving Method
-                  </button>
-                </form>
               </div>
             @endif
           </div>
@@ -369,7 +345,7 @@
           </label>
           @if($paymentMethods->isEmpty())
             <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 10px; font-size: 0.8rem; color: #92400e;">
-              ⚠️ You have not saved any payment methods yet. Please <a href="javascript:void(0)" onclick="closeModal('requestPayoutModal'); openModal('addPaymentMethodModal');" style="color: #b45309; font-weight: 700; text-decoration: underline;">add a payment method</a> first.
+              ⚠️ You have not saved any payment methods yet. Please <a href="{{ route('partner.profile.index') }}#payout" style="color: #b45309; font-weight: 700; text-decoration: underline;">add a payment method in Settings</a> first.
             </div>
           @else
             <select name="partner_payment_method_id" required style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; color: #0f172a;">
@@ -400,119 +376,6 @@
     </div>
   </div>
 
-  <!-- MODAL 2: ADD PAYMENT METHOD (Supports bKash, Nagad, Rocket, Bank + Personal/Agent Selector) -->
-  <div id="addPaymentMethodModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 9999; align-items: center; justify-content: center; padding: 16px;">
-    <div style="background: #ffffff; border-radius: 12px; max-width: 520px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; animation: popIn 0.2s ease;">
-      <div style="padding: 18px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a;">Add Payment Method</h3>
-          <p style="margin: 2px 0 0; font-size: 0.78rem; color: #64748b;">Specify whether your bKash, Nagad, or Rocket number is Personal or Agent.</p>
-        </div>
-        <button type="button" onclick="closeModal('addPaymentMethodModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #94a3b8;">✕</button>
-      </div>
-
-      <form action="{{ route('partner.payment-methods.store') }}" method="POST" style="padding: 20px;">
-        @csrf
-
-        <!-- Method Type -->
-        <div style="margin-bottom: 14px;">
-          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
-            Payment Method Provider <span style="color: #dc2626;">*</span>
-          </label>
-          <select name="method_type" id="method_type_select" required onchange="toggleMethodFields(this.value)" style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
-            <option value="bkash">bKash</option>
-            <option value="nagad">Nagad</option>
-            <option value="rocket">Rocket</option>
-            <option value="bank">Bank Transfer</option>
-          </select>
-        </div>
-
-        <!-- Number Type for MFS (Personal vs Agent vs Merchant) -->
-        <div id="mfsTypeWrapper" style="margin-bottom: 14px;">
-          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">
-            Number Classification <span style="color: #dc2626;">*</span>
-          </label>
-          <div style="display: flex; gap: 14px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 8px;">
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer;">
-              <input type="radio" name="number_type" value="personal" checked>
-              <span>Personal</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer;">
-              <input type="radio" name="number_type" value="agent">
-              <span style="color: #b45309;">Agent</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer;">
-              <input type="radio" name="number_type" value="merchant">
-              <span>Merchant</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Account / Mobile Number -->
-        <div style="margin-bottom: 14px;">
-          <label id="accountNumberLabel" style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
-            Mobile Wallet Number (01XXXXXXXXX) <span style="color: #dc2626;">*</span>
-          </label>
-          <input 
-            type="text" 
-            name="account_number" 
-            required 
-            placeholder="017XXXXXXXX" 
-            style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; font-family: monospace;"
-          >
-        </div>
-
-        <!-- Account Name -->
-        <div style="margin-bottom: 14px;">
-          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
-            Account Name / Owner Name (Optional)
-          </label>
-          <input 
-            type="text" 
-            name="account_name" 
-            placeholder="e.g. Md. Rafiqul Islam" 
-            style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;"
-          >
-        </div>
-
-        <!-- Bank Specific Fields (Hidden by default) -->
-        <div id="bankFieldsWrapper" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 14px;">
-          <div style="margin-bottom: 10px;">
-            <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
-              Bank Name <span style="color: #dc2626;">*</span>
-            </label>
-            <input type="text" name="bank_name" placeholder="e.g. Islami Bank Bangladesh Ltd." style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem;">
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div>
-              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">Branch Name</label>
-              <input type="text" name="branch_name" placeholder="e.g. Gulshan Branch" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem;">
-            </div>
-            <div>
-              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">Routing Number (Optional)</label>
-              <input type="text" name="routing_number" placeholder="e.g. 12527283" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem;">
-            </div>
-          </div>
-        </div>
-
-        <!-- Set as Default -->
-        <div style="margin-bottom: 18px;">
-          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 600; color: #1e293b; cursor: pointer;">
-            <input type="checkbox" name="is_default" value="1" {{ $paymentMethods->isEmpty() ? 'checked' : '' }}>
-            <span>Set as primary default payout method</span>
-          </label>
-        </div>
-
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-          <button type="button" class="btn-p btn-p-outline" onclick="closeModal('addPaymentMethodModal')">Cancel</button>
-          <button type="submit" class="btn-p btn-p-primary">
-            Save Payment Method
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <script>
     function openModal(id) {
       const modal = document.getElementById(id);
@@ -522,22 +385,6 @@
     function closeModal(id) {
       const modal = document.getElementById(id);
       if (modal) modal.style.display = 'none';
-    }
-
-    function toggleMethodFields(val) {
-      const mfsWrapper = document.getElementById('mfsTypeWrapper');
-      const bankWrapper = document.getElementById('bankFieldsWrapper');
-      const label = document.getElementById('accountNumberLabel');
-
-      if (val === 'bank') {
-        if (mfsWrapper) mfsWrapper.style.display = 'none';
-        if (bankWrapper) bankWrapper.style.display = 'block';
-        if (label) label.innerHTML = 'Bank Account Number <span style="color:#dc2626;">*</span>';
-      } else {
-        if (mfsWrapper) mfsWrapper.style.display = 'block';
-        if (bankWrapper) bankWrapper.style.display = 'none';
-        if (label) label.innerHTML = (val.toUpperCase()) + ' Mobile Number (01XXXXXXXXX) <span style="color:#dc2626;">*</span>';
-      }
     }
   </script>
 </x-partner.layouts.app>

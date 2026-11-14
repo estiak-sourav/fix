@@ -118,13 +118,19 @@
       }
     }
 
-    /* Mobile Visibility Logic */
+    /* Mobile Visibility Logic: Menu only by default, content only when tab is active */
     @media (max-width: 859px) {
-      .settings-menu.mobile-hidden {
+      .settings-content-wrap {
         display: none !important;
       }
-      .settings-content-wrap.mobile-hidden {
+      .settings-menu {
+        display: flex !important;
+      }
+      .settings-layout.tab-active .settings-menu {
         display: none !important;
+      }
+      .settings-layout.tab-active .settings-content-wrap {
+        display: block !important;
       }
     }
     @media (min-width: 860px) {
@@ -164,7 +170,7 @@
   <div class="settings-layout">
     <!-- Menu List (Sidebar on desktop, Full-width vertical list on mobile) -->
     <aside id="settingsMenu" class="settings-menu">
-      <button type="button" class="settings-menu-btn active" data-tab="tab-profile" onclick="switchSettingsTab('tab-profile')">
+      <button type="button" class="settings-menu-btn" data-tab="tab-profile" onclick="switchSettingsTab('tab-profile')">
         <span class="settings-menu-btn-left">
           <span class="menu-icon-wrap">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -214,11 +220,21 @@
         <div style="display: flex; align-items: center; gap: 8px;">
           @php $unrCount = auth('partner')->user()?->unreadNotificationsCount() ?? 0; @endphp
           @if($unrCount > 0)
-            <span style="background: #ef4444; color: #fff; font-size: 0.7rem; font-weight: 800; padding: 2px 7px; border-radius: 9999px;">{{ $unrCount }} New</span>
+            <span class="p-badge" style="background: #ef4444; color: #fff; font-size: 0.7rem; font-weight: 800; padding: 2px 7px; border-radius: 9999px; white-space: nowrap !important; flex-shrink: 0 !important;">{{ $unrCount }} New</span>
           @endif
           <svg class="settings-chevron" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </div>
       </a>
+
+      <button type="button" class="settings-menu-btn" data-tab="tab-policies" onclick="switchSettingsTab('tab-policies')">
+        <span class="settings-menu-btn-left">
+          <span class="menu-icon-wrap">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </span>
+          <span>Policies &amp; Terms</span>
+        </span>
+        <svg class="settings-chevron" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
 
       <!-- Sign Out Action -->
       <div style="border-top: 1px solid var(--p-border); margin-top: 4px; padding-top: 6px;">
@@ -685,62 +701,261 @@
           </div>
         </div>
 
-        <!-- Tab 4: Payout Method -->
-        <div id="tab-payout" class="settings-tab-panel">
-          <div class="p-card">
-            <h3 class="p-card-title" style="margin-bottom: 16px; border-bottom: 1px solid var(--p-border); padding-bottom: 10px;">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-              <span>Payout Method</span>
-            </h3>
+      </form>
 
-            <div style="margin-bottom: 14px;">
-              <label class="p-label">Channel</label>
-              <select name="payment_method" class="p-input" id="payment_method_select">
-                <option value="bank" {{ old('payment_method', $partner->payment_method) === 'bank' ? 'selected' : '' }}>Bank Account</option>
-                <option value="bkash" {{ old('payment_method', $partner->payment_method) === 'bkash' ? 'selected' : '' }}>bKash</option>
-                <option value="nagad" {{ old('payment_method', $partner->payment_method) === 'nagad' ? 'selected' : '' }}>Nagad</option>
-                <option value="rocket" {{ old('payment_method', $partner->payment_method) === 'rocket' ? 'selected' : '' }}>Rocket</option>
-              </select>
+      <!-- Tab 4: Payout Method (Outside profile form to allow independent add/delete/set-default forms) -->
+      <div id="tab-payout" class="settings-tab-panel">
+        <div class="p-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--p-border); padding-bottom: 14px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h3 class="p-card-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                <span>Payout &amp; Receiving Methods</span>
+              </h3>
+              <p style="margin: 4px 0 0; font-size: 0.8rem; color: #64748b;">
+                Add and manage your bKash, Nagad, Rocket, Upay, or Bank accounts for withdrawing earnings.
+              </p>
             </div>
 
-            {{-- Bank Account Fields --}}
-            <div id="bank_fields">
-              <div style="margin-bottom: 12px;">
-                <label class="p-label">Bank Name</label>
-                <input type="text" name="bank_name" class="p-input" placeholder="e.g. BRAC Bank PLC" value="{{ old('bank_name', $partner->bank_name) }}">
+            <button type="button" class="btn-p btn-p-primary" onclick="openModal('addPaymentMethodModal')" style="padding: 8px 16px; font-size: 0.84rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <span>Add Payment Method</span>
+            </button>
+          </div>
+
+          @if($partner->paymentMethods->isEmpty())
+            <div style="text-align: center; padding: 44px 20px; color: var(--p-muted); background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 12px;">
+              <div style="width: 56px; height: 56px; border-radius: 50%; background: #eff6ff; color: var(--p-accent); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 12px;">
+                💳
               </div>
-              <div style="margin-bottom: 12px;">
-                <label class="p-label">Account Holder Name</label>
-                <input type="text" name="account_holder" class="p-input" value="{{ old('account_holder', $partner->account_holder) }}">
+              <div style="font-weight: 800; color: #1e293b; font-size: 1rem;">No Payment Methods Added Yet</div>
+              <p style="font-size: 0.82rem; color: #64748b; margin: 4px auto 16px; max-width: 380px;">
+                Add your personal or merchant bKash, Nagad, Rocket, Upay, or Bank account to withdraw job earnings.
+              </p>
+              <button type="button" class="btn-p btn-p-primary" onclick="openModal('addPaymentMethodModal')" style="padding: 9px 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Add Payment Method Now</span>
+              </button>
+            </div>
+          @else
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px;">
+              @foreach($partner->paymentMethods as $method)
+                <div style="background: {{ $method->is_default ? '#f0fdf4' : '#ffffff' }}; border: 1.5px solid {{ $method->is_default ? '#86efac' : '#e2e8f0' }}; border-radius: 12px; padding: 16px; position: relative; transition: all 0.2s ease; display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 8px;">
+                      <div>
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                          <span style="font-weight: 800; font-size: 0.98rem; color: #0f172a; white-space: nowrap !important; flex-shrink: 0 !important;">
+                            {{ strtoupper($method->method_type) }}
+                          </span>
+                          @if($method->number_type)
+                            <span style="font-size: 0.78rem; color: #64748b; font-weight: 700; white-space: nowrap !important; flex-shrink: 0 !important;">
+                              ({{ ucfirst($method->number_type) }})
+                            </span>
+                          @endif
+                          @if($method->is_default)
+                            <span class="p-badge" style="background: #16a34a; color: #ffffff; font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; white-space: nowrap !important; flex-shrink: 0 !important;">
+                              ★ Primary Default
+                            </span>
+                          @endif
+                        </div>
+                      </div>
+
+                      <!-- Action Buttons: Edit & Delete using Global Modal Dialog -->
+                      <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                        <!-- Edit Button -->
+                        <button type="button" 
+                          onclick='openEditPaymentMethodModal(@json($method))' 
+                          class="btn-p btn-p-outline"
+                          style="padding: 4px 10px; font-size: 0.75rem; font-weight: 700; gap: 4px; white-space: nowrap !important; flex-shrink: 0 !important;" 
+                          title="Edit Payment Method">
+                          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                          <span>Edit</span>
+                        </button>
+
+                        <!-- Delete Button using Global Modal -->
+                        <form id="deleteMethodForm_{{ $method->id }}" action="{{ route('partner.payment-methods.destroy', $method) }}" method="POST" style="margin: 0;">
+                          @csrf
+                          @method('DELETE')
+                          <button type="button" 
+                            onclick="confirmDialog({ title: 'Delete Payment Method?', text: 'Are you sure you want to delete this payment method ({{ strtoupper($method->method_type) }} {{ $method->account_number }})?', type: 'danger', confirmText: 'Delete Method', formId: 'deleteMethodForm_{{ $method->id }}' })"
+                            class="btn-p btn-p-danger"
+                            style="padding: 4px 9px; font-size: 0.75rem; font-weight: 700; white-space: nowrap !important; flex-shrink: 0 !important;" 
+                            title="Delete Method">
+                            ✕
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+
+                    <div style="font-size: 1.08rem; font-family: monospace; font-weight: 800; color: #1e293b; margin-bottom: 6px; letter-spacing: 0.02em;">
+                      {{ $method->account_number }}
+                    </div>
+
+                    @if($method->account_name)
+                      <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 2px;">
+                        A/C Name: <strong style="color: #334155;">{{ $method->account_name }}</strong>
+                      </div>
+                    @endif
+
+                    @if($method->method_type === 'bank')
+                      <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">
+                        <span>Bank: <strong>{{ $method->bank_name ?: 'Bank Transfer' }}</strong></span>
+                        @if($method->branch_name) <span> • {{ $method->branch_name }}</span> @endif
+                        @if($method->routing_number) <span> (Routing: {{ $method->routing_number }})</span> @endif
+                      </div>
+                    @endif
+                  </div>
+
+                  <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed {{ $method->is_default ? '#bbf7d0' : '#e2e8f0' }}; display: flex; justify-content: space-between; align-items: center;">
+                    @if(!$method->is_default)
+                      <form id="setDefaultForm_{{ $method->id }}" action="{{ route('partner.payment-methods.default', $method) }}" method="POST" style="margin: 0;">
+                        @csrf
+                        <button type="button" 
+                          onclick="confirmDialog({ title: 'Set as Default Method?', text: 'Set {{ strtoupper($method->method_type) }} ({{ $method->account_number }}) as your primary receiving target for payouts?', type: 'primary', confirmText: 'Set as Default', formId: 'setDefaultForm_{{ $method->id }}' })"
+                          style="background: none; border: none; color: var(--p-accent); font-size: 0.78rem; font-weight: 700; cursor: pointer; padding: 0; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap !important; flex-shrink: 0 !important;">
+                          <span>☆ Set as Primary Default</span>
+                        </button>
+                      </form>
+                    @else
+                      <span class="p-badge" style="font-size: 0.75rem; color: #16a34a; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap !important; flex-shrink: 0 !important;">
+                        ✓ Default Payout Target
+                      </span>
+                    @endif
+                  </div>
+                </div>
+              @endforeach
+            </div>
+          @endif
+        </div>
+      </div>
+
+      <!-- Tab 5: Crew Policies & SOP Guidelines -->
+      <div id="tab-policies" class="settings-tab-panel">
+        @php
+          $partnerTerms = \App\Models\SiteContent::forSection('partner_terms');
+          $partnerWorkPolicy = \App\Models\SiteContent::forSection('partner_work_policy');
+          $partnerPrivacy = \App\Models\SiteContent::forSection('partner_privacy');
+          $partnerPayoutPolicy = \App\Models\SiteContent::forSection('partner_payout_policy');
+        @endphp
+
+        <div class="p-card" style="margin-bottom: 20px;">
+          <div style="border-bottom: 1px solid var(--p-border); padding-bottom: 14px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 class="p-card-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                  <span>Crew Policies, Safety SOP &amp; Terms</span>
+                </h3>
+                <p style="margin: 4px 0 0; font-size: 0.8rem; color: #64748b;">
+                  Operating guidelines, safety SOPs, privacy obligations, and earnings settlement policies.
+                </p>
               </div>
-              <div style="margin-bottom: 12px;">
-                <label class="p-label">Account Number</label>
-                <input type="text" name="account_number" class="p-input" value="{{ old('account_number', $partner->account_number) }}">
-              </div>
-              <div style="margin-bottom: 14px;">
-                <label class="p-label">Branch Name</label>
-                <input type="text" name="branch_name" class="p-input" placeholder="e.g. Gulshan Branch" value="{{ old('branch_name', $partner->branch_name) }}">
-              </div>
+
+              <a href="{{ route('partner.policy') }}" target="_blank" class="btn-p btn-p-outline" style="padding: 7px 14px; font-size: 0.78rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                <span>Public View</span>
+                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              </a>
             </div>
 
-            {{-- MFS Fields --}}
-            <div id="mfs_fields" style="display: none;">
-              <div style="margin-bottom: 14px;">
-                <label class="p-label">Mobile Wallet Number</label>
-                <input type="text" name="mfs_number" class="p-input" placeholder="017XXXXXXXX" value="{{ old('mfs_number', $partner->mfs_number) }}">
-              </div>
-            </div>
-
-            <div style="border-top: 1px solid var(--p-border); padding-top: 16px; display: flex; justify-content: flex-end;">
-              <button type="button" class="btn-p btn-p-primary" style="padding: 10px 22px; font-size: 0.88rem;" onclick="confirmDialog({ title: 'Save Payout Method?', text: 'Confirm updating your payout banking/MFS details.', type: 'primary', confirmText: 'Save Changes', formId: 'profileUpdateForm' })">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Save Changes</span>
+            <!-- Subtab pills -->
+            <div style="display: flex; gap: 8px; margin-top: 16px; overflow-x: auto; padding-bottom: 4px;" id="crewPolicyPills">
+              <button type="button" class="btn-p btn-p-primary policy-pill active" onclick="switchCrewPolicyPill('pill-terms', this)" style="padding: 6px 14px; font-size: 0.78rem; border-radius: 9999px;">
+                Terms of Service
+              </button>
+              <button type="button" class="btn-p btn-p-outline policy-pill" onclick="switchCrewPolicyPill('pill-work', this)" style="padding: 6px 14px; font-size: 0.78rem; border-radius: 9999px;">
+                Work Policy &amp; Safety SOP
+              </button>
+              <button type="button" class="btn-p btn-p-outline policy-pill" onclick="switchCrewPolicyPill('pill-privacy', this)" style="padding: 6px 14px; font-size: 0.78rem; border-radius: 9999px;">
+                Privacy &amp; Confidentiality
+              </button>
+              <button type="button" class="btn-p btn-p-outline policy-pill" onclick="switchCrewPolicyPill('pill-payout', this)" style="padding: 6px 14px; font-size: 0.78rem; border-radius: 9999px;">
+                Payout &amp; Settlement Policy
               </button>
             </div>
           </div>
-        </div>
 
-      </form>
+          <!-- Policy Subtab 1: Terms -->
+          <div id="pill-terms" class="crew-policy-pane">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h4 style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0;">{{ $partnerTerms?->title ?? 'Crew & Partner Terms of Service' }}</h4>
+              <span class="p-badge" style="font-size: 0.7rem; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 3px 8px; border-radius: 6px; white-space: nowrap !important; flex-shrink: 0 !important;">{{ $partnerTerms?->badge ?? 'CONTRACT' }}</span>
+            </div>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 18px; line-height: 1.5;">{{ $partnerTerms?->subtitle ?? 'Operational obligations, dispatch acceptance standards, and partner agreements.' }}</p>
+
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              @foreach($partnerTerms?->meta_data['sections'] ?? [] as $sec)
+                <div style="background: #f8fafc; border: 1px solid var(--p-border); border-radius: 10px; padding: 14px 16px;">
+                  <h5 style="font-size: 0.92rem; font-weight: 700; color: #1e293b; margin: 0 0 6px;">{{ $sec['heading'] ?? '' }}</h5>
+                  <p style="font-size: 0.825rem; color: #475569; margin: 0; line-height: 1.6;">{!! nl2br(e($sec['body'] ?? '')) !!}</p>
+                </div>
+              @endforeach
+            </div>
+          </div>
+
+          <!-- Policy Subtab 2: Work Policy & Safety -->
+          <div id="pill-work" class="crew-policy-pane" style="display: none;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h4 style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0;">{{ $partnerWorkPolicy?->title ?? 'Crew Work Policy & Safety SOP' }}</h4>
+              <span class="p-badge" style="font-size: 0.7rem; font-weight: 800; color: #16a34a; background: #dcfce7; padding: 3px 8px; border-radius: 6px; white-space: nowrap !important; flex-shrink: 0 !important;">{{ $partnerWorkPolicy?->badge ?? 'SAFETY SOP' }}</span>
+            </div>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 18px; line-height: 1.5;">{{ $partnerWorkPolicy?->subtitle ?? 'Standard operating procedures, BNBC safety compliance, and code of conduct.' }}</p>
+
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              @foreach($partnerWorkPolicy?->meta_data['sections'] ?? [] as $sec)
+                <div style="background: #f8fafc; border: 1px solid var(--p-border); border-radius: 10px; padding: 14px 16px;">
+                  <h5 style="font-size: 0.92rem; font-weight: 700; color: #1e293b; margin: 0 0 6px;">{{ $sec['heading'] ?? '' }}</h5>
+                  <p style="font-size: 0.825rem; color: #475569; margin: 0; line-height: 1.6;">{!! nl2br(e($sec['body'] ?? '')) !!}</p>
+                </div>
+              @endforeach
+            </div>
+          </div>
+
+          <!-- Policy Subtab 3: Privacy & Confidentiality -->
+          <div id="pill-privacy" class="crew-policy-pane" style="display: none;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h4 style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0;">{{ $partnerPrivacy?->title ?? 'Crew Privacy & Data Protection Policy' }}</h4>
+              <span class="p-badge" style="font-size: 0.7rem; font-weight: 800; color: #7c3aed; background: #f3e8ff; padding: 3px 8px; border-radius: 6px; white-space: nowrap !important; flex-shrink: 0 !important;">{{ $partnerPrivacy?->badge ?? 'PRIVACY' }}</span>
+            </div>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 18px; line-height: 1.5;">{{ $partnerPrivacy?->subtitle ?? 'Technician personal data handling, dispatch telemetry, and client confidentiality.' }}</p>
+
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              @foreach($partnerPrivacy?->meta_data['sections'] ?? [] as $sec)
+                <div style="background: #f8fafc; border: 1px solid var(--p-border); border-radius: 10px; padding: 14px 16px;">
+                  <h5 style="font-size: 0.92rem; font-weight: 700; color: #1e293b; margin: 0 0 6px;">{{ $sec['heading'] ?? '' }}</h5>
+                  <p style="font-size: 0.825rem; color: #475569; margin: 0; line-height: 1.6;">{!! nl2br(e($sec['body'] ?? '')) !!}</p>
+                </div>
+              @endforeach
+            </div>
+          </div>
+
+          <!-- Policy Subtab 4: Payout & Settlement -->
+          <div id="pill-payout" class="crew-policy-pane" style="display: none;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h4 style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0;">{{ $partnerPayoutPolicy?->title ?? 'Crew Payout & Earnings Settlement Policy' }}</h4>
+              <span class="p-badge" style="font-size: 0.7rem; font-weight: 800; color: #d97706; background: #fef3c7; padding: 3px 8px; border-radius: 6px; white-space: nowrap !important; flex-shrink: 0 !important;">{{ $partnerPayoutPolicy?->badge ?? 'PAYOUT' }}</span>
+            </div>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 18px; line-height: 1.5;">{{ $partnerPayoutPolicy?->subtitle ?? 'Earning rules, withdrawal thresholds, disbursement turnaround, and warranty reserve deductions.' }}</p>
+
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              @foreach($partnerPayoutPolicy?->meta_data['sections'] ?? [] as $sec)
+                <div style="background: #f8fafc; border: 1px solid var(--p-border); border-radius: 10px; padding: 14px 16px;">
+                  <h5 style="font-size: 0.92rem; font-weight: 700; color: #1e293b; margin: 0 0 6px;">{{ $sec['heading'] ?? '' }}</h5>
+                  <p style="font-size: 0.825rem; color: #475569; margin: 0; line-height: 1.6;">{!! nl2br(e($sec['body'] ?? '')) !!}</p>
+                </div>
+              @endforeach
+            </div>
+          </div>
+
+          <!-- Compliance Note -->
+          <div style="margin-top: 20px; padding: 12px 14px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; display: flex; align-items: flex-start; gap: 10px;">
+            <svg width="18" height="18" fill="none" stroke="#2563eb" viewBox="0 0 24 24" stroke-width="2.2" style="flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <div style="font-size: 0.78rem; color: #1e40af; line-height: 1.5;">
+              <strong>Compliance Notice:</strong> All registered partner contractors and field crews are contractually bound by these policies. Any policy updates made by the operations administration take effect immediately.
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -798,12 +1013,10 @@
         panel.classList.toggle('active', panel.id === tabId);
       });
 
-      // On mobile view: hide menu list, show content panel
+      // On mobile view: show content panel, hide menu list
+      document.querySelector('.settings-layout')?.classList.add('tab-active');
+
       if (isMobileView()) {
-        const menuEl = document.getElementById('settingsMenu');
-        const contentEl = document.getElementById('settingsContentWrap');
-        if (menuEl) menuEl.classList.add('mobile-hidden');
-        if (contentEl) contentEl.classList.remove('mobile-hidden');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
@@ -815,15 +1028,23 @@
     }
 
     function backToMobileMenu() {
-      if (isMobileView()) {
-        const menuEl = document.getElementById('settingsMenu');
-        const contentEl = document.getElementById('settingsContentWrap');
-        if (menuEl) menuEl.classList.remove('mobile-hidden');
-        if (contentEl) contentEl.classList.add('mobile-hidden');
-        if (history.replaceState) {
-          history.replaceState(null, null, window.location.pathname);
-        }
+      document.querySelector('.settings-layout')?.classList.remove('tab-active');
+      if (history.replaceState) {
+        history.replaceState(null, null, window.location.pathname);
       }
+    }
+
+    function switchCrewPolicyPill(paneId, btn) {
+      document.querySelectorAll('#crewPolicyPills .policy-pill').forEach(b => {
+        b.classList.remove('active', 'btn-p-primary');
+        b.classList.add('btn-p-outline');
+      });
+      btn.classList.add('active', 'btn-p-primary');
+      btn.classList.remove('btn-p-outline');
+
+      document.querySelectorAll('.crew-policy-pane').forEach(pane => {
+        pane.style.display = (pane.id === paneId) ? 'block' : 'none';
+      });
     }
 
     function togglePaymentFields() {
@@ -987,6 +1208,7 @@
       const urlParams = new URLSearchParams(window.location.search);
       const hasErrors = @json($errors->any());
       const hasSuccess = @json(session('success') ? true : false);
+      const sessionTab = @json(session('tab'));
 
       const isProfileEdit = urlParams.get('edit') === '1' || hash === 'profile-edit' || (hasErrors && !@json($errors->has('current_password') || $errors->has('new_password')));
       if (isProfileEdit) {
@@ -998,29 +1220,369 @@
       @if($errors->has('current_password') || $errors->has('new_password'))
         switchSettingsTab('tab-security');
       @else
-        if (hash === 'banking' || hash === 'payout') {
+        const effectiveTab = sessionTab || (hash ? hash : null);
+        if (effectiveTab === 'banking' || effectiveTab === 'payout') {
           switchSettingsTab('tab-payout');
-        } else if (hash === 'notifications') {
+        } else if (effectiveTab === 'notifications') {
           switchSettingsTab('tab-notifications');
-        } else if (hash === 'security') {
+        } else if (effectiveTab === 'security') {
           switchSettingsTab('tab-security');
-        } else if (hash === 'profile' || hash === 'profile-edit' || hasSuccess || hasErrors || urlParams.get('edit') === '1') {
+        } else if (effectiveTab === 'policies' || effectiveTab === 'terms' || effectiveTab === 'policy') {
+          switchSettingsTab('tab-policies');
+        } else if (effectiveTab === 'profile' || effectiveTab === 'profile-edit' || urlParams.get('edit') === '1' || (hasErrors && !@json($errors->has('current_password') || $errors->has('new_password')))) {
           switchSettingsTab('tab-profile');
         } else {
-          // On mobile without a target hash, show menu list by default
-          if (isMobileView()) {
-            document.getElementById('settingsMenu').classList.remove('mobile-hidden');
-            document.getElementById('settingsContentWrap').classList.add('mobile-hidden');
+          // Default visit without target hash:
+          // On mobile, keep .tab-active OFF so ONLY the menu list is displayed (no profile open under menu)
+          document.querySelector('.settings-layout')?.classList.remove('tab-active');
+          if (!isMobileView()) {
+            document.querySelectorAll('.settings-menu-btn').forEach(btn => {
+              btn.classList.toggle('active', btn.dataset.tab === 'tab-profile');
+            });
+            document.querySelectorAll('.settings-tab-panel').forEach(panel => {
+              panel.classList.toggle('active', panel.id === 'tab-profile');
+            });
+          } else {
+            document.querySelectorAll('.settings-menu-btn').forEach(btn => {
+              btn.classList.remove('active');
+            });
           }
         }
       @endif
     });
 
-    window.addEventListener('resize', function() {
-      if (!isMobileView()) {
-        document.getElementById('settingsMenu')?.classList.remove('mobile-hidden');
-        document.getElementById('settingsContentWrap')?.classList.remove('mobile-hidden');
+    window.addEventListener('hashchange', function() {
+      const h = window.location.hash.replace('#', '');
+      if (!h) {
+        backToMobileMenu();
+      } else {
+        const tabMap = {
+          'payout': 'tab-payout',
+          'banking': 'tab-payout',
+          'notifications': 'tab-notifications',
+          'security': 'tab-security',
+          'policies': 'tab-policies',
+          'terms': 'tab-policies',
+          'policy': 'tab-policies',
+          'profile': 'tab-profile',
+          'profile-edit': 'tab-profile'
+        };
+        if (tabMap[h]) {
+          switchSettingsTab(tabMap[h], false);
+        }
       }
     });
+
+    window.addEventListener('resize', function() {
+      if (!isMobileView()) {
+        document.querySelector('.settings-layout')?.classList.remove('tab-active');
+      }
+    });
+
+    // Modal Helpers for Payout Methods
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.style.display = 'none';
+    }
+
+    function toggleMethodFields(val) {
+      const mfsWrapper = document.getElementById('mfsTypeWrapper');
+      const bankWrapper = document.getElementById('bankFieldsWrapper');
+      const label = document.getElementById('accountNumberLabel');
+
+      if (val === 'bank') {
+        if (mfsWrapper) mfsWrapper.style.display = 'none';
+        if (bankWrapper) bankWrapper.style.display = 'block';
+        if (label) label.innerHTML = 'Bank Account Number <span style="color:#dc2626;">*</span>';
+      } else {
+        if (mfsWrapper) mfsWrapper.style.display = 'block';
+        if (bankWrapper) bankWrapper.style.display = 'none';
+        if (label) label.innerHTML = (val.toUpperCase()) + ' Mobile Number (01XXXXXXXXX) <span style="color:#dc2626;">*</span>';
+      }
+    }
+
+    function openEditPaymentMethodModal(method) {
+      const form = document.getElementById('editPaymentMethodForm');
+      form.action = '/partner/payment-methods/' + method.id;
+
+      document.getElementById('edit_method_type_select').value = method.method_type;
+      toggleEditMethodFields(method.method_type);
+
+      const numType = method.number_type || 'personal';
+      const rPersonal = document.getElementById('edit_num_personal');
+      const rAgent = document.getElementById('edit_num_agent');
+      const rMerchant = document.getElementById('edit_num_merchant');
+      if (rPersonal) rPersonal.checked = (numType === 'personal');
+      if (rAgent) rAgent.checked = (numType === 'agent');
+      if (rMerchant) rMerchant.checked = (numType === 'merchant');
+
+      document.getElementById('edit_account_number').value = method.account_number || '';
+      document.getElementById('edit_account_name').value = method.account_name || '';
+      document.getElementById('edit_bank_name').value = method.bank_name || '';
+      document.getElementById('edit_branch_name').value = method.branch_name || '';
+      document.getElementById('edit_routing_number').value = method.routing_number || '';
+      document.getElementById('edit_is_default').checked = !!method.is_default;
+
+      openModal('editPaymentMethodModal');
+    }
+
+    function toggleEditMethodFields(val) {
+      const mfsWrapper = document.getElementById('editMfsTypeWrapper');
+      const bankWrapper = document.getElementById('editBankFieldsWrapper');
+      const label = document.getElementById('editAccountNumberLabel');
+
+      if (val === 'bank') {
+        if (mfsWrapper) mfsWrapper.style.display = 'none';
+        if (bankWrapper) bankWrapper.style.display = 'block';
+        if (label) label.innerHTML = 'Bank Account Number <span style="color:#dc2626;">*</span>';
+      } else {
+        if (mfsWrapper) mfsWrapper.style.display = 'block';
+        if (bankWrapper) bankWrapper.style.display = 'none';
+        if (label) label.innerHTML = (val.toUpperCase()) + ' Mobile Number (01XXXXXXXXX) <span style="color:#dc2626;">*</span>';
+      }
+    }
   </script>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ADD RECEIVING PAYMENT METHOD (In Settings > Payout Method)         -->
+  <!-- ========================================================================= -->
+  <div id="addPaymentMethodModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 9999; align-items: center; justify-content: center; padding: 16px;" onclick="if(event.target===this) closeModal('addPaymentMethodModal')">
+    <div style="background: #ffffff; border-radius: 14px; max-width: 520px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15); overflow: hidden; animation: popIn 0.2s ease;">
+      <div style="padding: 18px 22px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+        <div>
+          <h3 style="margin: 0; font-size: 1.08rem; font-weight: 800; color: #0f172a;">Add Receiving Payment Method</h3>
+          <p style="margin: 2px 0 0; font-size: 0.78rem; color: #64748b;">Specify your bKash, Nagad, Rocket, Upay, or Bank account for payouts.</p>
+        </div>
+        <button type="button" onclick="closeModal('addPaymentMethodModal')" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #94a3b8; line-height: 1;">✕</button>
+      </div>
+
+      <form action="{{ route('partner.payment-methods.store') }}" method="POST" style="padding: 22px; margin: 0;">
+        @csrf
+
+        <!-- Method Type -->
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+            Payment Provider <span style="color: #dc2626;">*</span>
+          </label>
+          <select name="method_type" id="method_type_select" required onchange="toggleMethodFields(this.value)" class="p-input" style="font-weight: 700;">
+            <option value="bkash">bKash</option>
+            <option value="nagad">Nagad</option>
+            <option value="rocket">Rocket</option>
+            <option value="upay">Upay</option>
+            <option value="bank">Bank Transfer</option>
+          </select>
+        </div>
+
+        <!-- Number Classification for MFS -->
+        <div id="mfsTypeWrapper" style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+            Wallet Classification <span style="color: #dc2626;">*</span>
+          </label>
+          <div style="display: flex; gap: 14px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 8px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer;">
+              <input type="radio" name="number_type" value="personal" checked style="accent-color: var(--p-primary);">
+              <span>Personal</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer;">
+              <input type="radio" name="number_type" value="agent" style="accent-color: var(--p-primary);">
+              <span style="color: #b45309;">Agent</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer;">
+              <input type="radio" name="number_type" value="merchant" style="accent-color: var(--p-primary);">
+              <span>Merchant</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Mobile / Account Number -->
+        <div style="margin-bottom: 14px;">
+          <label id="accountNumberLabel" style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+            Mobile Wallet Number (01XXXXXXXXX) <span style="color: #dc2626;">*</span>
+          </label>
+          <input 
+            type="text" 
+            name="account_number" 
+            required 
+            placeholder="017XXXXXXXX" 
+            class="p-input"
+            style="font-family: monospace; font-size: 0.95rem; font-weight: 700;"
+          >
+        </div>
+
+        <!-- Account Holder Name -->
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+            Account Holder / Owner Name (Optional)
+          </label>
+          <input 
+            type="text" 
+            name="account_name" 
+            placeholder="e.g. {{ $partner->contact_person }}" 
+            value="{{ $partner->contact_person }}"
+            class="p-input"
+          >
+        </div>
+
+        <!-- Bank Specific Fields (Hidden by default) -->
+        <div id="bankFieldsWrapper" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 8px; margin-bottom: 14px;">
+          <div style="margin-bottom: 10px;">
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+              Bank Name <span style="color: #dc2626;">*</span>
+            </label>
+            <input type="text" name="bank_name" placeholder="e.g. BRAC Bank PLC, Dutch-Bangla Bank" class="p-input" style="font-size: 0.84rem;">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">Branch Name</label>
+              <input type="text" name="branch_name" placeholder="e.g. Gulshan Branch" class="p-input" style="font-size: 0.84rem;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">Routing Number (Optional)</label>
+              <input type="text" name="routing_number" placeholder="9-digit routing" class="p-input" style="font-size: 0.84rem;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Set as Default Checkbox -->
+        <div style="margin-bottom: 18px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.84rem; font-weight: 600; color: #1e293b; cursor: pointer;">
+            <input type="checkbox" name="is_default" value="1" {{ $partner->paymentMethods->isEmpty() ? 'checked' : '' }} style="accent-color: var(--p-primary); width: 16px; height: 16px;">
+            <span>Set as primary default receiving method</span>
+          </label>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          <button type="button" class="btn-p btn-p-outline" onclick="closeModal('addPaymentMethodModal')">Cancel</button>
+          <button type="submit" class="btn-p btn-p-primary" style="font-weight: 700; padding: 9px 20px;">
+            Save Payment Method
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: EDIT RECEIVING PAYMENT METHOD                                      -->
+  <!-- ========================================================================= -->
+  <div id="editPaymentMethodModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 9999; align-items: center; justify-content: center; padding: 16px;" onclick="if(event.target===this) closeModal('editPaymentMethodModal')">
+    <div style="background: #ffffff; border-radius: 14px; max-width: 520px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15); overflow: hidden; animation: popIn 0.2s ease;">
+      <div style="padding: 18px 22px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+        <div>
+          <h3 style="margin: 0; font-size: 1.08rem; font-weight: 800; color: #0f172a;">Edit Receiving Payment Method</h3>
+          <p style="margin: 2px 0 0; font-size: 0.78rem; color: #64748b;">Update your payout receiving details.</p>
+        </div>
+        <button type="button" onclick="closeModal('editPaymentMethodModal')" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #94a3b8; line-height: 1;">✕</button>
+      </div>
+
+      <form id="editPaymentMethodForm" method="POST" style="padding: 22px; margin: 0;">
+        @csrf
+        @method('PUT')
+
+        <!-- Method Type -->
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+            Payment Provider <span style="color: #dc2626;">*</span>
+          </label>
+          <select name="method_type" id="edit_method_type_select" required onchange="toggleEditMethodFields(this.value)" class="p-input" style="font-weight: 700;">
+            <option value="bkash">bKash</option>
+            <option value="nagad">Nagad</option>
+            <option value="rocket">Rocket</option>
+            <option value="upay">Upay</option>
+            <option value="bank">Bank Transfer</option>
+          </select>
+        </div>
+
+        <!-- Number Classification for MFS -->
+        <div id="editMfsTypeWrapper" style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+            Wallet Classification <span style="color: #dc2626;">*</span>
+          </label>
+          <div style="display: flex; gap: 14px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 8px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer;">
+              <input type="radio" name="number_type" id="edit_num_personal" value="personal" style="accent-color: var(--p-primary);">
+              <span>Personal</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer;">
+              <input type="radio" name="number_type" id="edit_num_agent" value="agent" style="accent-color: var(--p-primary);">
+              <span style="color: #b45309;">Agent</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer;">
+              <input type="radio" name="number_type" id="edit_num_merchant" value="merchant" style="accent-color: var(--p-primary);">
+              <span>Merchant</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Mobile / Account Number -->
+        <div style="margin-bottom: 14px;">
+          <label id="editAccountNumberLabel" style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+            Mobile Wallet Number (01XXXXXXXXX) <span style="color: #dc2626;">*</span>
+          </label>
+          <input 
+            type="text" 
+            name="account_number" 
+            id="edit_account_number"
+            required 
+            placeholder="017XXXXXXXX" 
+            class="p-input"
+            style="font-family: monospace; font-size: 0.95rem; font-weight: 700;"
+          >
+        </div>
+
+        <!-- Account Holder Name -->
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+            Account Holder / Owner Name (Optional)
+          </label>
+          <input 
+            type="text" 
+            name="account_name" 
+            id="edit_account_name"
+            placeholder="e.g. Account name" 
+            class="p-input"
+          >
+        </div>
+
+        <!-- Bank Specific Fields -->
+        <div id="editBankFieldsWrapper" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 8px; margin-bottom: 14px;">
+          <div style="margin-bottom: 10px;">
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+              Bank Name <span style="color: #dc2626;">*</span>
+            </label>
+            <input type="text" name="bank_name" id="edit_bank_name" placeholder="e.g. BRAC Bank PLC, Dutch-Bangla Bank" class="p-input" style="font-size: 0.84rem;">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">Branch Name</label>
+              <input type="text" name="branch_name" id="edit_branch_name" placeholder="e.g. Gulshan Branch" class="p-input" style="font-size: 0.84rem;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #1e293b; margin-bottom: 4px;">Routing Number (Optional)</label>
+              <input type="text" name="routing_number" id="edit_routing_number" placeholder="9-digit routing" class="p-input" style="font-size: 0.84rem;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Set as Default Checkbox -->
+        <div style="margin-bottom: 18px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.84rem; font-weight: 600; color: #1e293b; cursor: pointer;">
+            <input type="checkbox" name="is_default" id="edit_is_default" value="1" style="accent-color: var(--p-primary); width: 16px; height: 16px;">
+            <span>Set as primary default receiving method</span>
+          </label>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          <button type="button" class="btn-p btn-p-outline" onclick="closeModal('editPaymentMethodModal')">Cancel</button>
+          <button type="submit" class="btn-p btn-p-primary" style="font-weight: 700; padding: 9px 20px;">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </x-partner.layouts.app>

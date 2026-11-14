@@ -32,7 +32,7 @@
               <h2 style="font-size:1.35rem; font-weight:800; margin:0; color:var(--text-main);">
                 My Support Tickets
               </h2>
-              <span style="font-size:0.78rem; font-weight:700; background:rgba(67,97,238,0.1); color:var(--primary); padding:3px 10px; border-radius:12px;">
+              <span class="badge" style="font-size:0.78rem; font-weight:700; background:rgba(67,97,238,0.1); color:var(--primary); padding:3px 10px; border-radius:12px; white-space:nowrap !important; flex-shrink:0 !important;">
                 {{ $myTickets->count() }} Total
               </span>
             </div>
@@ -95,7 +95,7 @@
                           $statusBorder = '#e2e8f0';
                         }
                       @endphp
-                      <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:{{ $statusBg }}; color:{{ $statusColor }}; border:1px solid {{ $statusBorder }};">
+                      <span class="badge" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:{{ $statusBg }}; color:{{ $statusColor }}; border:1px solid {{ $statusBorder }}; white-space:nowrap !important; flex-shrink:0 !important;">
                         ● {{ ucfirst(str_replace('_', ' ', $ticket->status)) }}
                       </span>
 
@@ -113,7 +113,7 @@
                           $priBorder = '#fed7aa';
                         }
                       @endphp
-                      <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:{{ $priBg }}; color:{{ $priColor }}; border:1px solid {{ $priBorder }};">
+                      <span class="badge" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:{{ $priBg }}; color:{{ $priColor }}; border:1px solid {{ $priBorder }}; white-space:nowrap !important; flex-shrink:0 !important;">
                         Priority: {{ ucfirst($ticket->priority) }}
                       </span>
                     </div>

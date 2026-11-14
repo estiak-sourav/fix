@@ -83,7 +83,7 @@
             <div style="margin:2.5rem 0; padding-top:2rem; border-top:1px solid var(--border);">
               <h3 style="font-size:1.25rem; font-weight:700; color:var(--text-main); margin-bottom:0.5rem; display:flex; align-items:center; gap:8px;">
                 <span>Completed Work &amp; Inspection Gallery</span>
-                <span style="font-size:0.75rem; font-weight:600; background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; padding:2px 8px; border-radius:12px;">Verified Field Photos</span>
+                <span class="badge" style="font-size:0.75rem; font-weight:600; background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; padding:2px 8px; border-radius:12px; white-space:nowrap !important; flex-shrink:0 !important;">Verified Field Photos</span>
               </h3>
               <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1.25rem;">
                 Actual photographic documentation from recent enterprise & residential service deployments.

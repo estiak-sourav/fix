@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Admin;
 use App\Models\AdminNotification;
 use App\Models\Booking;
+use App\Models\BookingStatusLog;
 use App\Models\Partner;
 use App\Models\Service;
 use App\Models\User;
@@ -127,30 +128,21 @@ class BookingLifecycleAndNotificationTest extends TestCase
         $this->assertEquals($partner2->id, $booking->partner_id);
         $this->assertEquals('assigned', $booking->partner_job_status);
 
-        // 5. Pricing Logic: Admin set price later -> Crew MUST set price before accepting assignment
-        $failAccept = $this->actingAs($partner2, 'partner')
+        // 5. Pricing Logic: Admin set price later -> Crew accepts assignment, price will be set before starting work
+        $acceptResponse = $this->actingAs($partner2, 'partner')
             ->post(route('partner.jobs.accept', $booking));
-        $failAccept->assertSessionHasErrors('agreed_price');
-
-        // Crew 2 sets agreed price and accepts the assignment -> User panel now shows 'Assigned' & CMS alerted
-        $this->actingAs($partner2, 'partner')
-            ->post(route('partner.jobs.accept', $booking), [
-                'agreed_price' => 2500,
-            ])
-            ->assertRedirect();
+        $acceptResponse->assertRedirect();
 
         $booking->refresh();
         $this->assertEquals('accepted', $booking->partner_job_status);
         $this->assertEquals('assigned', $booking->status);
-        $this->assertEquals(2500.00, (float) $booking->final_cost);
-        $this->assertNull($booking->estimated_cost);
+        $this->assertTrue($booking->is_price_set_later);
 
         $acceptNotif = AdminNotification::where('booking_id', $booking->id)
             ->where('title', 'like', '%Crew Accepted%')
             ->latest()
             ->first();
         $this->assertNotNull($acceptNotif);
-        $this->assertStringContainsString('2,500', $acceptNotif->message);
 
         // User panel verifies status is Assigned
         $userPanel = $this->actingAs($user, 'web')->get('/my-bookings');
@@ -178,10 +170,18 @@ class BookingLifecycleAndNotificationTest extends TestCase
         $userPanel->assertSee('On the Way');
         $userPanel->assertSee('Crew is on the way');
 
-        // 7. Work starts on site (Price was already confirmed upon acceptance)
+        // 7. Work starts on site: Since price was set later, crew MUST set agreed price before starting work
+        $failStart = $this->actingAs($partner2, 'partner')
+            ->post(route('partner.jobs.status', $booking), [
+                'partner_job_status' => 'in_progress',
+            ]);
+        $failStart->assertSessionHasErrors('agreed_price');
+
+        // Crew sets agreed price and starts work
         $startWorkResponse = $this->actingAs($partner2, 'partner')
             ->post(route('partner.jobs.status', $booking), [
                 'partner_job_status' => 'in_progress',
+                'agreed_price' => 2500,
             ]);
         $startWorkResponse->assertRedirect();
 
@@ -189,6 +189,7 @@ class BookingLifecycleAndNotificationTest extends TestCase
         $this->assertEquals('in_progress', $booking->partner_job_status);
         $this->assertEquals('in_progress', $booking->status);
         $this->assertEquals(2500.00, (float) $booking->final_cost);
+        $this->assertNull($booking->estimated_cost);
 
         // CMS notified of work started
         $workStartedNotif = AdminNotification::where('booking_id', $booking->id)
@@ -422,5 +423,231 @@ class BookingLifecycleAndNotificationTest extends TestCase
         $bookingShowRes->assertSee('Gulshan Spark Electricals');
         // Partner B (Dhanmondi + Plumbing) MUST NOT appear in the dropdown
         $bookingShowRes->assertDontSee('Dhanmondi Pipes & Plumbing');
+    }
+
+    public function test_customer_can_cancel_booking_before_admin_accepts(): void
+    {
+        $user = User::first();
+        $service = Service::first();
+
+        $booking = Booking::create([
+            'booking_number' => Booking::generateBookingNumber('Dhaka', 'Dhaka'),
+            'user_id' => $user->id,
+            'service_type' => 'on_demand',
+            'service_id' => $service->id,
+            'customer_name' => $user->name,
+            'customer_phone' => $user->phone ?? '01712345678',
+            'customer_email' => $user->email,
+            'property_type' => 'residential',
+            'division' => 'Dhaka',
+            'district' => 'Dhaka',
+            'area' => 'Mirpur',
+            'street_address' => 'Mirpur 10',
+            'preferred_date' => now()->addDay()->toDateString(),
+            'preferred_time_slot' => 'Morning',
+            'urgency' => 'standard',
+            'problem_description' => 'AC not blowing cold air',
+            'status' => 'pending_review',
+        ]);
+
+        $this->assertTrue($booking->canBeCancelledByCustomer());
+
+        // View in customer portal before acceptance: Cancel Request is visible
+        $portalRes = $this->actingAs($user, 'web')->get(route('customer.bookings'));
+        $portalRes->assertStatus(200);
+        $portalRes->assertSee('Cancel Request');
+
+        $detailRes = $this->actingAs($user, 'web')->get(route('customer.bookings.show', $booking->booking_number));
+        $detailRes->assertStatus(200);
+        $detailRes->assertSee('Cancel Request');
+        $detailRes->assertSee('Need to cancel this service request?');
+
+        // Customer cancels the request
+        $cancelRes = $this->actingAs($user, 'web')->post(route('customer.bookings.cancel', $booking->booking_number), [
+            'cancellation_reason' => 'Schedule conflict',
+        ]);
+        $cancelRes->assertRedirect(route('customer.bookings'));
+        $cancelRes->assertSessionHas('success');
+
+        $booking->refresh();
+        $this->assertEquals('cancelled', $booking->status);
+        $this->assertNotNull($booking->cancelled_at);
+        $this->assertFalse($booking->canBeCancelledByCustomer());
+        $this->assertEquals('Schedule conflict', $booking->cancellation_reason);
+
+        // Check Admin Notification
+        $this->assertDatabaseHas('admin_notifications', [
+            'booking_id' => $booking->id,
+            'type' => 'order_status',
+        ]);
+
+        // Cancelled section visible in customer portal
+        $afterCancelRes = $this->actingAs($user, 'web')->get(route('customer.bookings'));
+        $afterCancelRes->assertStatus(200);
+        $afterCancelRes->assertSee('Cancelled Requests');
+        $afterCancelRes->assertSee('Schedule conflict');
+    }
+
+    public function test_customer_cannot_cancel_booking_after_admin_accepts_only_admin_can_cancel(): void
+    {
+        $admin = Admin::first();
+        $user = User::first();
+        $service = Service::first();
+
+        $booking = Booking::create([
+            'booking_number' => Booking::generateBookingNumber('Dhaka', 'Dhaka'),
+            'user_id' => $user->id,
+            'service_type' => 'on_demand',
+            'service_id' => $service->id,
+            'customer_name' => $user->name,
+            'customer_phone' => $user->phone ?? '01712345678',
+            'customer_email' => $user->email,
+            'property_type' => 'residential',
+            'division' => 'Dhaka',
+            'district' => 'Dhaka',
+            'area' => 'Uttara',
+            'street_address' => 'Sector 3',
+            'preferred_date' => now()->addDay()->toDateString(),
+            'preferred_time_slot' => 'Afternoon',
+            'urgency' => 'standard',
+            'problem_description' => 'Water leakage in bathroom pipe',
+            'status' => 'pending_review',
+        ]);
+
+        // Admin accepts the work order
+        $acceptRes = $this->from(route('admin.bookings.show', $booking))
+            ->actingAs($admin, 'admin')
+            ->post(route('admin.bookings.update-status', $booking), [
+                'status' => 'accepted',
+                'cost_type' => 'final',
+                'cost_amount' => 1500,
+                'assigned_team' => 'Rapid Response Team',
+                'comment' => 'Confirmed with client via call and accepted.',
+            ]);
+        $acceptRes->assertRedirect(route('admin.bookings.show', $booking));
+
+        $booking->refresh();
+        $this->assertEquals('accepted', $booking->status);
+        $this->assertNotNull($booking->accepted_at);
+        $this->assertFalse($booking->canBeCancelledByCustomer());
+
+        // In Customer Portal: Cancel button must NOT appear
+        $portalRes = $this->actingAs($user, 'web')->get(route('customer.bookings'));
+        $portalRes->assertStatus(200);
+        $portalRes->assertDontSee('Cancel Request');
+
+        $detailRes = $this->actingAs($user, 'web')->get(route('customer.bookings.show', $booking->booking_number));
+        $detailRes->assertStatus(200);
+        $detailRes->assertDontSee('Cancel Request');
+        $detailRes->assertSee('Work Order Accepted by Operations');
+
+        // Customer attempts to cancel via POST request -> MUST be rejected
+        $customerCancelAttempt = $this->actingAs($user, 'web')->post(route('customer.bookings.cancel', $booking->booking_number), [
+            'cancellation_reason' => 'I want to cancel now',
+        ]);
+        $customerCancelAttempt->assertSessionHas('error');
+
+        $booking->refresh();
+        $this->assertEquals('accepted', $booking->status); // Status is NOT cancelled
+
+        // However, Admin CAN cancel the accepted work order
+        $adminCancelRes = $this->actingAs($admin, 'admin')->post(route('admin.bookings.cancel', $booking), [
+            'cancellation_reason' => 'Cancelled by Operations Headquarters after customer phone request.',
+        ]);
+        $adminCancelRes->assertRedirect();
+        $adminCancelRes->assertSessionHas('success');
+
+        $booking->refresh();
+        $this->assertEquals('cancelled', $booking->status);
+        $this->assertNotNull($booking->cancelled_at);
+    }
+
+    public function test_partner_and_crew_details_hidden_from_client_portal_and_visible_in_admin_portal(): void
+    {
+        $admin = Admin::first();
+        $user = User::first();
+        $service = Service::first();
+
+        $partner = Partner::create([
+            'company_name' => 'Delta Electro-Mechanical Ltd',
+            'contact_person' => 'Subcontractor Rahim',
+            'phone' => '01799001122',
+            'email' => 'rahim@delta-electro.com',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'company',
+            'coverage_areas' => 'Dhaka',
+            'trade_domain' => 'Electrical',
+            'earning_model' => 'commission',
+            'payout_rate' => 80.00,
+        ]);
+
+        $booking = Booking::create([
+            'booking_number' => Booking::generateBookingNumber('Dhaka', 'Dhaka'),
+            'user_id' => $user->id,
+            'service_type' => 'on_demand',
+            'service_id' => $service->id,
+            'customer_name' => $user->name,
+            'customer_phone' => $user->phone ?? '01712345678',
+            'customer_email' => $user->email,
+            'property_type' => 'commercial',
+            'division' => 'Dhaka',
+            'district' => 'Dhaka',
+            'area' => 'Banani',
+            'street_address' => 'Banani Road 11',
+            'preferred_date' => now()->addDay()->toDateString(),
+            'preferred_time_slot' => 'Morning',
+            'urgency' => 'standard',
+            'problem_description' => 'Substation maintenance',
+            'status' => 'assigned',
+            'partner_id' => $partner->id,
+            'assigned_team' => "{$partner->company_name} ({$partner->contact_person})",
+            'partner_job_status' => 'accepted',
+            'arrival_window' => '09:00 AM - 12:00 PM',
+        ]);
+
+        // Add status logs that explicitly mention the partner
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'from_status' => 'pending_review',
+            'to_status' => 'assigned',
+            'comment' => "Partner '{$partner->company_name}' accepted the job assignment.",
+            'is_customer_visible' => true,
+        ]);
+
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'from_status' => 'assigned',
+            'to_status' => 'on_the_way',
+            'comment' => "Technician/Crew from '{$partner->company_name}' is currently on the way to the service address.",
+            'is_customer_visible' => true,
+        ]);
+
+        // 1. Client user visits /my-bookings
+        $clientIndex = $this->actingAs($user, 'web')->get(route('customer.bookings'));
+        $clientIndex->assertOk();
+        $clientIndex->assertDontSee('Delta Electro-Mechanical Ltd');
+        $clientIndex->assertDontSee('Subcontractor Rahim');
+        $clientIndex->assertDontSee('01799001122');
+        $clientIndex->assertDontSee('rahim@delta-electro.com');
+
+        // 2. Client user visits /my-bookings/{bookingNumber}
+        $clientShow = $this->actingAs($user, 'web')->get(route('customer.bookings.show', $booking->booking_number));
+        $clientShow->assertOk();
+        $clientShow->assertDontSee('Delta Electro-Mechanical Ltd');
+        $clientShow->assertDontSee('Subcontractor Rahim');
+        $clientShow->assertDontSee('01799001122');
+        $clientShow->assertDontSee('rahim@delta-electro.com');
+        $clientShow->assertDontSee('Awaiting Crew Acceptance');
+        $clientShow->assertDontSee('Crew Assigned & Confirmed');
+        // Sanitized comments are rendered
+        $clientShow->assertSee('Work order confirmed and scheduled for service.');
+        $clientShow->assertSee('Technician team is on the way to the service address.');
+
+        // 3. Admin visits /admin/bookings/{id} -> Partner & crew details ARE visible
+        $adminShow = $this->actingAs($admin, 'admin')->get(route('admin.bookings.show', $booking));
+        $adminShow->assertOk();
+        $adminShow->assertSee('Delta Electro-Mechanical Ltd');
+        $adminShow->assertSee('01799001122');
     }
 }

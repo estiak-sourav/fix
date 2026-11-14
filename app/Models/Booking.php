@@ -297,9 +297,19 @@ class Booking extends Model
             : $this->statusLogs()->where('to_status', 'cancelled')->latest('id')->first();
 
         if ($cancelLog && $cancelLog->comment) {
-            return preg_replace('/^Order cancelled:\s*/i', '', $cancelLog->comment);
+            return preg_replace('/^(Order cancelled|Service request cancelled by client|Request cancelled by client|Cancelled by client):\s*/i', '', $cancelLog->comment);
         }
 
         return null;
+    }
+
+    public function canBeCancelledByCustomer(): bool
+    {
+        return $this->status === 'pending_review' && $this->accepted_at === null;
+    }
+
+    public function getCanBeCancelledByCustomerAttribute(): bool
+    {
+        return $this->canBeCancelledByCustomer();
     }
 }

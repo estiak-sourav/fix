@@ -7,6 +7,7 @@ use App\Models\District;
 use App\Models\Division;
 use App\Models\Partner;
 use App\Models\PartnerNotification;
+use App\Models\PartnerPaymentMethod;
 use App\Models\PartnerPayout;
 use App\Models\ServiceCategory;
 use App\Services\ActivityLogService;
@@ -15,6 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class AdminPartnerController extends Controller
@@ -114,6 +116,8 @@ class AdminPartnerController extends Controller
             'mfs_number' => ['nullable', 'string', 'max:30'],
             'admin_notes' => ['nullable', 'string', 'max:1000'],
             'password' => ['nullable', 'string', 'min:6'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'remove_avatar' => ['nullable', 'boolean'],
         ], [
             'trade_domain.required' => 'Please select at least one primary technical domain.',
             'coverage_areas.required' => 'Please select at least one operating coverage area.',
@@ -160,6 +164,11 @@ class AdminPartnerController extends Controller
             'approved_at' => $isApproved ? now() : null,
             'approved_by_admin_id' => $isApproved ? $admin?->id : null,
         ]);
+
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars/partners', 'public');
+            $partner->update(['avatar' => $avatarPath]);
+        }
 
         ActivityLogService::logPartner('partner.create', "Enlisted new partner/field crew '{$partner->company_name}' ({$partner->contact_person}).", $partner);
 
@@ -279,6 +288,8 @@ class AdminPartnerController extends Controller
             'mfs_number' => ['nullable', 'string', 'max:30'],
             'admin_notes' => ['nullable', 'string', 'max:1000'],
             'password' => ['nullable', 'string', 'min:6'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'remove_avatar' => ['nullable', 'boolean'],
         ], [
             'trade_domain.required' => 'Please select at least one primary technical domain.',
             'coverage_areas.required' => 'Please select at least one operating coverage area.',
@@ -318,6 +329,18 @@ class AdminPartnerController extends Controller
             'mfs_number' => $request->input('mfs_number') ?: null,
             'admin_notes' => $request->input('admin_notes') ?: null,
         ];
+
+        if ($request->hasFile('avatar')) {
+            if ($partner->avatar && ! str_starts_with($partner->avatar, 'http')) {
+                Storage::disk('public')->delete($partner->avatar);
+            }
+            $updateData['avatar'] = $request->file('avatar')->store('avatars/partners', 'public');
+        } elseif ($request->boolean('remove_avatar')) {
+            if ($partner->avatar && ! str_starts_with($partner->avatar, 'http')) {
+                Storage::disk('public')->delete($partner->avatar);
+            }
+            $updateData['avatar'] = null;
+        }
 
         if ($request->filled('password')) {
             $updateData['password'] = Hash::make($request->input('password'));
@@ -463,11 +486,11 @@ class AdminPartnerController extends Controller
         $amount = (float) $validated['amount'];
         $method = ! empty($validated['partner_payment_method_id'])
             ? $partner->paymentMethods()->find($validated['partner_payment_method_id'])
-            : null;
+            : $partner->ensureDefaultPaymentMethod();
 
         $methodDetails = $method
             ? $method->formatted_method
-            : ($validated['custom_payment_method'] ?? 'Direct Cash / Bank Settlement');
+            : (! empty($validated['custom_payment_method']) ? $validated['custom_payment_method'] : 'Direct Cash / Bank Settlement');
 
         $payout = PartnerPayout::create([
             'payout_number' => PartnerPayout::generatePayoutNumber(),
@@ -588,5 +611,188 @@ class AdminPartnerController extends Controller
         ActivityLogService::logPartner('partner.payout_rejected', "Rejected payout request #{$payout->payout_number} of {$partner->company_name}. Reason: {$validated['rejection_reason']}", $partner);
 
         return back()->with('info', "Payout request #{$payout->payout_number} has been rejected.");
+    }
+
+    /**
+     * Quick update or remove partner avatar profile picture.
+     */
+    public function updateAvatar(Request $request, Partner $partner): RedirectResponse
+    {
+        $request->validate([
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'remove_avatar' => ['nullable', 'boolean'],
+        ]);
+
+        if ($request->hasFile('avatar')) {
+            if ($partner->avatar && ! str_starts_with($partner->avatar, 'http')) {
+                Storage::disk('public')->delete($partner->avatar);
+            }
+            $path = $request->file('avatar')->store('avatars/partners', 'public');
+            $partner->update(['avatar' => $path]);
+
+            ActivityLogService::logPartner('partner.avatar_updated', "Updated profile picture for partner '{$partner->company_name}'.", $partner);
+
+            return redirect()->back()->with('success', 'Crew profile picture updated successfully.');
+        }
+
+        if ($request->boolean('remove_avatar')) {
+            if ($partner->avatar && ! str_starts_with($partner->avatar, 'http')) {
+                Storage::disk('public')->delete($partner->avatar);
+            }
+            $partner->update(['avatar' => null]);
+
+            ActivityLogService::logPartner('partner.avatar_removed', "Removed profile picture for partner '{$partner->company_name}'.", $partner);
+
+            return redirect()->back()->with('success', 'Crew profile picture removed successfully.');
+        }
+
+        return redirect()->back()->with('info', 'No image file was provided.');
+    }
+
+    /**
+     * Add a new receiving payment method for the partner (Admin Panel).
+     */
+    public function storePaymentMethod(Request $request, Partner $partner): RedirectResponse
+    {
+        $validated = $request->validate([
+            'method_type' => ['required', 'string', 'in:bkash,nagad,rocket,upay,bank'],
+            'account_number' => ['required', 'string', 'max:50'],
+            'account_name' => ['required', 'string', 'max:100'],
+            'number_type' => ['required', 'string', 'in:personal,merchant,agent'],
+            'bank_name' => ['required_if:method_type,bank', 'nullable', 'string', 'max:100'],
+            'branch_name' => ['nullable', 'string', 'max:100'],
+            'routing_number' => ['nullable', 'string', 'max:50'],
+            'is_default' => ['nullable', 'boolean'],
+        ], [
+            'bank_name.required_if' => 'Bank name is required when Bank Transfer is selected.',
+            'account_number.required' => 'Account or wallet number is required.',
+            'account_name.required' => 'Account holder name is required.',
+        ]);
+
+        $isDefault = $request->boolean('is_default') || ! $partner->paymentMethods()->exists();
+
+        if ($isDefault) {
+            $partner->paymentMethods()->update(['is_default' => false]);
+        }
+
+        $method = $partner->paymentMethods()->create([
+            'method_type' => $validated['method_type'],
+            'account_number' => $validated['account_number'],
+            'account_name' => $validated['account_name'],
+            'number_type' => $validated['number_type'],
+            'bank_name' => $validated['method_type'] === 'bank' ? ($validated['bank_name'] ?? null) : null,
+            'branch_name' => $validated['method_type'] === 'bank' ? ($validated['branch_name'] ?? null) : null,
+            'routing_number' => $validated['method_type'] === 'bank' ? ($validated['routing_number'] ?? null) : null,
+            'is_default' => $isDefault,
+        ]);
+
+        ActivityLogService::logPartner(
+            'partner.payment_method_added',
+            "Added new payout method ({$method->formatted_method}) for {$partner->company_name}.",
+            $partner
+        );
+
+        return redirect()->route('admin.partners.show', $partner)
+            ->with('success', "Payment method '{$method->formatted_method}' added successfully for {$partner->company_name}.");
+    }
+
+    /**
+     * Update an existing payment method for the partner (Admin Panel).
+     */
+    public function updatePaymentMethod(Request $request, Partner $partner, PartnerPaymentMethod $paymentMethod): RedirectResponse
+    {
+        if ((int) $paymentMethod->partner_id !== (int) $partner->id) {
+            abort(403, 'Unauthorized payment method.');
+        }
+
+        $validated = $request->validate([
+            'method_type' => ['required', 'string', 'in:bkash,nagad,rocket,upay,bank'],
+            'account_number' => ['required', 'string', 'max:50'],
+            'account_name' => ['required', 'string', 'max:100'],
+            'number_type' => ['required', 'string', 'in:personal,merchant,agent'],
+            'bank_name' => ['required_if:method_type,bank', 'nullable', 'string', 'max:100'],
+            'branch_name' => ['nullable', 'string', 'max:100'],
+            'routing_number' => ['nullable', 'string', 'max:50'],
+            'is_default' => ['nullable', 'boolean'],
+        ], [
+            'bank_name.required_if' => 'Bank name is required when Bank Transfer is selected.',
+            'account_number.required' => 'Account or wallet number is required.',
+            'account_name.required' => 'Account holder name is required.',
+        ]);
+
+        $isDefault = $request->boolean('is_default');
+
+        if ($isDefault && ! $paymentMethod->is_default) {
+            $partner->paymentMethods()->update(['is_default' => false]);
+        }
+
+        $paymentMethod->update([
+            'method_type' => $validated['method_type'],
+            'account_number' => $validated['account_number'],
+            'account_name' => $validated['account_name'],
+            'number_type' => $validated['number_type'],
+            'bank_name' => $validated['method_type'] === 'bank' ? ($validated['bank_name'] ?? null) : null,
+            'branch_name' => $validated['method_type'] === 'bank' ? ($validated['branch_name'] ?? null) : null,
+            'routing_number' => $validated['method_type'] === 'bank' ? ($validated['routing_number'] ?? null) : null,
+            'is_default' => $isDefault ? true : $paymentMethod->is_default,
+        ]);
+
+        ActivityLogService::logPartner(
+            'partner.payment_method_updated',
+            "Updated payout method ({$paymentMethod->formatted_method}) for {$partner->company_name}.",
+            $partner
+        );
+
+        return redirect()->route('admin.partners.show', $partner)
+            ->with('success', "Payment method '{$paymentMethod->formatted_method}' updated successfully.");
+    }
+
+    /**
+     * Delete a payment method for the partner (Admin Panel).
+     */
+    public function destroyPaymentMethod(Partner $partner, PartnerPaymentMethod $paymentMethod): RedirectResponse
+    {
+        if ((int) $paymentMethod->partner_id !== (int) $partner->id) {
+            abort(403, 'Unauthorized payment method.');
+        }
+
+        $formatted = $paymentMethod->formatted_method;
+        $wasDefault = $paymentMethod->is_default;
+        $paymentMethod->delete();
+
+        if ($wasDefault) {
+            $partner->paymentMethods()->latest()->first()?->update(['is_default' => true]);
+        }
+
+        ActivityLogService::logPartner(
+            'partner.payment_method_removed',
+            "Removed payout method ({$formatted}) for {$partner->company_name}.",
+            $partner
+        );
+
+        return redirect()->route('admin.partners.show', $partner)
+            ->with('success', "Payment method '{$formatted}' removed.");
+    }
+
+    /**
+     * Set a payment method as default for the partner (Admin Panel).
+     */
+    public function setDefaultPaymentMethod(Partner $partner, PartnerPaymentMethod $paymentMethod): RedirectResponse
+    {
+        if ((int) $paymentMethod->partner_id !== (int) $partner->id) {
+            abort(403, 'Unauthorized payment method.');
+        }
+
+        $partner->paymentMethods()->update(['is_default' => false]);
+        $paymentMethod->update(['is_default' => true]);
+
+        ActivityLogService::logPartner(
+            'partner.payment_method_default',
+            "Set {$paymentMethod->formatted_method} as default payout method for {$partner->company_name}.",
+            $partner
+        );
+
+        return redirect()->route('admin.partners.show', $partner)
+            ->with('success', "Default payout method updated to '{$paymentMethod->formatted_method}'.");
     }
 }

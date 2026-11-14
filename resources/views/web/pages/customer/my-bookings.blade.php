@@ -49,6 +49,13 @@
       }
     }
 
+    /* Strict single-line rule for all badges and buttons */
+    .badge, .btn, span[style*="border-radius"], [class*="badge"], [class*="btn"] {
+      white-space: nowrap !important;
+      flex-shrink: 0 !important;
+      word-break: keep-all !important;
+    }
+
     @keyframes modalPopIn {
       from { opacity: 0; transform: scale(0.96) translateY(8px); }
       to { opacity: 1; transform: scale(1) translateY(0); }
@@ -72,13 +79,33 @@
         </div>
       @endif
 
+      @if(session('error'))
+        <div data-alert style="background:#fef2f2; border:1px solid #f87171; color:#991b1b; padding:0.9rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>{{ session('error') }}</span>
+          </div>
+          <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#991b1b; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
+        </div>
+      @endif
+
+      @if(session('info'))
+        <div data-alert style="background:#eff6ff; border:1px solid #60a5fa; color:#1e40af; padding:0.9rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <span>{{ session('info') }}</span>
+          </div>
+          <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#1e40af; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
+        </div>
+      @endif
+
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.75rem; flex-wrap:wrap; gap:16px;">
         <div>
           <div style="display:flex; align-items:center; gap:10px;">
             <h2 style="font-size:1.35rem; font-weight:800; margin:0; color:var(--text-main);">
               Active & Past Bookings
             </h2>
-            <span style="font-size:0.78rem; font-weight:700; background:rgba(67,97,238,0.1); color:var(--primary); padding:3px 10px; border-radius:12px;">
+            <span class="badge" style="font-size:0.78rem; font-weight:700; background:rgba(67,97,238,0.1); color:var(--primary); padding:3px 10px; border-radius:12px; white-space:nowrap !important; flex-shrink:0 !important;">
               {{ $bookings->total() }} Total
             </span>
           </div>
@@ -138,25 +165,25 @@
                   <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:1.5rem; border-bottom:1px solid #f1f5f9; padding-bottom:1.25rem;">
                     <div>
                       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                        <span style="font-size:1.1rem; font-weight:800; color:var(--primary); font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; background:rgba(67,97,238,0.08); padding:3px 10px; border-radius:6px; letter-spacing:0.02em;">
+                        <span class="badge" style="font-size:1.1rem; font-weight:800; color:var(--primary); font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; background:rgba(67,97,238,0.08); padding:3px 10px; border-radius:6px; letter-spacing:0.02em; white-space:nowrap !important; flex-shrink:0 !important;">
                           #{{ $booking->booking_number }}
                         </span>
                         @if($booking->is_amc)
-                          <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:#f5f3ff; color:#7c3aed; border:1px solid #ddd6fe;">
+                          <span class="badge" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:#f5f3ff; color:#7c3aed; border:1px solid #ddd6fe; white-space:nowrap !important; flex-shrink:0 !important;">
                             🏢 AMC Contract
                           </span>
                           @if($booking->is_running_contract)
-                            <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; display:inline-flex; align-items:center; gap:4px;">
+                            <span class="badge" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; display:inline-flex; align-items:center; gap:4px; white-space:nowrap !important; flex-shrink:0 !important;">
                               <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
                               Running Contract
                             </span>
                           @endif
                         @endif
-                        <span style="font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:{{ $booking->status_badge_color }}22; color:{{ $booking->status_badge_color }}; border:1px solid {{ $booking->status_badge_color }}44;">
+                        <span class="badge" style="font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:{{ $booking->status_badge_color }}22; color:{{ $booking->status_badge_color }}; border:1px solid {{ $booking->status_badge_color }}44; white-space:nowrap !important; flex-shrink:0 !important;">
                           ● {{ $booking->status_label }}
                         </span>
                         @if($booking->urgency === 'emergency_1h')
-                          <span style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; padding:2px 8px; border-radius:10px; background:#fef2f2; color:#dc2626; border:1px solid #fecaca;">
+                          <span class="badge" style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; padding:2px 8px; border-radius:10px; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; white-space:nowrap !important; flex-shrink:0 !important;">
                             🚨 Critical Emergency
                           </span>
                         @endif
@@ -278,15 +305,15 @@
                         <span style="font-size:1.3rem;">🔧</span>
                         <div>
                           <strong style="color:#15803d; font-size:0.85rem; display:block;">Working On Site</strong>
-                          <span style="font-size:0.78rem; color:#166534;">Our engineering crew is actively servicing your facility on site.</span>
+                          <span style="font-size:0.78rem; color:#166534;">Our engineering team is actively servicing your facility on site.</span>
                         </div>
                       </div>
                     @elseif($booking->status === 'assigned')
                       <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; margin-bottom:1.25rem; display:flex; align-items:center; gap:10px;">
                         <span style="font-size:1.3rem;">👷</span>
                         <div>
-                          <strong style="color:#1d4ed8; font-size:0.85rem; display:block;">Field Crew Assigned & Confirmed</strong>
-                          <span style="font-size:0.78rem; color:#2563eb;">A certified team has been assigned and confirmed for your service booking.</span>
+                          <strong style="color:#1d4ed8; font-size:0.85rem; display:block;">Service Confirmed & Scheduled</strong>
+                          <span style="font-size:0.78rem; color:#2563eb;">A certified engineering team has been assigned and confirmed for your service booking.</span>
                         </div>
                       </div>
                     @elseif($booking->status === 'accepted')
@@ -294,7 +321,7 @@
                         <span style="font-size:1.3rem;">✓</span>
                         <div>
                           <strong style="color:#0369a1; font-size:0.85rem; display:block;">Booking Accepted</strong>
-                          <span style="font-size:0.78rem; color:#0284c7;">Operations headquarters accepted your booking. Dispatching field crew.</span>
+                          <span style="font-size:0.78rem; color:#0284c7;">Operations headquarters accepted your booking. Preparing dispatch.</span>
                         </div>
                       </div>
                     @endif
@@ -312,7 +339,7 @@
                         <strong style="color:var(--text-main); font-size:0.825rem; display:block; margin-bottom:6px;">Latest Operations Update:</strong>
                         @foreach($booking->statusLogs->take(2) as $log)
                           <div style="font-size:0.825rem; color:#475569; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                            <span>• {{ $log->comment ?: 'Status updated to ' . ucfirst(str_replace('_', ' ', $log->to_status)) }}</span>
+                            <span>• {{ $log->customer_comment }}</span>
                             <span style="color:#94a3b8; font-size:0.75rem;">{{ $log->created_at->diffForHumans() }}</span>
                           </div>
                         @endforeach
@@ -326,6 +353,16 @@
                       Address: {{ $booking->street_address }}
                     </div>
                     <div style="display:flex; gap:10px; align-items:center;">
+                      @if($booking->canBeCancelledByCustomer())
+                        <button type="button" 
+                                onclick="openCancelModal('{{ $booking->booking_number }}', '{{ addslashes($booking->service?->title ?? ($booking->amcPlan?->name ?? 'Facility Service')) }}')" 
+                                class="btn btn-outline" 
+                                style="padding:8px 14px; font-size:0.85rem; font-weight:700; border-radius:8px; display:inline-flex; align-items:center; gap:6px; color:#dc2626; border-color:#fca5a5; background:#ffffff; cursor:pointer;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                          <span>Cancel Request</span>
+                        </button>
+                      @endif
+
                       <a href="{{ route('customer.bookings.show', $booking->booking_number) }}" class="btn btn-outline" style="padding:8px 16px; font-size:0.85rem; font-weight:700; border-radius:8px; display:inline-flex; align-items:center; gap:6px; color:var(--primary); border-color:#cbd5e1; background:#ffffff;">
                         <span>Live Tracking & Details</span>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -390,7 +427,7 @@
                       <div style="font-size:1.05rem; font-weight:800; color:#059669;">
                         ৳ {{ number_format((float) ($cb->final_cost ?: $cb->estimated_cost ?: 0), 2) }}
                       </div>
-                      <span style="font-size:0.7rem; font-weight:700; color:#059669; background:#ecfdf5; padding:2px 8px; border-radius:10px; border:1px solid #a7f3d0; display:inline-block; margin-top:2px;">
+                      <span class="badge" style="font-size:0.7rem; font-weight:700; color:#059669; background:#ecfdf5; padding:2px 8px; border-radius:10px; border:1px solid #a7f3d0; display:inline-block; margin-top:2px; white-space:nowrap !important; flex-shrink:0 !important;">
                         Completed ✓
                       </span>
                     </div>
@@ -433,7 +470,7 @@
                         <span style="font-weight:800; font-size:0.95rem; color:#0f172a;">
                           {{ $cb->service?->title ?? ($cb->amcPlan?->name ?? 'Facility Service') }}
                         </span>
-                        <span style="font-family:monospace; font-weight:700; font-size:0.75rem; color:#dc2626; background:#fee2e2; padding:1px 6px; border-radius:4px;">
+                        <span class="badge" style="font-family:monospace; font-weight:700; font-size:0.75rem; color:#dc2626; background:#fee2e2; padding:1px 6px; border-radius:4px; white-space:nowrap !important; flex-shrink:0 !important;">
                           #{{ $cb->booking_number }}
                         </span>
                       </div>
@@ -445,7 +482,7 @@
                       </div>
 
                       @if($cb->cancellation_reason)
-                        <div style="margin-top:6px; font-size:0.78rem; color:#b91c1c; background:#fef2f2; border:1px solid #fee2e2; border-radius:6px; padding:3px 8px; display:inline-block;">
+                        <div class="badge" style="margin-top:6px; font-size:0.78rem; color:#b91c1c; background:#fef2f2; border:1px solid #fee2e2; border-radius:6px; padding:3px 8px; display:inline-block; white-space:nowrap !important; flex-shrink:0 !important;">
                           <strong>Reason:</strong> {{ $cb->cancellation_reason }}
                         </div>
                       @endif
@@ -455,7 +492,7 @@
                   <!-- Right: Cancelled Badge + View Details Button -->
                   <div class="completed-item-right" style="display:flex; align-items:center; gap:16px;">
                     <div style="text-align:right;">
-                      <span style="font-size:0.72rem; font-weight:700; color:#dc2626; background:#fef2f2; padding:3px 10px; border-radius:10px; border:1px solid #fecaca; display:inline-block;">
+                      <span class="badge" style="font-size:0.72rem; font-weight:700; color:#dc2626; background:#fef2f2; padding:3px 10px; border-radius:10px; border:1px solid #fecaca; display:inline-block; white-space:nowrap !important; flex-shrink:0 !important;">
                         Cancelled ✕
                       </span>
                     </div>
@@ -488,7 +525,7 @@
         <div>
           <div style="display:flex; align-items:center; gap:8px;">
             <span id="modalBookingNumber" style="font-weight:800; font-family:monospace; color:var(--primary); font-size:1.05rem;"></span>
-            <span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:12px;">Completed ✓</span>
+            <span class="badge" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:12px; white-space:nowrap !important; flex-shrink:0 !important;">Completed ✓</span>
           </div>
           <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">Service Request Completed & Invoiced</div>
         </div>
@@ -554,9 +591,80 @@
   </div>
 
   <!-- ========================================================================= -->
+  <!-- CUSTOMER CANCEL REQUEST MODAL                                             -->
+  <!-- ========================================================================= -->
+  @if($runningBookings->contains(fn ($b) => $b->canBeCancelledByCustomer()))
+  <div id="customerCancelModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:99999; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;" onclick="if(event.target === this) closeCancelModal()">
+    <div style="background:#ffffff; border-radius:14px; max-width:480px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); animation:modalPopIn 0.2s ease; border:1px solid #e2e8f0; overflow:hidden;">
+      <div style="padding:16px 20px; border-bottom:1px solid #fee2e2; background:#fff1f2; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#fecdd3; color:#e11d48; font-weight:800; font-size:0.9rem;">✕</span>
+          <h4 style="margin:0; font-size:1.05rem; font-weight:800; color:#9f1239;">Cancel Service Request</h4>
+        </div>
+        <button type="button" onclick="closeCancelModal()" style="background:none; border:none; font-size:1.3rem; color:#94a3b8; cursor:pointer; padding:0 4px; line-height:1;">✕</button>
+      </div>
+
+      <form id="customerCancelForm" method="POST" action="">
+        @csrf
+        <div style="padding:20px;">
+          <p style="font-size:0.875rem; color:#334155; margin:0 0 12px; line-height:1.5;">
+            Are you sure you want to cancel request <strong id="cancelModalBookingNumber" style="color:var(--primary); font-family:monospace;"></strong> (<span id="cancelModalServiceTitle"></span>)?
+          </p>
+          <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 12px; margin-bottom:16px; font-size:0.8rem; color:#b91c1c;">
+            ⚠️ Since this request hasn't been accepted yet, you can cancel it immediately without any charges.
+          </div>
+
+          <label style="font-size:0.825rem; font-weight:700; color:#1e293b; display:block; margin-bottom:6px;">
+            Reason for cancellation (Optional):
+          </label>
+          <select name="cancellation_quick_reason" class="form-control" style="width:100%; font-size:0.85rem; margin-bottom:8px; padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px;" onchange="if(this.value) { document.getElementById('cancelReasonTextarea').value = this.value; }">
+            <option value="">-- Select a reason (or write details below) --</option>
+            <option value="Schedule or timing conflict">Schedule or timing conflict</option>
+            <option value="Booked by mistake / duplicate request">Booked by mistake / duplicate request</option>
+            <option value="Problem resolved already">Problem resolved already</option>
+            <option value="Found alternative solution">Found alternative solution</option>
+            <option value="Changed mind">Changed my mind</option>
+          </select>
+          <textarea id="cancelReasonTextarea" name="cancellation_reason" class="form-control" rows="2" placeholder="Optional details..." style="width:100%; font-size:0.85rem; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;"></textarea>
+        </div>
+
+        <div style="padding:14px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" onclick="closeCancelModal()" class="btn btn-outline btn-sm" style="font-size:0.825rem; font-weight:600; padding:6px 14px; border:1px solid #cbd5e1; background:#fff; cursor:pointer;">
+            Keep Request
+          </button>
+          <button type="submit" class="btn btn-danger btn-sm" style="font-size:0.825rem; font-weight:700; padding:6px 16px; background:#e11d48; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+            Yes, Cancel Request
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  @endif
+
+  <!-- ========================================================================= -->
   <!-- JAVASCRIPT: DATA MAP & MODAL HANDLER                                     -->
   <!-- ========================================================================= -->
   <script>
+    function openCancelModal(bookingNumber, serviceTitle) {
+      const modal = document.getElementById('customerCancelModal');
+      const form = document.getElementById('customerCancelForm');
+      const numSpan = document.getElementById('cancelModalBookingNumber');
+      const titleSpan = document.getElementById('cancelModalServiceTitle');
+      const textarea = document.getElementById('cancelReasonTextarea');
+
+      form.action = '/my-bookings/' + encodeURIComponent(bookingNumber) + '/cancel';
+      numSpan.textContent = '#' + bookingNumber;
+      titleSpan.textContent = serviceTitle;
+      textarea.value = '';
+
+      modal.style.display = 'flex';
+    }
+
+    function closeCancelModal() {
+      const modal = document.getElementById('customerCancelModal');
+      if (modal) modal.style.display = 'none';
+    }
+
     const completedBookingsData = {
       @foreach($completedBookings as $cb)
         "{{ $cb->booking_number }}": {
@@ -644,6 +752,7 @@
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
         closeCompletedModal();
+        closeCancelModal();
       }
     });
   </script>

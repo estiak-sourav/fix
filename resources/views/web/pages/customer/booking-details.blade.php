@@ -1,4 +1,13 @@
 <x-layouts.app :title="'Booking #' . $booking->booking_number . ' | ' . \App\Models\SiteSetting::get('site_name', 'FIX Facility Management')">
+  <style>
+    /* Strict single-line rule for all badges and buttons */
+    .badge, .btn, span[style*="border-radius"], [class*="badge"], [class*="btn"] {
+      white-space: nowrap !important;
+      flex-shrink: 0 !important;
+      word-break: keep-all !important;
+    }
+  </style>
+
   <x-page-hero 
     title="Booking #{{ $booking->booking_number }}"
     subtitle="Real-time dispatch timeline and technical work progress."
@@ -20,6 +29,26 @@
         </div>
       @endif
 
+      @if(session('error'))
+        <div data-alert style="background:#fef2f2; border:1px solid #f87171; color:#991b1b; padding:12px 18px; border-radius:8px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; font-size:0.9rem;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>{{ session('error') }}</span>
+          </div>
+          <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#991b1b; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
+        </div>
+      @endif
+
+      @if(session('info'))
+        <div data-alert style="background:#eff6ff; border:1px solid #60a5fa; color:#1e40af; padding:12px 18px; border-radius:8px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; font-size:0.9rem;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <span>{{ session('info') }}</span>
+          </div>
+          <button type="button" onclick="this.closest('[data-alert]').remove()" style="background:none; border:none; color:#1e40af; cursor:pointer; font-size:1.15rem; line-height:1; padding:0 4px;" aria-label="Close message">&times;</button>
+        </div>
+      @endif
+
       <div class="form-card" style="padding:2rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:1.25rem; margin-bottom:1.5rem; flex-wrap:wrap; gap:12px;">
           <div>
@@ -30,10 +59,33 @@
               Booking Reference: <strong>#{{ $booking->booking_number }}</strong> • Requested on {{ $booking->created_at->format('M d, Y') }}
             </div>
           </div>
-          <span style="font-size:0.85rem; font-weight:700; padding:6px 14px; border-radius:20px; background:{{ $booking->status_badge_color }}22; color:{{ $booking->status_badge_color }};">
+          <span class="badge" style="font-size:0.85rem; font-weight:700; padding:6px 14px; border-radius:20px; background:{{ $booking->status_badge_color }}22; color:{{ $booking->status_badge_color }}; white-space:nowrap !important; flex-shrink:0 !important;">
             {{ $booking->status_label }}
           </span>
         </div>
+
+        @if($booking->canBeCancelledByCustomer())
+          <div style="background:#fff1f2; border:1px solid #fecdd3; border-radius:10px; padding:12px 18px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:#ffe4e6; color:#e11d48; font-weight:800;">✕</span>
+              <div>
+                <strong style="color:#9f1239; font-size:0.9rem; display:block;">Need to cancel this service request?</strong>
+                <span style="font-size:0.8rem; color:#be123c;">This booking is pending review and has not yet been accepted by Operations. You can cancel it directly anytime.</span>
+              </div>
+            </div>
+            <button type="button" onclick="openCancelModal('{{ $booking->booking_number }}', '{{ addslashes($booking->service?->title ?? ($booking->amcPlan?->name ?? 'Facility Service')) }}')" class="btn btn-danger btn-sm" style="background:#e11d48; color:#fff; border:none; padding:8px 16px; font-weight:700; border-radius:8px; cursor:pointer;">
+              Cancel Request
+            </button>
+          </div>
+        @elseif(!in_array($booking->status, ['completed', 'cancelled']))
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:1.2rem;">🔒</span>
+            <div>
+              <strong style="color:#1e293b; font-size:0.875rem; display:block;">Work Order Accepted by Operations</strong>
+              <span style="font-size:0.8rem; color:#64748b;">This request has already been accepted and entered dispatch. Direct client cancellation is locked. If you need urgent changes or cancellation, please contact our operations desk.</span>
+            </div>
+          </div>
+        @endif
 
         @if($booking->status === 'cancelled')
           <!-- Prominent Cancellation Banner -->
@@ -114,7 +166,7 @@
             <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; gap:12px;">
               <span style="font-size:1.5rem;">🚗</span>
               <div>
-                <strong style="color:#6d28d9; font-size:0.9rem; display:block;">Crew is on the way to your address!</strong>
+                <strong style="color:#6d28d9; font-size:0.9rem; display:block;">Technician team is on the way to your address!</strong>
                 <span style="font-size:0.82rem; color:#7c3aed;">Our technician team has started journey. {{ $booking->arrival_window ? 'Expected arrival window: ' . $booking->arrival_window : 'Heading to location.' }}</span>
               </div>
             </div>
@@ -123,15 +175,15 @@
               <span style="font-size:1.5rem;">🔧</span>
               <div>
                 <strong style="color:#15803d; font-size:0.9rem; display:block;">Working On Site</strong>
-                <span style="font-size:0.82rem; color:#166534;">Our engineering crew is actively servicing your facility on site.</span>
+                <span style="font-size:0.82rem; color:#166534;">Our engineering team is actively servicing your facility on site.</span>
               </div>
             </div>
           @elseif($booking->status === 'assigned')
             <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; gap:12px;">
               <span style="font-size:1.5rem;">👷</span>
               <div>
-                <strong style="color:#1d4ed8; font-size:0.9rem; display:block;">Field Crew Assigned & Confirmed</strong>
-                <span style="font-size:0.82rem; color:#2563eb;">A certified team has been assigned and confirmed for your service booking.</span>
+                <strong style="color:#1d4ed8; font-size:0.9rem; display:block;">Service Confirmed & Scheduled</strong>
+                <span style="font-size:0.82rem; color:#2563eb;">A certified engineering team has been assigned and confirmed for your service booking.</span>
               </div>
             </div>
           @elseif($booking->status === 'accepted')
@@ -139,7 +191,7 @@
               <span style="font-size:1.5rem;">✓</span>
               <div>
                 <strong style="color:#0369a1; font-size:0.9rem; display:block;">Booking Accepted</strong>
-                <span style="font-size:0.82rem; color:#0284c7;">Operations headquarters accepted your booking. Dispatching technician team shortly.</span>
+                <span style="font-size:0.82rem; color:#0284c7;">Operations headquarters accepted your booking. Preparing dispatch.</span>
               </div>
             </div>
           @endif
@@ -191,7 +243,7 @@
                 ✓ Active Annual Maintenance Contract (AMC): {{ $booking->amcPlan?->name ?? 'Annual Enterprise AMC' }}
               </strong>
               @if($booking->contract_start_date && $booking->contract_end_date)
-                <span style="font-size:0.8rem; background:#dcfce7; color:#166534; padding:3px 10px; border-radius:12px; font-weight:600;">
+                <span class="badge" style="font-size:0.8rem; background:#dcfce7; color:#166534; padding:3px 10px; border-radius:12px; font-weight:600; white-space:nowrap !important; flex-shrink:0 !important;">
                   Period: {{ $booking->contract_start_date->format('M d, Y') }} — {{ $booking->contract_end_date->format('M d, Y') }}
                 </span>
               @endif
@@ -224,9 +276,9 @@
                       <div style="display:flex; align-items:center; gap:8px;">
                         <strong style="color:#166534;">৳ {{ number_format($inv->amount, 2) }}</strong>
                         @if($inv->status === 'paid')
-                          <span style="background:#dcfce7; color:#15803d; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px;">✓ Paid</span>
+                          <span class="badge" style="background:#dcfce7; color:#15803d; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px; white-space:nowrap !important; flex-shrink:0 !important;">✓ Paid</span>
                         @else
-                          <span style="background:#fef3c7; color:#92400e; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px;">Due: {{ $inv->due_date?->format('M d') }}</span>
+                          <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px; white-space:nowrap !important; flex-shrink:0 !important;">Due: {{ $inv->due_date?->format('M d') }}</span>
                         @endif
                       </div>
                     </div>
@@ -237,33 +289,12 @@
           </div>
         @endif
 
-        @if($booking->partner_job_status || $booking->arrival_window)
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1.2rem; margin-bottom:1.5rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-              <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Service Execution Status</span>
-              @if($booking->partner_job_status)
-                @php
-                  $pBadge = match($booking->partner_job_status) {
-                    'on_the_way' => ['bg' => '#f3e8ff', 'color' => '#7e22ce', 'label' => 'On the Way (En Route)'],
-                    'in_progress' => ['bg' => '#dcfce7', 'color' => '#15803d', 'label' => 'Working On Site'],
-                    'completed' => ['bg' => '#ecfdf5', 'color' => '#047857', 'label' => 'Service Completed'],
-                    'accepted' => ['bg' => '#eff6ff', 'color' => '#1d4ed8', 'label' => 'Crew Assigned & Confirmed'],
-                    'assigned' => ['bg' => '#fffbeb', 'color' => '#d97706', 'label' => 'Awaiting Crew Acceptance'],
-                    'declined' => ['bg' => '#fef2f2', 'color' => '#dc2626', 'label' => 'Declined (Reassigning)'],
-                    default => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Dispatched'],
-                  };
-                @endphp
-                <span style="background:{{ $pBadge['bg'] }}; color:{{ $pBadge['color'] }}; font-size:0.75rem; font-weight:700; padding:3px 10px; border-radius:12px;">
-                  ● {{ $pBadge['label'] }}
-                </span>
-              @endif
+        @if($booking->arrival_window)
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1rem 1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:1.1rem;">⏱</span>
+            <div style="font-size:0.875rem; color:#0f766e; font-weight:600;">
+              Expected Arrival Window: {{ $booking->arrival_window }}
             </div>
-
-            @if($booking->arrival_window)
-              <div style="font-size:0.85rem; color:#0d9488; font-weight:600; margin-top:8px;">
-                ⏱ Expected Arrival Slot: {{ $booking->arrival_window }}
-              </div>
-            @endif
           </div>
         @endif
 
@@ -359,7 +390,7 @@
                 <span style="font-weight:400; font-size:0.75rem; color:var(--text-muted);">• {{ $log->created_at->format('M d, Y h:i A') }}</span>
               </div>
               @if($log->comment)
-                <div style="color:var(--text-muted); margin-top:2px;">{{ $log->comment }}</div>
+                <div style="color:var(--text-muted); margin-top:2px;">{{ $log->customer_comment }}</div>
               @endif
             </div>
           @endforeach
@@ -367,4 +398,83 @@
       </div>
     </div>
   </section>
+
+  @if($booking->canBeCancelledByCustomer())
+  <!-- ========================================================================= -->
+  <!-- CUSTOMER CANCEL REQUEST MODAL                                             -->
+  <!-- ========================================================================= -->
+  <div id="customerCancelModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:99999; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;" onclick="if(event.target === this) closeCancelModal()">
+    <div style="background:#ffffff; border-radius:14px; max-width:480px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); animation:modalPopIn 0.2s ease; border:1px solid #e2e8f0; overflow:hidden;">
+      <div style="padding:16px 20px; border-bottom:1px solid #fee2e2; background:#fff1f2; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#fecdd3; color:#e11d48; font-weight:800; font-size:0.9rem;">✕</span>
+          <h4 style="margin:0; font-size:1.05rem; font-weight:800; color:#9f1239;">Cancel Service Request</h4>
+        </div>
+        <button type="button" onclick="closeCancelModal()" style="background:none; border:none; font-size:1.3rem; color:#94a3b8; cursor:pointer; padding:0 4px; line-height:1;">✕</button>
+      </div>
+
+      <form id="customerCancelForm" method="POST" action="">
+        @csrf
+        <div style="padding:20px;">
+          <p style="font-size:0.875rem; color:#334155; margin:0 0 12px; line-height:1.5;">
+            Are you sure you want to cancel request <strong id="cancelModalBookingNumber" style="color:var(--primary); font-family:monospace;"></strong> (<span id="cancelModalServiceTitle"></span>)?
+          </p>
+          <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 12px; margin-bottom:16px; font-size:0.8rem; color:#b91c1c;">
+            ⚠️ Since this request hasn't been accepted yet, you can cancel it immediately without any charges.
+          </div>
+
+          <label style="font-size:0.825rem; font-weight:700; color:#1e293b; display:block; margin-bottom:6px;">
+            Reason for cancellation (Optional):
+          </label>
+          <select name="cancellation_quick_reason" class="form-control" style="width:100%; font-size:0.85rem; margin-bottom:8px; padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px;" onchange="if(this.value) { document.getElementById('cancelReasonTextarea').value = this.value; }">
+            <option value="">-- Select a reason (or write details below) --</option>
+            <option value="Schedule or timing conflict">Schedule or timing conflict</option>
+            <option value="Booked by mistake / duplicate request">Booked by mistake / duplicate request</option>
+            <option value="Problem resolved already">Problem resolved already</option>
+            <option value="Found alternative solution">Found alternative solution</option>
+            <option value="Changed mind">Changed my mind</option>
+          </select>
+          <textarea id="cancelReasonTextarea" name="cancellation_reason" class="form-control" rows="2" placeholder="Optional details..." style="width:100%; font-size:0.85rem; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;"></textarea>
+        </div>
+
+        <div style="padding:14px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" onclick="closeCancelModal()" class="btn btn-outline btn-sm" style="font-size:0.825rem; font-weight:600; padding:6px 14px; border:1px solid #cbd5e1; background:#fff; cursor:pointer;">
+            Keep Request
+          </button>
+          <button type="submit" class="btn btn-danger btn-sm" style="font-size:0.825rem; font-weight:700; padding:6px 16px; background:#e11d48; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+            Yes, Cancel Request
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openCancelModal(bookingNumber, serviceTitle) {
+      const modal = document.getElementById('customerCancelModal');
+      const form = document.getElementById('customerCancelForm');
+      const numSpan = document.getElementById('cancelModalBookingNumber');
+      const titleSpan = document.getElementById('cancelModalServiceTitle');
+      const textarea = document.getElementById('cancelReasonTextarea');
+
+      form.action = '/my-bookings/' + encodeURIComponent(bookingNumber) + '/cancel';
+      numSpan.textContent = '#' + bookingNumber;
+      titleSpan.textContent = serviceTitle;
+      textarea.value = '';
+
+      modal.style.display = 'flex';
+    }
+
+    function closeCancelModal() {
+      const modal = document.getElementById('customerCancelModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeCancelModal();
+      }
+    });
+  </script>
+  @endif
 </x-layouts.app>

@@ -21,6 +21,9 @@ class PartnerProfileController extends Controller
     public function index(): View
     {
         $partner = Auth::guard('partner')->user();
+        $partner->ensureDefaultPaymentMethod();
+        $partner->load('paymentMethods');
+
         $activeCategories = ServiceCategory::where('is_active', true)->orderBy('order')->get();
         $activeDivisions = Division::whereHas('districts', function ($q) {
             $q->where('is_active', true);
@@ -136,6 +139,35 @@ class PartnerProfileController extends Controller
 
         $partner->update($updateData);
 
-        return back()->with('success', 'Profile and notification preferences updated successfully.');
+        // Keep default PartnerPaymentMethod in sync with profile update
+        if ($request->filled('payment_method')) {
+            $isMfs = in_array($partner->payment_method, ['bkash', 'nagad', 'rocket']);
+            $accNum = $isMfs ? $partner->mfs_number : $partner->account_number;
+            if ($accNum) {
+                $defaultMethod = $partner->paymentMethods()->where('is_default', true)->first();
+                if ($defaultMethod) {
+                    $defaultMethod->update([
+                        'method_type' => $partner->payment_method,
+                        'account_number' => $accNum,
+                        'account_name' => $partner->account_holder ?: ($partner->contact_person ?: $partner->company_name),
+                        'bank_name' => $isMfs ? null : $partner->bank_name,
+                        'branch_name' => $isMfs ? null : $partner->branch_name,
+                    ]);
+                } else {
+                    $partner->ensureDefaultPaymentMethod();
+                }
+            }
+        }
+
+        $tab = 'profile';
+        if ($request->filled('new_password')) {
+            $tab = 'security';
+        } elseif (! $request->filled('contact_person') && ($request->has('notify_job_updated') || $request->has('notify_system_broadcast'))) {
+            $tab = 'notifications';
+        }
+
+        return back()
+            ->with('tab', $tab)
+            ->with('success', 'Profile and notification preferences updated successfully.');
     }
 }

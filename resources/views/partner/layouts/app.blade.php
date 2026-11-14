@@ -342,6 +342,8 @@
       text-decoration: none;
       transition: all 0.15s ease;
       line-height: 1.25;
+      white-space: nowrap !important;
+      flex-shrink: 0;
     }
     .btn-p svg {
       width: 15px;
@@ -395,6 +397,8 @@
       padding: 3px 8px;
       border-radius: 6px;
       line-height: 1.2;
+      white-space: nowrap !important;
+      flex-shrink: 0;
     }
     .p-badge-warning { background: #fef3c7; color: #92400e; }
     .p-badge-info { background: #e0f2fe; color: #0369a1; }
@@ -402,6 +406,64 @@
     .p-badge-success { background: #dcfce7; color: #15803d; }
     .p-badge-danger { background: #fee2e2; color: #b91c1c; }
     .p-badge-neutral { background: #f1f5f9; color: #475569; }
+
+    /* Single-line enforcement for all badges and buttons across Partner/Crew portal */
+    .btn-p,
+    .btn-p-primary,
+    .btn-p-outline,
+    .btn-p-danger,
+    .btn-p-success,
+    .btn-p-sm,
+    .p-badge,
+    .p-badge-warning,
+    .p-badge-info,
+    .p-badge-purple,
+    .p-badge-success,
+    .p-badge-danger,
+    .p-badge-neutral,
+    .status-badge-btn,
+    .p-brand-badge,
+    .p-notif-badge,
+    .p-nav-notif-btn,
+    .settings-menu-btn,
+    .btn,
+    .badge,
+    .tag,
+    .pill,
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [class*="badge"],
+    [class*="btn"],
+    [class*="pill"],
+    [class*="tag"],
+    span[style*="border-radius: 9999px"],
+    span[style*="border-radius:9999px"],
+    span[style*="border-radius: 20px"],
+    span[style*="border-radius:20px"],
+    span[style*="border-radius: 12px"],
+    span[style*="border-radius:12px"],
+    span[style*="border-radius: 10px"],
+    span[style*="border-radius:10px"],
+    span[style*="border-radius: 8px"],
+    span[style*="border-radius:8px"],
+    span[style*="border-radius: 6px"],
+    span[style*="border-radius:6px"] {
+      white-space: nowrap !important;
+      flex-shrink: 0 !important;
+      word-break: keep-all !important;
+    }
+    .btn-p *,
+    .p-badge *,
+    .btn *,
+    .badge *,
+    button *,
+    [class*="badge"] *,
+    [class*="btn"] * {
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+    }
 
     /* Standard Tables */
     .p-table-wrapper {

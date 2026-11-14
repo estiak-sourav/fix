@@ -22,6 +22,42 @@ use Illuminate\Support\Facades\Route;
 Route::get('/login', [PartnerAuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [PartnerAuthController::class, 'login'])->name('login.submit');
 
+// Public Partner & Crew Policies
+Route::get('/policy', function () {
+    return view('web.pages.partner-policy', [
+        'title' => 'Crew Policies & Partner Guidelines',
+        'activeTab' => request('tab', 'terms'),
+    ]);
+})->name('policy');
+
+Route::get('/terms', function () {
+    return view('web.pages.partner-policy', [
+        'title' => 'Crew & Partner Terms of Service',
+        'activeTab' => 'terms',
+    ]);
+})->name('terms');
+
+Route::get('/work-policy', function () {
+    return view('web.pages.partner-policy', [
+        'title' => 'Crew Work Policy & Safety SOP',
+        'activeTab' => 'work',
+    ]);
+})->name('work-policy');
+
+Route::get('/privacy-policy', function () {
+    return view('web.pages.partner-policy', [
+        'title' => 'Crew Privacy & Data Protection Policy',
+        'activeTab' => 'privacy',
+    ]);
+})->name('privacy');
+
+Route::get('/payout-policy', function () {
+    return view('web.pages.partner-policy', [
+        'title' => 'Crew Payout & Earnings Settlement Policy',
+        'activeTab' => 'payout',
+    ]);
+})->name('payout-policy');
+
 // Authenticated Partner Routes
 Route::middleware(['auth.partner'])->group(function () {
     Route::post('/logout', [PartnerAuthController::class, 'logout'])->name('logout');
@@ -64,6 +100,7 @@ Route::middleware(['auth.partner'])->group(function () {
     Route::get('/payouts', [PartnerPayoutController::class, 'index'])->name('payouts.index');
     Route::post('/payouts/request', [PartnerPayoutController::class, 'requestPayout'])->name('payouts.request');
     Route::post('/payment-methods', [PartnerPayoutController::class, 'storePaymentMethod'])->name('payment-methods.store');
+    Route::put('/payment-methods/{paymentMethod}', [PartnerPayoutController::class, 'updatePaymentMethod'])->name('payment-methods.update');
     Route::delete('/payment-methods/{paymentMethod}', [PartnerPayoutController::class, 'destroyPaymentMethod'])->name('payment-methods.destroy');
     Route::post('/payment-methods/{paymentMethod}/default', [PartnerPayoutController::class, 'setDefaultPaymentMethod'])->name('payment-methods.default');
 

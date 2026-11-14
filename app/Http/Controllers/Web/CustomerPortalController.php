@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\Booking\UpdateBookingStatusAction;
 use App\Actions\User\UpdateUserProfileAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\UpdateAvatarRequest;
@@ -11,7 +12,9 @@ use App\Models\Booking;
 use App\Models\BookingStatusLog;
 use App\Models\Division;
 use App\Models\PartnerNotification;
+use App\Services\ActivityLogService;
 use App\Services\ImageService;
+use App\Services\NotificationDispatcher;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,8 +34,6 @@ class CustomerPortalController extends Controller
             ->with([
                 'service',
                 'amcPlan',
-                'partner',
-                'assignedCrew',
                 'statusLogs' => fn ($q) => $q->where('is_customer_visible', true)->latest(),
             ])
             ->latest()
@@ -52,13 +53,89 @@ class CustomerPortalController extends Controller
             ->with([
                 'service',
                 'amcPlan',
-                'partner',
-                'assignedCrew',
                 'statusLogs' => fn ($q) => $q->where('is_customer_visible', true)->latest(),
             ])
             ->firstOrFail();
 
         return view('web.pages.customer.booking-details', compact('booking'));
+    }
+
+    /**
+     * Cancel a service request by customer before operations acceptance.
+     */
+    public function cancelBooking(Request $request, string $bookingNumber, UpdateBookingStatusAction $action): RedirectResponse
+    {
+        $validated = $request->validate([
+            'cancellation_reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $user = Auth::guard('web')->user();
+        $booking = Booking::where('booking_number', $bookingNumber)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        if ($booking->status === 'cancelled') {
+            return redirect()->back()->with('info', 'This service request is already cancelled.');
+        }
+
+        if (! $booking->canBeCancelledByCustomer()) {
+            return redirect()->back()->with('error', 'This service request has already been accepted by operations and cannot be cancelled directly. Please contact our support desk.');
+        }
+
+        $reason = ! empty($validated['cancellation_reason'])
+            ? trim($validated['cancellation_reason'])
+            : 'Cancelled by client before admin acceptance';
+
+        $action->execute($booking, [
+            'status' => 'cancelled',
+            'comment' => 'Request cancelled by client: '.$reason,
+            'admin_notes' => 'Client cancelled request prior to acceptance. Reason: '.$reason,
+        ], admin: null, user: $user);
+
+        // Auto-complete any pending outreach tasks for this booking
+        $booking->outreachTasks()->where('status', 'pending')->update([
+            'status' => 'completed',
+            'completed_at' => now(),
+            'notes' => 'Auto-completed: customer cancelled request before acceptance.',
+        ]);
+
+        // In-app alert to Admins
+        AdminNotification::create([
+            'type' => 'order_status',
+            'title' => "Client Cancelled Request #{$booking->booking_number}",
+            'message' => "Client {$user->name} cancelled service request #{$booking->booking_number} before operations acceptance.",
+            'booking_id' => $booking->id,
+            'action_url' => route('admin.bookings.show', $booking),
+            'is_read' => false,
+        ]);
+
+        // Operational email notification to Admin orders section
+        NotificationDispatcher::notifyAdminSection(
+            'orders',
+            "Order #{$booking->booking_number} Cancelled by Client",
+            "Client {$user->name} cancelled service request #{$booking->booking_number} before operations acceptance. Reason: {$reason}",
+            route('admin.bookings.show', $booking),
+            [
+                'Order' => "#{$booking->booking_number}",
+                'Client' => $user->name,
+                'Phone' => $user->phone ?? $booking->customer_phone,
+                'Reason' => $reason,
+            ]
+        );
+
+        ActivityLogService::log(
+            'booking',
+            'booking.client_cancelled',
+            "Client {$user->name} cancelled Work Order #{$booking->booking_number} prior to acceptance. Reason: {$reason}",
+            $booking,
+            [
+                'booking_number' => $booking->booking_number,
+                'reason' => $reason,
+                'cancelled_by_user_id' => $user->id,
+            ]
+        );
+
+        return redirect()->route('customer.bookings')->with('success', "Service request #{$booking->booking_number} has been cancelled successfully.");
     }
 
     /**

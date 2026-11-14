@@ -21,7 +21,7 @@
     </div>
   @endif
 
-  <form action="{{ route('admin.partners.store') }}" method="POST">
+  <form action="{{ route('admin.partners.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
 
     <!-- 1. Partner Identity & Contact Profile -->
@@ -105,6 +105,18 @@
             placeholder="Default: 123456 (if left blank on approval)"
           >
           <span style="font-size:0.75rem; color:var(--paces-text-muted);">Used with phone number to sign in to /partner/login</span>
+        </div>
+
+        <div>
+          <label class="form-label-paces" for="avatar">Crew Profile Picture / Logo</label>
+          <input 
+            type="file" 
+            name="avatar" 
+            id="avatar" 
+            class="form-control-paces" 
+            accept="image/jpeg,image/png,image/jpg,image/webp"
+          >
+          <span style="font-size:0.75rem; color:var(--paces-text-muted);">JPG, PNG or WEBP (max 5MB). Shown in dispatch and partner portal.</span>
         </div>
       </div>
     </div>

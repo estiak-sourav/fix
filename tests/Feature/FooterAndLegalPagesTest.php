@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Admin;
 use App\Models\Service;
+use App\Models\SiteContent;
 use App\Models\SiteSetting;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -121,5 +122,58 @@ class FooterAndLegalPagesTest extends TestCase
         $this->assertEquals('https://facebook.com/newfix', SiteSetting::get('facebook_url'));
         $this->assertEquals('+8801711223344', SiteSetting::get('whatsapp_number'));
         $this->assertEquals('24/7 Operations Desk', SiteSetting::get('operating_hours'));
+    }
+
+    public function test_partner_policy_pages_return_successful_response(): void
+    {
+        $response = $this->get(route('partner.policy'));
+        $response->assertStatus(200);
+        $response->assertSee('Crew Policies &amp; Partner Guidelines', false);
+        $response->assertSee('Contractor Onboarding &amp; Identity Verification', false);
+        $response->assertSee('Zero-Tolerance Safety Violations', false);
+
+        $termsResponse = $this->get(route('partner.terms'));
+        $termsResponse->assertStatus(200);
+        $termsResponse->assertSee('Crew &amp; Partner Terms of Service', false);
+
+        $workResponse = $this->get(route('partner.work-policy'));
+        $workResponse->assertStatus(200);
+        $workResponse->assertSee('Crew Work Policy &amp; Safety SOP', false);
+
+        $privacyResponse = $this->get(route('partner.privacy'));
+        $privacyResponse->assertStatus(200);
+        $privacyResponse->assertSee('Crew Privacy &amp; Data Protection Policy', false);
+
+        $payoutResponse = $this->get(route('partner.payout-policy'));
+        $payoutResponse->assertStatus(200);
+        $payoutResponse->assertSee('Crew Payout &amp; Earnings Settlement Policy', false);
+    }
+
+    public function test_admin_can_update_crew_policy_in_cms(): void
+    {
+        /** @var Admin $admin */
+        $admin = Admin::where('role', 'super_admin')->first();
+        $termsContent = SiteContent::where('section_key', 'partner_terms')->firstOrFail();
+
+        $response = $this->actingAs($admin, 'admin')->post(route('admin.web.contents.update', $termsContent), [
+            'title' => 'Updated Crew Code of Conduct 2026',
+            'subtitle' => 'Mandatory terms for all verified contractors.',
+            'legal_sections' => [
+                [
+                    'heading' => 'Clause 1: Updated Attendance Protocol',
+                    'body' => 'Technicians must check in on the mobile app within 5 minutes of arrival.',
+                ],
+                [
+                    'heading' => 'Clause 2: Electrical Inspection Mandate',
+                    'body' => 'All distribution panels must undergo live-dead-live testing before maintenance.',
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $fresh = $termsContent->fresh();
+        $this->assertEquals('Updated Crew Code of Conduct 2026', $fresh->title);
+        $this->assertEquals('Clause 1: Updated Attendance Protocol', $fresh->meta_data['sections'][0]['heading']);
+        $this->assertEquals('Clause 2: Electrical Inspection Mandate', $fresh->meta_data['sections'][1]['heading']);
     }
 }

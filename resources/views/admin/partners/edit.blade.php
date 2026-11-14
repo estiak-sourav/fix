@@ -22,7 +22,7 @@
     </div>
   @endif
 
-  <form action="{{ route('admin.partners.update', $partner) }}" method="POST">
+  <form action="{{ route('admin.partners.update', $partner) }}" method="POST" enctype="multipart/form-data">
     @csrf
     @method('PUT')
 
@@ -109,6 +109,37 @@
           <span style="font-size:0.75rem; color:var(--paces-text-muted);">
             {{ !empty($partner->password) ? '✓ Password is currently configured' : '⚠️ No password configured yet' }}
           </span>
+        </div>
+
+        <div style="grid-column:1 / -1; background:#f8fafc; border:1px solid var(--paces-border); border-radius:var(--paces-radius-sm); padding:1rem;">
+          <label class="form-label-paces" style="font-weight:600; margin-bottom:8px; display:block;">Crew / Partner Profile Picture</label>
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <div style="width:58px; height:58px; border-radius:50%; background:linear-gradient(135deg, var(--paces-primary) 0%, #1e293b 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:1.25rem; font-weight:700; overflow:hidden; border:2px solid #cbd5e1; flex-shrink:0;">
+              @if($partner->avatar_url)
+                <img src="{{ $partner->avatar_url }}" alt="{{ $partner->company_name }}" style="width:100%; height:100%; object-fit:cover;">
+              @else
+                <span>{{ $partner->initials }}</span>
+              @endif
+            </div>
+            <div style="flex:1; min-width:240px;">
+              <input 
+                type="file" 
+                name="avatar" 
+                id="avatar" 
+                class="form-control-paces" 
+                accept="image/jpeg,image/png,image/jpg,image/webp"
+              >
+              <span style="font-size:0.75rem; color:var(--paces-text-muted); display:block; margin-top:4px;">
+                Upload JPG, PNG or WEBP (max 5MB) to update photo.
+              </span>
+              @if($partner->avatar)
+                <label style="display:inline-flex; align-items:center; gap:6px; margin-top:8px; font-size:0.8rem; color:#dc2626; cursor:pointer;">
+                  <input type="checkbox" name="remove_avatar" value="1" style="accent-color:#dc2626;">
+                  <span>Remove existing profile picture</span>
+                </label>
+              @endif
+            </div>
+          </div>
         </div>
       </div>
     </div>

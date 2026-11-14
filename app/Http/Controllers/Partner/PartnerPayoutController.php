@@ -122,10 +122,10 @@ class PartnerPayoutController extends Controller
         $partner = Auth::guard('partner')->user();
 
         $validated = $request->validate([
-            'method_type' => ['required', 'string', 'in:bkash,nagad,rocket,bank'],
+            'method_type' => ['required', 'string', 'in:bkash,nagad,rocket,upay,bank'],
             'account_number' => ['required', 'string', 'max:60'],
             'account_name' => ['nullable', 'string', 'max:100'],
-            'number_type' => ['required_if:method_type,bkash,nagad,rocket', 'nullable', 'string', 'in:personal,agent,merchant'],
+            'number_type' => ['required_if:method_type,bkash,nagad,rocket,upay', 'nullable', 'string', 'in:personal,agent,merchant'],
             'bank_name' => ['required_if:method_type,bank', 'nullable', 'string', 'max:100'],
             'branch_name' => ['nullable', 'string', 'max:100'],
             'routing_number' => ['nullable', 'string', 'max:50'],
@@ -145,15 +145,64 @@ class PartnerPayoutController extends Controller
             'method_type' => $validated['method_type'],
             'account_number' => $validated['account_number'],
             'account_name' => $validated['account_name'] ?? null,
-            'number_type' => $validated['number_type'] ?? null,
-            'bank_name' => $validated['bank_name'] ?? null,
-            'branch_name' => $validated['branch_name'] ?? null,
-            'routing_number' => $validated['routing_number'] ?? null,
+            'number_type' => $validated['method_type'] !== 'bank' ? ($validated['number_type'] ?? 'personal') : null,
+            'bank_name' => $validated['method_type'] === 'bank' ? ($validated['bank_name'] ?? null) : null,
+            'branch_name' => $validated['method_type'] === 'bank' ? ($validated['branch_name'] ?? null) : null,
+            'routing_number' => $validated['method_type'] === 'bank' ? ($validated['routing_number'] ?? null) : null,
             'is_default' => $isDefault,
         ]);
 
-        return redirect()->route('partner.payouts.index')
+        return redirect()->back()
+            ->with('tab', 'payout')
             ->with('success', 'New payment method added successfully!');
+    }
+
+    /**
+     * Update an existing payment method.
+     */
+    public function updatePaymentMethod(Request $request, PartnerPaymentMethod $paymentMethod): RedirectResponse
+    {
+        /** @var Partner $partner */
+        $partner = Auth::guard('partner')->user();
+
+        if ((int) $paymentMethod->partner_id !== (int) $partner->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'method_type' => ['required', 'string', 'in:bkash,nagad,rocket,upay,bank'],
+            'account_number' => ['required', 'string', 'max:60'],
+            'account_name' => ['nullable', 'string', 'max:100'],
+            'number_type' => ['required_if:method_type,bkash,nagad,rocket,upay', 'nullable', 'string', 'in:personal,agent,merchant'],
+            'bank_name' => ['required_if:method_type,bank', 'nullable', 'string', 'max:100'],
+            'branch_name' => ['nullable', 'string', 'max:100'],
+            'routing_number' => ['nullable', 'string', 'max:50'],
+            'is_default' => ['nullable', 'boolean'],
+        ], [
+            'number_type.required_if' => 'Please specify whether this number is Personal, Agent, or Merchant.',
+            'bank_name.required_if' => 'Bank name is required for bank transfer method.',
+        ]);
+
+        $isDefault = $request->boolean('is_default');
+
+        if ($isDefault && ! $paymentMethod->is_default) {
+            $partner->paymentMethods()->update(['is_default' => false]);
+        }
+
+        $paymentMethod->update([
+            'method_type' => $validated['method_type'],
+            'account_number' => $validated['account_number'],
+            'account_name' => $validated['account_name'] ?? null,
+            'number_type' => $validated['method_type'] !== 'bank' ? ($validated['number_type'] ?? 'personal') : null,
+            'bank_name' => $validated['method_type'] === 'bank' ? ($validated['bank_name'] ?? null) : null,
+            'branch_name' => $validated['method_type'] === 'bank' ? ($validated['branch_name'] ?? null) : null,
+            'routing_number' => $validated['method_type'] === 'bank' ? ($validated['routing_number'] ?? null) : null,
+            'is_default' => $isDefault ? true : $paymentMethod->is_default,
+        ]);
+
+        return redirect()->back()
+            ->with('tab', 'payout')
+            ->with('success', 'Payment method updated successfully!');
     }
 
     /**
@@ -175,7 +224,8 @@ class PartnerPayoutController extends Controller
             $partner->paymentMethods()->latest()->first()?->update(['is_default' => true]);
         }
 
-        return redirect()->route('partner.payouts.index')
+        return redirect()->back()
+            ->with('tab', 'payout')
             ->with('success', 'Payment method removed.');
     }
 
@@ -194,7 +244,8 @@ class PartnerPayoutController extends Controller
         $partner->paymentMethods()->update(['is_default' => false]);
         $paymentMethod->update(['is_default' => true]);
 
-        return redirect()->route('partner.payouts.index')
+        return redirect()->back()
+            ->with('tab', 'payout')
             ->with('success', 'Default payout method updated.');
     }
 }
