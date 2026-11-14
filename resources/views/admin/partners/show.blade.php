@@ -147,9 +147,13 @@
 
     <button type="button" class="partner-tab-btn" data-tab="tab-payouts" onclick="switchPartnerTab('tab-payouts')">
       <span>💰 Payables & Financials</span>
-      @if($pendingDue > 0)
+      @if($crewOwesAdmin)
         <span class="badge-paces" style="background:#fee2e2; color:#dc2626; font-size:0.72rem; padding:2px 8px; border-radius:10px; font-weight:700;">
-          Due: ৳{{ number_format($pendingDue, 0) }}
+          Crew Owes: ৳{{ number_format($crewDueAmount, 0) }}
+        </span>
+      @elseif($adminOwesCrew)
+        <span class="badge-paces" style="background:#fef3c7; color:#b45309; font-size:0.72rem; padding:2px 8px; border-radius:10px; font-weight:700;">
+          Due Crew: ৳{{ number_format($pendingDue, 0) }}
         </span>
       @else
         <span class="badge-paces" style="background:#dcfce7; color:#16a34a; font-size:0.72rem; padding:2px 8px; border-radius:10px;">✓ Settled</span>
@@ -309,37 +313,74 @@
       <!-- Financial Summary Box -->
       <div class="card-paces" style="margin-bottom:0; padding:20px;">
         <h3 class="card-title-paces" style="font-size:0.95rem; margin-bottom:14px;">Payable & Earnings Ledger Summary</h3>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px;">
-          <div style="background:#f8fafc; border:1px solid var(--paces-border); padding:12px; border-radius:8px;">
-            <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Total Earned by Crew</div>
-            <div style="font-size:1.35rem; font-weight:800; color:var(--paces-primary); margin-top:4px;">৳ {{ number_format($totalEarned, 2) }}</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div style="background:#f8fafc; border:1px solid var(--paces-border); padding:10px 12px; border-radius:8px;">
+            <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Total Earned by Crew</div>
+            <div style="font-size:1.25rem; font-weight:800; color:var(--paces-primary); margin-top:2px;">৳ {{ number_format($totalEarned, 2) }}</div>
           </div>
-          <div style="background:#f8fafc; border:1px solid var(--paces-border); padding:12px; border-radius:8px;">
-            <div style="font-size:0.75rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Total Paid Out</div>
-            <div style="font-size:1.35rem; font-weight:800; color:#16a34a; margin-top:4px;">৳ {{ number_format($totalPaid, 2) }}</div>
+          <div style="background:#f8fafc; border:1px solid var(--paces-border); padding:10px 12px; border-radius:8px;">
+            <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Cash Collected</div>
+            <div style="font-size:1.25rem; font-weight:800; color:#b45309; margin-top:2px;">৳ {{ number_format($cashCollectedByCrew, 2) }}</div>
           </div>
         </div>
 
-        <div style="background:{{ $pendingDue > 0 ? '#fef2f2' : '#f0fdf4' }}; border:1px solid {{ $pendingDue > 0 ? '#fecaca' : '#bbf7d0' }}; border-radius:10px; padding:16px; display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div style="font-size:0.78rem; font-weight:700; color:{{ $pendingDue > 0 ? '#991b1b' : '#166534' }}; text-transform:uppercase;">Current Payable Balance</div>
-            <div style="font-size:1.75rem; font-weight:900; color:{{ $pendingDue > 0 ? '#dc2626' : '#16a34a' }};">
-              ৳ {{ number_format($pendingDue, 2) }}
-            </div>
-            <div style="font-size:0.75rem; color:{{ $pendingDue > 0 ? '#b91c1c' : '#15803d' }}; margin-top:2px;">
-              {{ $completedJobsCount }} total completed jobs • Any amount can be paid from this balance
-            </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+          <div style="background:#f8fafc; border:1px solid var(--paces-border); padding:10px 12px; border-radius:8px;">
+            <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Payouts Paid to Crew</div>
+            <div style="font-size:1.25rem; font-weight:800; color:#16a34a; margin-top:2px;">৳ {{ number_format($totalPaid, 2) }}</div>
           </div>
-          @if($pendingDue > 0)
+          <div style="background:#f8fafc; border:1px solid var(--paces-border); padding:10px 12px; border-radius:8px;">
+            <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Settled Paid by Crew to FIX</div>
+            <div style="font-size:1.25rem; font-weight:800; color:#059669; margin-top:2px;">৳ {{ number_format($paidByCrew, 2) }}</div>
+          </div>
+        </div>
+
+        @if($crewOwesAdmin)
+          <div style="background:#fef2f2; border:1.5px solid #fecaca; border-radius:10px; padding:16px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:0.78rem; font-weight:700; color:#991b1b; text-transform:uppercase;">Crew Owes Admin (Receivable Due)</div>
+              <div style="font-size:1.75rem; font-weight:900; color:#dc2626;">
+                ৳ {{ number_format($crewDueAmount, 2) }}
+              </div>
+              <div style="font-size:0.75rem; color:#b91c1c; margin-top:2px;">
+                Crew collected client payments on site exceeding earnings • Request settlement below
+              </div>
+            </div>
             <span class="badge-paces" style="background:#fee2e2; color:#b91c1c; font-weight:800; padding:6px 14px; border-radius:20px; font-size:0.85rem;">
-              Payment Due
+              Due from Crew
             </span>
-          @else
+          </div>
+        @elseif($adminOwesCrew)
+          <div style="background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:10px; padding:16px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:0.78rem; font-weight:700; color:#166534; text-transform:uppercase;">Admin Owes Crew (Payable Balance)</div>
+              <div style="font-size:1.75rem; font-weight:900; color:#16a34a;">
+                ৳ {{ number_format($pendingDue, 2) }}
+              </div>
+              <div style="font-size:0.75rem; color:#15803d; margin-top:2px;">
+                {{ $completedJobsCount }} completed jobs • You can disburse full or partial payout below
+              </div>
+            </div>
+            <span class="badge-paces" style="background:#dcfce7; color:#166534; font-weight:800; padding:6px 14px; border-radius:20px; font-size:0.85rem;">
+              Payable to Crew
+            </span>
+          </div>
+        @else
+          <div style="background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:10px; padding:16px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:0.78rem; font-weight:700; color:#166534; text-transform:uppercase;">Account Settlement Position</div>
+              <div style="font-size:1.75rem; font-weight:900; color:#16a34a;">
+                ৳ 0.00
+              </div>
+              <div style="font-size:0.75rem; color:#15803d; margin-top:2px;">
+                All client cash collections and crew earnings are perfectly balanced & settled!
+              </div>
+            </div>
             <span class="badge-paces" style="background:#dcfce7; color:#166534; font-weight:800; padding:6px 14px; border-radius:20px; font-size:0.85rem;">
               ✓ All Settled
             </span>
-          @endif
-        </div>
+          </div>
+        @endif
       </div>
 
       <!-- Configured Disbursement & Payment Methods Info -->
@@ -429,6 +470,153 @@
         </div>
       </div>
     </div>
+
+    <!-- PENDING SETTLEMENT SUBMISSIONS FROM CREW (Crew paid money to Admin) -->
+    @if($pendingSettlementRequests->isNotEmpty())
+      <div class="card-paces" style="margin-bottom:1.5rem; border:1px solid #86efac; background:#f0fdf4; padding:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <h4 style="margin:0; font-size:1rem; color:#166534; font-weight:700;">
+              📥 Crew Settlement Payments Awaiting Verification ({{ $pendingSettlementRequests->count() }})
+            </h4>
+            <p style="margin:2px 0 0; font-size:0.78rem; color:#15803d;">
+              Crew submitted settlement payment for client cash collections. Verify Trx ID / Cash receipt and confirm to clear dues.
+            </p>
+          </div>
+          <span style="font-size:0.85rem; font-weight:800; background:#dcfce7; color:#15803d; padding:4px 10px; border-radius:12px;">
+            Total Paid: ৳ {{ number_format((float) $pendingSettlementRequests->sum('amount'), 2) }}
+          </span>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          @foreach($pendingSettlementRequests as $sreq)
+            <div style="background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+                <div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-weight:700; font-size:0.9rem; color:#1e293b; font-family:monospace;">#{{ $sreq->payout_number }}</span>
+                    <span style="background:#dcfce7; color:#15803d; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:4px;">Verification Pending</span>
+                    <span style="font-size:0.75rem; color:#64748b;">Submitted {{ $sreq->requested_at?->diffForHumans() ?? 'recently' }}</span>
+                  </div>
+                  <div style="margin-top:6px; font-size:0.84rem; color:#334155;">
+                    Payment Method: <strong>{{ $sreq->payment_method_details ?: ($sreq->adminPaymentMethod?->formatted_method ?? 'Cash at Office') }}</strong>
+                  </div>
+                  @if($sreq->transaction_reference)
+                    <div style="margin-top:3px; font-size:0.82rem; color:#1e40af;">
+                      Trx ID / Ref: <strong style="font-family:monospace;">{{ $sreq->transaction_reference }}</strong>
+                    </div>
+                  @endif
+                  @if($sreq->proof_file)
+                    <div style="margin-top:4px;">
+                      <a href="{{ asset('storage/' . $sreq->proof_file) }}" target="_blank" style="font-size:0.75rem; color:#2563eb; font-weight:600; text-decoration:underline;">
+                        📎 View Uploaded Payment Proof / Receipt
+                      </a>
+                    </div>
+                  @endif
+                  @if($sreq->partner_notes)
+                    <div style="margin-top:4px; font-size:0.78rem; color:#64748b; font-style:italic;">
+                      Note from crew: "{{ $sreq->partner_notes }}"
+                    </div>
+                  @endif
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:1.4rem; font-weight:800; color:#166534;">
+                    ৳ {{ number_format((float) $sreq->amount, 2) }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action buttons -->
+              <div style="margin-top:14px; padding-top:12px; border-top:1px dashed #bbf7d0; display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+                <form action="{{ route('admin.partners.payouts.reject', $sreq) }}" method="POST" style="margin:0;" onsubmit="return confirm('Reject this settlement verification?')">
+                  @csrf
+                  <input type="hidden" name="rejection_reason" value="Payment not found in FIX account or invalid Trx ID.">
+                  <button type="submit" class="btn-paces btn-paces-outline btn-paces-sm" style="color:#dc2626; border-color:#fca5a5;">
+                    ✕ Reject Payment
+                  </button>
+                </form>
+
+                <form action="{{ route('admin.partners.payouts.approve', $sreq) }}" method="POST" style="margin:0;">
+                  @csrf
+                  <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#16a34a; border-color:#16a34a;">
+                    ✓ Confirm Payment Received & Clear Dues
+                  </button>
+                </form>
+              </div>
+            </div>
+          @endforeach
+        </div>
+      </div>
+    @endif
+
+    <!-- REQUEST PAYMENT SETTLEMENT CARD (When Crew owes Admin) -->
+    @if($crewOwesAdmin)
+      <div class="card-paces" style="margin-bottom:1.5rem; padding:20px; border:1.5px solid #fed7aa; background:#fff7ed;">
+        <div style="border-bottom:1px solid #fed7aa; padding-bottom:12px; margin-bottom:16px;">
+          <h4 style="margin:0; font-size:1.05rem; font-weight:700; color:#9a3412;">
+            📥 Request Payment Settlement from Crew
+          </h4>
+          <p style="margin:4px 0 0; font-size:0.8rem; color:#c2410c;">
+            This crew collected client payments on site and currently owes <strong>৳ {{ number_format($crewDueAmount, 2) }}</strong> to FIX. Send an official payment settlement request to the crew's app with receiving payment instructions.
+          </p>
+        </div>
+
+        <form action="{{ route('admin.partners.request-payment', $partner) }}" method="POST">
+          @csrf
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px;">
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">
+                Requested Settlement Amount (৳) <span style="color:#dc2626;">*</span>
+              </label>
+              <div style="position:relative;">
+                <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-weight:700; color:#64748b;">৳</span>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  min="1" 
+                  name="amount" 
+                  required 
+                  value="{{ old('amount', $crewDueAmount) }}" 
+                  class="form-control-paces" 
+                  style="padding-left:28px; font-size:1rem; font-weight:700;"
+                >
+              </div>
+              <div style="font-size:0.72rem; color:#9a3412; margin-top:4px;">
+                Outstanding crew dues: ৳{{ number_format($crewDueAmount, 2) }}
+              </div>
+            </div>
+
+            <div>
+              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">
+                Preferred FIX Receiving Account
+              </label>
+              <select name="admin_payment_method_id" class="form-control-paces" style="font-size:0.85rem;">
+                @foreach($adminPaymentMethods as $apm)
+                  <option value="{{ $apm->id }}" {{ $apm->is_default ? 'selected' : '' }}>
+                    {{ $apm->formatted_method }}{{ $apm->is_default ? ' ★ (Default)' : '' }}
+                  </option>
+                @endforeach
+                <option value="">-- Cash Handover at FIX Office / General --</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Settlement Instructions / Note for Crew</label>
+            <input type="text" name="admin_notes" class="form-control-paces" placeholder="e.g. Please clear client cash collected for jobs this week via bKash Merchant or Office Counter." style="font-size:0.85rem;">
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #fed7aa; padding-top:14px;">
+            <div style="font-size:0.78rem; color:#9a3412;">
+              Crew will receive an instant high-priority in-app notification with payment instructions.
+            </div>
+            <button type="submit" class="btn-paces btn-paces-primary" style="background:#ea580c; border-color:#ea580c; padding:8px 20px; font-weight:700;">
+              Send Settlement Request →
+            </button>
+          </div>
+        </form>
+      </div>
+    @endif
 
     <!-- PENDING PAYOUT REQUESTS FROM CREW -->
     @if($pendingPayoutRequests->isNotEmpty())
@@ -640,27 +828,33 @@
       @endif
     </div>
 
-    <!-- ALL HISTORICAL DISBURSED PAYOUT TRANSACTIONS TABLE -->
+    <!-- ALL HISTORICAL DISBURSED PAYOUT & SETTLEMENT TRANSACTIONS TABLE -->
     <div class="card-paces" style="margin-bottom:1.5rem; padding:0; overflow:hidden;">
       <div class="card-header-paces" style="padding:16px 20px; border-bottom:1px solid var(--paces-border); display:flex; justify-content:space-between; align-items:center;">
         <div>
-          <h3 class="card-title-paces" style="margin:0;">Disbursed Payout Transactions History</h3>
-          <p class="card-subtitle-paces" style="margin:2px 0 0;">Record of all payment disbursements made to this partner from balance</p>
+          <h3 class="card-title-paces" style="margin:0;">Disbursements &amp; Settlements Ledger</h3>
+          <p class="card-subtitle-paces" style="margin:2px 0 0;">Record of all two-way payouts to crew and settlement receipts from crew</p>
         </div>
-        <span class="badge-paces" style="background:#f1f5f9; color:#475569; font-size:0.75rem; padding:3px 10px;">
-          Total Disbursed: ৳ {{ number_format($totalPaid, 2) }}
-        </span>
+        <div style="display:flex; gap:8px;">
+          <span class="badge-paces" style="background:#ecfdf5; color:#047857; font-size:0.75rem; padding:3px 10px;">
+            Total Payouts: ৳ {{ number_format($totalPaid, 2) }}
+          </span>
+          <span class="badge-paces" style="background:#eff6ff; color:#1e40af; font-size:0.75rem; padding:3px 10px;">
+            Crew Settled: ৳ {{ number_format($paidByCrew, 2) }}
+          </span>
+        </div>
       </div>
       <div class="table-responsive-paces">
         <table class="table-paces">
           <thead>
             <tr>
-              <th>Payout #</th>
-              <th>Date & Time</th>
-              <th style="text-align:right;">Amount Paid</th>
+              <th>Trx #</th>
+              <th>Direction</th>
+              <th>Date &amp; Time</th>
+              <th style="text-align:right;">Amount</th>
               <th>Payment Method</th>
               <th style="text-align:center;">Status</th>
-              <th>Transaction TrxID</th>
+              <th>Reference / Proof</th>
               <th>Processed By</th>
               <th>Notes</th>
             </tr>
@@ -671,14 +865,25 @@
                 <td style="font-family:monospace; font-weight:700; color:var(--paces-primary);">
                   #{{ $pay->payout_number }}
                 </td>
-                <td style="font-size:0.8rem; color:var(--paces-text-muted);">
-                  {{ $pay->paid_at ? $pay->paid_at->format('M d, Y h:i A') : $pay->created_at->format('M d, Y') }}
+                <td>
+                  @if($pay->direction === 'partner_to_admin')
+                    <span style="font-size:0.75rem; font-weight:700; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
+                      📥 Crew → FIX
+                    </span>
+                  @else
+                    <span style="font-size:0.75rem; font-weight:700; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
+                      📤 FIX → Crew
+                    </span>
+                  @endif
                 </td>
-                <td style="text-align:right; font-weight:800; color:#16a34a; font-size:0.92rem;">
+                <td style="font-size:0.8rem; color:var(--paces-text-muted);">
+                  {{ $pay->paid_at ? $pay->paid_at->format('M d, Y h:i A') : ($pay->requested_at ? $pay->requested_at->format('M d, Y') : $pay->created_at->format('M d, Y')) }}
+                </td>
+                <td style="text-align:right; font-weight:800; color:{{ $pay->direction === 'partner_to_admin' ? '#059669' : '#2563eb' }}; font-size:0.92rem;">
                   ৳ {{ number_format((float) $pay->amount, 2) }}
                 </td>
                 <td style="font-size:0.82rem;">
-                  {{ $pay->payment_method_details ?: ($pay->paymentMethod?->formatted_method ?? 'Direct Settlement') }}
+                  {{ $pay->payment_method_details ?: ($pay->paymentMethod?->formatted_method ?? ($pay->adminPaymentMethod?->formatted_method ?? 'Direct Settlement')) }}
                 </td>
                 <td style="text-align:center;">
                   @php $badge = $pay->status_badge; @endphp
@@ -686,11 +891,18 @@
                     {{ $badge['label'] }}
                   </span>
                 </td>
-                <td style="font-family:monospace; font-size:0.8rem; color:#475569;">
-                  {{ $pay->transaction_reference ?: '—' }}
+                <td style="font-size:0.8rem; color:#475569;">
+                  <span style="font-family:monospace;">{{ $pay->transaction_reference ?: '—' }}</span>
+                  @if($pay->proof_file)
+                    <div style="margin-top:2px;">
+                      <a href="{{ asset('storage/' . $pay->proof_file) }}" target="_blank" style="font-size:0.72rem; color:#2563eb; text-decoration:underline;">
+                        📎 View Receipt
+                      </a>
+                    </div>
+                  @endif
                 </td>
                 <td style="font-size:0.8rem; color:#64748b;">
-                  {{ $pay->processedByAdmin?->name ?? 'Admin' }}
+                  {{ $pay->processedByAdmin?->name ?? ($pay->initiated_by === 'partner' ? 'Crew' : 'Admin') }}
                 </td>
                 <td style="font-size:0.78rem; color:#64748b; max-width:180px;">
                   {{ $pay->admin_notes ?: ($pay->partner_notes ?: '—') }}
@@ -698,8 +910,8 @@
               </tr>
             @empty
               <tr>
-                <td colspan="8" style="text-align:center; padding:2rem; color:var(--paces-text-muted);">
-                  No payout transactions disbursed yet.
+                <td colspan="9" style="text-align:center; padding:2rem; color:var(--paces-text-muted);">
+                  No financial transactions recorded yet.
                 </td>
               </tr>
             @endforelse

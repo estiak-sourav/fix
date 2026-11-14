@@ -38,6 +38,7 @@
       flex-direction: column;
       padding-bottom: 74px;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
     @media (min-width: 992px) {
       body { padding-bottom: 0; }
@@ -231,6 +232,7 @@
       flex: 1;
       max-width: 1240px;
       width: 100%;
+      min-width: 0;
       margin: 0 auto;
       padding: 24px 20px;
     }
@@ -243,6 +245,8 @@
       box-shadow: var(--p-shadow);
       padding: 20px;
       margin-bottom: 20px;
+      min-width: 0;
+      max-width: 100%;
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
     .p-card-header {
@@ -471,9 +475,13 @@
     }
 
     /* Standard Tables */
-    .p-table-wrapper {
+    .p-table-wrapper,
+    .p-table-responsive {
       width: 100%;
+      max-width: 100%;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      display: block;
       border: 1px solid var(--p-border);
       border-radius: 10px;
       background: #ffffff;

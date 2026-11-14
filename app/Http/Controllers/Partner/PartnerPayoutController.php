@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminNotification;
+use App\Models\AdminPaymentMethod;
 use App\Models\Booking;
 use App\Models\Partner;
 use App\Models\PartnerNotification;
 use App\Models\PartnerPaymentMethod;
 use App\Models\PartnerPayout;
+use App\Services\NotificationDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -34,23 +36,54 @@ class PartnerPayoutController extends Controller
             ->paginate(10, ['*'], 'jobs_page');
 
         $paymentMethods = $partner->paymentMethods;
-        $payouts = $partner->payouts()->with('paymentMethod')->paginate(10, ['*'], 'payouts_page');
+        $adminPaymentMethods = AdminPaymentMethod::active()->get();
+        $payouts = $partner->payouts()->with(['paymentMethod', 'adminPaymentMethod'])->latest()->paginate(10, ['*'], 'payouts_page');
 
         $totalEarned = $partner->total_earned;
         $totalPaid = $partner->total_paid;
+        $cashCollectedByCrew = $partner->cash_collected_by_crew;
+        $paidByCrew = $partner->paid_by_crew;
+        $netBalance = $partner->net_balance;
+        $adminOwesCrew = $partner->admin_owes_crew;
+        $crewOwesAdmin = $partner->crew_owes_admin;
         $pendingDue = $partner->payable_balance;
+        $crewDueAmount = $partner->crew_due_amount;
 
-        $pendingPayoutRequests = $partner->payouts()->where('status', 'pending')->get();
+        $adminPaymentRequests = $partner->payouts()
+            ->where('direction', 'partner_to_admin')
+            ->where('status', 'requested')
+            ->with('adminPaymentMethod')
+            ->get();
+
+        $pendingSettlementSubmissions = $partner->payouts()
+            ->where('direction', 'partner_to_admin')
+            ->where('status', 'pending')
+            ->with('adminPaymentMethod')
+            ->get();
+
+        $pendingPayoutRequests = $partner->payouts()
+            ->where('direction', 'admin_to_partner')
+            ->where('status', 'pending')
+            ->get();
         $pendingRequestedAmount = (float) $pendingPayoutRequests->sum('amount');
 
         return view('partner.payouts.index', compact(
             'partner',
             'completedJobs',
             'paymentMethods',
+            'adminPaymentMethods',
             'payouts',
             'totalEarned',
             'totalPaid',
+            'cashCollectedByCrew',
+            'paidByCrew',
+            'netBalance',
+            'adminOwesCrew',
+            'crewOwesAdmin',
             'pendingDue',
+            'crewDueAmount',
+            'adminPaymentRequests',
+            'pendingSettlementSubmissions',
             'pendingPayoutRequests',
             'pendingRequestedAmount'
         ));
@@ -111,6 +144,107 @@ class PartnerPayoutController extends Controller
 
         return redirect()->route('partner.payouts.index')
             ->with('success', 'Payout request for ৳'.number_format($amount, 2).' submitted successfully! Admin will process your disbursement shortly.');
+    }
+
+    /**
+     * Submit a dues settlement payment to Admin.
+     */
+    public function payAdmin(Request $request): RedirectResponse
+    {
+        /** @var Partner $partner */
+        $partner = Auth::guard('partner')->user();
+
+        if (! $request->filled('payment_method_type') && $request->filled('admin_payment_method_id')) {
+            $matchedMethod = AdminPaymentMethod::find($request->input('admin_payment_method_id'));
+            if ($matchedMethod) {
+                $request->merge(['payment_method_type' => $matchedMethod->method_type]);
+            }
+        }
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:1'],
+            'admin_payment_method_id' => ['nullable', 'exists:admin_payment_methods,id'],
+            'payment_method_type' => ['required', 'string', 'in:cash,offline,bkash,nagad,rocket,bank,other'],
+            'transaction_reference' => ['nullable', 'string', 'max:100'],
+            'partner_reference' => ['nullable', 'string', 'max:100'],
+            'partner_notes' => ['nullable', 'string', 'max:500'],
+            'proof_file' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'admin_request_id' => ['nullable', 'exists:partner_payouts,id'],
+        ]);
+
+        $amount = (float) $validated['amount'];
+        $proofPath = null;
+        if ($request->hasFile('proof_file')) {
+            $proofPath = $request->file('proof_file')->store('settlement_proofs', 'public');
+        }
+
+        $adminMethod = ! empty($validated['admin_payment_method_id'])
+            ? AdminPaymentMethod::find($validated['admin_payment_method_id'])
+            : null;
+
+        $methodDetails = $adminMethod
+            ? $adminMethod->formatted_method
+            : strtoupper($validated['payment_method_type']).' (Cash / Offline Handover)';
+
+        $payout = PartnerPayout::create([
+            'payout_number' => PartnerPayout::generatePayoutNumber('partner_to_admin'),
+            'direction' => 'partner_to_admin',
+            'initiated_by' => 'partner',
+            'partner_id' => $partner->id,
+            'admin_payment_method_id' => $adminMethod?->id,
+            'payment_method_type' => $validated['payment_method_type'],
+            'amount' => $amount,
+            'status' => 'pending',
+            'payment_method_details' => $methodDetails,
+            'transaction_reference' => $validated['transaction_reference'] ?? $validated['partner_reference'] ?? null,
+            'partner_notes' => $validated['partner_notes'] ?? null,
+            'proof_file' => $proofPath,
+            'requested_at' => now(),
+        ]);
+
+        // If this was in response to an open admin payment request, update it
+        if (! empty($validated['admin_request_id'])) {
+            $adminReq = PartnerPayout::where('id', $validated['admin_request_id'])
+                ->where('partner_id', $partner->id)
+                ->where('status', 'requested')
+                ->first();
+            if ($adminReq) {
+                $adminReq->update([
+                    'status' => 'pending',
+                    'transaction_reference' => $validated['transaction_reference'] ?? $adminReq->transaction_reference,
+                    'partner_notes' => 'Settlement payment submitted via payout #'.$payout->payout_number,
+                ]);
+            }
+        }
+
+        // Notify Admin CMS
+        AdminNotification::create([
+            'type' => 'partner_settlement_submitted',
+            'title' => 'Crew Payment Submitted: ৳'.number_format($amount, 2)." from {$partner->company_name}",
+            'message' => "Partner '{$partner->company_name}' submitted dues settlement of ৳".number_format($amount, 2)." via {$methodDetails} (Ref: {$payout->transaction_reference}). Review and confirm to clear dues.",
+            'action_url' => route('admin.partners.show', $partner).'#tab-payouts',
+            'is_read' => false,
+        ]);
+
+        NotificationDispatcher::notifyAdminSection(
+            'payments',
+            "Crew Payment Submitted from {$partner->company_name}",
+            "Partner '{$partner->company_name}' submitted dues settlement of ৳".number_format($amount, 2)." via {$methodDetails}. Please verify and approve.",
+            route('admin.partners.show', $partner).'#tab-payouts'
+        );
+
+        // Notify Partner In-App
+        PartnerNotification::create([
+            'partner_id' => $partner->id,
+            'type' => 'settlement_submitted',
+            'title' => 'Settlement Payment Submitted: ৳'.number_format($amount, 2),
+            'message' => 'Your payment of ৳'.number_format($amount, 2)." to FIX has been submitted (Receipt #{$payout->payout_number}). Admin will verify transaction and clear dues.",
+            'action_url' => route('partner.payouts.index'),
+            'is_read' => false,
+        ]);
+
+        return redirect()->route('partner.payouts.index')
+            ->with('success', 'Payment of ৳'.number_format($amount, 2).' to FIX submitted successfully! Admin will verify and clear your dues.');
     }
 
     /**

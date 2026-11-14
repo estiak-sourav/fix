@@ -118,9 +118,35 @@ class Partner extends Authenticatable
         });
     }
 
-    public function getTotalPaidAttribute(): float
+    /**
+     * Total cash/payments collected directly on site by crew from customers.
+     */
+    public function getCashCollectedByCrewAttribute(): float
     {
-        $payoutSum = (float) $this->payouts()->where('status', 'paid')->sum('amount');
+        return (float) $this->bookings()
+            ->where(function ($q) {
+                $q->where('status', 'completed')
+                    ->orWhere('partner_job_status', 'completed');
+            })
+            ->where('payment_collected_by', 'crew')
+            ->get()
+            ->sum(function ($b) {
+                return (float) ($b->collected_amount ?? $b->final_cost ?? $b->estimated_cost ?? 0);
+            });
+    }
+
+    /**
+     * Total payouts disbursed by Admin to this Partner.
+     */
+    public function getPaidToCrewAttribute(): float
+    {
+        $payoutSum = (float) $this->payouts()
+            ->where(function ($q) {
+                $q->where('direction', 'admin_to_partner')
+                    ->orWhereNull('direction');
+            })
+            ->where('status', 'paid')
+            ->sum('amount');
 
         // Also include any legacy bookings marked as paid where no payout transaction exists
         if ($payoutSum === 0.0) {
@@ -141,9 +167,64 @@ class Partner extends Authenticatable
         return $payoutSum;
     }
 
+    /**
+     * Total settlements paid by Partner to Admin (approved).
+     */
+    public function getPaidByCrewAttribute(): float
+    {
+        return (float) $this->payouts()
+            ->where('direction', 'partner_to_admin')
+            ->where('status', 'paid')
+            ->sum('amount');
+    }
+
+    public function getTotalPaidAttribute(): float
+    {
+        return $this->paid_to_crew;
+    }
+
+    /**
+     * Net financial balance:
+     * (Total Earnings + Settled Payments to Admin) - (Client Cash Collected by Crew + Admin Payouts Received).
+     *
+     * Positive (> 0): Admin owes Crew (Admin er kache crew pabe).
+     * Negative (< 0): Crew owes Admin (Crew er kache admin pabe).
+     * Zero (= 0): Fully balanced & settled.
+     */
+    public function getNetBalanceAttribute(): float
+    {
+        return (float) (($this->total_earned + $this->paid_by_crew) - ($this->cash_collected_by_crew + $this->paid_to_crew));
+    }
+
+    public function getAdminOwesCrewAttribute(): bool
+    {
+        return $this->net_balance > 0.001;
+    }
+
+    public function getCrewOwesAdminAttribute(): bool
+    {
+        return $this->net_balance < -0.001;
+    }
+
+    public function getIsSettledAttribute(): bool
+    {
+        return abs($this->net_balance) <= 0.001;
+    }
+
+    /**
+     * Balance available for Crew to withdraw / for Admin to disburse.
+     */
     public function getPayableBalanceAttribute(): float
     {
-        return max(0.0, (float) ($this->total_earned - $this->total_paid));
+        return max(0.0, $this->net_balance);
+    }
+
+    /**
+     * Dues balance that Crew owes Admin.
+     */
+    public function getCrewDueAmountAttribute(): float
+    {
+        return max(0.0, -1.0 * $this->net_balance);
     }
 
     public function unreadNotificationsCount(): int

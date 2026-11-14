@@ -40,15 +40,124 @@
       </div>
     </div>
 
-    <!-- Total Earnings -->
+    <!-- Current Balance -->
     <div class="p-card p-stat-card">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
         <div style="min-width: 0; flex: 1;">
-          <span class="p-stat-label">Earnings</span>
-          <div class="p-stat-value" style="color: #b45309;">৳ {{ number_format($stats['total_earnings']) }}</div>
+          <span class="p-stat-label">Current Balance</span>
+          @if($stats['crew_owes_admin'])
+            <div class="p-stat-value" style="color: #dc2626; white-space: nowrap !important;" title="Payable to FIX">
+              -৳&nbsp;{{ number_format($stats['crew_due_amount'], 2) }}
+            </div>
+            <div style="font-size: 0.68rem; color: #dc2626; font-weight: 500; margin-top: 2px; white-space: nowrap;">
+              ⚠️ Payable to FIX
+            </div>
+          @elseif($stats['admin_owes_crew'])
+            <div class="p-stat-value" style="color: #15803d; white-space: nowrap !important;" title="Available to withdraw">
+              ৳&nbsp;{{ number_format($stats['pending_due'], 2) }}
+            </div>
+            <div style="font-size: 0.68rem; color: #15803d; font-weight: 500; margin-top: 2px; white-space: nowrap;">
+              ✓ Available to withdraw
+            </div>
+          @else
+            <div class="p-stat-value" style="color: #334155; white-space: nowrap !important;" title="All Settled">
+              ৳&nbsp;0.00
+            </div>
+            <div style="font-size: 0.68rem; color: #64748b; font-weight: 500; margin-top: 2px; white-space: nowrap;">
+              ✓ All Settled
+            </div>
+          @endif
         </div>
-        <div class="p-stat-icon" style="background: #fffbeb; color: #d97706;">
-          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        <div class="p-stat-icon" style="background: {{ $stats['crew_owes_admin'] ? '#fef2f2' : ($stats['admin_owes_crew'] ? '#f0fdf4' : '#f8fafc') }}; color: {{ $stats['crew_owes_admin'] ? '#dc2626' : ($stats['admin_owes_crew'] ? '#16a34a' : '#64748b') }};">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+            <line x1="2" y1="10" x2="22" y2="10"></line>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Financial Settlement & Balance Overview Widget -->
+  <div class="p-card" style="margin-bottom: 20px; border: 1.5px solid {{ $stats['crew_owes_admin'] ? '#fca5a5' : ($stats['admin_owes_crew'] ? '#86efac' : '#cbd5e1') }}; background: {{ $stats['crew_owes_admin'] ? '#fff7ed' : ($stats['admin_owes_crew'] ? '#f0fdf4' : '#f8fafc') }}; padding: 18px 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.35rem;">
+          {{ $stats['crew_owes_admin'] ? '⚠️' : ($stats['admin_owes_crew'] ? '💰' : '✓') }}
+        </span>
+        <div>
+          <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: {{ $stats['crew_owes_admin'] ? '#9a3412' : ($stats['admin_owes_crew'] ? '#166534' : '#334155') }};">
+            @if($stats['crew_owes_admin'])
+              Payable Dues to FIX: ৳ {{ number_format($stats['crew_due_amount'], 2) }}
+            @elseif($stats['admin_owes_crew'])
+              Receivable from FIX: ৳ {{ number_format($stats['pending_due'], 2) }}
+            @else
+              Account Balance: Fully Settled
+            @endif
+          </h3>
+          <p style="margin: 2px 0 0; font-size: 0.78rem; color: {{ $stats['crew_owes_admin'] ? '#c2410c' : ($stats['admin_owes_crew'] ? '#15803d' : '#64748b') }};">
+            @if($stats['crew_owes_admin'])
+              You have payable to FIX.
+            @elseif($stats['admin_owes_crew'])
+              You have earnings available to withdraw.
+            @else
+              Collections and earnings are completely balanced.
+            @endif
+          </p>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <a href="{{ route('partner.payouts.index') }}" class="btn-p btn-p-primary btn-p-sm" style="{{ $stats['crew_owes_admin'] ? 'background:#ea580c; border-color:#ea580c;' : '' }}">
+          @if($stats['crew_owes_admin'])
+            Pay Dues / Settle →
+          @elseif($stats['admin_owes_crew'])
+            Request Payout →
+          @else
+            View Ledger →
+          @endif
+        </a>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; background: #ffffff; border-radius: 8px; padding: 10px 14px; border: 1px solid {{ $stats['crew_owes_admin'] ? '#fed7aa' : ($stats['admin_owes_crew'] ? '#bbf7d0' : '#e2e8f0') }};">
+      <div>
+        <span style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Total Earned</span>
+        <div style="font-weight: 800; color: #1e293b; font-size: 0.95rem; margin-top: 2px;">
+          ৳ {{ number_format($stats['total_earnings'], 2) }}
+        </div>
+      </div>
+
+      <div>
+        <span style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Cash Collected</span>
+        <div style="font-weight: 800; color: #b45309; font-size: 0.95rem; margin-top: 2px;">
+          ৳ {{ number_format($stats['cash_collected'], 2) }}
+        </div>
+      </div>
+
+      <div>
+        <span style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Payouts Received</span>
+        <div style="font-weight: 800; color: #16a34a; font-size: 0.95rem; margin-top: 2px;">
+          ৳ {{ number_format($stats['total_paid'], 2) }}
+        </div>
+      </div>
+
+      <div>
+        <span style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Status</span>
+        <div style="margin-top: 2px;">
+          @if($stats['crew_owes_admin'])
+            <span style="font-size: 0.72rem; font-weight: 700; background: #fee2e2; color: #dc2626; padding: 2px 7px; border-radius: 6px;">
+              Dues Pending
+            </span>
+          @elseif($stats['admin_owes_crew'])
+            <span style="font-size: 0.72rem; font-weight: 700; background: #dcfce7; color: #15803d; padding: 2px 7px; border-radius: 6px;">
+              Payable to You
+            </span>
+          @else
+            <span style="font-size: 0.72rem; font-weight: 700; background: #f1f5f9; color: #475569; padding: 2px 7px; border-radius: 6px;">
+              Balanced
+            </span>
+          @endif
         </div>
       </div>
     </div>

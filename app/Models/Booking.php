@@ -68,6 +68,11 @@ class Booking extends Model
         'partner_notes',
         'completion_photos',
         'partner_assigned_at',
+        'payment_collected_by',
+        'payment_method',
+        'collected_amount',
+        'payment_reference',
+        'payment_collected_at',
     ];
 
     protected function casts(): array
@@ -78,6 +83,8 @@ class Booking extends Model
             'partner_payout_amount' => 'decimal:2',
             'partner_worked_hours' => 'decimal:2',
             'partner_payout_paid_at' => 'datetime',
+            'collected_amount' => 'decimal:2',
+            'payment_collected_at' => 'datetime',
             'preferred_date' => 'date',
             'contract_start_date' => 'date',
             'contract_end_date' => 'date',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminPaymentMethod;
 use App\Models\District;
 use App\Models\Division;
 use App\Models\Partner;
@@ -200,10 +201,19 @@ class AdminPartnerController extends Controller
 
         $totalEarned = $partner->total_earned;
         $totalPaid = $partner->total_paid;
+        $cashCollectedByCrew = $partner->cash_collected_by_crew;
+        $paidByCrew = $partner->paid_by_crew;
+        $netBalance = $partner->net_balance;
+        $adminOwesCrew = $partner->admin_owes_crew;
+        $crewOwesAdmin = $partner->crew_owes_admin;
         $pendingDue = $partner->payable_balance;
+        $crewDueAmount = $partner->crew_due_amount;
+
         $payoutHistory = $partner->payouts;
-        $pendingPayoutRequests = $partner->payouts->where('status', 'pending');
+        $pendingPayoutRequests = $partner->payouts->where('direction', '!=', 'partner_to_admin')->where('status', 'pending');
+        $pendingSettlementRequests = $partner->payouts->where('direction', 'partner_to_admin')->where('status', 'pending');
         $paymentMethods = $partner->paymentMethods;
+        $adminPaymentMethods = AdminPaymentMethod::active()->get();
 
         $unsettledCount = $completedBookings->where('partner_payout_status', '!=', 'paid')->count();
         $activeJobsCount = $partner->bookings->whereIn('status', ['pending_review', 'accepted', 'assigned', 'on_the_way', 'in_progress'])->count();
@@ -220,7 +230,13 @@ class AdminPartnerController extends Controller
             'partner',
             'totalEarned',
             'totalPaid',
+            'cashCollectedByCrew',
+            'paidByCrew',
+            'netBalance',
+            'adminOwesCrew',
+            'crewOwesAdmin',
             'pendingDue',
+            'crewDueAmount',
             'unsettledCount',
             'activeJobsCount',
             'totalJobsCount',
@@ -231,7 +247,9 @@ class AdminPartnerController extends Controller
             'activeCrewsCount',
             'payoutHistory',
             'pendingPayoutRequests',
-            'paymentMethods'
+            'pendingSettlementRequests',
+            'paymentMethods',
+            'adminPaymentMethods'
         ));
     }
 
@@ -493,7 +511,9 @@ class AdminPartnerController extends Controller
             : (! empty($validated['custom_payment_method']) ? $validated['custom_payment_method'] : 'Direct Cash / Bank Settlement');
 
         $payout = PartnerPayout::create([
-            'payout_number' => PartnerPayout::generatePayoutNumber(),
+            'payout_number' => PartnerPayout::generatePayoutNumber('admin_to_partner'),
+            'direction' => 'admin_to_partner',
+            'initiated_by' => 'admin',
             'partner_id' => $partner->id,
             'partner_payment_method_id' => $method?->id,
             'amount' => $amount,
@@ -545,7 +565,7 @@ class AdminPartnerController extends Controller
     }
 
     /**
-     * Approve and mark a partner withdrawal request as paid.
+     * Approve and mark a partner withdrawal request or crew settlement payment as paid/settled.
      */
     public function approvePayoutRequest(Request $request, PartnerPayout $payout): RedirectResponse
     {
@@ -564,6 +584,25 @@ class AdminPartnerController extends Controller
             'admin_notes' => $validated['admin_notes'] ?? $payout->admin_notes,
         ]);
 
+        if ($payout->direction === 'partner_to_admin') {
+            $remainingDue = $partner->fresh()->crew_due_amount;
+
+            PartnerNotification::create([
+                'partner_id' => $partner->id,
+                'type' => 'settlement_approved',
+                'title' => 'Payment Settled & Confirmed: ৳'.number_format((float) $payout->amount, 2),
+                'message' => 'Your settlement payment of ৳'.number_format((float) $payout->amount, 2).' has been verified and confirmed by FIX Operations.'
+                    .(! empty($payout->transaction_reference) ? " (Trx: {$payout->transaction_reference})" : '')
+                    .' Remaining due: ৳'.number_format($remainingDue, 2).'.',
+                'action_url' => route('partner.payouts.index'),
+                'is_read' => false,
+            ]);
+
+            ActivityLogService::logPartner('partner.settlement_approved', "Confirmed settlement payment #{$payout->payout_number} for ৳".number_format((float) $payout->amount, 2)." from {$partner->company_name}.", $partner);
+
+            return redirect()->route('admin.partners.show', $partner)->with('success', "Settlement payment #{$payout->payout_number} for ৳".number_format((float) $payout->amount, 2).' verified and marked as received.');
+        }
+
         $remainingBalance = $partner->fresh()->payable_balance;
 
         PartnerNotification::create([
@@ -579,11 +618,11 @@ class AdminPartnerController extends Controller
 
         ActivityLogService::logPartner('partner.payout_approved', "Approved withdrawal request #{$payout->payout_number} for ৳".number_format((float) $payout->amount, 2)." to {$partner->company_name}.", $partner);
 
-        return back()->with('success', "Payout request #{$payout->payout_number} for ৳".number_format((float) $payout->amount, 2).' approved and disbursed.');
+        return redirect()->route('admin.partners.show', $partner)->with('success', "Payout request #{$payout->payout_number} for ৳".number_format((float) $payout->amount, 2).' approved and disbursed.');
     }
 
     /**
-     * Reject a partner withdrawal request.
+     * Reject a partner withdrawal request or crew settlement submission.
      */
     public function rejectPayoutRequest(Request $request, PartnerPayout $payout): RedirectResponse
     {
@@ -599,18 +638,64 @@ class AdminPartnerController extends Controller
             'processed_by_admin_id' => Auth::guard('admin')->id(),
         ]);
 
+        $title = $payout->direction === 'partner_to_admin' ? 'Settlement Verification Rejected' : 'Payout Request Rejected';
+
         PartnerNotification::create([
             'partner_id' => $partner->id,
             'type' => 'payout_rejected',
-            'title' => 'Payout Request Rejected',
-            'message' => "Your payout request #{$payout->payout_number} for ৳".number_format((float) $payout->amount, 2).' was rejected by admin. Reason: '.$validated['rejection_reason'],
+            'title' => $title,
+            'message' => "Transaction #{$payout->payout_number} for ৳".number_format((float) $payout->amount, 2).' was rejected by admin. Reason: '.$validated['rejection_reason'],
             'action_url' => route('partner.payouts.index'),
             'is_read' => false,
         ]);
 
-        ActivityLogService::logPartner('partner.payout_rejected', "Rejected payout request #{$payout->payout_number} of {$partner->company_name}. Reason: {$validated['rejection_reason']}", $partner);
+        ActivityLogService::logPartner('partner.payout_rejected', "Rejected transaction #{$payout->payout_number} of {$partner->company_name}. Reason: {$validated['rejection_reason']}", $partner);
 
-        return back()->with('info', "Payout request #{$payout->payout_number} has been rejected.");
+        return back()->with('info', "Transaction #{$payout->payout_number} has been rejected.");
+    }
+
+    /**
+     * Admin requests dues payment settlement from crew.
+     */
+    public function requestPaymentFromPartner(Request $request, Partner $partner): RedirectResponse
+    {
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:1'],
+            'admin_payment_method_id' => ['nullable', 'exists:admin_payment_methods,id'],
+            'admin_notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $amount = (float) $validated['amount'];
+        $adminMethod = ! empty($validated['admin_payment_method_id'])
+            ? AdminPaymentMethod::find($validated['admin_payment_method_id'])
+            : AdminPaymentMethod::active()->default()->first();
+
+        $payout = PartnerPayout::create([
+            'payout_number' => PartnerPayout::generatePayoutNumber('partner_to_admin'),
+            'direction' => 'partner_to_admin',
+            'initiated_by' => 'admin',
+            'partner_id' => $partner->id,
+            'admin_payment_method_id' => $adminMethod?->id,
+            'amount' => $amount,
+            'status' => 'requested',
+            'payment_method_details' => $adminMethod?->formatted_method ?: 'FIX Official Receiving Account / Cash at Office',
+            'admin_notes' => $validated['admin_notes'] ?? null,
+            'requested_at' => now(),
+            'processed_by_admin_id' => Auth::guard('admin')->id(),
+        ]);
+
+        PartnerNotification::create([
+            'partner_id' => $partner->id,
+            'type' => 'payment_requested_by_admin',
+            'title' => 'Settlement Payment Requested: ৳'.number_format($amount, 2),
+            'message' => 'FIX Operations has requested settlement payment of ৳'.number_format($amount, 2)." for collected client cash. Please pay via {$payout->payment_method_details} or Cash at FIX Office.",
+            'action_url' => route('partner.payouts.index'),
+            'is_read' => false,
+        ]);
+
+        ActivityLogService::logPartner('partner.payment_requested', 'Sent payment settlement request for ৳'.number_format($amount, 2)." to {$partner->company_name}.", $partner);
+
+        return redirect()->route('admin.partners.show', $partner)->with('success', 'Settlement payment request for ৳'.number_format($amount, 2)." sent to {$partner->company_name}.");
     }
 
     /**

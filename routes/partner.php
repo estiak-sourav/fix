@@ -99,6 +99,7 @@ Route::middleware(['auth.partner'])->group(function () {
     // Payouts & Earnings & Payment Methods
     Route::get('/payouts', [PartnerPayoutController::class, 'index'])->name('payouts.index');
     Route::post('/payouts/request', [PartnerPayoutController::class, 'requestPayout'])->name('payouts.request');
+    Route::post('/payouts/pay-admin', [PartnerPayoutController::class, 'payAdmin'])->name('payouts.pay-admin');
     Route::post('/payment-methods', [PartnerPayoutController::class, 'storePaymentMethod'])->name('payment-methods.store');
     Route::put('/payment-methods/{paymentMethod}', [PartnerPayoutController::class, 'updatePaymentMethod'])->name('payment-methods.update');
     Route::delete('/payment-methods/{paymentMethod}', [PartnerPayoutController::class, 'destroyPaymentMethod'])->name('payment-methods.destroy');

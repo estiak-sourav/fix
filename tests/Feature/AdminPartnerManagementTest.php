@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\AdminPaymentMethod;
 use App\Models\Booking;
 use App\Models\Partner;
 use App\Models\PartnerCrew;
+use App\Models\PartnerPayout;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\User;
@@ -370,5 +372,128 @@ class AdminPartnerManagementTest extends TestCase
         $response->assertSee('High Voltage Substation Automation');
         $response->assertDontSee('Archived Trade Competency');
         $response->assertSee('Gulshan');
+    }
+
+    public function test_admin_can_manage_official_receiving_payment_methods(): void
+    {
+        $admin = Admin::first();
+
+        // 1. View listing page
+        $indexResponse = $this->actingAs($admin, 'admin')
+            ->get(route('admin.payment-methods.index'));
+        $indexResponse->assertOk();
+        $indexResponse->assertSee('Receiving Payment Methods');
+
+        // 2. Create a new receiving payment method (e.g. Rocket Merchant)
+        $storeResponse = $this->actingAs($admin, 'admin')
+            ->post(route('admin.payment-methods.store'), [
+                'method_type' => 'rocket',
+                'account_number' => '01811223344-9',
+                'account_name' => 'FIX Facility Rocket Merchant',
+                'number_type' => 'merchant',
+                'instructions' => 'Use Rocket Merchant Payment Option',
+                'is_active' => true,
+                'is_default' => false,
+            ]);
+
+        $storeResponse->assertRedirect(route('admin.payment-methods.index'));
+        $storeResponse->assertSessionHas('success');
+
+        $method = AdminPaymentMethod::where('account_number', '01811223344-9')->first();
+        $this->assertNotNull($method);
+        $this->assertEquals('rocket', $method->method_type);
+        $this->assertEquals('merchant', $method->number_type);
+
+        // 3. Set as default
+        $defaultResponse = $this->actingAs($admin, 'admin')
+            ->post(route('admin.payment-methods.default', $method));
+        $defaultResponse->assertRedirect(route('admin.payment-methods.index'));
+        $method->refresh();
+        $this->assertTrue((bool) $method->is_default);
+
+        // 4. Delete method
+        $deleteResponse = $this->actingAs($admin, 'admin')
+            ->delete(route('admin.payment-methods.destroy', $method));
+        $deleteResponse->assertRedirect(route('admin.payment-methods.index'));
+        $this->assertDatabaseMissing('admin_payment_methods', ['id' => $method->id]);
+    }
+
+    public function test_admin_can_request_dues_settlement_from_partner(): void
+    {
+        $admin = Admin::first();
+
+        $partner = Partner::create([
+            'company_name' => 'Dhaka Electric Pro',
+            'contact_person' => 'Kamal',
+            'phone' => '01700998877',
+            'trade_domain' => 'Electrical',
+            'coverage_areas' => 'Mirpur',
+            'status' => 'approved',
+            'earning_model' => 'per_job',
+            'payout_rate' => 300.00,
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->post(route('admin.partners.request-payment', $partner), [
+                'amount' => 1500.00,
+                'due_date' => now()->addDays(2)->format('Y-m-d'),
+                'admin_notes' => 'Please clear cash collected from customer booking DHK-00010',
+            ]);
+
+        $response->assertRedirect(route('admin.partners.show', $partner));
+        $response->assertSessionHas('success');
+
+        $payoutRequest = PartnerPayout::where('partner_id', $partner->id)->first();
+        $this->assertNotNull($payoutRequest);
+        $this->assertEquals('partner_to_admin', $payoutRequest->direction);
+        $this->assertEquals('requested', $payoutRequest->status);
+        $this->assertEquals('admin', $payoutRequest->initiated_by);
+        $this->assertEquals(1500.00, (float) $payoutRequest->amount);
+    }
+
+    public function test_admin_can_approve_partner_settlement_payment_and_clear_dues(): void
+    {
+        $admin = Admin::first();
+
+        $partner = Partner::create([
+            'company_name' => 'Metro Cooling Care',
+            'contact_person' => 'Rashed',
+            'phone' => '01800112233',
+            'trade_domain' => 'HVAC',
+            'coverage_areas' => 'Gulshan',
+            'status' => 'approved',
+            'earning_model' => 'per_job',
+            'payout_rate' => 500.00,
+        ]);
+
+        // Partner has submitted a settlement payment of 2000 to admin
+        $settlement = PartnerPayout::create([
+            'payout_number' => PartnerPayout::generatePayoutNumber('partner_to_admin'),
+            'direction' => 'partner_to_admin',
+            'initiated_by' => 'partner',
+            'partner_id' => $partner->id,
+            'payment_method_type' => 'bkash',
+            'amount' => 2000.00,
+            'status' => 'pending',
+            'payment_method_details' => 'bKash Merchant 01700000000',
+            'transaction_reference' => 'bKash TrxID TRX992211',
+            'requested_at' => now(),
+        ]);
+
+        $approveResponse = $this->actingAs($admin, 'admin')
+            ->post(route('admin.partners.payouts.approve', $settlement), [
+                'admin_notes' => 'Verified on bKash merchant statement. Dues cleared.',
+            ]);
+
+        $approveResponse->assertRedirect(route('admin.partners.show', $partner));
+        $approveResponse->assertSessionHas('success');
+
+        $settlement->refresh();
+        $this->assertEquals('paid', $settlement->status);
+        $this->assertNotNull($settlement->paid_at);
+        $this->assertEquals($admin->id, $settlement->processed_by_admin_id);
+
+        $partner->refresh();
+        $this->assertEquals(2000.00, $partner->paid_by_crew);
     }
 }

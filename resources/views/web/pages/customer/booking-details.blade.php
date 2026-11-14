@@ -231,6 +231,16 @@
               <strong style="color:var(--text-main); display:block; margin-bottom:4px;">Billing / Agreed Price:</strong>
               @if($booking->final_cost > 0)
                 <p style="margin:0; color:#16a34a; font-weight:700; font-size:1.1rem;">৳ {{ number_format($booking->final_cost, 2) }} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">(Invoiced)</span></p>
+                @if($booking->payment_status === 'paid' || $booking->payment_collected_by)
+                  <div style="margin-top:4px;">
+                    <span style="font-weight:700; color:#15803d; background:#dcfce7; font-size:0.75rem; padding:2px 8px; border-radius:6px; display:inline-block;">
+                      ✓ Paid via {{ strtoupper($booking->payment_method ?: 'Cash') }}
+                    </span>
+                    <span style="font-size:0.72rem; color:#64748b; margin-top:2px; display:block;">
+                      {{ $booking->payment_collected_by === 'crew' ? 'Paid on site to assigned crew' : 'Paid to FIX Operations' }}
+                    </span>
+                  </div>
+                @endif
               @elseif($booking->estimated_cost > 0)
                 <p style="margin:0; color:var(--primary); font-weight:700; font-size:1.1rem;">৳ {{ number_format($booking->estimated_cost, 2) }} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">(Agreed)</span></p>
               @elseif(in_array($booking->status, ['accepted', 'assigned', 'in_progress']))

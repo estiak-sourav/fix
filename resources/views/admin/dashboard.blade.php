@@ -1361,6 +1361,148 @@
 
   </div>
 
+  <!-- Two-Way Financial Settlement & Cash Reconciliation Card -->
+  <div class="card-paces" style="margin-bottom:1.5rem; padding:20px; border-radius:12px; background:linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border:1px solid #e2e8f0;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; border-bottom:1px solid #f1f5f9; padding-bottom:12px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:40px; height:40px; border-radius:10px; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+          ⚖️
+        </div>
+        <div>
+          <h3 class="card-title-paces" style="margin:0; font-size:1.1rem; font-weight:800; color:#1e293b;">
+            Crew Financial Settlement &amp; Cash Reconciliation
+          </h3>
+          <p style="margin:2px 0 0; font-size:0.8rem; color:#64748b;">
+            Two-way tracking of client cash held by field crews vs. payable commission earnings.
+          </p>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px;">
+        <a href="{{ route('admin.payment-methods.index') }}" class="btn-paces btn-paces-outline btn-paces-sm" style="display:inline-flex; align-items:center; gap:4px;">
+          <span>Official Accounts</span>
+        </a>
+        <a href="{{ route('admin.partners.index') }}" class="btn-paces btn-paces-primary btn-paces-sm" style="display:inline-flex; align-items:center; gap:4px;">
+          <span>Manage Crews →</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- 4 Key Reconciliation Metric Blocks -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
+      <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:14px 16px;">
+        <span style="font-size:0.72rem; color:#64748b; font-weight:700; text-transform:uppercase;">Cash Held by Field Crews</span>
+        <div style="font-size:1.45rem; font-weight:900; color:#b45309; margin-top:4px;">
+          ৳ {{ number_format($totalCashHeldByCrews, 2) }}
+        </div>
+        <span style="font-size:0.75rem; color:#64748b; margin-top:2px; display:block;">Collected on site from clients</span>
+      </div>
+
+      <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:14px 16px;">
+        <span style="font-size:0.72rem; color:#991b1b; font-weight:700; text-transform:uppercase;">Crews Owe to FIX (Receivables)</span>
+        <div style="font-size:1.45rem; font-weight:900; color:#dc2626; margin-top:4px;">
+          ৳ {{ number_format($totalCrewDuesToAdmin, 2) }}
+        </div>
+        <span style="font-size:0.75rem; color:#b91c1c; margin-top:2px; display:block;">Excess client cash to collect</span>
+      </div>
+
+      <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px 16px;">
+        <span style="font-size:0.72rem; color:#166534; font-weight:700; text-transform:uppercase;">FIX Owes to Crews (Payables)</span>
+        <div style="font-size:1.45rem; font-weight:900; color:#16a34a; margin-top:4px;">
+          ৳ {{ number_format($totalPayableBalance, 2) }}
+        </div>
+        <span style="font-size:0.75rem; color:#15803d; margin-top:2px; display:block;">Earned balance to disburse</span>
+      </div>
+
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:14px 16px;">
+        <span style="font-size:0.72rem; color:#1e40af; font-weight:700; text-transform:uppercase;">Pending Actions</span>
+        <div style="font-size:1.45rem; font-weight:900; color:#2563eb; margin-top:4px;">
+          {{ $pendingPayoutRequests->count() + $pendingSettlementConfirmations->count() }}
+        </div>
+        <span style="font-size:0.75rem; color:#3b82f6; margin-top:2px; display:block;">
+          {{ $pendingSettlementConfirmations->count() }} receipts to confirm • {{ $pendingPayoutRequests->count() }} payout requests
+        </span>
+      </div>
+    </div>
+  </div>
+
+  {{-- Pending Crew Settlement Payments Awaiting Verification Alert --}}
+  @if($pendingSettlementConfirmations->isNotEmpty())
+    <div class="card-paces" style="margin-bottom:1.5rem; border:1px solid #86efac; background:#f0fdf4; padding:20px; border-radius:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px; border-bottom:1px solid #bbf7d0; padding-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:8px; background:#bbf7d0; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
+            📥
+          </div>
+          <div>
+            <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:#166534;">
+              Crew Settlement Payments Awaiting Verification ({{ $pendingSettlementConfirmations->count() }})
+            </h3>
+            <p style="margin:2px 0 0; font-size:0.78rem; color:#15803d;">
+              Field crews have submitted dues settlement payments (bKash/Bank/Cash) awaiting admin confirmation.
+            </p>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:0.88rem; font-weight:800; background:#dcfce7; color:#15803d; padding:5px 12px; border-radius:12px;">
+            Total Paid: ৳ {{ number_format((float) $pendingSettlementConfirmations->sum('amount'), 2) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="table-responsive-paces">
+        <table class="table-paces" style="background:#ffffff; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:#dcfce7;">
+              <th>Trx #</th>
+              <th>Crew / Partner</th>
+              <th>Submitted</th>
+              <th style="text-align:right;">Amount</th>
+              <th>Method</th>
+              <th>Reference / TrxID</th>
+              <th style="text-align:right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($pendingSettlementConfirmations as $sconf)
+              <tr>
+                <td style="font-weight:700; font-family:monospace; color:#166534;">
+                  #{{ $sconf->payout_number }}
+                </td>
+                <td>
+                  <div style="font-weight:600; color:#1e293b;">{{ $sconf->partner?->company_name ?? 'Field Crew' }}</div>
+                  <div style="font-size:0.75rem; color:#64748b;">📞 {{ $sconf->partner?->phone }}</div>
+                </td>
+                <td style="font-size:0.8rem; color:#64748b;">
+                  {{ $sconf->requested_at ? $sconf->requested_at->diffForHumans() : $sconf->created_at->diffForHumans() }}
+                </td>
+                <td style="text-align:right; font-weight:800; font-size:0.95rem; color:#15803d;">
+                  ৳ {{ number_format((float) $sconf->amount, 2) }}
+                </td>
+                <td style="font-size:0.82rem;">
+                  {{ $sconf->payment_method_details ?: ($sconf->adminPaymentMethod?->formatted_method ?? 'Direct / Office') }}
+                </td>
+                <td style="font-size:0.8rem; font-family:monospace;">
+                  {{ $sconf->transaction_reference ?: '—' }}
+                  @if($sconf->proof_file)
+                    <a href="{{ asset('storage/' . $sconf->proof_file) }}" target="_blank" style="font-size:0.7rem; color:#2563eb; display:block; text-decoration:underline;">
+                      📎 View Proof
+                    </a>
+                  @endif
+                </td>
+                <td style="text-align:right;">
+                  <a href="{{ route('admin.partners.show', $sconf->partner_id) }}#tab-payouts" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#16a34a; border-color:#16a34a; padding:4px 10px; font-size:0.78rem;">
+                    Verify & Confirm →
+                  </a>
+                </td>
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    </div>
+  @endif
+
   <!-- Pending Crew Withdrawal Requests Alert Section -->
   @if($pendingPayoutRequests->isNotEmpty())
     <div class="card-paces" style="margin-bottom:1.5rem; border:1px solid #fed7aa; background:#fffbeb; padding:20px; border-radius:12px;">
@@ -1525,6 +1667,68 @@
       </div>
     @endif
   </div>
+
+  <!-- Crews with Outstanding Dues (Crew Owes Admin) -->
+  @if($topDuesCrews->isNotEmpty())
+    <div class="card-paces" style="margin-bottom:1.5rem; border:1px solid #fed7aa; background:#fff7ed; padding:20px; border-radius:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px; border-bottom:1px solid #fed7aa; padding-bottom:10px;">
+        <div>
+          <h3 class="card-title-paces" style="margin:0; font-size:1.05rem; color:#9a3412;">
+            📥 Crews Holding Client Cash (Outstanding Dues to FIX)
+          </h3>
+          <p style="margin:2px 0 0; font-size:0.78rem; color:#c2410c;">
+            These field crews collected cash payments on site from clients that exceed their commission share.
+          </p>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:0.85rem; font-weight:800; background:#ffedd5; color:#9a3412; padding:4px 12px; border-radius:12px;">
+            Total Dues: ৳ {{ number_format($totalCrewDuesToAdmin, 2) }}
+          </span>
+          <a href="{{ route('admin.partners.index') }}" class="btn-paces btn-paces-outline btn-paces-sm">
+            View All Crews →
+          </a>
+        </div>
+      </div>
+
+      <div class="table-responsive-paces">
+        <table class="table-paces" style="background:#ffffff; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:#ffedd5;">
+              <th>Crew / Partner Company</th>
+              <th style="text-align:right;">Cash Collected</th>
+              <th style="text-align:right;">Crew Earned</th>
+              <th style="text-align:right;">Dues to FIX</th>
+              <th style="text-align:right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($topDuesCrews as $dcrew)
+              <tr>
+                <td>
+                  <div style="font-weight:600; color:#1e293b;">{{ $dcrew->company_name }}</div>
+                  <div style="font-size:0.75rem; color:#64748b;">👤 {{ $dcrew->contact_person }} • 📞 {{ $dcrew->phone }}</div>
+                </td>
+                <td style="text-align:right; font-weight:700; color:#b45309;">
+                  ৳ {{ number_format($dcrew->cash_collected_by_crew, 2) }}
+                </td>
+                <td style="text-align:right; font-weight:600; color:#1e293b;">
+                  ৳ {{ number_format($dcrew->total_earned, 2) }}
+                </td>
+                <td style="text-align:right; font-weight:900; color:#dc2626; font-size:0.95rem;">
+                  ৳ {{ number_format($dcrew->crew_due_amount, 2) }}
+                </td>
+                <td style="text-align:right;">
+                  <a href="{{ route('admin.partners.show', $dcrew) }}#tab-payouts" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#ea580c; border-color:#ea580c; padding:4px 10px; font-size:0.78rem;">
+                    Request Settlement →
+                  </a>
+                </td>
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    </div>
+  @endif
 
   <!-- Recent Inbound Work Orders (Table Card) -->
   <div class="card-paces">

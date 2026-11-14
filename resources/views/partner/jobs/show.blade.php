@@ -163,6 +163,65 @@
                 </div>
               @endif
 
+              {{-- Customer Payment Collection Section --}}
+              <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+                <div style="font-size:0.78rem; font-weight:800; color:#1e293b; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                  <span>Customer Payment Collection *</span>
+                </div>
+
+                {{-- Who holds the money --}}
+                <div style="margin-bottom:10px;">
+                  <label class="p-label" style="font-size:0.75rem;">Who Collected / Holds the Money? *</label>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <label id="lblCrewCollect" style="display:flex; align-items:flex-start; gap:8px; padding:8px 10px; border:1.5px solid #059669; background:#ecfdf5; border-radius:8px; cursor:pointer;">
+                      <input type="radio" name="payment_collected_by" value="crew" checked onchange="toggleCollectorHelp('crew')" style="margin-top:2px;">
+                      <div>
+                        <strong style="display:block; font-size:0.8rem; color:#065f46;">Crew Collected on Site</strong>
+                        <span style="font-size:0.7rem; color:#047857;">Money is currently with you (Cash/MFS).</span>
+                      </div>
+                    </label>
+
+                    <label id="lblAdminCollect" style="display:flex; align-items:flex-start; gap:8px; padding:8px 10px; border:1.5px solid #cbd5e1; background:#ffffff; border-radius:8px; cursor:pointer;">
+                      <input type="radio" name="payment_collected_by" value="admin" onchange="toggleCollectorHelp('admin')" style="margin-top:2px;">
+                      <div>
+                        <strong style="display:block; font-size:0.8rem; color:#334155;">Client Paid Admin</strong>
+                        <span style="font-size:0.7rem; color:#64748b;">Client paid FIX online or bank.</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                  <div>
+                    <label class="p-label" style="font-size:0.75rem;">Payment Method *</label>
+                    <select name="payment_method" class="p-input" style="font-size:0.82rem; padding:6px 10px;" required>
+                      <option value="cash" selected>Cash / Offline (On Site)</option>
+                      <option value="bkash">bKash</option>
+                      <option value="nagad">Nagad</option>
+                      <option value="rocket">Rocket</option>
+                      <option value="bank">Bank Transfer</option>
+                      <option value="offline">Offline / Office Deposit</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="p-label" style="font-size:0.75rem;">Amount Collected (৳) *</label>
+                    <input type="number" step="0.01" min="0" name="collected_amount" class="p-input" style="font-size:0.82rem; padding:6px 10px;" value="{{ old('collected_amount', $booking->final_cost ?? $booking->estimated_cost ?? 0) }}" required>
+                  </div>
+                </div>
+
+                <div style="margin-bottom:4px;">
+                  <label class="p-label" style="font-size:0.75rem;">Trx ID / Cash Receipt Note (Optional)</label>
+                  <input type="text" name="payment_reference" class="p-input" style="font-size:0.82rem; padding:6px 10px;" placeholder="e.g. TrxID or Handed cash on site...">
+                </div>
+
+                <div id="collectorExplainer" style="font-size:0.72rem; color:#047857; margin-top:8px; background:#d1fae5; padding:6px 10px; border-radius:6px;">
+                  💡 <strong>Accounting:</strong> Since you collected client's payment directly, your net earnings (৳ {{ number_format($partner->calculateBookingEarning($booking), 2) }}) will be credited to your account, and the remaining platform balance will be settled with Admin.
+                </div>
+              </div>
+
               <div style="margin-bottom: 12px;">
                 <label class="p-label">After-Service Photos (Optional)</label>
                 <input type="file" name="completion_photos[]" multiple accept="image/*" class="p-input" style="height: auto; padding: 7px;">
@@ -173,11 +232,101 @@
                 <textarea name="partner_notes" rows="2" class="p-input" style="height: auto; resize: vertical;" placeholder="Work summary or replaced parts...">{{ old('partner_notes', $booking->partner_notes) }}</textarea>
               </div>
 
-              <button type="button" class="btn-p btn-p-success" style="width: 100%; padding: 11px; font-size: 0.9rem;" onclick="confirmDialog({ title: 'Complete Service Job?', text: 'Confirm all work on site is finished.', type: 'success', confirmText: 'Complete Job', formId: 'completeJobForm' })">
+              <button type="button" class="btn-p btn-p-success" style="width: 100%; padding: 11px; font-size: 0.9rem;" onclick="confirmDialog({ title: 'Complete Service Job?', text: 'Confirm all work on site is finished and payment is collected.', type: 'success', confirmText: 'Complete Job', formId: 'completeJobForm' })">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                 <span>Complete Job</span>
               </button>
             </form>
+            <script>
+              function toggleCollectorHelp(mode) {
+                var explainer = document.getElementById('collectorExplainer');
+                var lblCrew = document.getElementById('lblCrewCollect');
+                var lblAdmin = document.getElementById('lblAdminCollect');
+                if (mode === 'crew') {
+                  explainer.innerHTML = '💡 <strong>Accounting:</strong> Since you collected client\'s payment directly, your net earnings (৳ {{ number_format($partner->calculateBookingEarning($booking), 2) }}) will be credited to your account, and the remaining platform balance will be settled with Admin.';
+                  explainer.style.background = '#d1fae5';
+                  explainer.style.color = '#047857';
+                  lblCrew.style.borderColor = '#059669';
+                  lblCrew.style.background = '#ecfdf5';
+                  lblAdmin.style.borderColor = '#cbd5e1';
+                  lblAdmin.style.background = '#ffffff';
+                } else {
+                  explainer.innerHTML = '💡 <strong>Accounting:</strong> Since the client paid Admin directly, FIX owes you your full net earnings (৳ {{ number_format($partner->calculateBookingEarning($booking), 2) }}) for this job, which you can withdraw via Payouts.';
+                  explainer.style.background = '#dbeafe';
+                  explainer.style.color = '#1e40af';
+                  lblAdmin.style.borderColor = '#2563eb';
+                  lblAdmin.style.background = '#eff6ff';
+                  lblCrew.style.borderColor = '#cbd5e1';
+                  lblCrew.style.background = '#ffffff';
+                }
+              }
+            </script>
+          @endif
+        </div>
+      @endif
+
+      {{-- Completed Payment & Settlement Summary Card --}}
+      @if($booking->status === 'completed' || $booking->partner_job_status === 'completed')
+        <div class="p-card" style="background:#f0fdf4; border:1.5px solid #86efac; padding:14px 18px; margin-bottom:18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#bbf7d0; color:#166534; font-weight:800; font-size:0.9rem;">✓</span>
+              <div>
+                <strong style="color:#166534; font-size:0.95rem; display:block;">Job Payment & Accounting Settlement</strong>
+                <span style="font-size:0.75rem; color:#15803d;">
+                  Marked at {{ $booking->payment_collected_at ? $booking->payment_collected_at->format('M d, Y • h:i A') : ($booking->completed_at ? $booking->completed_at->format('M d, Y • h:i A') : 'Completed') }}
+                </span>
+              </div>
+            </div>
+            <span style="background:#dcfce7; color:#15803d; border:1px solid #86efac; font-weight:800; font-size:0.85rem; padding:4px 12px; border-radius:12px;">
+              Total: ৳ {{ number_format($booking->collected_amount ?? $booking->final_cost ?? $booking->estimated_cost ?? 0, 2) }}
+            </span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; font-size:0.8rem; background:#ffffff; border-radius:8px; padding:10px 12px; border:1px solid #bbf7d0;">
+            <div>
+              <span style="font-size:0.7rem; color:#64748b; font-weight:700; text-transform:uppercase;">Money Held By</span>
+              <div style="font-weight:700; color:{{ $booking->payment_collected_by === 'crew' ? '#047857' : '#1e40af' }}; margin-top:2px;">
+                {{ $booking->payment_collected_by === 'crew' ? '💵 Crew (On Site)' : '🏢 FIX Admin / Office' }}
+              </div>
+            </div>
+
+            <div>
+              <span style="font-size:0.7rem; color:#64748b; font-weight:700; text-transform:uppercase;">Payment Method</span>
+              <div style="font-weight:700; color:#1e293b; margin-top:2px;">
+                {{ strtoupper($booking->payment_method ?: 'CASH') }}
+              </div>
+            </div>
+
+            <div>
+              <span style="font-size:0.7rem; color:#64748b; font-weight:700; text-transform:uppercase;">Your Earning</span>
+              <div style="font-weight:800; color:#059669; margin-top:2px;">
+                ৳ {{ number_format($partner->calculateBookingEarning($booking), 2) }}
+              </div>
+            </div>
+
+            <div>
+              <span style="font-size:0.7rem; color:#64748b; font-weight:700; text-transform:uppercase;">Settlement Result</span>
+              <div style="font-weight:700; color:#334155; margin-top:2px;">
+                @if($booking->payment_collected_by === 'crew')
+                  @php
+                    $diff = ($booking->collected_amount ?? $booking->final_cost ?? 0) - $partner->calculateBookingEarning($booking);
+                  @endphp
+                  @if($diff > 0)
+                    <span style="color:#b45309;">Owe Admin: ৳ {{ number_format($diff, 2) }}</span>
+                  @else
+                    <span style="color:#059669;">Admin Owes: ৳ {{ number_format(abs($diff), 2) }}</span>
+                  @endif
+                @else
+                  <span style="color:#059669;">Admin Owes: ৳ {{ number_format($partner->calculateBookingEarning($booking), 2) }}</span>
+                @endif
+              </div>
+            </div>
+          </div>
+          @if($booking->payment_reference)
+            <div style="margin-top:8px; font-size:0.75rem; color:#475569;">
+              <strong>Reference / Notes:</strong> {{ $booking->payment_reference }}
+            </div>
           @endif
         </div>
       @endif

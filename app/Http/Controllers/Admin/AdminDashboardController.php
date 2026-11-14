@@ -605,20 +605,34 @@ class AdminDashboardController extends Controller
             ->latest('updated_at')
             ->first();
 
-        // 7. Pending Crew Payout Requests
-        $pendingPayoutRequests = PartnerPayout::where('status', 'pending')
+        // 7. Two-Way Crew Settlements & Financial Reconciliation
+        $allPartners = Partner::with(['user', 'bookings', 'payouts'])->get();
+
+        $totalCashHeldByCrews = (float) $allPartners->sum(fn ($p) => $p->cash_collected_by_crew);
+        $totalCrewDuesToAdmin = (float) $allPartners->filter(fn ($p) => $p->crew_owes_admin)->sum(fn ($p) => $p->crew_due_amount);
+        $totalPayableBalance = (float) $allPartners->filter(fn ($p) => $p->admin_owes_crew)->sum(fn ($p) => $p->payable_balance);
+
+        $pendingPayoutRequests = PartnerPayout::where('direction', '!=', 'partner_to_admin')
+            ->where('status', 'pending')
             ->with(['partner', 'paymentMethod'])
             ->latest('requested_at')
             ->get();
 
-        // 8. Top Payable Crews (Outstanding Dues Balance)
-        $allPayablePartners = Partner::with(['user', 'bookings'])
-            ->get()
-            ->filter(fn (Partner $p) => $p->payable_balance > 0)
-            ->sortByDesc(fn (Partner $p) => $p->payable_balance);
+        $pendingSettlementConfirmations = PartnerPayout::where('direction', 'partner_to_admin')
+            ->where('status', 'pending')
+            ->with(['partner', 'adminPaymentMethod'])
+            ->latest('requested_at')
+            ->get();
 
-        $totalPayableBalance = (float) $allPayablePartners->sum(fn ($p) => $p->payable_balance);
-        $topPayableCrews = $allPayablePartners->take(5)->values();
+        $topPayableCrews = $allPartners->filter(fn ($p) => $p->admin_owes_crew)
+            ->sortByDesc(fn ($p) => $p->payable_balance)
+            ->take(5)
+            ->values();
+
+        $topDuesCrews = $allPartners->filter(fn ($p) => $p->crew_owes_admin)
+            ->sortByDesc(fn ($p) => $p->crew_due_amount)
+            ->take(5)
+            ->values();
 
         return view('admin.dashboard', compact(
             'stats',
@@ -641,8 +655,12 @@ class AdminDashboardController extends Controller
             'latestSupportTicket',
             'amcCollectionAlert',
             'pendingPayoutRequests',
+            'pendingSettlementConfirmations',
+            'totalCashHeldByCrews',
+            'totalCrewDuesToAdmin',
+            'totalPayableBalance',
             'topPayableCrews',
-            'totalPayableBalance'
+            'topDuesCrews'
         ));
     }
 

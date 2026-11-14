@@ -5,9 +5,11 @@ namespace Tests\Feature;
 use App\Mail\AdminEventNotificationMail;
 use App\Mail\PartnerJobAssignedMail;
 use App\Models\Admin;
+use App\Models\AdminPaymentMethod;
 use App\Models\Booking;
 use App\Models\District;
 use App\Models\Partner;
+use App\Models\PartnerPayout;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\User;
@@ -236,6 +238,9 @@ class PartnerPortalTest extends TestCase
             ->post(route('partner.jobs.status', $booking), [
                 'partner_job_status' => 'completed',
                 'partner_notes' => 'Capacitor bank replaced and compressor amps balanced.',
+                'payment_collected_by' => 'crew',
+                'payment_method' => 'cash',
+                'collected_amount' => 1500,
             ])->assertRedirect();
 
         $booking->refresh();
@@ -1165,5 +1170,113 @@ class PartnerPortalTest extends TestCase
         $response->assertSee('Zero-Tolerance Safety Violations', false);
         $response->assertSee('Real-Time Dispatch GPS Telemetry', false);
         $response->assertSee('Minimum Payout Threshold &amp; Request Cycles', false);
+    }
+
+    public function test_partner_completes_job_with_cash_collection_and_computes_settlement_balances(): void
+    {
+        $partner = Partner::create([
+            'company_name' => 'Apex Electro Solutions',
+            'contact_person' => 'Habib',
+            'phone' => '01799887766',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'individual',
+            'trade_domain' => 'Electrical',
+            'coverage_areas' => 'Dhanmondi',
+            'earning_model' => 'per_job',
+            'payout_rate' => 500.00,
+        ]);
+
+        $booking = $this->createBooking([
+            'partner_id' => $partner->id,
+            'partner_job_status' => 'in_progress',
+            'status' => 'in_progress',
+            'agreed_price' => 1800.00,
+            'final_cost' => 1800.00,
+        ]);
+
+        // Partner completes job and marks that cash was collected on site by crew
+        $response = $this->actingAs($partner, 'partner')
+            ->post(route('partner.jobs.status', $booking), [
+                'partner_job_status' => 'completed',
+                'payment_collected_by' => 'crew',
+                'payment_method' => 'cash',
+                'collected_amount' => 1800.00,
+                'payment_reference' => 'Cash received from client at doorstep',
+                'partner_notes' => 'Completed AC wiring and switch repair.',
+            ]);
+
+        $response->assertRedirect();
+        $booking->refresh();
+        $partner->refresh();
+
+        $this->assertEquals('completed', $booking->partner_job_status);
+        $this->assertEquals('completed', $booking->status);
+        $this->assertEquals('paid', $booking->payment_status);
+        $this->assertEquals('crew', $booking->payment_collected_by);
+        $this->assertEquals('cash', $booking->payment_method);
+        $this->assertEquals(1800.00, (float) $booking->collected_amount);
+
+        // Financial balances check
+        // Total earned by crew = 500 (fixed_per_job)
+        // Cash collected on site = 1800
+        // Net balance = (500) - (1800) = -1300 -> Crew owes admin 1300
+        $this->assertEquals(500.00, $partner->total_earned);
+        $this->assertEquals(1800.00, $partner->cash_collected_by_crew);
+        $this->assertEquals(-1300.00, $partner->net_balance);
+        $this->assertTrue($partner->crew_owes_admin);
+        $this->assertFalse($partner->admin_owes_crew);
+        $this->assertEquals(1300.00, $partner->crew_due_amount);
+    }
+
+    public function test_partner_can_submit_settlement_payment_to_admin_with_proof(): void
+    {
+        Storage::fake('public');
+
+        $adminMethod = AdminPaymentMethod::create([
+            'method_type' => 'bkash',
+            'account_number' => '01700000000',
+            'account_name' => 'FIX Merchant bKash',
+            'number_type' => 'merchant',
+            'is_active' => true,
+            'is_default' => true,
+        ]);
+
+        $partner = Partner::create([
+            'company_name' => 'PlumbPro BD',
+            'contact_person' => 'Monir',
+            'phone' => '01855667788',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'trade_domain' => 'Plumbing',
+            'coverage_areas' => 'Gulshan',
+            'earning_model' => 'per_job',
+            'payout_rate' => 400.00,
+        ]);
+
+        $proofFile = UploadedFile::fake()->image('bkash_receipt.png');
+
+        $response = $this->actingAs($partner, 'partner')
+            ->post(route('partner.payouts.pay-admin'), [
+                'amount' => 1000.00,
+                'admin_payment_method_id' => $adminMethod->id,
+                'partner_reference' => 'bKash TrxID 9987AABBCC',
+                'proof_file' => $proofFile,
+            ]);
+
+        $response->assertRedirect(route('partner.payouts.index'));
+        $response->assertSessionHas('success');
+
+        $payout = PartnerPayout::where('partner_id', $partner->id)->first();
+        $this->assertNotNull($payout);
+        $this->assertEquals('partner_to_admin', $payout->direction);
+        $this->assertEquals('pending', $payout->status);
+        $this->assertEquals('partner', $payout->initiated_by);
+        $this->assertEquals(1000.00, (float) $payout->amount);
+        $this->assertEquals('bkash', $payout->payment_method_type);
+        $this->assertEquals('bkash', $payout->method);
+        $this->assertEquals('bKash TrxID 9987AABBCC', $payout->transaction_reference);
+        $this->assertNotNull($payout->proof_file);
+        Storage::disk('public')->assertExists($payout->proof_file);
     }
 }

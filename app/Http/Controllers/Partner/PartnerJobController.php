@@ -218,6 +218,10 @@ class PartnerJobController extends Controller
             'partner_notes' => ['nullable', 'string', 'max:1000'],
             'partner_worked_hours' => ['nullable', 'numeric', 'min:0.25', 'max:100'],
             'completion_photos.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'payment_collected_by' => ['nullable', 'required_if:partner_job_status,completed', 'string', 'in:crew,admin'],
+            'payment_method' => ['nullable', 'required_if:partner_job_status,completed', 'string', 'in:cash,offline,bkash,nagad,rocket,bank,other'],
+            'collected_amount' => ['nullable', 'numeric', 'min:0'],
+            'payment_reference' => ['nullable', 'string', 'max:120'],
         ]);
 
         $newJobStatus = $request->input('partner_job_status');
@@ -349,7 +353,22 @@ class PartnerJobController extends Controller
         } elseif ($newJobStatus === 'completed') {
             $updateData['status'] = 'completed';
             $updateData['completed_at'] = now();
-            $comment = 'Service work successfully completed on site.';
+
+            $collectedBy = $request->input('payment_collected_by', 'crew');
+            $payMethod = $request->input('payment_method', 'cash');
+            $finalAmount = (float) ($booking->final_cost ?? $booking->estimated_cost ?? 0);
+            $collectedAmount = $request->filled('collected_amount') ? (float) $request->input('collected_amount') : $finalAmount;
+
+            $updateData['payment_status'] = 'paid';
+            $updateData['payment_collected_by'] = $collectedBy;
+            $updateData['payment_method'] = $payMethod;
+            $updateData['collected_amount'] = $collectedAmount;
+            $updateData['payment_reference'] = $request->input('payment_reference');
+            $updateData['payment_collected_at'] = now();
+
+            $collectorLabel = $collectedBy === 'crew' ? 'Crew Collected on Site' : 'Client Paid to Admin/Office';
+            $methodLabel = strtoupper($payMethod);
+            $comment = 'Service work completed on site. Payment: ৳'.number_format($collectedAmount, 2)." ({$collectorLabel} via {$methodLabel}).";
 
             if ($request->filled('partner_worked_hours')) {
                 $updateData['partner_worked_hours'] = (float) $request->input('partner_worked_hours');
@@ -368,8 +387,8 @@ class PartnerJobController extends Controller
             // Create admin in-app notification
             AdminNotification::create([
                 'type' => 'order_status',
-                'title' => "Job #{$booking->booking_number} Completed",
-                'message' => "Partner '{$partner->company_name}' completed service on site.",
+                'title' => "Job #{$booking->booking_number} Completed ({$collectorLabel})",
+                'message' => "Partner '{$partner->company_name}' completed service on site. Payment ৳".number_format($collectedAmount, 2)." marked as {$collectorLabel} via {$methodLabel}.".($request->filled('payment_reference') ? " (Ref: {$request->input('payment_reference')})" : ''),
                 'booking_id' => $booking->id,
                 'action_url' => route('admin.bookings.show', $booking),
                 'is_read' => false,
@@ -378,12 +397,13 @@ class PartnerJobController extends Controller
             // Dispatch operational alert to admin team
             NotificationDispatcher::notifyAdminSection(
                 'orders',
-                "Job #{$booking->booking_number} Completed by Partner",
-                "Partner '{$partner->company_name}' has completed on-site service for Job #{$booking->booking_number}.",
+                "Job #{$booking->booking_number} Completed ({$collectorLabel})",
+                "Partner '{$partner->company_name}' has completed on-site service for Job #{$booking->booking_number}. Payment: ৳".number_format($collectedAmount, 2)." ({$collectorLabel} via {$methodLabel}).",
                 route('admin.bookings.show', $booking),
                 [
                     'Order' => "#{$booking->booking_number}",
                     'Partner' => $partner->company_name,
+                    'Payment Status' => '৳ '.number_format($collectedAmount, 2)." ({$collectorLabel})",
                     'Completed At' => now()->format('M d, Y h:i A'),
                 ]
             );
