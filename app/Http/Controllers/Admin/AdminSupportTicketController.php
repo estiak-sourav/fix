@@ -128,11 +128,19 @@ class AdminSupportTicketController extends Controller
         ]);
 
         // Send confirmation email to customer from no-reply address
-        try {
-            MailConfigService::applyDynamicConfig();
-            Mail::to($email)->send(new SupportTicketCreatedMail($ticket, $ticket->access_token));
-        } catch (\Throwable $e) {
-            Log::error("Failed to send ticket creation email to {$email}: ".$e->getMessage());
+        $sendTicketMail = function () use ($email, $ticket) {
+            try {
+                MailConfigService::applyDynamicConfig();
+                Mail::to($email)->send(new SupportTicketCreatedMail($ticket, $ticket->access_token));
+            } catch (\Throwable $e) {
+                Log::error("Failed to send ticket creation email to {$email}: ".$e->getMessage());
+            }
+        };
+
+        if (app()->runningUnitTests()) {
+            $sendTicketMail();
+        } else {
+            defer($sendTicketMail);
         }
 
         return redirect()
@@ -186,15 +194,23 @@ class AdminSupportTicketController extends Controller
         ]);
 
         // Notify customer by no-reply email when admin replies
-        try {
-            $recipientEmail = $ticket->customer_email ?: $ticket->user?->email;
-            if ($recipientEmail) {
-                MailConfigService::applyDynamicConfig();
-                Mail::to($recipientEmail)
-                    ->send(new SupportTicketAdminReplyMail($ticket, $replyMessage, $ticket->access_token));
+        $sendReplyMail = function () use ($ticket, $replyMessage) {
+            try {
+                $recipientEmail = $ticket->customer_email ?: $ticket->user?->email;
+                if ($recipientEmail) {
+                    MailConfigService::applyDynamicConfig();
+                    Mail::to($recipientEmail)
+                        ->send(new SupportTicketAdminReplyMail($ticket, $replyMessage, $ticket->access_token));
+                }
+            } catch (\Throwable $e) {
+                Log::error("Failed to send admin ticket reply no-reply email to {$ticket->customer_email}: ".$e->getMessage());
             }
-        } catch (\Throwable $e) {
-            Log::error("Failed to send admin ticket reply no-reply email to {$ticket->customer_email}: ".$e->getMessage());
+        };
+
+        if (app()->runningUnitTests()) {
+            $sendReplyMail();
+        } else {
+            defer($sendReplyMail);
         }
 
         return redirect()

@@ -650,4 +650,59 @@ class BookingLifecycleAndNotificationTest extends TestCase
         $adminShow->assertSee('Delta Electro-Mechanical Ltd');
         $adminShow->assertSee('01799001122');
     }
+
+    public function test_unreviewed_completed_service_is_prominently_visible_for_review_in_user_panel(): void
+    {
+        $user = User::first();
+        $service = Service::first();
+
+        $booking = Booking::create([
+            'booking_number' => Booking::generateBookingNumber('Dhaka', 'Dhaka'),
+            'user_id' => $user->id,
+            'service_type' => 'on_demand',
+            'service_id' => $service->id,
+            'customer_name' => $user->name,
+            'customer_email' => $user->email,
+            'customer_phone' => $user->phone ?? '01711223344',
+            'division' => 'Dhaka',
+            'district' => 'Dhaka',
+            'area' => 'Gulshan',
+            'street_address' => 'House 12, Road 4',
+            'property_type' => 'residential',
+            'preferred_date' => now()->toDateString(),
+            'preferred_time_slot' => 'morning',
+            'urgency' => 'standard',
+            'problem_description' => 'Electrical circuit issue repaired.',
+            'status' => 'completed',
+            'completed_at' => now()->subDay(),
+            'final_cost' => 2500,
+        ]);
+
+        // 1. Visit /my-bookings: pending review section is prominently rendered at top
+        $response = $this->actingAs($user, 'web')->get(route('customer.bookings'));
+        $response->assertOk();
+        $response->assertSee('pendingReviewsSection', false);
+        $response->assertSee('Rate Your Completed Service');
+        $response->assertSee('Submit Review');
+        $response->assertSee('Review Needed');
+        $response->assertSee('Rate Service');
+
+        // 2. Submit review
+        $reviewResponse = $this->actingAs($user, 'web')->post(route('customer.bookings.review', $booking->booking_number), [
+            'review_rating' => 5,
+            'review_comment' => 'Excellent electrical repair service!',
+        ]);
+        $reviewResponse->assertRedirect();
+        $reviewResponse->assertSessionHas('success');
+
+        $booking->refresh();
+        $this->assertEquals(5, $booking->review_rating);
+        $this->assertEquals('Excellent electrical repair service!', $booking->review_comment);
+
+        // 3. Visit /my-bookings again: pending review section is gone, reviewed rating is displayed
+        $afterReview = $this->actingAs($user, 'web')->get(route('customer.bookings'));
+        $afterReview->assertOk();
+        $afterReview->assertDontSee('pendingReviewsSection', false);
+        $afterReview->assertSee('★ 5.0');
+    }
 }

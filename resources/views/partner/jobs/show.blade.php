@@ -104,14 +104,22 @@
               <input type="hidden" name="partner_job_status" value="in_progress">
 
               @if($isPriceSetLater)
-                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px; margin-bottom:14px;">
+                <div id="agreedPriceRequiredBox" style="background:#fffbeb; border:1.5px solid #fde68a; border-radius:8px; padding:12px; margin-bottom:14px; transition: all 0.2s ease;">
                   <div style="font-size:0.84rem; font-weight:800; color:#92400e; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     <span>Price Required (Must Set Before Starting Work)</span>
                   </div>
                   <div>
                     <label class="p-label" style="font-size:0.78rem;">Agreed Service Price (৳) *</label>
-                    <input type="number" step="1" min="1" name="agreed_price" class="p-input" placeholder="e.g. 1500" required value="{{ old('agreed_price') }}">
+                    <input type="number" step="1" min="1" id="startAgreedPriceInput" name="agreed_price" class="p-input" placeholder="e.g. 1500" required value="{{ old('agreed_price') }}">
+                    <div id="agreedPriceErrorMsg" style="display:none; color:#dc2626; font-size:0.78rem; font-weight:700; margin-top:5px;">
+                      ⚠️ Price Required: Please enter the agreed service price before starting work.
+                    </div>
+                    @error('agreed_price')
+                      <div style="color:#dc2626; font-size:0.78rem; font-weight:700; margin-top:5px;">
+                        ⚠️ {{ $message }}
+                      </div>
+                    @enderror
                   </div>
                 </div>
               @else
@@ -127,7 +135,7 @@
                 </div>
               @endif
 
-              <button type="button" class="btn-p btn-p-success" style="width: 100%; padding: 11px; font-size: 0.9rem;" onclick="confirmDialog({ title: 'Start Work On Site?', text: 'Confirm crew has arrived, agreed on scope and price with client, and started work.', type: 'success', confirmText: 'Confirm In Progress', formId: 'startWorkForm' })">
+              <button type="button" class="btn-p btn-p-success" style="width: 100%; padding: 11px; font-size: 0.9rem;" onclick="handleStartWorkClick()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
                 <span>Arrived & Start Work (In Progress)</span>
               </button>
@@ -472,7 +480,7 @@
           <button type="button" onclick="document.getElementById('priceUpdateModal').style.display='none'" class="btn-p btn-p-outline">
             Cancel
           </button>
-          <button type="button" class="btn-p btn-p-success" onclick="confirmDialog({ title: 'Confirm Price Update?', text: 'Submit agreed price of ৳ ' + (document.querySelector('#priceUpdateModalForm input[name=agreed_price]').value || '0') + ' to dispatch?', type: 'success', confirmText: 'Save Price', formId: 'priceUpdateModalForm' })">
+          <button type="button" class="btn-p btn-p-success" onclick="handlePriceUpdateSubmit()">
             Save Price
           </button>
         </div>
@@ -546,6 +554,118 @@
   @endif
 
   <script>
+    function handleStartWorkClick() {
+      @if($isPriceSetLater)
+        const priceInput = document.getElementById('startAgreedPriceInput');
+        const priceBox = document.getElementById('agreedPriceRequiredBox');
+        const errorMsg = document.getElementById('agreedPriceErrorMsg');
+        const rawVal = priceInput?.value?.trim() || '';
+        const val = parseFloat(rawVal);
+
+        if (!rawVal || isNaN(val) || val <= 0) {
+          if (priceBox) {
+            priceBox.style.borderColor = '#ef4444';
+            priceBox.style.background = '#fef2f2';
+          }
+          if (priceInput) {
+            priceInput.style.borderColor = '#ef4444';
+            priceInput.style.background = '#ffffff';
+            priceInput.focus();
+          }
+          if (errorMsg) {
+            errorMsg.style.display = 'block';
+          }
+
+          confirmDialog({
+            title: 'Price Required!',
+            text: 'Admin selected "Set price later". You must enter and agree on the service price with the customer before starting work.',
+            type: 'warning',
+            confirmText: 'Enter Price Now',
+            onConfirm: function() {
+              if (priceInput) priceInput.focus();
+            }
+          });
+          return;
+        }
+
+        if (priceBox) {
+          priceBox.style.borderColor = '#fde68a';
+          priceBox.style.background = '#fffbeb';
+        }
+        if (priceInput) {
+          priceInput.style.borderColor = '';
+        }
+        if (errorMsg) {
+          errorMsg.style.display = 'none';
+        }
+
+        confirmDialog({
+          title: 'Start Work On Site?',
+          text: 'Agreed Price: ৳ ' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '. Confirm crew has arrived, agreed on scope and price with client, and started work.',
+          type: 'success',
+          confirmText: 'Confirm In Progress',
+          formId: 'startWorkForm'
+        });
+      @else
+        const priceInput = document.querySelector('#startWorkForm input[name="agreed_price"]');
+        const rawVal = priceInput?.value?.trim() || '';
+        const val = parseFloat(rawVal);
+        const priceText = (rawVal && !isNaN(val) && val > 0)
+          ? 'Revised Agreed Price: ৳ ' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : 'Agreed Price: ৳ {{ number_format($booking->final_cost ?? $booking->estimated_cost ?? 0, 2) }}';
+
+        confirmDialog({
+          title: 'Start Work On Site?',
+          text: priceText + '. Confirm crew has arrived and started work on site.',
+          type: 'success',
+          confirmText: 'Confirm In Progress',
+          formId: 'startWorkForm'
+        });
+      @endif
+    }
+
+    document.getElementById('startAgreedPriceInput')?.addEventListener('input', function() {
+      const priceBox = document.getElementById('agreedPriceRequiredBox');
+      const errorMsg = document.getElementById('agreedPriceErrorMsg');
+      const val = parseFloat(this.value?.trim() || '0');
+      if (this.value?.trim() && !isNaN(val) && val > 0) {
+        if (priceBox) {
+          priceBox.style.borderColor = '#fde68a';
+          priceBox.style.background = '#fffbeb';
+        }
+        this.style.borderColor = '';
+        if (errorMsg) errorMsg.style.display = 'none';
+      }
+    });
+
+    function handlePriceUpdateSubmit() {
+      const priceInput = document.querySelector('#priceUpdateModalForm input[name=agreed_price]');
+      const rawVal = priceInput?.value?.trim() || '';
+      const val = parseFloat(rawVal);
+
+      if (!rawVal || isNaN(val) || val <= 0) {
+        priceInput?.focus();
+        confirmDialog({
+          title: 'Price Required',
+          text: 'Please enter a valid agreed price greater than 0.',
+          type: 'warning',
+          confirmText: 'Enter Price',
+          onConfirm: function() {
+            priceInput?.focus();
+          }
+        });
+        return;
+      }
+
+      confirmDialog({
+        title: 'Confirm Price Update?',
+        text: 'Submit agreed price of ৳ ' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' to dispatch?',
+        type: 'success',
+        confirmText: 'Save Price',
+        formId: 'priceUpdateModalForm'
+      });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
       if (window.location.hash === '#accept') {
         const modal = document.getElementById('acceptJobModal');

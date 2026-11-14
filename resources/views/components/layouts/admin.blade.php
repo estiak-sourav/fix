@@ -1735,6 +1735,7 @@
         btnEl.innerText = confirmText;
         btnEl.style.background = confirmColor;
         btnEl.style.borderColor = confirmColor;
+        btnEl.disabled = false;
       }
 
       if (iconEl) {
@@ -1762,6 +1763,8 @@
     document.getElementById('adminConfirmProceedBtn')?.addEventListener('click', function() {
       if (typeof confirmProceedCallback === 'function') {
         const cb = confirmProceedCallback;
+        this.disabled = true;
+        this.innerHTML = '<span style="display:inline-block;animation:spin 0.8s linear infinite;margin-right:6px;">↻</span> Processing...';
         closeAdminConfirmModal();
         cb();
       } else {

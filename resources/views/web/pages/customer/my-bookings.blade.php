@@ -115,11 +115,7 @@
         </div>
 
         <div style="display:flex; gap:10px; align-items:center;">
-          <a href="{{ route('customer.profile') }}" class="btn btn-outline" style="padding:0.6rem 1.1rem; font-size:0.875rem; font-weight:600; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            <span>Edit Profile</span>
-          </a>
-          <a href="{{ route('booking.create') }}" class="btn btn-accent" style="padding:0.6rem 1.25rem; font-size:0.875rem; font-weight:700; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+          <a href="{{ route('booking.create') }}" class="btn btn-accent" style="padding:0.6rem 1.25rem; font-size:0.875rem; font-weight:700; border-radius:8px; display:inline-flex; align-items:center; gap:6px; white-space:nowrap !important; flex-shrink:0 !important;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             <span>New Service Request</span>
           </a>
@@ -144,7 +140,95 @@
           $runningBookings = $bookings->filter(fn ($b) => in_array($b->status, ['pending_review', 'accepted', 'assigned', 'on_the_way', 'in_progress']));
           $completedBookings = $bookings->filter(fn ($b) => $b->status === 'completed');
           $cancelledBookings = $bookings->filter(fn ($b) => $b->status === 'cancelled');
+          $unreviewedList = isset($pendingReviews) ? $pendingReviews : $completedBookings->filter(fn ($b) => empty($b->review_rating));
         @endphp
+
+        <!-- ================================================================= -->
+        <!-- ⭐ AWAITING SERVICE REVIEWS (EYE-CATCHING PROMPT FOR FEEDBACK)    -->
+        <!-- ================================================================= -->
+        @if($unreviewedList->isNotEmpty())
+          <div id="pendingReviewsSection" style="margin-bottom: 2.25rem; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 45%, #fff7ed 100%); border: 1.5px solid #f59e0b; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(245, 158, 11, 0.15);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1.15rem; border-bottom: 1px dashed #fcd34d; padding-bottom: 0.9rem;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #ffffff; border: 1.5px solid #f59e0b; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);">
+                  ⭐
+                </div>
+                <div>
+                  <h3 style="margin: 0; font-size: 1.18rem; font-weight: 800; color: #78350f;">
+                    Rate Your Completed Service ({{ $unreviewedList->count() }} Awaiting)
+                  </h3>
+                  <p style="margin: 2px 0 0; font-size: 0.83rem; color: #92400e;">
+                    আপনার সার্ভিসটি সম্পন্ন হয়েছে। সেবার মান এবং টেকনিশিয়ানদের অভিজ্ঞতা জানিয়ে আমাদের রেটিং দিন!
+                  </p>
+                </div>
+              </div>
+
+              <span class="badge" style="background: #f59e0b; color: #ffffff; font-size: 0.76rem; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap !important; flex-shrink: 0 !important; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);">
+                ⭐ Action Needed
+              </span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              @foreach($unreviewedList as $pr)
+                <div id="reviewCard_{{ $pr->booking_number }}" style="background: #ffffff; border: 1.5px solid #fde68a; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: all 0.25s ease;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                    <div>
+                      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span style="font-weight: 800; font-size: 1.05rem; color: #0f172a;">
+                          {{ $pr->service?->title ?? ($pr->amcPlan?->name ?? 'Facility Service') }}
+                        </span>
+                        <span class="badge" style="font-family: monospace; font-weight: 700; font-size: 0.78rem; color: #6366f1; background: #e0e7ff; padding: 2px 8px; border-radius: 6px; white-space: nowrap !important; flex-shrink: 0 !important;">
+                          #{{ $pr->booking_number }}
+                        </span>
+                        <span class="badge" style="font-size: 0.72rem; font-weight: 700; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 12px; white-space: nowrap !important; flex-shrink: 0 !important;">
+                          Completed ✓
+                        </span>
+                      </div>
+                      <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <span>Completed on {{ $pr->completed_at ? $pr->completed_at->format('M d, Y') : $pr->updated_at->format('M d, Y') }}</span>
+                        <span>•</span>
+                        <span>📍 {{ $pr->area }}, {{ $pr->district }}</span>
+                        <span>•</span>
+                        <span style="color: #059669; font-weight: 700;">Bill: ৳ {{ number_format((float) ($pr->final_cost ?: $pr->estimated_cost ?: 0), 2) }}</span>
+                      </div>
+                    </div>
+
+                    <a href="{{ route('customer.bookings.show', $pr->booking_number) }}" style="font-size: 0.8rem; color: var(--primary); font-weight: 700; text-decoration: none; white-space: nowrap !important; flex-shrink: 0 !important;">
+                      View Order Receipt ↗
+                    </a>
+                  </div>
+
+                  <!-- Direct Fast Rating Form -->
+                  <form action="{{ route('customer.bookings.review', $pr->booking_number) }}" method="POST" style="margin: 0; background: #fffdf5; border: 1.5px solid #fef3c7; border-radius: 10px; padding: 14px 16px;">
+                    @csrf
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                      <label style="font-size: 0.82rem; font-weight: 700; color: #92400e; margin: 0;">
+                        Select star rating:
+                      </label>
+                      <div class="star-rating-picker" data-target="rating_input_{{ $pr->id }}" data-label="rating_label_{{ $pr->id }}" style="display: inline-flex; align-items: center; gap: 4px; font-size: 1.6rem; color: #cbd5e1; cursor: pointer; user-select: none;">
+                        <span class="star-item" data-value="1" style="color: #f59e0b; transition: transform 0.15s ease;" title="1 Star">★</span>
+                        <span class="star-item" data-value="2" style="color: #f59e0b; transition: transform 0.15s ease;" title="2 Stars">★</span>
+                        <span class="star-item" data-value="3" style="color: #f59e0b; transition: transform 0.15s ease;" title="3 Stars">★</span>
+                        <span class="star-item" data-value="4" style="color: #f59e0b; transition: transform 0.15s ease;" title="4 Stars">★</span>
+                        <span class="star-item" data-value="5" style="color: #f59e0b; transition: transform 0.15s ease;" title="5 Stars">★</span>
+                        <span id="rating_label_{{ $pr->id }}" style="font-size: 0.82rem; font-weight: 800; color: #b45309; margin-left: 8px;">5.0 (Excellent)</span>
+                      </div>
+                      <input type="hidden" name="review_rating" id="rating_input_{{ $pr->id }}" value="5">
+                    </div>
+
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                      <input type="text" name="review_comment" required placeholder="Write a few words about technician behavior, punctuality, and work quality..." style="flex: 1; min-width: 250px; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.84rem; outline: none; transition: border-color 0.2s ease;">
+                      <button type="submit" class="btn btn-accent btn-sm" style="padding: 9px 20px; font-size: 0.84rem; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: #ffffff; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25); white-space: nowrap !important; flex-shrink: 0 !important;">
+                        <span>Submit Review</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              @endforeach
+            </div>
+          </div>
+        @endif
 
         <!-- ================================================================= -->
         <!-- 1. ACTIVE & RUNNING SERVICE REQUESTS (LIVE REAL-TIME TRACKING)   -->
@@ -407,8 +491,12 @@
                           #{{ $cb->booking_number }}
                         </span>
                         @if($cb->review_rating)
-                          <span style="color:#d97706; font-size:0.78rem; font-weight:700; background:#fef3c7; padding:1px 6px; border-radius:4px;">
+                          <span style="color:#d97706; font-size:0.78rem; font-weight:700; background:#fef3c7; padding:1px 6px; border-radius:4px; white-space:nowrap !important; flex-shrink:0 !important;">
                             ★ {{ $cb->review_rating }}.0
+                          </span>
+                        @else
+                          <span class="badge" style="color:#b45309; background:#fef3c7; border:1px solid #fde68a; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-flex; align-items:center; gap:4px; white-space:nowrap !important; flex-shrink:0 !important;">
+                            ⭐ Review Needed
                           </span>
                         @endif
                       </div>
@@ -422,7 +510,7 @@
                   </div>
 
                   <!-- Right: Bill + Completed Badge + View Details Button -->
-                  <div class="completed-item-right" style="display:flex; align-items:center; gap:16px;">
+                  <div class="completed-item-right" style="display:flex; align-items:center; gap:12px;">
                     <div style="text-align:right;">
                       <div style="font-size:1.05rem; font-weight:800; color:#059669;">
                         ৳ {{ number_format((float) ($cb->final_cost ?: $cb->estimated_cost ?: 0), 2) }}
@@ -431,6 +519,12 @@
                         Completed ✓
                       </span>
                     </div>
+
+                    @if(!$cb->review_rating)
+                      <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); scrollToOrOpenReview('{{ $cb->booking_number }}');" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#ffffff; border:none; font-size:0.78rem; font-weight:700; padding:6px 14px; border-radius:6px; box-shadow:0 2px 6px rgba(245, 158, 11, 0.25); display:inline-flex; align-items:center; gap:5px; white-space:nowrap !important; flex-shrink:0 !important;">
+                        <span>⭐ Rate Service</span>
+                      </button>
+                    @endif
 
                     <button type="button" class="btn btn-outline btn-sm" style="font-size:0.78rem; font-weight:700; padding:6px 12px; border-radius:6px; color:#0f172a; border-color:#cbd5e1; background:#ffffff; pointer-events:none;">
                       <span>View Details →</span>
@@ -714,20 +808,24 @@
         `;
       } else {
         reviewContainer.innerHTML = `
-          <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px 14px;">
-            <div style="font-weight:700; font-size:0.82rem; color:#92400e; margin-bottom:8px;">Leave a Rating & Feedback:</div>
+          <div style="background:#fffbeb; border:1.5px solid #f59e0b; border-radius:10px; padding:14px 16px; box-shadow:0 2px 8px rgba(245,158,11,0.12);">
+            <div style="display:flex; align-items:center; gap:6px; font-weight:800; font-size:0.9rem; color:#78350f; margin-bottom:4px;">
+              <span>⭐</span>
+              <span>Rate Your Experience:</span>
+            </div>
+            <div style="font-size:0.78rem; color:#92400e; margin-bottom:10px;">Please share a quick rating and feedback for this completed service:</div>
             <form method="POST" action="${data.review_url}">
               <input type="hidden" name="_token" value="{{ csrf_token() }}">
-              <div style="display:flex; gap:12px; margin-bottom:8px; align-items:center; flex-wrap:wrap;">
-                <label style="font-size:0.8rem; cursor:pointer; font-weight:600;"><input type="radio" name="review_rating" value="5" checked> ★★★★★ 5</label>
-                <label style="font-size:0.8rem; cursor:pointer; font-weight:600;"><input type="radio" name="review_rating" value="4"> ★★★★ 4</label>
-                <label style="font-size:0.8rem; cursor:pointer; font-weight:600;"><input type="radio" name="review_rating" value="3"> ★★★ 3</label>
-                <label style="font-size:0.8rem; cursor:pointer; font-weight:600;"><input type="radio" name="review_rating" value="2"> ★★ 2</label>
-                <label style="font-size:0.8rem; cursor:pointer; font-weight:600;"><input type="radio" name="review_rating" value="1"> ★ 1</label>
+              <div style="display:flex; gap:12px; margin-bottom:10px; align-items:center; flex-wrap:wrap;">
+                <label style="font-size:0.8rem; cursor:pointer; font-weight:700; color:#b45309;"><input type="radio" name="review_rating" value="5" checked> ★★★★★ 5</label>
+                <label style="font-size:0.8rem; cursor:pointer; font-weight:700; color:#b45309;"><input type="radio" name="review_rating" value="4"> ★★★★ 4</label>
+                <label style="font-size:0.8rem; cursor:pointer; font-weight:700; color:#b45309;"><input type="radio" name="review_rating" value="3"> ★★★ 3</label>
+                <label style="font-size:0.8rem; cursor:pointer; font-weight:700; color:#b45309;"><input type="radio" name="review_rating" value="2"> ★★ 2</label>
+                <label style="font-size:0.8rem; cursor:pointer; font-weight:700; color:#b45309;"><input type="radio" name="review_rating" value="1"> ★ 1</label>
               </div>
               <div style="display:flex; gap:8px;">
-                <input type="text" name="review_comment" required placeholder="Share your experience with this service..." style="flex:1; padding:7px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem;">
-                <button type="submit" class="btn btn-accent btn-sm" style="font-size:0.78rem; padding:7px 14px; font-weight:700;">Submit Review</button>
+                <input type="text" name="review_comment" required placeholder="Write a few words about technicians & service quality..." style="flex:1; padding:8px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.82rem; outline:none;">
+                <button type="submit" class="btn btn-accent btn-sm" style="font-size:0.8rem; padding:8px 16px; font-weight:700; background:linear-gradient(135deg, #f59e0b, #d97706); border:none; color:#fff; border-radius:8px; box-shadow:0 2px 6px rgba(217,119,6,0.25); white-space:nowrap !important; flex-shrink:0 !important;">Submit Review</button>
               </div>
             </form>
           </div>
@@ -737,6 +835,78 @@
       const modal = document.getElementById('completedBookingModal');
       if (modal) modal.style.display = 'flex';
     }
+
+    function scrollToOrOpenReview(bookingNumber) {
+      const card = document.getElementById('reviewCard_' + bookingNumber);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.style.borderColor = '#f59e0b';
+        card.style.boxShadow = '0 0 0 4px rgba(245, 158, 11, 0.35)';
+        setTimeout(function() {
+          const input = card.querySelector('input[name="review_comment"]');
+          if (input) input.focus();
+        }, 350);
+        setTimeout(function() {
+          card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)';
+        }, 2200);
+      } else {
+        openCompletedModal(bookingNumber);
+      }
+    }
+
+    // Star Rating Picker Interactive Handlers
+    document.addEventListener('DOMContentLoaded', function() {
+      const labels = {
+        1: '1.0 (Unsatisfactory)',
+        2: '2.0 (Needs Improvement)',
+        3: '3.0 (Average)',
+        4: '4.0 (Good)',
+        5: '5.0 (Excellent)'
+      };
+
+      document.querySelectorAll('.star-rating-picker').forEach(function(picker) {
+        const targetInputId = picker.dataset.target;
+        const targetLabelId = picker.dataset.label;
+        const targetInput = document.getElementById(targetInputId);
+        const targetLabel = document.getElementById(targetLabelId);
+        const stars = picker.querySelectorAll('.star-item');
+
+        function updateStars(val) {
+          stars.forEach(function(s) {
+            const sVal = parseInt(s.dataset.value);
+            s.style.color = sVal <= val ? '#f59e0b' : '#cbd5e1';
+          });
+          if (targetLabel && labels[val]) {
+            targetLabel.textContent = labels[val];
+          }
+          if (targetInput) {
+            targetInput.value = val;
+          }
+        }
+
+        stars.forEach(function(star) {
+          star.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const val = parseInt(this.dataset.value);
+            updateStars(val);
+          });
+          star.addEventListener('mouseenter', function() {
+            const val = parseInt(this.dataset.value);
+            stars.forEach(function(s) {
+              const sVal = parseInt(s.dataset.value);
+              s.style.color = sVal <= val ? '#f59e0b' : '#cbd5e1';
+            });
+            if (targetLabel && labels[val]) {
+              targetLabel.textContent = labels[val];
+            }
+          });
+          star.addEventListener('mouseleave', function() {
+            const currentVal = targetInput ? parseInt(targetInput.value) : 5;
+            updateStars(currentVal);
+          });
+        });
+      });
+    });
 
     function closeCompletedModal() {
       const modal = document.getElementById('completedBookingModal');

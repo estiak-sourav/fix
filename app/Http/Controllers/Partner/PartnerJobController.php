@@ -262,9 +262,12 @@ class PartnerJobController extends Controller
             // Mandatory price check if price was set to "later"
             if ($isInitialPrice) {
                 if (! $request->filled('agreed_price') || (float) $request->input('agreed_price') <= 0) {
-                    return back()->withErrors([
-                        'agreed_price' => 'Admin selected "Set price later". You must set and agree on the service price with the customer before starting work.',
-                    ]);
+                    return back()
+                        ->withInput()
+                        ->with('error', 'Price Required: Admin selected "Set price later". You must set and agree on the service price with the customer before starting work.')
+                        ->withErrors([
+                            'agreed_price' => 'Admin selected "Set price later". You must set and agree on the service price with the customer before starting work.',
+                        ]);
                 }
             }
 

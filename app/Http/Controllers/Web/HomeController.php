@@ -141,10 +141,18 @@ class HomeController extends Controller
 
         // If a real email address is available, send confirmation email
         if (! empty($validated['email']) || ($user && $user->email)) {
-            try {
-                Mail::to($customerEmail)->send(new SupportTicketCreatedMail($ticket, $ticket->access_token));
-            } catch (\Throwable $e) {
-                report($e);
+            $sendTicketMail = function () use ($customerEmail, $ticket) {
+                try {
+                    Mail::to($customerEmail)->send(new SupportTicketCreatedMail($ticket, $ticket->access_token));
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            };
+
+            if (app()->runningUnitTests()) {
+                $sendTicketMail();
+            } else {
+                defer($sendTicketMail);
             }
         }
 

@@ -132,6 +132,9 @@
       .settings-layout.tab-active .settings-content-wrap {
         display: block !important;
       }
+      .desktop-only-back {
+        display: none !important;
+      }
     }
     @media (min-width: 860px) {
       .settings-menu {
@@ -258,7 +261,7 @@
     <div id="settingsContentWrap" class="settings-content-wrap">
       <!-- Mobile Back to Menu Bar -->
       <div class="mobile-back-bar">
-        <button type="button" class="btn-p btn-p-outline" onclick="backToMobileMenu()" style="padding: 8px 14px; font-size: 0.82rem; font-weight: 700; gap: 7px;">
+        <button type="button" id="mobileBackBtn" class="btn-p btn-p-outline" onclick="backToMobileMenu()" style="padding: 8px 14px; font-size: 0.82rem; font-weight: 700; gap: 7px;">
           <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           <span>Back to Menu</span>
         </button>
@@ -396,7 +399,7 @@
                 <span>Edit Account Profile</span>
               </h3>
 
-              <button type="button" class="btn-p btn-p-outline" onclick="showCrewProfileDetails()" style="padding: 6px 14px; font-size: 0.8rem; font-weight: 700; gap: 6px;">
+              <button type="button" class="btn-p btn-p-outline desktop-only-back" onclick="showCrewProfileDetails()" style="padding: 6px 14px; font-size: 0.8rem; font-weight: 700; gap: 6px;">
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                 <span>&larr; Back to Profile</span>
               </button>
@@ -579,6 +582,21 @@
 
               <!-- Thanas / Areas Checkbox Groups (Rendered per District) -->
               <div id="districtAreasWrapper">
+                @php
+                  $allSystemThanas = [];
+                  foreach($locationsList as $divItem) {
+                    foreach($divItem->districts as $dstItem) {
+                      foreach($dstItem->thanas as $thItem) {
+                        $allSystemThanas[] = $thItem->name;
+                      }
+                    }
+                  }
+                  $customOrLegacyAreas = array_diff($selectedAreas, $allSystemThanas);
+                @endphp
+                @foreach($customOrLegacyAreas as $cArea)
+                  <input type="checkbox" name="coverage_areas[]" value="{{ $cArea }}" checked style="display: none;" class="area-checkbox-item" data-area-name="{{ $cArea }}" onchange="updateSelectedAreasSummary()">
+                @endforeach
+
                 @forelse($locationsList as $div)
                   @foreach($div->districts as $district)
                     <div class="district-areas-panel" id="districtAreasPanel_{{ $district->id }}" data-division-id="{{ $div->id }}" data-district-id="{{ $district->id }}" style="display: none;">
@@ -1020,6 +1038,24 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
+      // Update mobile back button behavior
+      const backBtn = document.getElementById('mobileBackBtn');
+      if (backBtn) {
+        if (tabId === 'tab-profile') {
+          const editCard = document.getElementById('crewProfileEditCard');
+          if (editCard && editCard.style.display !== 'none') {
+            backBtn.onclick = showCrewProfileDetails;
+            backBtn.innerHTML = '<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg><span>Back to Profile</span>';
+          } else {
+            backBtn.onclick = backToMobileMenu;
+            backBtn.innerHTML = '<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg><span>Back to Menu</span>';
+          }
+        } else {
+          backBtn.onclick = backToMobileMenu;
+          backBtn.innerHTML = '<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg><span>Back to Menu</span>';
+        }
+      }
+
       // Update URL hash
       const hash = tabId.replace('tab-', '');
       if (updateHistory && history.replaceState) {
@@ -1046,22 +1082,6 @@
         pane.style.display = (pane.id === paneId) ? 'block' : 'none';
       });
     }
-
-    function togglePaymentFields() {
-      const val = document.getElementById('payment_method_select').value;
-      const bank = document.getElementById('bank_fields');
-      const mfs = document.getElementById('mfs_fields');
-      if (val === 'bank') {
-        bank.style.display = 'block';
-        mfs.style.display = 'none';
-      } else {
-        bank.style.display = 'none';
-        mfs.style.display = 'block';
-      }
-    }
-
-    document.getElementById('payment_method_select').addEventListener('change', togglePaymentFields);
-    togglePaymentFields();
 
     // Coverage Areas Filtering & Summary Logic
     const activeLocationsData = @json($locationsList);
@@ -1177,6 +1197,34 @@
       });
     }
 
+    function initCoverageFilterDefaults() {
+      if (!activeLocationsData || activeLocationsData.length === 0) return;
+      const divSelect = document.getElementById('coverageDivisionSelect');
+      if (!divSelect) return;
+
+      let targetDivId = activeLocationsData[0].id;
+      let targetDistId = (activeLocationsData[0].districts && activeLocationsData[0].districts.length > 0) ? activeLocationsData[0].districts[0].id : '';
+
+      // Check if any thana checkbox is currently checked, and use its district/division as default view
+      const firstCheckedCb = document.querySelector('.area-checkbox-item:checked[data-district-id]');
+      if (firstCheckedCb && firstCheckedCb.dataset.districtId) {
+        const cbDistId = String(firstCheckedCb.dataset.districtId);
+        const matchingDiv = activeLocationsData.find(d => d.districts && d.districts.some(dist => String(dist.id) === cbDistId));
+        if (matchingDiv) {
+          targetDivId = matchingDiv.id;
+          targetDistId = cbDistId;
+        }
+      }
+
+      divSelect.value = targetDivId;
+      onCoverageDivisionChange(targetDivId);
+      const distSelect = document.getElementById('coverageDistrictSelect');
+      if (distSelect && targetDistId) {
+        distSelect.value = targetDistId;
+        onCoverageDistrictChange(targetDistId);
+      }
+    }
+
     function showCrewProfileEdit() {
       const detailsCard = document.getElementById('crewProfileDetailsCard');
       const editCard = document.getElementById('crewProfileEditCard');
@@ -1184,6 +1232,13 @@
         detailsCard.style.display = 'none';
         editCard.style.display = 'block';
         window.location.hash = 'profile-edit';
+        const backBtn = document.getElementById('mobileBackBtn');
+        if (backBtn) {
+          backBtn.onclick = showCrewProfileDetails;
+          backBtn.innerHTML = '<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg><span>Back to Profile</span>';
+        }
+        updateSelectedAreasSummary();
+        initCoverageFilterDefaults();
       }
     }
 
@@ -1196,14 +1251,18 @@
         if (window.location.hash === '#profile-edit') {
           history.replaceState(null, null, window.location.pathname);
         }
+        const backBtn = document.getElementById('mobileBackBtn');
+        if (backBtn) {
+          backBtn.onclick = backToMobileMenu;
+          backBtn.innerHTML = '<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg><span>Back to Menu</span>';
+        }
       }
     }
 
     // Check URL hash or errors on load
     document.addEventListener('DOMContentLoaded', function() {
-      // Keep coverage filter collapsed until user selects division & district
-      onCoverageDivisionChange('');
       updateSelectedAreasSummary();
+      initCoverageFilterDefaults();
       const hash = window.location.hash.replace('#', '');
       const urlParams = new URLSearchParams(window.location.search);
       const hasErrors = @json($errors->any());

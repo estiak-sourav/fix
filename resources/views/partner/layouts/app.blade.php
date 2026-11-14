@@ -407,6 +407,11 @@
     .p-badge-danger { background: #fee2e2; color: #b91c1c; }
     .p-badge-neutral { background: #f1f5f9; color: #475569; }
 
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     /* Single-line enforcement for all badges and buttons across Partner/Crew portal */
     .btn-p,
     .btn-p-primary,
@@ -754,11 +759,11 @@
         <button type="button" onclick="dismissPartnerAlert(this.closest('.p-alert'))" style="background:none;border:none;cursor:pointer;color:inherit;font-size:1.2rem;line-height:1;padding:0 4px;" aria-label="Close">&times;</button>
       </div>
     @endif
-    @if(session('error'))
-      <div class="p-alert p-alert-danger" data-auto-dismiss="4500">
+    @if(session('error') || $errors->any())
+      <div class="p-alert p-alert-danger" data-auto-dismiss="5000">
         <div style="display:flex; align-items:center; gap:8px;">
           <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-          <span>{{ session('error') }}</span>
+          <span>{{ session('error') ?? $errors->first() }}</span>
         </div>
         <button type="button" onclick="dismissPartnerAlert(this.closest('.p-alert'))" style="background:none;border:none;cursor:pointer;color:inherit;font-size:1.2rem;line-height:1;padding:0 4px;" aria-label="Close">&times;</button>
       </div>
@@ -836,6 +841,7 @@
       titleEl.textContent = opts.title || 'Confirm Action';
       textEl.textContent = opts.text || 'Are you sure you want to proceed?';
       confirmBtn.textContent = opts.confirmText || 'Confirm';
+      confirmBtn.disabled = false;
 
       const type = opts.type || 'primary';
       if (type === 'danger') {
@@ -869,12 +875,14 @@
       }
 
       currentDialogCallback = function() {
-        closeConfirmDialog();
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span style="display:inline-block;animation:spin 0.8s linear infinite;margin-right:6px;">↻</span> Processing...';
         if (opts.formId) {
           document.getElementById(opts.formId)?.submit();
         } else if (opts.formElement) {
           opts.formElement.submit();
         } else if (typeof opts.onConfirm === 'function') {
+          closeConfirmDialog();
           opts.onConfirm();
         }
       };

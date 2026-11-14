@@ -30,6 +30,14 @@ class CustomerPortalController extends Controller
     public function myBookings(): View
     {
         $user = Auth::guard('web')->user();
+
+        $pendingReviews = Booking::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->whereNull('review_rating')
+            ->with(['service.category', 'amcPlan'])
+            ->latest('completed_at')
+            ->get();
+
         $bookings = Booking::where('user_id', $user->id)
             ->with([
                 'service',
@@ -39,7 +47,7 @@ class CustomerPortalController extends Controller
             ->latest()
             ->paginate(20);
 
-        return view('web.pages.customer.my-bookings', compact('bookings'));
+        return view('web.pages.customer.my-bookings', compact('bookings', 'pendingReviews'));
     }
 
     /**

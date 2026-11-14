@@ -745,6 +745,7 @@ class PartnerPortalTest extends TestCase
                 'partner_job_status' => 'in_progress',
             ]);
         $failStart->assertSessionHasErrors('agreed_price');
+        $failStart->assertSessionHas('error');
 
         // 3. Crew sets price before starting work, which sets final_cost
         $startResponse = $this->actingAs($partner, 'partner')

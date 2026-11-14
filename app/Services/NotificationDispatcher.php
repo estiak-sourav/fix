@@ -49,11 +49,13 @@ class NotificationDispatcher
             return;
         }
 
-        try {
-            Mail::to($partner->email)->send(new PartnerJobAssignedMail($partner, $booking));
-        } catch (Throwable $e) {
-            Log::warning("Failed sending partner job assigned email to {$partner->email}: ".$e->getMessage());
-        }
+        static::executeDeferred(function () use ($partner, $booking) {
+            try {
+                Mail::to($partner->email)->send(new PartnerJobAssignedMail($partner, $booking));
+            } catch (Throwable $e) {
+                Log::warning("Failed sending partner job assigned email to {$partner->email}: ".$e->getMessage());
+            }
+        });
     }
 
     /**
@@ -85,11 +87,13 @@ class NotificationDispatcher
             return;
         }
 
-        try {
-            Mail::to($partner->email)->send(new PartnerJobUpdatedMail($partner, $booking, $updateNote));
-        } catch (Throwable $e) {
-            Log::warning("Failed sending partner job updated email to {$partner->email}: ".$e->getMessage());
-        }
+        static::executeDeferred(function () use ($partner, $booking, $updateNote) {
+            try {
+                Mail::to($partner->email)->send(new PartnerJobUpdatedMail($partner, $booking, $updateNote));
+            } catch (Throwable $e) {
+                Log::warning("Failed sending partner job updated email to {$partner->email}: ".$e->getMessage());
+            }
+        });
     }
 
     /**
@@ -121,11 +125,13 @@ class NotificationDispatcher
             return;
         }
 
-        try {
-            Mail::to($partner->email)->send(new PartnerJobCancelledMail($partner, $booking, $reason));
-        } catch (Throwable $e) {
-            Log::warning("Failed sending partner job cancelled email to {$partner->email}: ".$e->getMessage());
-        }
+        static::executeDeferred(function () use ($partner, $booking, $reason) {
+            try {
+                Mail::to($partner->email)->send(new PartnerJobCancelledMail($partner, $booking, $reason));
+            } catch (Throwable $e) {
+                Log::warning("Failed sending partner job cancelled email to {$partner->email}: ".$e->getMessage());
+            }
+        });
     }
 
     /**
@@ -161,14 +167,32 @@ class NotificationDispatcher
             ->get()
             ->filter(fn (Admin $admin) => $admin->wantsEmailFor($section));
 
-        foreach ($recipients as $admin) {
-            try {
-                Mail::to($admin->email)->send(
-                    new AdminEventNotificationMail($section, $title, $message, $actionUrl, $details)
-                );
-            } catch (Throwable $e) {
-                Log::warning("Failed dispatching admin {$section} notification to {$admin->email}: ".$e->getMessage());
+        if ($recipients->isEmpty()) {
+            return;
+        }
+
+        static::executeDeferred(function () use ($recipients, $section, $title, $message, $actionUrl, $details) {
+            foreach ($recipients as $admin) {
+                try {
+                    Mail::to($admin->email)->send(
+                        new AdminEventNotificationMail($section, $title, $message, $actionUrl, $details)
+                    );
+                } catch (Throwable $e) {
+                    Log::warning("Failed dispatching admin {$section} notification to {$admin->email}: ".$e->getMessage());
+                }
             }
+        });
+    }
+
+    /**
+     * Execute callback after response during HTTP requests, or synchronously during unit tests.
+     */
+    protected static function executeDeferred(callable $callback): void
+    {
+        if (app()->runningUnitTests()) {
+            $callback();
+        } else {
+            defer($callback);
         }
     }
 }

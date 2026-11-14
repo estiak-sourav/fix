@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -73,8 +74,20 @@ class SupportTicketController extends Controller
         ]);
 
         // Send confirmation email to customer
-        Mail::to($ticket->customer_email)
-            ->send(new SupportTicketCreatedMail($ticket, $ticket->access_token));
+        $sendTicketMail = function () use ($ticket) {
+            try {
+                Mail::to($ticket->customer_email)
+                    ->send(new SupportTicketCreatedMail($ticket, $ticket->access_token));
+            } catch (\Throwable $e) {
+                Log::warning('Failed sending support ticket confirmation email: '.$e->getMessage());
+            }
+        };
+
+        if (app()->runningUnitTests()) {
+            $sendTicketMail();
+        } else {
+            defer($sendTicketMail);
+        }
 
         if (auth()->check()) {
             return redirect()

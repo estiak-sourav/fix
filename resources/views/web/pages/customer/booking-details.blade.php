@@ -85,6 +85,19 @@
               <span style="font-size:0.8rem; color:#64748b;">This request has already been accepted and entered dispatch. Direct client cancellation is locked. If you need urgent changes or cancellation, please contact our operations desk.</span>
             </div>
           </div>
+        @elseif($booking->status === 'completed' && !$booking->review_rating)
+          <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fff7ed 100%); border: 1.5px solid #f59e0b; border-radius: 12px; padding: 14px 18px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.12);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.4rem;">⭐</span>
+              <div>
+                <strong style="color: #78350f; font-size: 0.95rem; display: block;">Service Completed — How was your experience?</strong>
+                <span style="font-size: 0.8rem; color: #92400e;">Please take a moment to rate and review this completed service below.</span>
+              </div>
+            </div>
+            <a href="#customerReviewCard" class="btn btn-accent btn-sm" style="font-weight: 700; padding: 7px 16px; border-radius: 8px; text-decoration: none; white-space: nowrap !important; flex-shrink: 0 !important; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: #fff;">
+              ⭐ Rate Service Below ↓
+            </a>
+          </div>
         @endif
 
         @if($booking->status === 'cancelled')
@@ -346,34 +359,39 @@
               </div>
             </div>
           @else
-            <div style="background:#ffffff; border:2px dashed var(--primary); border-radius:10px; padding:1.5rem; margin-bottom:1.5rem;">
-              <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-main); margin:0 0 6px;">
-                Rate Your Service Experience
-              </h3>
-              <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:14px;">
-                How was the service provided by our team? Your review helps us continuously improve.
+            <div id="customerReviewCard" style="background:#fffdf5; border:2px solid #f59e0b; border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; box-shadow:0 4px 16px rgba(245,158,11,0.12);">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <span style="font-size:1.3rem;">⭐</span>
+                <h3 style="font-size:1.2rem; font-weight:800; color:#78350f; margin:0;">
+                  Rate Your Service Experience
+                </h3>
+              </div>
+              <p style="font-size:0.85rem; color:#92400e; margin-bottom:16px;">
+                How was the service delivered by our technicians? Your feedback helps us maintain high quality standards.
               </p>
 
               <form action="{{ route('customer.bookings.review', $booking->booking_number) }}" method="POST">
                 @csrf
-                <div style="margin-bottom:12px;">
-                  <label style="font-size:0.85rem; font-weight:700; color:var(--text-main); display:block; margin-bottom:6px;">Your Rating (1 to 5 Stars) *</label>
-                  <select name="review_rating" class="form-control" style="max-width:200px;" required>
-                    <option value="5" selected>★★★★★ 5 Stars (Excellent)</option>
-                    <option value="4">★★★★☆ 4 Stars (Good)</option>
-                    <option value="3">★★★☆☆ 3 Stars (Average)</option>
-                    <option value="2">★★☆☆☆ 2 Stars (Needs Improvement)</option>
-                    <option value="1">★☆☆☆☆ 1 Star (Unsatisfactory)</option>
-                  </select>
+                <div style="margin-bottom:14px; background:#ffffff; border:1px solid #fde68a; border-radius:10px; padding:12px 14px;">
+                  <label style="font-size:0.85rem; font-weight:700; color:#92400e; display:block; margin-bottom:6px;">Your Rating *</label>
+                  <div class="star-rating-picker" data-target="detail_review_rating_input" data-label="detail_rating_label" style="display:inline-flex; align-items:center; gap:6px; font-size:1.8rem; color:#cbd5e1; cursor:pointer; user-select:none;">
+                    <span class="star-item" data-value="1" style="color:#f59e0b; transition:transform 0.15s ease;" title="1 Star">★</span>
+                    <span class="star-item" data-value="2" style="color:#f59e0b; transition:transform 0.15s ease;" title="2 Stars">★</span>
+                    <span class="star-item" data-value="3" style="color:#f59e0b; transition:transform 0.15s ease;" title="3 Stars">★</span>
+                    <span class="star-item" data-value="4" style="color:#f59e0b; transition:transform 0.15s ease;" title="4 Stars">★</span>
+                    <span class="star-item" data-value="5" style="color:#f59e0b; transition:transform 0.15s ease;" title="5 Stars">★</span>
+                    <span id="detail_rating_label" style="font-size:0.85rem; font-weight:800; color:#b45309; margin-left:10px;">5.0 (Excellent)</span>
+                  </div>
+                  <input type="hidden" name="review_rating" id="detail_review_rating_input" value="5">
                 </div>
 
-                <div style="margin-bottom:14px;">
-                  <label style="font-size:0.85rem; font-weight:700; color:var(--text-main); display:block; margin-bottom:6px;">Your Comments / Review *</label>
-                  <textarea name="review_comment" class="form-control" rows="3" placeholder="Share your feedback about the technicians, punctuality, and work quality..." required></textarea>
+                <div style="margin-bottom:16px;">
+                  <label style="font-size:0.85rem; font-weight:700; color:#78350f; display:block; margin-bottom:6px;">Your Comments / Review *</label>
+                  <textarea name="review_comment" class="form-control" rows="3" placeholder="Share your feedback about the technicians, punctuality, and work quality..." style="width:100%; padding:10px 14px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:0.875rem;" required></textarea>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="padding:0.6rem 1.4rem; font-size:0.875rem;">
-                  Submit Feedback & Review
+                <button type="submit" class="btn btn-accent" style="padding:0.75rem 1.6rem; font-size:0.9rem; font-weight:700; background:linear-gradient(135deg, #f59e0b, #d97706); border:none; color:#ffffff; border-radius:8px; box-shadow:0 2px 8px rgba(217,119,6,0.25); display:inline-flex; align-items:center; gap:6px;">
+                  <span>⭐ Submit Feedback & Review</span>
                 </button>
               </form>
             </div>
@@ -448,33 +466,90 @@
       </form>
     </div>
   </div>
+  @endif
 
   <script>
-    function openCancelModal(bookingNumber, serviceTitle) {
-      const modal = document.getElementById('customerCancelModal');
-      const form = document.getElementById('customerCancelForm');
-      const numSpan = document.getElementById('cancelModalBookingNumber');
-      const titleSpan = document.getElementById('cancelModalServiceTitle');
-      const textarea = document.getElementById('cancelReasonTextarea');
+    @if($booking->canBeCancelledByCustomer())
+      function openCancelModal(bookingNumber, serviceTitle) {
+        const modal = document.getElementById('customerCancelModal');
+        const form = document.getElementById('customerCancelForm');
+        const numSpan = document.getElementById('cancelModalBookingNumber');
+        const titleSpan = document.getElementById('cancelModalServiceTitle');
+        const textarea = document.getElementById('cancelReasonTextarea');
 
-      form.action = '/my-bookings/' + encodeURIComponent(bookingNumber) + '/cancel';
-      numSpan.textContent = '#' + bookingNumber;
-      titleSpan.textContent = serviceTitle;
-      textarea.value = '';
+        form.action = '/my-bookings/' + encodeURIComponent(bookingNumber) + '/cancel';
+        numSpan.textContent = '#' + bookingNumber;
+        titleSpan.textContent = serviceTitle;
+        textarea.value = '';
 
-      modal.style.display = 'flex';
-    }
+        modal.style.display = 'flex';
+      }
 
-    function closeCancelModal() {
-      const modal = document.getElementById('customerCancelModal');
-      if (modal) modal.style.display = 'none';
-    }
+      function closeCancelModal() {
+        const modal = document.getElementById('customerCancelModal');
+        if (modal) modal.style.display = 'none';
+      }
+    @endif
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const labels = {
+        1: '1.0 (Unsatisfactory)',
+        2: '2.0 (Needs Improvement)',
+        3: '3.0 (Average)',
+        4: '4.0 (Good)',
+        5: '5.0 (Excellent)'
+      };
+
+      document.querySelectorAll('.star-rating-picker').forEach(function(picker) {
+        const targetInputId = picker.dataset.target;
+        const targetLabelId = picker.dataset.label;
+        const targetInput = document.getElementById(targetInputId);
+        const targetLabel = document.getElementById(targetLabelId);
+        const stars = picker.querySelectorAll('.star-item');
+
+        function updateStars(val) {
+          stars.forEach(function(s) {
+            const sVal = parseInt(s.dataset.value);
+            s.style.color = sVal <= val ? '#f59e0b' : '#cbd5e1';
+          });
+          if (targetLabel && labels[val]) {
+            targetLabel.textContent = labels[val];
+          }
+          if (targetInput) {
+            targetInput.value = val;
+          }
+        }
+
+        stars.forEach(function(star) {
+          star.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const val = parseInt(this.dataset.value);
+            updateStars(val);
+          });
+          star.addEventListener('mouseenter', function() {
+            const val = parseInt(this.dataset.value);
+            stars.forEach(function(s) {
+              const sVal = parseInt(s.dataset.value);
+              s.style.color = sVal <= val ? '#f59e0b' : '#cbd5e1';
+            });
+            if (targetLabel && labels[val]) {
+              targetLabel.textContent = labels[val];
+            }
+          });
+          star.addEventListener('mouseleave', function() {
+            const currentVal = targetInput ? parseInt(targetInput.value) : 5;
+            updateStars(currentVal);
+          });
+        });
+      });
+    });
 
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
-        closeCancelModal();
+        @if($booking->canBeCancelledByCustomer())
+          closeCancelModal();
+        @endif
       }
     });
   </script>
-  @endif
 </x-layouts.app>
