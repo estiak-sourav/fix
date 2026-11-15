@@ -112,6 +112,18 @@ class PartnerPayoutController extends Controller
 
         $amount = (float) $validated['amount'];
 
+        // Prevent rapid accidental double-clicks from creating duplicate payout requests
+        $recentDuplicate = PartnerPayout::where('partner_id', $partner->id)
+            ->where('direction', 'admin_to_partner')
+            ->where('amount', $amount)
+            ->where('created_at', '>=', now()->subSeconds(20))
+            ->first();
+
+        if ($recentDuplicate) {
+            return redirect()->route('partner.payouts.index')
+                ->with('info', "Payout request #{$recentDuplicate->payout_number} is already recorded and awaiting processing.");
+        }
+
         $payout = PartnerPayout::create([
             'payout_number' => PartnerPayout::generatePayoutNumber(),
             'partner_id' => $partner->id,
@@ -173,6 +185,19 @@ class PartnerPayoutController extends Controller
         ]);
 
         $amount = (float) $validated['amount'];
+
+        // Prevent rapid accidental double-clicks from creating duplicate settlement records
+        $recentDuplicate = PartnerPayout::where('partner_id', $partner->id)
+            ->where('direction', 'partner_to_admin')
+            ->where('amount', $amount)
+            ->where('created_at', '>=', now()->subSeconds(20))
+            ->first();
+
+        if ($recentDuplicate) {
+            return redirect()->route('partner.payouts.index')
+                ->with('info', "Settlement submission #{$recentDuplicate->payout_number} is already recorded and awaiting admin review.");
+        }
+
         $proofPath = null;
         if ($request->hasFile('proof_file')) {
             $proofPath = $request->file('proof_file')->store('settlement_proofs', 'public');

@@ -236,12 +236,12 @@
 
                 <div class="form-group">
                   <label for="bookEngagementModel">Engagement Model <span class="required">*</span></label>
-                  <select id="bookEngagementModel" name="bookEngagementModel" class="form-control" required>
-                    <option value="One-Time" selected>One-Time Service</option>
-                    <option value="Daily">Daily Staffing</option>
-                    <option value="Weekly">Weekly Preventive</option>
-                    <option value="Monthly">Monthly AMC</option>
-                    <option value="Yearly">Annual Enterprise AMC</option>
+                  <select id="bookEngagementModel" name="bookEngagementModel" class="form-control" required onchange="handleEngagementModelChange(this.value)">
+                    <option value="One-Time" {{ old('bookEngagementModel', $selectedPlan ? 'Monthly' : 'One-Time') === 'One-Time' ? 'selected' : '' }}>One-Time Service</option>
+                    <option value="Daily" {{ old('bookEngagementModel') === 'Daily' ? 'selected' : '' }}>Daily Staffing</option>
+                    <option value="Weekly" {{ old('bookEngagementModel') === 'Weekly' ? 'selected' : '' }}>Weekly Preventive</option>
+                    <option value="Monthly" {{ old('bookEngagementModel', $selectedPlan ? 'Monthly' : '') === 'Monthly' ? 'selected' : '' }}>Monthly AMC</option>
+                    <option value="Yearly" {{ old('bookEngagementModel') === 'Yearly' ? 'selected' : '' }}>Annual Enterprise AMC</option>
                   </select>
                 </div>
               </div>
@@ -339,25 +339,43 @@
                   </div>
 
                   @php
+                    $presetValues = ['3 Months', '6 Months', '1 Year', '2 Years', '3 Years', 'Lifetime'];
+                    $selectedTenure = old('contract_tenure', '1 Year');
+                    $isCustomTenure = !in_array($selectedTenure, $presetValues) && !empty($selectedTenure);
+
+                    $customNumber = 4;
+                    $customUnit = 'Months';
+                    if ($isCustomTenure && preg_match('/^(\d+)\s*(month|year)s?$/i', $selectedTenure, $matches)) {
+                      $customNumber = (int)$matches[1];
+                      $customUnit = strtolower($matches[2]) === 'year' ? 'Years' : 'Months';
+                    }
+
                     $tenureOptions = [
                       ['value' => '3 Months', 'label' => '3 Months', 'sub' => 'Quarterly Trial', 'popular' => false],
                       ['value' => '6 Months', 'label' => '6 Months', 'sub' => 'Half-Yearly Scope', 'popular' => false],
                       ['value' => '1 Year', 'label' => '1 Year', 'sub' => 'Annual Agreement', 'popular' => true],
                       ['value' => '2 Years', 'label' => '2 Years', 'sub' => 'Multi-Year Corporate', 'popular' => false],
                       ['value' => '3 Years', 'label' => '3 Years', 'sub' => 'Long-Term Enterprise', 'popular' => false],
+                      ['value' => 'Lifetime', 'label' => 'Lifetime', 'sub' => 'Ongoing Facility SLA', 'popular' => false],
+                      ['value' => 'custom', 'label' => 'Custom', 'sub' => 'Set Month / Year', 'popular' => false],
                     ];
-                    $selectedTenure = old('contract_tenure', '1 Year');
                   @endphp
 
-                  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px;">
+                  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px;">
                     @foreach($tenureOptions as $opt)
                       @php
-                        $isTenureActive = ($selectedTenure === $opt['value']);
+                        $isTenureActive = ($opt['value'] === 'custom')
+                          ? ($isCustomTenure || $selectedTenure === 'custom')
+                          : (!$isCustomTenure && $selectedTenure === $opt['value']);
                       @endphp
                       <label id="tenureCard_{{ Str::slug($opt['value']) }}" class="contract-tenure-card" style="display:flex; flex-direction:column; justify-content:space-between; cursor:pointer; border:2px solid {{ $isTenureActive ? '#00a896' : '#cbd5e1' }}; border-radius:8px; padding:10px 12px; background:{{ $isTenureActive ? '#f0fdfa' : '#ffffff' }}; box-shadow:{{ $isTenureActive ? '0 2px 8px rgba(0, 168, 150, 0.12)' : 'none' }}; transition:all 0.2s ease;" onclick="highlightSelectedTenure(this, '{{ $opt['value'] }}')">
                         <div style="display:flex; align-items:flex-start; gap:8px;">
                           <div class="tenure-radio-wrap" style="position:relative; width:16px; height:16px; flex-shrink:0; margin-top:2px;">
-                            <input type="radio" name="contract_tenure" value="{{ $opt['value'] }}" {{ $isTenureActive ? 'checked' : '' }} style="position:absolute; opacity:0; width:0; height:0; pointer-events:none;">
+                            @if($opt['value'] === 'custom')
+                              <input type="radio" id="customTenureRadio" name="contract_tenure" value="{{ $isCustomTenure ? $selectedTenure : ($customNumber . ' ' . $customUnit) }}" {{ $isTenureActive ? 'checked' : '' }} style="position:absolute; opacity:0; width:0; height:0; pointer-events:none;">
+                            @else
+                              <input type="radio" name="contract_tenure" value="{{ $opt['value'] }}" {{ $isTenureActive ? 'checked' : '' }} style="position:absolute; opacity:0; width:0; height:0; pointer-events:none;">
+                            @endif
                             <span class="tenure-radio-circle" style="width:16px; height:16px; border-radius:50%; border:2px solid {{ $isTenureActive ? '#00a896' : '#cbd5e1' }}; display:flex; align-items:center; justify-content:center; background:{{ $isTenureActive ? '#00a896' : '#ffffff' }}; transition:all 0.2s ease; box-sizing:border-box;">
                               <span class="tenure-radio-dot" style="width:6px; height:6px; border-radius:50%; background:#ffffff; display:{{ $isTenureActive ? 'block' : 'none' }};"></span>
                             </span>
@@ -376,6 +394,25 @@
                         </div>
                       </label>
                     @endforeach
+                  </div>
+
+                  <!-- Custom Tenure Details Container -->
+                  <div id="customTenureContainer" style="margin-top:12px; padding:12px 16px; background:#f8fafc; border:1.5px dashed #00a896; border-radius:8px; display:{{ ($isCustomTenure || $selectedTenure === 'custom') ? 'block' : 'none' }}; transition:all 0.3s ease;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                      <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:0.85rem; font-weight:700; color:#0f2744;">Custom Period:</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                          <input type="number" id="customTenureNumber" min="1" max="120" value="{{ $customNumber }}" style="width:75px; padding:6px 10px; border:1.5px solid #cbd5e1; border-radius:6px; font-weight:700; color:#0f2744; background:#ffffff; text-align:center; font-size:0.9rem; outline:none;" oninput="onCustomTenureChange()" onchange="onCustomTenureChange()">
+                          <select id="customTenureUnit" style="padding:6px 10px; border:1.5px solid #cbd5e1; border-radius:6px; font-weight:600; color:#0f2744; background:#ffffff; font-size:0.88rem; outline:none; cursor:pointer;" onchange="onCustomTenureChange()">
+                            <option value="Months" {{ $customUnit === 'Months' ? 'selected' : '' }}>Month(s)</option>
+                            <option value="Years" {{ $customUnit === 'Years' ? 'selected' : '' }}>Year(s)</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div id="customTenureFeedback" style="font-size:0.78rem; font-weight:700; color:#0f766e; background:#f0fdfa; padding:5px 12px; border-radius:6px; border:1px solid #99f6e4;">
+                        Selected: {{ $customNumber }} {{ $customUnit }}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -697,6 +734,16 @@
         });
       @endif
 
+      function handleEngagementModelChange(val) {
+        if (!val) return;
+        val = String(val).trim();
+        if (val === 'Monthly' || val === 'Monthly AMC' || val === 'Yearly' || val === 'Daily' || val === 'Weekly' || val === 'Annual Enterprise AMC') {
+          setBookingType('amc_contract');
+        } else if (val === 'One-Time' || val === 'One-Time Service') {
+          setBookingType('on_demand');
+        }
+      }
+
       function setBookingType(type) {
         const typeInput = document.getElementById('bookServiceType');
         const planBox = document.getElementById('amcPlanSelectionBox');
@@ -707,7 +754,9 @@
 
         if (type === 'amc_contract') {
           if (typeInput) typeInput.value = 'amc_contract';
-          if (planBox) planBox.style.display = 'block';
+          if (planBox) {
+            planBox.style.display = 'block';
+          }
           const tenureRow = document.getElementById('sidebarAmcTenureRow');
           if (tenureRow) tenureRow.style.display = 'flex';
           if (btnAmc) {
@@ -723,10 +772,18 @@
             btnOneTime.style.boxShadow = 'none';
           }
           if (engagementSelect && engagementSelect.value === 'One-Time') {
-            engagementSelect.value = 'Monthly AMC';
+            engagementSelect.value = 'Monthly';
           }
-          if (urgencySelect) {
+          if (urgencySelect && urgencySelect.value !== 'scheduled') {
             urgencySelect.value = 'scheduled';
+          }
+
+          // Ensure an AMC plan radio is checked and highlighted
+          const checkedPlan = document.querySelector('input[name="amc_plan_id"]:checked') || document.querySelector('input[name="amc_plan_id"]');
+          if (checkedPlan) {
+            checkedPlan.checked = true;
+            const parentCard = checkedPlan.closest('.amc-plan-card');
+            if (parentCard) highlightSelectedAmcPlan(parentCard);
           }
         } else {
           if (typeInput) typeInput.value = 'on_demand';
@@ -783,6 +840,32 @@
         }
       }
 
+      function onCustomTenureChange() {
+        const numInput = document.getElementById('customTenureNumber');
+        let num = parseInt(numInput.value, 10);
+        if (isNaN(num) || num < 1) num = 1;
+        if (num > 120) num = 120;
+        numInput.value = num;
+
+        const unitSelect = document.getElementById('customTenureUnit');
+        const unit = unitSelect ? unitSelect.value : 'Months';
+        const displayUnit = num === 1 ? (unit === 'Years' ? 'Year' : 'Month') : unit;
+        const tenureVal = `${num} ${displayUnit}`;
+
+        const customRadio = document.getElementById('customTenureRadio');
+        if (customRadio) {
+          customRadio.value = tenureVal;
+          customRadio.checked = true;
+        }
+
+        const feedback = document.getElementById('customTenureFeedback');
+        if (feedback) {
+          feedback.textContent = `Selected: ${tenureVal}`;
+        }
+
+        updateContractDurationPreview(tenureVal);
+      }
+
       function highlightSelectedTenure(labelEl, tenureValue) {
         document.querySelectorAll('.contract-tenure-card').forEach(el => {
           el.style.borderColor = '#cbd5e1';
@@ -812,13 +895,33 @@
           if (radio) radio.checked = true;
         }
 
-        updateContractDurationPreview(tenureValue);
+        const customContainer = document.getElementById('customTenureContainer');
+        if (tenureValue === 'custom') {
+          if (customContainer) customContainer.style.display = 'block';
+          onCustomTenureChange();
+        } else {
+          if (customContainer) customContainer.style.display = 'none';
+          updateContractDurationPreview(tenureValue);
+        }
       }
 
       function updateContractDurationPreview(selectedTenure = null) {
         if (!selectedTenure) {
           const checkedRadio = document.querySelector('input[name="contract_tenure"]:checked');
           selectedTenure = checkedRadio ? checkedRadio.value : '1 Year';
+        }
+
+        const badgeText = document.getElementById('tenureDurationText');
+        const sidebarTenureVal = document.getElementById('sidebarAmcTenureValue');
+
+        if (selectedTenure === 'Lifetime') {
+          if (badgeText) {
+            badgeText.textContent = 'Lifetime / Ongoing (Continuous Facility Maintenance SLA)';
+          }
+          if (sidebarTenureVal) {
+            sidebarTenureVal.textContent = 'Lifetime';
+          }
+          return;
         }
 
         const dateInput = document.getElementById('bookDate');
@@ -828,7 +931,16 @@
         }
 
         let endDate = new Date(startDate);
-        if (selectedTenure === '3 Months') {
+        const monthMatch = selectedTenure.match(/^(\d+)\s*month/i);
+        const yearMatch = selectedTenure.match(/^(\d+)\s*year/i);
+
+        if (monthMatch) {
+          const months = parseInt(monthMatch[1], 10);
+          endDate.setMonth(endDate.getMonth() + months);
+        } else if (yearMatch) {
+          const years = parseInt(yearMatch[1], 10);
+          endDate.setFullYear(endDate.getFullYear() + years);
+        } else if (selectedTenure === '3 Months') {
           endDate.setMonth(endDate.getMonth() + 3);
         } else if (selectedTenure === '6 Months') {
           endDate.setMonth(endDate.getMonth() + 6);
@@ -844,12 +956,10 @@
         const startStr = startDate.toLocaleDateString('en-US', options);
         const endStr = endDate.toLocaleDateString('en-US', options);
 
-        const badgeText = document.getElementById('tenureDurationText');
         if (badgeText) {
           badgeText.textContent = `${selectedTenure} (${startStr} – ${endStr})`;
         }
 
-        const sidebarTenureVal = document.getElementById('sidebarAmcTenureValue');
         if (sidebarTenureVal) {
           sidebarTenureVal.textContent = selectedTenure;
         }
@@ -867,12 +977,13 @@
 
         if (engagementSelect) {
           engagementSelect.addEventListener('change', function() {
-            if (this.value === 'Monthly AMC' || this.value === 'Yearly' || this.value === 'Daily' || this.value === 'Weekly') {
-              setBookingType('amc_contract');
-            } else if (this.value === 'One-Time') {
-              setBookingType('on_demand');
-            }
+            handleEngagementModelChange(this.value);
           });
+          // Check on initial page load
+          const initVal = engagementSelect.value;
+          if (initVal === 'Monthly' || initVal === 'Monthly AMC' || initVal === 'Yearly' || initVal === 'Daily' || initVal === 'Weekly' || initVal === 'Annual Enterprise AMC') {
+            setBookingType('amc_contract');
+          }
         }
 
         if (urgencySelect) {

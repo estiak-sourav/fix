@@ -277,22 +277,36 @@ class AdminDashboardController extends Controller
             ->orderBy('due_date')
             ->get();
 
+        $firstDue = $amcBillsDue->first();
+
         $amcCollectionAlert = [
             'has_due' => $amcBillsDue->isNotEmpty(),
             'count' => $amcBillsDue->count(),
             'total_amount' => (float) $amcBillsDue->sum('amount'),
-            'invoices' => $amcBillsDue->take(4),
+            'invoices' => $amcBillsDue->take(5),
+            'single_booking_id' => $firstDue?->booking_id,
+            'single_invoice_id' => $firstDue?->id,
+            'single_client_name' => $firstDue?->booking?->customer_name ?: ($firstDue?->booking?->user?->name ?: 'Client'),
+            'single_booking_number' => $firstDue?->booking?->booking_number,
+            'single_amount' => $firstDue ? (float) $firstDue->amount : 0,
         ];
 
-        // Period Revenue calculation: Regular Completed Services + Paid AMC Bills in Range
-        $regularServiceRevenue = (float) $bookingsInRange->filter(fn ($b) => ! $b->is_amc)->where('status', 'completed')->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0);
-        $amcCollectedInPeriod = (float) AmcInvoice::where('status', 'paid')
+        // Period Revenue calculation: Regular Completed Services + Paid AMC Bills & Shift collections in Range
+        $regularServiceRevenue = (float) $bookingsInRange
+            ->filter(fn ($b) => ! $b->is_amc)
+            ->where('status', 'completed')
+            ->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0);
+
+        $amcInvoicesInPeriod = (float) AmcInvoice::where('status', 'paid')
             ->whereBetween('paid_at', [$startDate, $endDate])
             ->sum('amount');
-        if ($amcCollectedInPeriod === 0.0) {
-            $amcCollectedInPeriod = (float) $bookingsInRange->filter(fn ($b) => $b->is_amc && $b->contract_status === 'active')->sum(fn ($b) => $b->recurring_amount ?: $b->final_cost ?: 0);
-        }
-        $periodRevenue = $regularServiceRevenue + $amcCollectedInPeriod;
+
+        $amcShiftsInPeriod = (float) AmcShift::where('status', 'completed')
+            ->where('collected_amount', '>', 0)
+            ->whereBetween('completed_at', [$startDate, $endDate])
+            ->sum('collected_amount');
+
+        $periodRevenue = $regularServiceRevenue + $amcInvoicesInPeriod + $amcShiftsInPeriod;
 
         // Summary Statistics for the Active Period
         $stats = [
@@ -389,32 +403,135 @@ class AdminDashboardController extends Controller
 
         $unreadNotifications = AdminNotification::latest()->take(6)->get();
 
-        // 3. Earning analytics per month (Real database bookings & revenue)
+        // 3. Earning analytics per month (Real database bookings, AMC recurring bills, and completed shifts)
         $currentYear = Carbon::today()->year;
         $currentMonth = Carbon::today()->month;
 
-        $currentYearBookings = Booking::with(['service.category', 'amcPlan'])
-            ->whereYear('created_at', $currentYear)
+        $currentYearBookings = Booking::with(['service.category', 'amcPlan', 'amcInvoices', 'amcShifts'])
+            ->where(function ($q) use ($currentYear) {
+                $q->whereYear('created_at', $currentYear)
+                    ->orWhereYear('completed_at', $currentYear)
+                    ->orWhereYear('payment_collected_at', $currentYear);
+            })
             ->get();
 
-        $prevYearDecRevenue = (float) Booking::whereYear('created_at', $currentYear - 1)
-            ->whereMonth('created_at', 12)
-            ->get()
-            ->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0);
+        $currentYearPaidInvoices = AmcInvoice::where('status', 'paid')
+            ->whereYear('paid_at', $currentYear)
+            ->get();
 
-        $bookingsByMonth = $currentYearBookings->groupBy(fn ($b) => (int) $b->created_at->format('n'));
+        $currentYearPaidShifts = AmcShift::where('status', 'completed')
+            ->where('collected_amount', '>', 0)
+            ->whereYear('completed_at', $currentYear)
+            ->get();
+
+        $calculateMonthRevenueAndBuckets = function (int $year, int $month) use ($currentYearBookings, $currentYearPaidInvoices, $currentYearPaidShifts, $currentYear) {
+            $daysInMonth = Carbon::createFromDate($year, $month, 1)->daysInMonth;
+            $bucketValues = array_fill(0, 12, 0);
+            $totalRevenue = 0.0;
+
+            if ($year === $currentYear) {
+                // 1. Regular non-AMC bookings
+                $monthRegular = $currentYearBookings
+                    ->filter(fn ($b) => ! $b->is_amc)
+                    ->filter(function ($b) use ($month) {
+                        $dt = $b->completed_at ?? $b->payment_collected_at ?? $b->created_at;
+
+                        return (int) $dt->format('n') === $month;
+                    });
+
+                foreach ($monthRegular as $b) {
+                    $amt = (float) ($b->final_cost ?? $b->estimated_cost ?? 0);
+                    if ($amt > 0) {
+                        $totalRevenue += $amt;
+                        $dt = $b->completed_at ?? $b->payment_collected_at ?? $b->created_at;
+                        $day = (int) $dt->format('j');
+                        $idx = min(11, (int) floor((($day - 1) / $daysInMonth) * 12));
+                        $bucketValues[$idx] += $amt;
+                    }
+                }
+
+                // 2. Paid AMC recurring invoices
+                $monthInvoices = $currentYearPaidInvoices
+                    ->filter(fn ($inv) => $inv->paid_at && (int) $inv->paid_at->format('n') === $month);
+
+                foreach ($monthInvoices as $inv) {
+                    $amt = (float) $inv->amount;
+                    if ($amt > 0) {
+                        $totalRevenue += $amt;
+                        $day = (int) $inv->paid_at->format('j');
+                        $idx = min(11, (int) floor((($day - 1) / $daysInMonth) * 12));
+                        $bucketValues[$idx] += $amt;
+                    }
+                }
+
+                // 3. Paid AMC shifts
+                $monthShifts = $currentYearPaidShifts
+                    ->filter(fn ($s) => $s->completed_at && (int) $s->completed_at->format('n') === $month);
+
+                foreach ($monthShifts as $s) {
+                    $amt = (float) $s->collected_amount;
+                    if ($amt > 0) {
+                        $totalRevenue += $amt;
+                        $day = (int) $s->completed_at->format('j');
+                        $idx = min(11, (int) floor((($day - 1) / $daysInMonth) * 12));
+                        $bucketValues[$idx] += $amt;
+                    }
+                }
+
+                // 4. Standalone AMC direct booking payment fallback (if no invoices or shifts exist)
+                $monthAmcDirect = $currentYearBookings
+                    ->filter(fn ($b) => $b->is_amc && $b->amcInvoices->isEmpty() && $b->amcShifts->isEmpty())
+                    ->filter(function ($b) use ($month) {
+                        $dt = $b->payment_collected_at ?? $b->created_at;
+
+                        return (int) $dt->format('n') === $month;
+                    });
+
+                foreach ($monthAmcDirect as $b) {
+                    $amt = (float) ($b->collected_amount ?: ($b->payment_status === 'paid' ? ($b->final_cost ?: 0) : 0));
+                    if ($amt > 0) {
+                        $totalRevenue += $amt;
+                        $dt = $b->payment_collected_at ?? $b->created_at;
+                        $day = (int) $dt->format('j');
+                        $idx = min(11, (int) floor((($day - 1) / $daysInMonth) * 12));
+                        $bucketValues[$idx] += $amt;
+                    }
+                }
+            } else {
+                $prevRegular = (float) Booking::where('service_type', '!=', 'amc_contract')
+                    ->whereNull('amc_plan_id')
+                    ->whereYear('created_at', $year)
+                    ->whereMonth('created_at', $month)
+                    ->get()
+                    ->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0);
+
+                $prevInvoices = (float) AmcInvoice::where('status', 'paid')
+                    ->whereYear('paid_at', $year)
+                    ->whereMonth('paid_at', $month)
+                    ->sum('amount');
+
+                $prevShifts = (float) AmcShift::where('status', 'completed')
+                    ->where('collected_amount', '>', 0)
+                    ->whereYear('completed_at', $year)
+                    ->whereMonth('completed_at', $month)
+                    ->sum('collected_amount');
+
+                $totalRevenue = $prevRegular + $prevInvoices + $prevShifts;
+            }
+
+            return [$totalRevenue, $bucketValues];
+        };
+
+        [$prevYearDecRevenue] = $calculateMonthRevenueAndBuckets($currentYear - 1, 12);
 
         $earningMonthlyData = [];
-        for ($m = 1; $m <= 12; $m++) {
-            $monthBookings = $bookingsByMonth->get($m, collect());
-            $thisMonthRev = (float) $monthBookings->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0);
+        $monthlyRevenues = [];
 
-            if ($m === 1) {
-                $prevMonthRev = $prevYearDecRevenue;
-            } else {
-                $prevMonthBookings = $bookingsByMonth->get($m - 1, collect());
-                $prevMonthRev = (float) $prevMonthBookings->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0);
-            }
+        for ($m = 1; $m <= 12; $m++) {
+            [$thisMonthRev, $bucketValues] = $calculateMonthRevenueAndBuckets($currentYear, $m);
+            $monthlyRevenues[$m] = $thisMonthRev;
+
+            $prevMonthRev = ($m === 1) ? $prevYearDecRevenue : ($monthlyRevenues[$m - 1] ?? 0.0);
 
             if ($prevMonthRev > 0) {
                 $diff = $thisMonthRev - $prevMonthRev;
@@ -424,14 +541,6 @@ class AdminDashboardController extends Controller
                 $growthStr = '+ 100.0%';
             } else {
                 $growthStr = '0.0%';
-            }
-
-            $daysInMonth = Carbon::createFromDate($currentYear, $m, 1)->daysInMonth;
-            $bucketValues = array_fill(0, 12, 0);
-            foreach ($monthBookings as $b) {
-                $day = (int) $b->created_at->format('j');
-                $bucketIndex = min(11, (int) floor((($day - 1) / $daysInMonth) * 12));
-                $bucketValues[$bucketIndex] += (float) ($b->final_cost ?? $b->estimated_cost ?? 0);
             }
 
             $earningMonthlyData[$m] = [
@@ -445,19 +554,37 @@ class AdminDashboardController extends Controller
         }
 
         // 4. Sales analytics (Category revenue share & distribution)
-        $salesPool = $bookingsInRange->filter(fn ($b) => ($b->final_cost ?? $b->estimated_cost ?? 0) > 0);
+        $salesPool = $bookingsInRange->filter(function ($b) {
+            if ($b->is_amc) {
+                return $b->amc_total_paid > 0 || ($b->final_cost ?? $b->estimated_cost ?? 0) > 0;
+            }
+
+            return ($b->final_cost ?? $b->estimated_cost ?? 0) > 0;
+        });
+
         if ($salesPool->isEmpty()) {
-            $salesPool = $currentYearBookings->filter(fn ($b) => ($b->final_cost ?? $b->estimated_cost ?? 0) > 0);
+            $salesPool = $currentYearBookings->filter(function ($b) {
+                if ($b->is_amc) {
+                    return $b->amc_total_paid > 0 || ($b->final_cost ?? $b->estimated_cost ?? 0) > 0;
+                }
+
+                return ($b->final_cost ?? $b->estimated_cost ?? 0) > 0;
+            });
         }
+
         if ($salesPool->isEmpty()) {
-            $salesPool = Booking::with(['service.category', 'amcPlan'])
-                ->get()
-                ->filter(fn ($b) => ($b->final_cost ?? $b->estimated_cost ?? 0) > 0);
+            $salesPool = Booking::with(['service.category', 'amcPlan', 'amcInvoices', 'amcShifts'])->get();
         }
 
         $categorySales = $salesPool
-            ->groupBy(fn ($b) => $b->service?->category?->name ?? ($b->amcPlan ? 'AMC Contracts' : 'General Maintenance'))
-            ->map(fn ($group) => (float) $group->sum(fn ($b) => $b->final_cost ?? $b->estimated_cost ?? 0))
+            ->groupBy(fn ($b) => $b->service?->category?->name ?? ($b->amcPlan ? 'AMC Packages' : 'General Maintenance'))
+            ->map(fn ($group) => (float) $group->sum(function ($b) {
+                if ($b->is_amc) {
+                    return $b->amc_total_paid > 0 ? $b->amc_total_paid : ($b->final_cost ?? $b->estimated_cost ?? 0);
+                }
+
+                return $b->final_cost ?? $b->estimated_cost ?? 0;
+            }))
             ->filter(fn ($rev) => $rev > 0)
             ->sortDesc();
 
@@ -652,12 +779,17 @@ class AdminDashboardController extends Controller
             ->get();
 
         // 8. AMC & Facility Routine Maintenance Operations Hub
-        $shiftRange = $request->get('shift_range', 'all');
+        $shiftRange = $request->get('shift_range', '3days');
 
         $upcomingAmcShiftsQuery = AmcShift::with(['booking.user', 'booking.amcPlan', 'partner'])
             ->whereIn('status', ['scheduled', 'reassignment_needed', 'in_progress']);
 
-        if ($shiftRange === '7days') {
+        if ($shiftRange === '3days') {
+            $upcomingAmcShiftsQuery->whereBetween('scheduled_date', [
+                Carbon::today()->toDateString(),
+                Carbon::today()->addDays(3)->toDateString(),
+            ]);
+        } elseif ($shiftRange === '7days') {
             $upcomingAmcShiftsQuery->whereBetween('scheduled_date', [
                 Carbon::today()->toDateString(),
                 Carbon::today()->addDays(7)->toDateString(),
@@ -741,10 +873,22 @@ class AdminDashboardController extends Controller
             AdminNotification::whereIn('id', $unplayed->pluck('id'))->update(['sound_played' => true]);
         }
 
+        $pendingBookingsCount = Booking::where('status', 'pending_review')->count();
+        $pendingTasksCount = OutreachTask::where('status', 'pending')->count();
+        $latestBookingId = Booking::max('id') ?? 0;
+        $latestNotificationId = AdminNotification::max('id') ?? 0;
+        $bookingsUpdatedAt = (string) (Booking::max('updated_at') ?? '');
+
         return response()->json([
             'has_sound' => $unplayed->isNotEmpty(),
             'new_count' => $unplayed->count(),
             'unread_total' => $unreadCount,
+            'unread_alerts_count' => $unreadCount,
+            'pending_bookings_count' => $pendingBookingsCount,
+            'pending_tasks_count' => $pendingTasksCount,
+            'latest_booking_id' => $latestBookingId,
+            'latest_notification_id' => $latestNotificationId,
+            'bookings_updated_at' => $bookingsUpdatedAt,
             'alerts' => $unplayed->map(fn ($n) => [
                 'id' => $n->id,
                 'title' => $n->title,
@@ -926,17 +1070,56 @@ class AdminDashboardController extends Controller
         }
 
         // Cloned query for overall KPIs & aggregates
-        $allOrders = (clone $query)->get();
+        $allOrders = (clone $query)->with(['service', 'amcPlan', 'partner', 'amcInvoices', 'amcShifts'])->get();
 
-        $totalRevenue = (float) $allOrders->sum(fn ($b) => $b->final_cost > 0 ? $b->final_cost : ($b->estimated_cost ?: 0));
-        $invoicedRevenue = (float) $allOrders->where('status', 'completed')->sum(fn ($b) => $b->final_cost ?: ($b->estimated_cost ?: 0));
-        $pendingPipeline = (float) $allOrders->whereIn('status', ['pending_review', 'accepted', 'assigned', 'in_progress'])->sum(fn ($b) => $b->estimated_cost ?: ($b->final_cost ?: 0));
+        $totalRevenue = (float) $allOrders->sum(function ($b) {
+            if ($b->is_amc) {
+                return max((float) $b->amc_total_budget, (float) $b->amc_total_paid);
+            }
+
+            return $b->final_cost > 0 ? (float) $b->final_cost : (float) ($b->estimated_cost ?: 0);
+        });
+
+        $invoicedRevenue = (float) $allOrders->sum(function ($b) {
+            if ($b->is_amc) {
+                return (float) $b->amc_total_paid;
+            }
+
+            return ($b->status === 'completed' || $b->payment_status === 'paid')
+                ? (float) ($b->final_cost ?: ($b->estimated_cost ?: 0))
+                : 0.0;
+        });
+
+        $pendingPipeline = (float) $allOrders->sum(function ($b) {
+            if ($b->is_amc) {
+                return (float) $b->amc_remaining_due;
+            }
+
+            return in_array($b->status, ['pending_review', 'accepted', 'assigned', 'on_the_way', 'in_progress'])
+                ? (float) ($b->estimated_cost ?: ($b->final_cost ?: 0))
+                : 0.0;
+        });
+
         $avgOrderValue = $allOrders->count() > 0 ? round($totalRevenue / $allOrders->count(), 2) : 0;
 
         // Vendor Payout Analytics
-        $totalVendorCost = (float) $allOrders->sum(fn ($b) => (float) ($b->partner_payout_amount ?: 0));
-        $settledVendorPayouts = (float) $allOrders->where('partner_payout_status', 'paid')->sum(fn ($b) => (float) ($b->partner_payout_amount ?: 0));
-        $pendingVendorPayouts = (float) $allOrders->where('partner_payout_status', '!=', 'paid')->whereNotNull('partner_id')->sum(fn ($b) => (float) ($b->partner_payout_amount ?: 0));
+        $totalVendorCost = (float) $allOrders->sum(function ($b) {
+            if ($b->is_amc) {
+                return (float) $b->amcShifts->sum('payout_amount');
+            }
+
+            return (float) ($b->partner_payout_amount ?: 0);
+        });
+
+        $settledVendorPayouts = (float) $allOrders->sum(function ($b) {
+            if ($b->is_amc) {
+                return (float) $b->amcShifts->where('payout_status', 'paid')->sum('payout_amount');
+            }
+
+            return $b->partner_payout_status === 'paid' ? (float) ($b->partner_payout_amount ?: 0) : 0.0;
+        });
+
+        $pendingVendorPayouts = max(0.0, $totalVendorCost - $settledVendorPayouts);
         $netPlatformMargin = max(0.0, $totalRevenue - $totalVendorCost);
 
         // Breakdown by Service
@@ -945,7 +1128,13 @@ class AdminDashboardController extends Controller
             ->map(fn ($group, $title) => [
                 'title' => $title,
                 'count' => $group->count(),
-                'total' => (float) $group->sum(fn ($b) => $b->final_cost > 0 ? $b->final_cost : ($b->estimated_cost ?: 0)),
+                'total' => (float) $group->sum(function ($b) {
+                    if ($b->is_amc) {
+                        return $b->amc_total_paid > 0 ? $b->amc_total_paid : $b->amc_total_budget;
+                    }
+
+                    return $b->final_cost > 0 ? $b->final_cost : ($b->estimated_cost ?: 0);
+                }),
             ])
             ->sortByDesc('total')
             ->take(5);
@@ -957,11 +1146,17 @@ class AdminDashboardController extends Controller
             ->map(fn ($group, $div) => [
                 'division' => $div,
                 'count' => $group->count(),
-                'total' => (float) $group->sum(fn ($b) => $b->final_cost > 0 ? $b->final_cost : ($b->estimated_cost ?: 0)),
+                'total' => (float) $group->sum(function ($b) {
+                    if ($b->is_amc) {
+                        return $b->amc_total_paid > 0 ? $b->amc_total_paid : $b->amc_total_budget;
+                    }
+
+                    return $b->final_cost > 0 ? $b->final_cost : ($b->estimated_cost ?: 0);
+                }),
             ])
             ->sortByDesc('total');
 
-        $bookings = $query->latest()->paginate(15)->withQueryString();
+        $bookings = $query->with(['service', 'amcPlan', 'partner', 'amcInvoices', 'amcShifts'])->latest()->paginate(15)->withQueryString();
 
         $servicesList = Service::where('is_active', true)->orderBy('title')->get(['id', 'title']);
 

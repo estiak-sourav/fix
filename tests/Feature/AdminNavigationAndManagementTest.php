@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Admin;
 use App\Models\AdminNotification;
+use App\Models\AmcInvoice;
+use App\Models\AmcPlan;
 use App\Models\Booking;
 use App\Models\DailyAnalytics;
 use App\Models\Faq;
@@ -611,5 +613,48 @@ class AdminNavigationAndManagementTest extends TestCase
         $homeRes->assertSee('Alpha Tech');
         $homeRes->assertSee('Beta Towers');
         $homeRes->assertSee('Gamma Logistics');
+    }
+
+    public function test_amc_recurring_bill_alert_links_directly_to_client_contract_page(): void
+    {
+        $admin = Admin::first();
+        $user = User::factory()->create(['name' => 'Corporate Client Inc']);
+        $plan = AmcPlan::first();
+
+        $booking = Booking::create([
+            'booking_number' => 'AMC-TEST-001',
+            'user_id' => $user->id,
+            'customer_name' => 'Corporate Client Inc',
+            'customer_phone' => '01799887766',
+            'customer_email' => 'corporate@client.com',
+            'service_type' => 'amc_contract',
+            'amc_plan_id' => $plan->id,
+            'contract_status' => 'active',
+            'status' => 'assigned',
+            'division' => 'Dhaka',
+            'district' => 'Dhaka',
+            'area' => 'Gulshan',
+            'street_address' => 'House 1, Road 2, Gulshan',
+            'preferred_date' => now()->toDateString(),
+            'preferred_time_slot' => 'Morning (9:00 AM - 12:00 PM)',
+            'problem_description' => 'Annual facility maintenance',
+            'recurring_amount' => 500.00,
+        ]);
+
+        $invoice = AmcInvoice::create([
+            'booking_id' => $booking->id,
+            'invoice_number' => 'INV-TEST-001',
+            'billing_period_label' => 'Nov 2026',
+            'amount' => 500.00,
+            'due_date' => now()->addDays(2),
+            'status' => 'unpaid',
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.dashboard'));
+        $response->assertStatus(200);
+        $response->assertSee('AMC Recurring Bill Collection Warning');
+        $response->assertSee('Corporate Client Inc');
+        $response->assertSee('500.00');
+        $response->assertSee(route('admin.bookings.show', ['booking' => $booking->id, 'collect_invoice' => $invoice->id]).'#tab-amc-contract', false);
     }
 }

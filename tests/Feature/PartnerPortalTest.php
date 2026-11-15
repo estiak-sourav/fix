@@ -10,6 +10,7 @@ use App\Models\AmcPlan;
 use App\Models\Booking;
 use App\Models\District;
 use App\Models\Partner;
+use App\Models\PartnerNotification;
 use App\Models\PartnerPayout;
 use App\Models\Service;
 use App\Models\ServiceCategory;
@@ -1321,5 +1322,108 @@ class PartnerPortalTest extends TestCase
         $response->assertSee('Shift #'.$shift->shift_number);
         $response->assertSee($booking->booking_number);
         $response->assertSee('500.00');
+    }
+
+    public function test_partner_can_delete_notifications(): void
+    {
+        $partnerA = Partner::create([
+            'company_name' => 'Partner Alpha',
+            'contact_person' => 'Alpha',
+            'phone' => '01711990011',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'trade_domain' => 'Electrical',
+            'coverage_areas' => 'Dhaka',
+        ]);
+
+        $partnerB = Partner::create([
+            'company_name' => 'Partner Beta',
+            'contact_person' => 'Beta',
+            'phone' => '01711990022',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'trade_domain' => 'Electrical',
+            'coverage_areas' => 'Dhaka',
+        ]);
+
+        $notif1 = PartnerNotification::create([
+            'partner_id' => $partnerA->id,
+            'type' => 'system_alert',
+            'title' => 'Test Notification 1',
+            'message' => 'Message 1',
+            'is_read' => true,
+        ]);
+
+        $notif2 = PartnerNotification::create([
+            'partner_id' => $partnerA->id,
+            'type' => 'system_alert',
+            'title' => 'Test Notification 2',
+            'message' => 'Message 2',
+            'is_read' => false,
+        ]);
+
+        $notifB = PartnerNotification::create([
+            'partner_id' => $partnerB->id,
+            'type' => 'system_alert',
+            'title' => 'Partner B Notification',
+            'message' => 'Message B',
+            'is_read' => false,
+        ]);
+
+        // 1. Partner B cannot delete Partner A's notification (403)
+        $this->actingAs($partnerB, 'partner')
+            ->delete(route('partner.notifications.destroy', $notif1))
+            ->assertForbidden();
+
+        // 2. Partner A can delete single notification
+        $this->actingAs($partnerA, 'partner')
+            ->delete(route('partner.notifications.destroy', $notif1))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('partner_notifications', ['id' => $notif1->id]);
+
+        // 3. Partner A can clear all notifications
+        $this->actingAs($partnerA, 'partner')
+            ->post(route('partner.notifications.clear-all'))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('partner_notifications', ['id' => $notif2->id]);
+        $this->assertDatabaseHas('partner_notifications', ['id' => $notifB->id]);
+    }
+
+    public function test_partner_can_clear_read_notifications(): void
+    {
+        $partner = Partner::create([
+            'company_name' => 'Partner Clear Read',
+            'contact_person' => 'Clear',
+            'phone' => '01711990033',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'trade_domain' => 'Plumbing',
+            'coverage_areas' => 'Dhaka',
+        ]);
+
+        $readNotif = PartnerNotification::create([
+            'partner_id' => $partner->id,
+            'type' => 'system_alert',
+            'title' => 'Read Notice',
+            'message' => 'Already read',
+            'is_read' => true,
+        ]);
+
+        $unreadNotif = PartnerNotification::create([
+            'partner_id' => $partner->id,
+            'type' => 'system_alert',
+            'title' => 'Unread Notice',
+            'message' => 'Not yet read',
+            'is_read' => false,
+        ]);
+
+        $this->actingAs($partner, 'partner')
+            ->post(route('partner.notifications.clear-read'))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('partner_notifications', ['id' => $readNotif->id]);
+        $this->assertDatabaseHas('partner_notifications', ['id' => $unreadNotif->id]);
     }
 }

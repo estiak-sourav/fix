@@ -307,7 +307,7 @@
                         <span style="font-size:0.72rem; text-transform:uppercase; color:#0f766e; font-weight:700; letter-spacing:0.04em;">Contract Tenure</span>
                         <strong style="display:block; font-size:0.95rem; color:#0f2744; margin-top:3px;">
                           @if($booking->contract_tenure)
-                            {{ $booking->contract_tenure }} • {{ $booking->contract_start_date?->format('M d, Y') ?: 'Active' }} — {{ $booking->contract_end_date?->format('M d, Y') ?: '1 Year' }}
+                            {{ $booking->contract_tenure }} • {{ $booking->contract_start_date?->format('M d, Y') ?: 'Active' }} — {{ $booking->contract_end_date?->format('M d, Y') ?: ($booking->contract_tenure === 'Lifetime' ? 'Lifetime SLA' : '1 Year') }}
                           @else
                             {{ $booking->contract_start_date?->format('M d, Y') ?: 'Active' }} — {{ $booking->contract_end_date?->format('M d, Y') ?: '1 Year' }}
                           @endif

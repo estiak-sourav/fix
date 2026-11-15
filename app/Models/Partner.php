@@ -386,6 +386,24 @@ class Partner extends Authenticatable
     }
 
     /**
+     * Calculate partner's agreed shift payout based on their remuneration agreement.
+     */
+    public function calculateShiftPayoutRate(?float $contractCost = 0, int $estimatedShiftsCount = 12): float
+    {
+        $rate = (float) ($this->payout_rate ?? $this->commission_rate ?? 0);
+        $shifts = max(1, $estimatedShiftsCount);
+        $shiftValue = $shifts > 0 ? ((float) $contractCost / $shifts) : 0;
+
+        return match ($this->earning_model) {
+            'hourly' => (float) ($rate * 2), // Standard 2-hour routine inspection shift
+            'daily' => (float) $rate,
+            'per_job' => (float) $rate,
+            'monthly' => (float) ($shifts > 0 ? round($rate / $shifts, 2) : $rate),
+            default => (float) round(($shiftValue * ($rate ?: 15.00)) / 100, 2),
+        };
+    }
+
+    /**
      * Check if the partner is currently available or at a specific datetime.
      */
     public function isAvailableAt(?Carbon $targetTime = null): bool

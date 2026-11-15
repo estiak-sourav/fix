@@ -43,13 +43,21 @@ class CreateBookingAction
 
             if ($isAmc) {
                 $startDate = ! empty($data['preferred_date']) ? Carbon::parse($data['preferred_date']) : today();
-                $endDate = match ($contractTenure) {
-                    '3 Months', '3_months' => $startDate->copy()->addMonths(3),
-                    '6 Months', '6_months' => $startDate->copy()->addMonths(6),
-                    '2 Years', '2_years' => $startDate->copy()->addYears(2),
-                    '3 Years', '3_years' => $startDate->copy()->addYears(3),
-                    default => $startDate->copy()->addYear(),
-                };
+                if ($contractTenure === 'Lifetime' || strcasecmp((string) $contractTenure, 'lifetime') === 0) {
+                    $endDate = null;
+                } elseif (preg_match('/^(\d+)\s*month/i', (string) $contractTenure, $m)) {
+                    $endDate = $startDate->copy()->addMonths((int) $m[1]);
+                } elseif (preg_match('/^(\d+)\s*year/i', (string) $contractTenure, $m)) {
+                    $endDate = $startDate->copy()->addYears((int) $m[1]);
+                } else {
+                    $endDate = match ($contractTenure) {
+                        '3 Months', '3_months' => $startDate->copy()->addMonths(3),
+                        '6 Months', '6_months' => $startDate->copy()->addMonths(6),
+                        '2 Years', '2_years' => $startDate->copy()->addYears(2),
+                        '3 Years', '3_years' => $startDate->copy()->addYears(3),
+                        default => $startDate->copy()->addYear(),
+                    };
+                }
             }
 
             $booking = Booking::create([

@@ -27,6 +27,8 @@ class MailConfigService
                 Config::set('mail.mailers.smtp.port', (int) $port);
             }
 
+            Config::set('mail.mailers.smtp.timeout', 5);
+
             $username = SiteSetting::get('mail_username');
             if ($username !== null) {
                 Config::set('mail.mailers.smtp.username', $username);

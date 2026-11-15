@@ -587,9 +587,15 @@
             </div>
 
             <div>
-              <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">
-                Preferred FIX Receiving Account
-              </label>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label class="form-label-paces" style="font-weight:600; font-size:0.82rem; margin:0;">
+                  Preferred FIX Receiving Account
+                </label>
+                <a href="{{ route('admin.payment-methods.index') }}" target="_blank" style="font-size:0.75rem; color:#ea580c; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                  <span>Manage Accounts ↗</span>
+                </a>
+              </div>
               <select name="admin_payment_method_id" class="form-control-paces" style="font-size:0.85rem;">
                 @foreach($adminPaymentMethods as $apm)
                   <option value="{{ $apm->id }}" {{ $apm->is_default ? 'selected' : '' }}>
@@ -845,72 +851,94 @@
         </div>
       </div>
       <div class="table-responsive-paces">
-        <table class="table-paces">
+        <table class="table-paces" style="min-width: 1260px;">
           <thead>
             <tr>
-              <th>Trx #</th>
-              <th>Direction</th>
-              <th>Date &amp; Time</th>
-              <th style="text-align:right;">Amount</th>
-              <th>Payment Method</th>
-              <th style="text-align:center;">Status</th>
-              <th>Reference / Proof</th>
-              <th>Processed By</th>
-              <th>Notes</th>
+              <th style="white-space: nowrap; width: 160px;">Trx #</th>
+              <th style="white-space: nowrap; width: 130px;">Direction</th>
+              <th style="white-space: nowrap; width: 130px;">Date &amp; Time</th>
+              <th style="text-align: right; white-space: nowrap; width: 120px;">Amount</th>
+              <th style="white-space: nowrap; min-width: 330px; width: 360px;">Payment Method / Account</th>
+              <th style="text-align: center; white-space: nowrap; width: 170px;">Status</th>
+              <th style="white-space: nowrap; width: 140px;">Reference / Proof</th>
+              <th style="white-space: nowrap; width: 140px;">Processed By</th>
+              <th style="min-width: 150px;">Notes</th>
             </tr>
           </thead>
           <tbody>
             @forelse($payoutHistory as $pay)
               <tr>
-                <td style="font-family:monospace; font-weight:700; color:var(--paces-primary);">
+                <td style="font-family: monospace; font-weight: 700; color: var(--paces-primary); font-size: 0.84rem; white-space: nowrap;">
                   #{{ $pay->payout_number }}
                 </td>
-                <td>
+                <td style="white-space: nowrap;">
                   @if($pay->direction === 'partner_to_admin')
-                    <span style="font-size:0.75rem; font-weight:700; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
+                    <span style="font-size: 0.75rem; font-weight: 700; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
                       📥 Crew → FIX
                     </span>
                   @else
-                    <span style="font-size:0.75rem; font-weight:700; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
+                    <span style="font-size: 0.75rem; font-weight: 700; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
                       📤 FIX → Crew
                     </span>
                   @endif
                 </td>
-                <td style="font-size:0.8rem; color:var(--paces-text-muted);">
-                  {{ $pay->paid_at ? $pay->paid_at->format('M d, Y h:i A') : ($pay->requested_at ? $pay->requested_at->format('M d, Y') : $pay->created_at->format('M d, Y')) }}
+                <td style="white-space: nowrap;">
+                  <div style="font-weight: 600; color: #1e293b; font-size: 0.82rem; white-space: nowrap;">
+                    {{ $pay->paid_at ? $pay->paid_at->format('M d, Y') : ($pay->requested_at ? $pay->requested_at->format('M d, Y') : $pay->created_at->format('M d, Y')) }}
+                  </div>
+                  <div style="font-size: 0.72rem; color: #64748b; white-space: nowrap; margin-top: 2px;">
+                    {{ $pay->paid_at ? $pay->paid_at->format('h:i A') : ($pay->created_at ? $pay->created_at->format('h:i A') : '') }}
+                  </div>
                 </td>
-                <td style="text-align:right; font-weight:800; color:{{ $pay->direction === 'partner_to_admin' ? '#059669' : '#2563eb' }}; font-size:0.92rem;">
-                  ৳ {{ number_format((float) $pay->amount, 2) }}
+                <td style="text-align: right; font-weight: 800; color: {{ $pay->direction === 'partner_to_admin' ? '#059669' : '#2563eb' }}; font-size: 0.95rem; white-space: nowrap;">
+                  ৳&nbsp;{{ number_format((float) $pay->amount, 2) }}
                 </td>
-                <td style="font-size:0.82rem;">
-                  {{ $pay->payment_method_details ?: ($pay->paymentMethod?->formatted_method ?? ($pay->adminPaymentMethod?->formatted_method ?? 'Direct Settlement')) }}
+                <td style="min-width: 330px;">
+                  <div style="font-weight: 700; color: #0f172a; font-size: 0.84rem; white-space: nowrap;">
+                    @if($pay->adminPaymentMethod)
+                      {{ $pay->adminPaymentMethod->bank_name ?: ucfirst($pay->adminPaymentMethod->method_type) }}
+                    @elseif($pay->paymentMethod)
+                      {{ $pay->paymentMethod->formatted_method }}
+                    @else
+                      {{ Str::before($pay->payment_method_details ?: 'Direct Settlement', ' - ') }}
+                    @endif
+                  </div>
+                  <div style="font-size: 0.74rem; color: #64748b; margin-top: 2px; white-space: nowrap;">
+                    @if($pay->adminPaymentMethod)
+                      A/C: {{ $pay->adminPaymentMethod->account_number }} ({{ $pay->adminPaymentMethod->branch_name }})
+                    @elseif($pay->paymentMethod)
+                      A/C: {{ $pay->paymentMethod->account_number }}
+                    @else
+                      {{ Str::after($pay->payment_method_details, ' - ') ?: $pay->payment_method_details }}
+                    @endif
+                  </div>
                 </td>
-                <td style="text-align:center;">
+                <td style="text-align: center; white-space: nowrap;">
                   @php $badge = $pay->status_badge; @endphp
-                  <span style="background:{{ $badge['bg'] }}; color:{{ $badge['color'] }}; font-weight:700; font-size:0.72rem; padding:3px 10px; border-radius:12px; display:inline-block;">
+                  <span style="background: {{ $badge['bg'] }}; color: {{ $badge['color'] }}; font-weight: 700; font-size: 0.72rem; padding: 3px 10px; border-radius: 12px; display: inline-block; white-space: nowrap;">
                     {{ $badge['label'] }}
                   </span>
                 </td>
-                <td style="font-size:0.8rem; color:#475569;">
-                  <span style="font-family:monospace;">{{ $pay->transaction_reference ?: '—' }}</span>
+                <td style="font-size: 0.8rem; color: #475569; white-space: nowrap;">
+                  <span style="font-family: monospace; font-weight: 600;">{{ $pay->transaction_reference ?: '—' }}</span>
                   @if($pay->proof_file)
-                    <div style="margin-top:2px;">
-                      <a href="{{ asset('storage/' . $pay->proof_file) }}" target="_blank" style="font-size:0.72rem; color:#2563eb; text-decoration:underline;">
+                    <div style="margin-top: 2px;">
+                      <a href="{{ asset('storage/' . $pay->proof_file) }}" target="_blank" style="font-size: 0.72rem; color: #2563eb; text-decoration: underline; font-weight: 600;">
                         📎 View Receipt
                       </a>
                     </div>
                   @endif
                 </td>
-                <td style="font-size:0.8rem; color:#64748b;">
+                <td style="font-size: 0.8rem; color: #64748b; white-space: nowrap;">
                   {{ $pay->processedByAdmin?->name ?? ($pay->initiated_by === 'partner' ? 'Crew' : 'Admin') }}
                 </td>
-                <td style="font-size:0.78rem; color:#64748b; max-width:180px;">
+                <td style="font-size: 0.78rem; color: #64748b; max-width: 200px; line-height: 1.4;">
                   {{ $pay->admin_notes ?: ($pay->partner_notes ?: '—') }}
                 </td>
               </tr>
             @empty
               <tr>
-                <td colspan="9" style="text-align:center; padding:2rem; color:var(--paces-text-muted);">
+                <td colspan="9" style="text-align: center; padding: 2rem; color: var(--paces-text-muted);">
                   No financial transactions recorded yet.
                 </td>
               </tr>
@@ -932,16 +960,16 @@
         </span>
       </div>
       <div class="table-responsive-paces">
-        <table class="table-paces">
+        <table class="table-paces" style="min-width: 820px;">
           <thead>
             <tr>
-              <th>Order ID</th>
+              <th style="white-space: nowrap;">Order ID</th>
               <th>Service</th>
-              <th>Completed Date</th>
+              <th style="white-space: nowrap;">Completed Date</th>
               <th>Location</th>
-              <th style="text-align:right;">Order Cost</th>
-              <th style="text-align:right;">Partner Share Earned</th>
-              <th style="text-align:right;">Action</th>
+              <th style="text-align: right; white-space: nowrap;">Order Cost</th>
+              <th style="text-align: right; white-space: nowrap;">Partner Share Earned</th>
+              <th style="text-align: right; white-space: nowrap;">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -950,20 +978,20 @@
                 $pShare = (float) ($b->partner_payout_amount ?? $partner->calculateBookingEarning($b));
               @endphp
               <tr>
-                <td>
-                  <a href="{{ route('admin.bookings.show', $b) }}" style="font-weight:700; color:var(--paces-primary); font-family:monospace; text-decoration:none;">
+                <td style="white-space: nowrap;">
+                  <a href="{{ route('admin.bookings.show', $b) }}" style="font-weight: 700; color: var(--paces-primary); font-family: monospace; font-size: 0.84rem; text-decoration: none;">
                     #{{ $b->booking_number }}
                   </a>
                 </td>
-                <td>{{ $b->service?->title ?? 'Facility Service' }}</td>
-                <td style="font-size:0.8rem; color:var(--paces-text-muted);">
+                <td style="font-weight: 600; color: #1e293b;">{{ $b->service?->title ?? 'Facility Service' }}</td>
+                <td style="font-size: 0.8rem; color: var(--paces-text-muted); white-space: nowrap;">
                   {{ $b->completed_at ? $b->completed_at->format('M d, Y') : $b->created_at->format('M d, Y') }}
                 </td>
-                <td style="font-size:0.82rem;">📍 {{ $b->area ?: ($b->district ?: '—') }}</td>
-                <td style="text-align:right; font-weight:600;">৳ {{ number_format((float) ($b->final_cost ?: $b->estimated_cost ?: 0), 2) }}</td>
-                <td style="text-align:right; font-weight:700; color:#059669;">৳ {{ number_format($pShare, 2) }}</td>
-                <td style="text-align:right; white-space:nowrap;">
-                  <a href="{{ route('admin.bookings.show', $b) }}" class="btn-paces btn-paces-outline btn-paces-sm" style="padding:4px 8px; font-size:0.78rem; white-space:nowrap; display:inline-flex; align-items:center;">
+                <td style="font-size: 0.82rem; white-space: nowrap;">📍 {{ $b->area ?: ($b->district ?: '—') }}</td>
+                <td style="text-align: right; font-weight: 700; white-space: nowrap;">৳&nbsp;{{ number_format((float) ($b->final_cost ?: $b->estimated_cost ?: 0), 2) }}</td>
+                <td style="text-align: right; font-weight: 800; color: #059669; white-space: nowrap;">৳&nbsp;{{ number_format($pShare, 2) }}</td>
+                <td style="text-align: right; white-space: nowrap;">
+                  <a href="{{ route('admin.bookings.show', $b) }}" class="btn-paces btn-paces-outline btn-paces-sm" style="padding: 4px 10px; font-size: 0.78rem; white-space: nowrap; display: inline-flex; align-items: center; font-weight: 600;">
                     View Order →
                   </a>
                 </td>

@@ -269,6 +269,7 @@ class Booking extends Model
                 'scheduled_time_slot' => $this->preferred_time_slot ?: 'Morning (9:00 AM - 12:00 PM)',
                 'arrival_window' => $this->arrival_window ?: ($this->preferred_time_slot ?: '9:00 AM - 12:00 PM'),
                 'status' => 'scheduled',
+                'payout_amount' => $this->payout_per_shift ?: 0.00,
             ]);
             $created++;
         }
@@ -497,7 +498,7 @@ class Booking extends Model
             ? $this->amcShifts->sum('collected_amount')
             : $this->amcShifts()->sum('collected_amount'));
 
-        $bookingPaid = ($this->payment_status === 'paid' && $invoicePaid == 0)
+        $bookingPaid = ($this->payment_status === 'paid' && $invoicePaid == 0 && $shiftCollected == 0)
             ? (float) ($this->collected_amount ?: $this->final_cost)
             : 0;
 
@@ -523,5 +524,35 @@ class Booking extends Model
     public function getAmcOfficeCollectedAttribute(): float
     {
         return max(0.0, $this->amc_total_paid - $this->amc_crew_collected);
+    }
+
+    /**
+     * Re-calculate and synchronize all collected revenue and payment statuses for an AMC contract.
+     */
+    public function syncAmcFinancials(): void
+    {
+        if (! $this->is_amc) {
+            return;
+        }
+
+        $invoicePaid = (float) $this->amcInvoices()->where('status', 'paid')->sum('amount');
+        $shiftCollected = (float) $this->amcShifts()->sum('collected_amount');
+        $totalPaid = $invoicePaid + $shiftCollected;
+
+        $totalBudget = $this->amc_total_budget;
+        $newPaymentStatus = ($totalPaid >= $totalBudget && $totalBudget > 0)
+            ? 'paid'
+            : ($totalPaid > 0 ? 'partial' : 'pending');
+
+        $updates = [
+            'collected_amount' => $totalPaid,
+            'payment_status' => $newPaymentStatus,
+        ];
+
+        if ($totalPaid > 0 && empty($this->payment_collected_at)) {
+            $updates['payment_collected_at'] = now();
+        }
+
+        $this->update($updates);
     }
 }

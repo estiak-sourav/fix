@@ -26,7 +26,7 @@
       <div style="font-size:1.55rem; font-weight:800; color:var(--paces-primary); margin:6px 0 2px;">
         ৳ {{ number_format($totalRevenue, 2) }}
       </div>
-      <div style="font-size:0.72rem; color:var(--paces-text-muted);">Invoiced: ৳ {{ number_format($invoicedRevenue, 2) }}</div>
+      <div style="font-size:0.72rem; color:var(--paces-text-muted);">Invoiced / Collected: ৳ {{ number_format($invoicedRevenue, 2) }}</div>
     </div>
 
     <!-- Vendor Direct Cost -->
@@ -340,10 +340,20 @@
           <tbody>
             @foreach($bookings as $b)
               @php
-                $amount = $b->final_cost > 0 ? $b->final_cost : ($b->estimated_cost ?: 0);
-                $isFinal = $b->final_cost > 0;
-                $vPayout = (float) ($b->partner_payout_amount ?? ($b->partner ? $b->partner->calculateBookingEarning($b) : 0));
-                $vStatus = $b->partner_payout_status ?: 'unpaid';
+                if ($b->is_amc) {
+                    $amount = $b->amc_total_paid;
+                    $scopeAmount = $b->amc_total_budget;
+                    $isFinal = $b->payment_status === 'paid';
+                    $vPayout = (float) $b->amcShifts->sum('payout_amount');
+                    $hasUnpaidPayouts = $b->amcShifts->where('payout_status', '!=', 'paid')->isNotEmpty();
+                    $vStatus = $hasUnpaidPayouts ? ($b->amcShifts->where('payout_status', 'paid')->isNotEmpty() ? 'processing' : 'unpaid') : 'paid';
+                } else {
+                    $amount = $b->final_cost > 0 ? $b->final_cost : ($b->estimated_cost ?: 0);
+                    $scopeAmount = $amount;
+                    $isFinal = $b->final_cost > 0;
+                    $vPayout = (float) ($b->partner_payout_amount ?? ($b->partner ? $b->partner->calculateBookingEarning($b) : 0));
+                    $vStatus = $b->partner_payout_status ?: 'unpaid';
+                }
               @endphp
               <tr>
                 <td style="font-weight:500; font-family:monospace; color:var(--paces-primary);">
@@ -361,6 +371,9 @@
                   <div style="font-weight:500; font-size:0.85rem; color:var(--paces-text-dark);">
                     {{ $b->service?->title ?? ($b->amcPlan?->name ?? 'Custom Service') }}
                   </div>
+                  @if($b->is_amc)
+                    <span class="badge-paces" style="background:#e0f2fe; color:#0369a1; font-size:0.68rem; padding:1px 6px; font-weight:700;">AMC</span>
+                  @endif
                 </td>
                 <td>
                   <div style="font-size:0.82rem; color:var(--paces-text-dark);">📍 {{ $b->area }}, {{ $b->division }}</div>
@@ -369,12 +382,21 @@
                   {{ $b->created_at->format('M d, Y') }}
                 </td>
                 <td>
-                  <strong style="font-size:0.95rem; color:{{ $isFinal ? '#16a34a' : 'var(--paces-primary)' }};">
-                    ৳ {{ number_format($amount, 2) }}
-                  </strong>
-                  <div style="font-size:0.7rem; color:var(--paces-text-muted);">
-                    {{ $isFinal ? 'Invoiced Final' : 'Agreed Estimate' }}
-                  </div>
+                  @if($b->is_amc)
+                    <strong style="font-size:0.95rem; color:{{ $b->amc_total_paid > 0 ? '#16a34a' : 'var(--paces-primary)' }};">
+                      ৳ {{ number_format($b->amc_total_paid, 2) }}
+                    </strong>
+                    <div style="font-size:0.7rem; color:var(--paces-text-muted);">
+                      {{ $b->amc_total_paid >= $scopeAmount ? 'Fully Paid' : 'Collected' }} (৳ {{ number_format($scopeAmount, 2) }} Scope)
+                    </div>
+                  @else
+                    <strong style="font-size:0.95rem; color:{{ $isFinal ? '#16a34a' : 'var(--paces-primary)' }};">
+                      ৳ {{ number_format($amount, 2) }}
+                    </strong>
+                    <div style="font-size:0.7rem; color:var(--paces-text-muted);">
+                      {{ $isFinal ? 'Invoiced Final' : 'Agreed Estimate' }}
+                    </div>
+                  @endif
                 </td>
                 <td>
                   @if($b->partner_id || $vPayout > 0)

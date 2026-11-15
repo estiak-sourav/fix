@@ -64,20 +64,7 @@
           </span>
         </div>
 
-        @if($booking->canBeCancelledByCustomer())
-          <div style="background:#fff1f2; border:1px solid #fecdd3; border-radius:10px; padding:12px 18px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span style="display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:#ffe4e6; color:#e11d48; font-weight:800;">✕</span>
-              <div>
-                <strong style="color:#9f1239; font-size:0.9rem; display:block;">Need to cancel this service request?</strong>
-                <span style="font-size:0.8rem; color:#be123c;">This booking is pending review and has not yet been accepted by Operations. You can cancel it directly anytime.</span>
-              </div>
-            </div>
-            <button type="button" onclick="openCancelModal('{{ $booking->booking_number }}', '{{ addslashes($booking->service?->title ?? ($booking->amcPlan?->name ?? 'Facility Service')) }}')" class="btn btn-danger btn-sm" style="background:#e11d48; color:#fff; border:none; padding:8px 16px; font-weight:700; border-radius:8px; cursor:pointer;">
-              Cancel Request
-            </button>
-          </div>
-        @elseif(!in_array($booking->status, ['completed', 'cancelled']))
+        @if(!in_array($booking->status, ['pending_review', 'completed', 'cancelled']))
           <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px;">
             <span style="font-size:1.2rem;">🔒</span>
             <div>
@@ -162,7 +149,7 @@
                 <span style="font-size:0.72rem; color:#64748b; font-weight:600; text-transform:uppercase;">Contract Tenure</span>
                 <strong style="display:block; font-size:0.9rem; color:#0f172a; margin-top:2px;">
                   @if($booking->contract_tenure)
-                    {{ $booking->contract_tenure }} • {{ $booking->contract_start_date?->format('M d, Y') ?: 'Active' }} — {{ $booking->contract_end_date?->format('M d, Y') ?: '1 Year' }}
+                    {{ $booking->contract_tenure }} • {{ $booking->contract_start_date?->format('M d, Y') ?: 'Active' }} — {{ $booking->contract_end_date?->format('M d, Y') ?: ($booking->contract_tenure === 'Lifetime' ? 'Lifetime SLA' : '1 Year') }}
                   @else
                     {{ $booking->contract_start_date?->format('M d, Y') ?: 'Active' }} — {{ $booking->contract_end_date?->format('M d, Y') ?: '1 Year' }}
                   @endif

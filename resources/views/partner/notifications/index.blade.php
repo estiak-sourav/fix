@@ -37,13 +37,32 @@
         @endif
       </div>
 
-      <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
         @if($unreadCount > 0)
           <form id="markAllReadForm" action="{{ route('partner.notifications.mark-all-read') }}" method="POST" style="margin: 0;">
             @csrf
             <button type="button" class="btn-p btn-p-outline" style="padding: 7px 14px; font-size: 0.82rem;" onclick="confirmDialog({ title: 'Mark All as Read?', text: 'All unread notifications will be marked as read.', type: 'primary', confirmText: 'Mark All Read', formId: 'markAllReadForm' })">
               <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
               <span>Mark all read</span>
+            </button>
+          </form>
+        @endif
+
+        @if($totalCount > 0)
+          @if($totalCount > $unreadCount)
+            <form id="clearReadForm" action="{{ route('partner.notifications.clear-read') }}" method="POST" style="margin: 0;">
+              @csrf
+              <button type="button" class="btn-p btn-p-outline" style="padding: 7px 14px; font-size: 0.82rem; color: #64748b;" onclick="confirmDialog({ title: 'Clear Read Notifications?', text: 'Are you sure you want to delete all read notifications?', type: 'danger', confirmText: 'Clear Read', formId: 'clearReadForm' })" title="Clear read notifications">
+                <span>Clear Read</span>
+              </button>
+            </form>
+          @endif
+
+          <form id="clearAllForm" action="{{ route('partner.notifications.clear-all') }}" method="POST" style="margin: 0;">
+            @csrf
+            <button type="button" class="btn-p btn-p-outline" style="padding: 7px 14px; font-size: 0.82rem; color: #dc2626; border-color: #fca5a5;" onclick="confirmDialog({ title: 'Clear All Notifications?', text: 'Are you sure you want to permanently delete all notifications from your feed?', type: 'danger', confirmText: 'Clear All', formId: 'clearAllForm' })" title="Delete all notifications">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>Clear All</span>
             </button>
           </form>
         @endif
@@ -121,6 +140,24 @@
                 </div>
               </div>
             </div>
+
+            <!-- Delete action button -->
+            <div style="display: flex; align-items: center; align-self: center; flex-shrink: 0;" onclick="event.stopPropagation()">
+              <form id="deleteNotifForm_{{ $notif->id }}" action="{{ route('partner.notifications.destroy', $notif) }}" method="POST" style="margin: 0;">
+                @csrf
+                @method('DELETE')
+                <button 
+                  type="button" 
+                  title="Delete notification"
+                  onclick="confirmDialog({ title: 'Delete Notification?', text: 'Are you sure you want to permanently delete this notification?', type: 'danger', confirmText: 'Delete', formId: 'deleteNotifForm_{{ $notif->id }}' })"
+                  style="background: none; border: 1px solid transparent; border-radius: 8px; padding: 6px 8px; color: #94a3b8; cursor: pointer; transition: all 0.15s ease;"
+                  onmouseover="this.style.color='#dc2626'; this.style.borderColor='#fca5a5'; this.style.background='#fef2f2';"
+                  onmouseout="this.style.color='#94a3b8'; this.style.borderColor='transparent'; this.style.background='none';"
+                >
+                  <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+              </form>
+            </div>
           </div>
         @endforeach
       </div>
@@ -185,11 +222,23 @@
 
       <!-- Modal Footer -->
       <div style="padding:14px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; border-radius:0 0 14px 14px; gap:10px;">
-        <div id="mNotifJobLinkWrap" style="display:none;">
-          <a id="mNotifJobLink" href="#" class="btn-p btn-p-primary" style="padding:7px 14px; font-size:0.82rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
-            <span>Open Job Details →</span>
-          </a>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div id="mNotifJobLinkWrap" style="display:none;">
+            <a id="mNotifJobLink" href="#" class="btn-p btn-p-primary" style="padding:7px 14px; font-size:0.82rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+              <span>Open Job Details →</span>
+            </a>
+          </div>
+
+          <form id="mDeleteNotifForm" action="" method="POST" style="margin:0;">
+            @csrf
+            @method('DELETE')
+            <button type="button" onclick="confirmDialog({ title: 'Delete Notification?', text: 'Are you sure you want to permanently delete this notification?', type: 'danger', confirmText: 'Delete', formId: 'mDeleteNotifForm' })" class="btn-p btn-p-outline" style="padding:7px 12px; font-size:0.82rem; color:#dc2626; border-color:#fca5a5; display:inline-flex; align-items:center; gap:6px;">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>Delete</span>
+            </button>
+          </form>
         </div>
+
         <button type="button" onclick="closeNotifModal()" class="btn-p btn-p-outline" style="padding:7px 16px; font-size:0.82rem; margin-left:auto;">
           Close
         </button>
@@ -303,6 +352,12 @@
 
       const modal = document.getElementById('notifDetailModal');
       if (modal) modal.style.display = 'flex';
+
+      const deleteForm = document.getElementById('mDeleteNotifForm');
+      if (deleteForm) {
+        const deleteUrlTemplate = "{{ route('partner.notifications.destroy', ':id') }}";
+        deleteForm.action = deleteUrlTemplate.replace(':id', id);
+      }
 
       // Auto mark-as-read when opened
       if (!data.is_read) {

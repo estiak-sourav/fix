@@ -209,62 +209,84 @@
       </div>
     @else
       <div class="p-table-responsive">
-        <table class="p-table">
+        <table class="p-table" style="min-width: 1050px;">
           <thead>
             <tr>
-              <th>Trx Number</th>
-              <th>Direction</th>
-              <th>Date</th>
-              <th style="text-align: right;">Amount</th>
-              <th>Method / Account</th>
-              <th style="text-align: center;">Status</th>
-              <th>Trx ID / Proof</th>
-              <th>Remarks</th>
+              <th style="white-space: nowrap; width: 150px;">Trx Number</th>
+              <th style="white-space: nowrap; width: 130px;">Direction</th>
+              <th style="white-space: nowrap; width: 130px;">Date</th>
+              <th style="text-align: right; white-space: nowrap; width: 120px;">Amount</th>
+              <th style="white-space: nowrap; min-width: 250px; width: 270px;">Method / Account</th>
+              <th style="text-align: center; white-space: nowrap; width: 150px;">Status</th>
+              <th style="white-space: nowrap; width: 140px;">Trx ID / Proof</th>
+              <th style="min-width: 150px;">Remarks</th>
             </tr>
           </thead>
           <tbody>
             @foreach($payouts as $payout)
               <tr>
-                <td style="font-weight: 500; font-family: monospace; color: var(--p-primary); font-size: 0.84rem;">
+                <td style="font-weight: 600; font-family: monospace; color: var(--p-primary); font-size: 0.84rem; white-space: nowrap;">
                   #{{ $payout->payout_number }}
                 </td>
-                <td>
+                <td style="white-space: nowrap;">
                   @if($payout->direction === 'partner_to_admin')
-                    <span style="font-size: 0.72rem; font-weight: 500; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 6px;">
+                    <span style="font-size: 0.72rem; font-weight: 600; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
                       📥 You → FIX (Settlement)
                     </span>
                   @else
-                    <span style="font-size: 0.72rem; font-weight: 500; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 6px;">
+                    <span style="font-size: 0.72rem; font-weight: 600; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
                       📤 FIX → You (Payout)
                     </span>
                   @endif
                 </td>
-                <td style="font-size: 0.8rem; color: var(--p-muted);">
-                  {{ $payout->paid_at ? $payout->paid_at->format('M d, Y') : ($payout->requested_at ? $payout->requested_at->format('M d, Y') : $payout->created_at->format('M d, Y')) }}
+                <td style="white-space: nowrap;">
+                  <div style="font-size: 0.82rem; font-weight: 600; color: #1e293b; white-space: nowrap;">
+                    {{ $payout->paid_at ? $payout->paid_at->format('M d, Y') : ($payout->requested_at ? $payout->requested_at->format('M d, Y') : $payout->created_at->format('M d, Y')) }}
+                  </div>
+                  <div style="font-size: 0.72rem; color: var(--p-muted); white-space: nowrap; margin-top: 2px;">
+                    {{ $payout->paid_at ? $payout->paid_at->format('h:i A') : ($payout->created_at ? $payout->created_at->format('h:i A') : '') }}
+                  </div>
                 </td>
-                <td style="text-align: right; font-weight: 600; color: {{ $payout->direction === 'partner_to_admin' ? '#059669' : '#2563eb' }}; font-size: 0.9rem; white-space: nowrap !important;">
+                <td style="text-align: right; font-weight: 700; color: {{ $payout->direction === 'partner_to_admin' ? '#059669' : '#2563eb' }}; font-size: 0.92rem; white-space: nowrap !important;">
                   ৳&nbsp;{{ number_format((float) $payout->amount, 2) }}
                 </td>
-                <td style="font-size: 0.82rem;">
-                  {{ $payout->payment_method_details ?: ($payout->paymentMethod?->formatted_method ?? ($payout->adminPaymentMethod?->formatted_method ?? 'Direct')) }}
+                <td style="min-width: 250px;">
+                  <div style="font-weight: 700; color: #0f172a; font-size: 0.82rem; white-space: nowrap;">
+                    @if($payout->adminPaymentMethod)
+                      {{ $payout->adminPaymentMethod->bank_name ?: ucfirst($payout->adminPaymentMethod->method_type) }}
+                    @elseif($payout->paymentMethod)
+                      {{ $payout->paymentMethod->formatted_method }}
+                    @else
+                      {{ Str::before($payout->payment_method_details ?: 'Direct', ' - ') }}
+                    @endif
+                  </div>
+                  <div style="font-size: 0.74rem; color: var(--p-muted); margin-top: 2px; white-space: nowrap;">
+                    @if($payout->adminPaymentMethod)
+                      A/C: {{ $payout->adminPaymentMethod->account_number }} ({{ $payout->adminPaymentMethod->branch_name }})
+                    @elseif($payout->paymentMethod)
+                      A/C: {{ $payout->paymentMethod->account_number }}
+                    @else
+                      {{ Str::after($payout->payment_method_details, ' - ') ?: $payout->payment_method_details }}
+                    @endif
+                  </div>
                 </td>
-                <td style="text-align: center;">
+                <td style="text-align: center; white-space: nowrap;">
                   @php $badge = $payout->status_badge; @endphp
-                  <span style="background: {{ $badge['bg'] }}; color: {{ $badge['color'] }}; font-size: 0.7rem; font-weight: 500; padding: 3px 8px; border-radius: 12px; display: inline-block;">
+                  <span style="background: {{ $badge['bg'] }}; color: {{ $badge['color'] }}; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 12px; display: inline-block; white-space: nowrap;">
                     {{ $badge['label'] }}
                   </span>
                 </td>
-                <td style="font-size: 0.8rem; color: #475569;">
-                  <span style="font-family: monospace;">{{ $payout->transaction_reference ?: '—' }}</span>
+                <td style="font-size: 0.8rem; color: #475569; white-space: nowrap;">
+                  <span style="font-family: monospace; font-weight: 600;">{{ $payout->transaction_reference ?: '—' }}</span>
                   @if($payout->proof_file)
                     <div style="margin-top: 2px;">
-                      <a href="{{ asset('storage/' . $payout->proof_file) }}" target="_blank" style="font-size: 0.72rem; color: #2563eb; text-decoration: underline;">
+                      <a href="{{ asset('storage/' . $payout->proof_file) }}" target="_blank" style="font-size: 0.72rem; color: #2563eb; text-decoration: underline; font-weight: 600;">
                         📎 View Receipt
                       </a>
                     </div>
                   @endif
                 </td>
-                <td style="font-size: 0.78rem; color: var(--p-muted); max-width: 180px;">
+                <td style="font-size: 0.78rem; color: var(--p-muted); max-width: 200px; line-height: 1.4;">
                   {{ $payout->partner_notes ?: ($payout->admin_notes ?: '—') }}
                 </td>
               </tr>
@@ -362,7 +384,7 @@
         <button type="button" onclick="closeModal('requestPayoutModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #94a3b8;">✕</button>
       </div>
 
-      <form action="{{ route('partner.payouts.request') }}" method="POST" style="padding: 20px;">
+      <form id="requestPayoutForm" action="{{ route('partner.payouts.request') }}" method="POST" style="padding: 20px;">
         @csrf
 
         <!-- Available Balance Notification -->
@@ -435,7 +457,7 @@
 
         <div style="display: flex; justify-content: flex-end; gap: 10px;">
           <button type="button" class="btn-p btn-p-outline" onclick="closeModal('requestPayoutModal')">Cancel</button>
-          <button type="submit" class="btn-p btn-p-primary" {{ $paymentMethods->isEmpty() ? 'disabled' : '' }}>
+          <button type="submit" id="requestPayoutSubmitBtn" class="btn-p btn-p-primary" {{ $paymentMethods->isEmpty() ? 'disabled' : '' }}>
             Submit Payout Request
           </button>
         </div>
@@ -454,7 +476,7 @@
         <button type="button" onclick="closeModal('payAdminModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #9a3412;">✕</button>
       </div>
 
-      <form action="{{ route('partner.payouts.pay-admin') }}" method="POST" enctype="multipart/form-data" style="padding: 20px;">
+      <form id="payAdminForm" action="{{ route('partner.payouts.pay-admin') }}" method="POST" enctype="multipart/form-data" style="padding: 20px;">
         @csrf
         <input type="hidden" name="admin_request_id" id="pay_admin_request_id" value="">
 
@@ -548,7 +570,7 @@
 
         <div style="display: flex; justify-content: flex-end; gap: 10px;">
           <button type="button" class="btn-p btn-p-outline" onclick="closeModal('payAdminModal')">Cancel</button>
-          <button type="submit" class="btn-p btn-p-primary" style="background: #ea580c; border-color: #ea580c;">
+          <button type="submit" id="payAdminSubmitBtn" class="btn-p btn-p-primary" style="background: #ea580c; border-color: #ea580c;">
             Submit Settlement Payment
           </button>
         </div>
@@ -588,5 +610,23 @@
         lbl.innerText = 'Mobile Wallet Transaction ID (TrxID) *';
       }
     }
+
+    document.getElementById('payAdminForm')?.addEventListener('submit', function() {
+      const btn = document.getElementById('payAdminSubmitBtn');
+      if (btn && !btn.disabled) {
+        btn.style.pointerEvents = 'none';
+        btn.innerHTML = 'Submitting Payment...';
+        setTimeout(function() { btn.disabled = true; }, 20);
+      }
+    });
+
+    document.getElementById('requestPayoutForm')?.addEventListener('submit', function() {
+      const btn = document.getElementById('requestPayoutSubmitBtn');
+      if (btn && !btn.disabled) {
+        btn.style.pointerEvents = 'none';
+        btn.innerHTML = 'Submitting Request...';
+        setTimeout(function() { btn.disabled = true; }, 20);
+      }
+    });
   </script>
 </x-partner.layouts.app>

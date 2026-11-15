@@ -249,6 +249,16 @@
       max-width: 100%;
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
+
+    @media (max-width: 640px) {
+      .p-main {
+        padding: 16px 12px;
+      }
+      .p-card {
+        padding: 16px 14px;
+        border-radius: 12px;
+      }
+    }
     .p-card-header {
       display: flex;
       justify-content: space-between;

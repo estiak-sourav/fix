@@ -193,7 +193,7 @@
           <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#16a34a; border-color:#16a34a; font-weight:700;" onclick="document.getElementById('restartWorkOrderModal').style.display='flex'">
             🔄 Re-start Work Order
           </button>
-        @else
+        @elseif(!$booking->is_amc)
           <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="switchBookingTab('tab-manage-dispatch')">
             ⚙️ Manage & Edit Dispatch
           </button>
@@ -291,7 +291,7 @@
           </span>
         </div>
       </div>
-      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="switchBookingTab('tab-manage-dispatch')">
+      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="switchBookingTab('tab-amc-contract')">
         Reassign New Crew →
       </button>
     </div>
@@ -331,11 +331,11 @@
 
           @php $latestLog = $booking->statusLogs->sortByDesc('id')->first(); @endphp
           @if($latestLog)
-            <div style="font-size:0.8rem; color:#475569; margin-top:3px;">
-              <strong>Latest Audit Action:</strong> {{ $latestLog->changedByAdmin?->name ?? ($latestLog->changedByUser?->name ?? 'System Automated') }}
-              updated to <em>{{ ucfirst(str_replace('_', ' ', $latestLog->to_status)) }}</em> ({{ $latestLog->created_at->diffForHumans() }})
+            <div style="font-size:0.78rem; color:#64748b; margin-top:3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span>Updated {{ $latestLog->created_at->diffForHumans() }} by <strong>{{ $latestLog->changedByAdmin?->name ?? ($latestLog->changedByUser?->name ?? 'System') }}</strong></span>
               @if($latestLog->comment)
-                • <span style="color:#0f172a;">"{{ Str::limit($latestLog->comment, 95) }}"</span>
+                <span style="color:#cbd5e1;">•</span>
+                <span style="color:#475569;" title="{{ $latestLog->comment }}">{{ Str::limit($latestLog->comment, 40) }}</span>
               @endif
             </div>
           @endif
@@ -380,7 +380,7 @@
             </span>
           </div>
           <div style="font-size:0.8rem; color:#64748b; margin-top:3px;">
-            <span>🗓️ Contract Duration: <strong>{{ $booking->contract_start_date ? $booking->contract_start_date->format('M d, Y') : ($booking->preferred_date ? $booking->preferred_date->format('M d, Y') : 'Active') }}</strong> – <strong>{{ $booking->contract_end_date ? $booking->contract_end_date->format('M d, Y') : '1 Year Period' }}</strong>@if($booking->contract_tenure) ({{ $booking->contract_tenure }})@endif</span>
+            <span>🗓️ Contract Duration: <strong>{{ $booking->contract_start_date ? $booking->contract_start_date->format('M d, Y') : ($booking->preferred_date ? $booking->preferred_date->format('M d, Y') : 'Active') }}</strong> – <strong>{{ $booking->contract_end_date ? $booking->contract_end_date->format('M d, Y') : ($booking->contract_tenure === 'Lifetime' ? 'Lifetime / Ongoing' : '1 Year Period') }}</strong>@if($booking->contract_tenure) ({{ $booking->contract_tenure }})@endif</span>
             <span style="margin:0 6px;">•</span>
             <span>Billing: <strong style="text-transform:capitalize;">{{ str_replace('_', ' ', $booking->billing_cycle ?? 'Monthly') }}</strong></span>
             @if($booking->final_cost > 0)
@@ -559,7 +559,7 @@
       <span>📋 Overview & Details</span>
     </button>
 
-    @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+    @if(auth('admin')->user()?->hasPermission('bookings.edit') && !$booking->is_amc)
       <button type="button" class="booking-tab-btn" data-tab="tab-manage-dispatch" onclick="switchBookingTab('tab-manage-dispatch')">
         <span>⚙️ Manage & Edit Dispatch</span>
       </button>
@@ -572,13 +572,16 @@
       </span>
     </button>
 
-    <!-- AMC TAB: Context-aware label (Active AMC vs Convert to AMC) -->
+    <!-- AMC TAB: Context-aware label (Active AMC vs AMC Agreement vs Convert to AMC) -->
     <button type="button" class="booking-tab-btn" data-tab="tab-amc-contract" onclick="switchBookingTab('tab-amc-contract')">
       @if($booking->contract_status === 'active')
         <span>🏢 Active AMC Contract</span>
         <span style="background:#dcfce7; color:#166534; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:700;">Active</span>
       @elseif($booking->is_amc)
         <span>🏢 AMC Agreement</span>
+        @if($booking->status === 'pending_review')
+          <span style="background:#fef3c7; color:#92400e; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:700;">Pending Setup</span>
+        @endif
       @else
         <span>🏢 Convert to AMC</span>
       @endif
@@ -844,13 +847,39 @@
         @endif
 
         @if($booking->status === 'pending_review' && auth('admin')->user()?->hasPermission('bookings.edit'))
-          <!-- ACCEPT WORK ORDER CARD -->
-          <div class="card-paces" style="border:2px solid #16a34a; margin-bottom:1.5rem;">
-            <div class="card-header-paces" style="background:#f0fdf4; border-bottom:1px solid #bbf7d0;">
-              <h3 class="card-title-paces" style="color:#166534; display:flex; align-items:center; gap:8px; font-size:1.05rem;">
-                <span>✓</span> Accept Work Order & Assign Dispatch
-              </h3>
+          @if($booking->is_amc)
+            <!-- AMC PENDING REVIEW BANNER CARD -->
+            <div class="card-paces" style="border:2px solid #0d9488; margin-bottom:1.5rem; background:linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%); padding:22px; border-radius:12px; box-shadow:0 4px 14px rgba(13,148,136,0.08);">
+              <div style="display:flex; align-items:flex-start; gap:16px;">
+                <div style="width:48px; height:48px; border-radius:12px; background:#ccfbf1; color:#0f766e; display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0;">
+                  🏢
+                </div>
+                <div style="flex:1;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
+                    <h3 style="margin:0; font-size:1.1rem; font-weight:700; color:#0f2744;">
+                      Annual Maintenance Contract (AMC) Work Order
+                    </h3>
+                    <span class="badge-pill-paces" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-weight:700; font-size:0.75rem; padding:4px 10px;">
+                      Pending Agreement Setup
+                    </span>
+                  </div>
+                  <p style="margin:0 0 16px; font-size:0.85rem; color:#334155; line-height:1.5;">
+                    This customer requested an Annual Maintenance Contract. To activate this contract and dispatch the assigned field crew, configure the payment schedule (Monthly, Daily, Yearly, Half Yearly, One Time), set contract tenure, and assign the lead crew in the <strong>AMC Agreement</strong> tab.
+                  </p>
+                  <button type="button" class="btn-paces btn-paces-primary" onclick="switchBookingTab('tab-amc-contract')" style="font-weight:700; padding:9px 22px; background:#0d9488; border-color:#0d9488; font-size:0.9rem; display:inline-flex; align-items:center; gap:8px;">
+                    <span>➔ Configure & Activate AMC Agreement</span>
+                  </button>
+                </div>
+              </div>
             </div>
+          @else
+            <!-- ACCEPT WORK ORDER CARD -->
+            <div class="card-paces" style="border:2px solid #16a34a; margin-bottom:1.5rem;">
+              <div class="card-header-paces" style="background:#f0fdf4; border-bottom:1px solid #bbf7d0;">
+                <h3 class="card-title-paces" style="color:#166534; display:flex; align-items:center; gap:8px; font-size:1.05rem;">
+                  <span>✓</span> Accept Work Order & Assign Dispatch
+                </h3>
+              </div>
             
             <div class="card-body-paces" style="padding:1.5rem;">
               <form action="{{ route('admin.bookings.accept', $booking) }}" method="POST">
@@ -995,6 +1024,7 @@
               </form>
             </div>
           </div>
+          @endif
         @else
           <!-- CURRENT OPERATIONAL EXECUTION CARD -->
           <div class="card-paces" style="margin-bottom:1.5rem;">
@@ -1005,7 +1035,7 @@
               </div>
 
               @if(auth('admin')->user()?->hasPermission('bookings.edit'))
-                <button type="button" onclick="switchBookingTab('tab-manage-dispatch')" class="btn-paces btn-paces-outline btn-paces-sm" style="font-weight:600;">
+                <button type="button" onclick="switchBookingTab('{{ $booking->is_amc ? 'tab-amc-contract' : 'tab-manage-dispatch' }}')" class="btn-paces btn-paces-outline btn-paces-sm" style="font-weight:600;">
                   ✏️ Edit / Reassign
                 </button>
               @endif
@@ -1126,9 +1156,9 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- TAB 2: MANAGE & EDIT DISPATCH                                             -->
+  <!-- TAB 2: MANAGE & EDIT DISPATCH (NON-AMC ORDERS ONLY)                       -->
   <!-- ========================================================================= -->
-  @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+  @if(auth('admin')->user()?->hasPermission('bookings.edit') && !$booking->is_amc)
     <div id="tab-manage-dispatch" class="booking-tab-pane">
       <div class="card-paces" style="margin-bottom:1.5rem;">
         <div class="card-header-paces" style="border-bottom:1px solid var(--paces-border); padding-bottom:1rem; margin-bottom:1.25rem;">
@@ -1452,9 +1482,9 @@
           <div style="background:#f8fafc; border:1px solid var(--paces-border); border-radius:8px; padding:12px;">
             <div style="font-size:0.72rem; color:var(--paces-text-muted); text-transform:uppercase; font-weight:700;">Contract Period</div>
             <div style="font-size:0.88rem; font-weight:600; color:var(--paces-text-dark); margin-top:2px;">
-              {{ $booking->contract_start_date?->format('M d, Y') ?? 'Start' }} – {{ $booking->contract_end_date?->format('M d, Y') ?? 'Ongoing' }}
+              {{ $booking->contract_start_date?->format('M d, Y') ?? 'Start' }} – {{ $booking->contract_end_date?->format('M d, Y') ?? ($booking->contract_tenure === 'Lifetime' ? 'Lifetime SLA' : 'Ongoing') }}
             </div>
-            <div style="font-size:0.72rem; color:var(--paces-text-muted);">{{ $booking->days_remaining_in_contract }} days remaining</div>
+            <div style="font-size:0.72rem; color:var(--paces-text-muted);">{{ $booking->days_remaining_in_contract !== null ? $booking->days_remaining_in_contract . ' days remaining' : 'Ongoing / Lifetime SLA' }}</div>
           </div>
 
           <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:12px;">
@@ -1541,92 +1571,311 @@
         </div>
       @endif
 
-      <!-- AMC Activation / Update Form -->
+      <!-- AMC Agreement & Dispatch Management Form (Merged Dispatch & Agreement) -->
       @if(auth('admin')->user()?->hasPermission('bookings.edit'))
         <div style="border-top:1px dashed var(--paces-border); padding-top:1.25rem;">
-          <h4 style="margin:0 0 8px 0; font-size:0.95rem; font-weight:700; color:#1e293b;">
-            {{ $booking->contract_status === 'active' ? 'Update AMC Contract Details' : 'Activate AMC Contract for this Customer' }}
-          </h4>
-          <p style="font-size:0.8rem; color:var(--paces-text-muted); margin-bottom:1rem;">
-            Select an AMC package, contract billing cycle, and upload signed agreement document scan.
-          </p>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+            <div>
+              <h4 style="margin:0 0 4px 0; font-size:1.05rem; font-weight:700; color:#1e293b;">
+                {{ $booking->contract_status === 'active' ? 'Manage & Update AMC Agreement & Dispatch' : 'Configure & Activate AMC Agreement' }}
+              </h4>
+              <p style="font-size:0.8rem; color:var(--paces-text-muted); margin:0;">
+                Configure contract terms, select payment schedule, assign lead field crew, set shift payouts, and upload signed agreements.
+              </p>
+            </div>
+            @if($booking->contract_status === 'active')
+              <span class="badge-pill-paces" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; font-weight:700; font-size:0.75rem; padding:4px 10px;">
+                ● Active Contract Scope
+              </span>
+            @endif
+          </div>
 
           <form action="{{ route('admin.bookings.activate-amc', $booking) }}" method="POST" enctype="multipart/form-data">
             @csrf
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-              <div>
-                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Select AMC Package *</label>
-                <select name="amc_plan_id" class="form-control-paces" required>
-                  <option value="">-- Choose AMC Package --</option>
-                  @foreach($amcPlans as $plan)
-                    <option value="{{ $plan->id }}" {{ (old('amc_plan_id', $booking->amc_plan_id) == $plan->id) ? 'selected' : '' }}>
-                      {{ $plan->name }} ({{ $plan->price_period }})
+
+            <!-- 1. FIELD CREW & DISPATCH LOGISTICS (Merged from Manage Dispatch) -->
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin-bottom:1.25rem;">
+              <h5 style="margin:0 0 12px 0; font-size:0.9rem; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                <span>👷</span> Field Crew &amp; Dispatch Logistics
+              </h5>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                <!-- Searchable Enlisted Crew Dropdown -->
+                <div>
+                  <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">
+                    Assigned Field Crew / Lead Partner
+                    <span style="font-weight:400; color:#64748b;">(Filtered by Service & Area)</span>
+                  </label>
+                  <div style="position:relative;" id="crewDropdownWrapper_amc">
+                    <input type="hidden" name="partner_id" id="partner_id_amc" value="{{ old('partner_id', $booking->partner_id) }}">
+                    <input 
+                      type="text" 
+                      id="crewInput_amc" 
+                      name="assigned_team" 
+                      class="form-control-paces" 
+                      value="{{ old('assigned_team', $booking->assigned_team) }}" 
+                      placeholder="Select approved crew..." 
+                      autocomplete="off"
+                      onfocus="openCrewDropdown('amc')"
+                      oninput="filterCrewOptions('amc')"
+                    >
+
+                    <div id="crewDropdownMenu_amc" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; max-height:260px; overflow-y:auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.12); z-index:9999; padding:4px 0;">
+                      <div style="padding:6px 12px; background:#f8fafc; border-bottom:1px solid #f1f5f9; font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">
+                        Select Enlisted Partner or Field Technician ({{ $fieldCrews->count() }} available)
+                      </div>
+                      <div id="crewListItems_amc">
+                        @forelse($fieldCrews as $crew)
+                          @php
+                            $compOrRole = $crew->company_name ?: $crew->role;
+                            $crewFullVal = "{$crew->name} ({$compOrRole}) - {$crew->phone}";
+                            $crewPartnerId = $crew->partner_id ?? '';
+                            $crewWarning = $crew->warning_msg ?? '';
+                            $crewEarningModel = $crew->earning_model ?? 'commission';
+                            $crewPayoutRate = (float) ($crew->payout_rate ?? 0);
+                            $crewCommissionRate = (float) ($crew->commission_rate ?? 15);
+                            $crewFormattedRate = $crew->formatted_rate ?? '15.00%';
+                          @endphp
+                          <div class="crew-option-item" 
+                               data-val="{{ strtolower($crewFullVal) }}"
+                               onclick="selectCrew('amc', '{{ addslashes($crewFullVal) }}', true, '{{ $crewPartnerId }}', '{{ addslashes($crewWarning) }}', '{{ $crewEarningModel }}', {{ $crewPayoutRate }}, {{ $crewCommissionRate }}, '{{ addslashes($crewFormattedRate) }}')"
+                               style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f8fafc; transition:background 0.15s ease;"
+                               onmouseover="this.style.background='#eff6ff'" 
+                               onmouseout="this.style.background='transparent'">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                              <div style="font-weight:700; font-size:0.85rem; color:#1e293b;">
+                                {{ $crew->name }}
+                                @if(!empty($crew->match_badge))
+                                  <span style="font-size:0.68rem; font-weight:700; color:#047857; background:#ecfdf5; border:1px solid #a7f3d0; padding:1px 6px; border-radius:4px; margin-left:4px;">
+                                    {{ $crew->match_badge }}
+                                  </span>
+                                @endif
+                              </div>
+                              @if(!empty($crew->avail_label))
+                                <span style="font-size:0.72rem; font-weight:600; color:{{ $crew->avail_color }}; background:#f8fafc; border:1px solid #e2e8f0; padding:1px 6px; border-radius:4px;">
+                                  {{ $crew->avail_label }}
+                                </span>
+                              @endif
+                            </div>
+                            <div style="font-size:0.75rem; color:#64748b; display:flex; justify-content:space-between; margin-top:2px;">
+                              <span>{{ $crew->role }}</span>
+                              <span style="color:#0284c7; font-weight:500;">📞 {{ $crew->phone }}</span>
+                            </div>
+                          </div>
+                        @empty
+                          <div style="padding:14px 12px; text-align:center; font-size:0.8rem; color:#dc2626; background:#fef2f2;">
+                            ⚠️ No crews found matching this service and location.
+                          </div>
+                        @endforelse
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Crew Payout Per Shift (Auto-calculated from Partner Remuneration Agreement) -->
+                <div>
+                  <label class="form-label-paces" style="font-weight:600; font-size:0.82rem; display:flex; justify-content:space-between; align-items:center;">
+                    <span>Crew Payout Per Shift (৳)</span>
+                    <span style="font-size:0.7rem; color:#64748b; font-weight:500;">🔒 Agreement Auto-calculated</span>
+                  </label>
+                  <input type="hidden" name="payout_per_shift" id="payoutPerShiftHidden" value="{{ old('payout_per_shift', $booking->payout_per_shift) }}">
+                  <div style="position:relative;">
+                    <input 
+                      type="text" 
+                      id="payoutPerShiftDisplay" 
+                      class="form-control-paces" 
+                      readonly 
+                      style="background:#f1f5f9; cursor:not-allowed; font-weight:700; color:#0f172a;" 
+                      value="{{ number_format((float) ($booking->payout_per_shift ?? 0), 2, '.', '') }}"
+                    >
+                    <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:0.72rem; color:#64748b; font-weight:600;">🔒 Auto-calculated</span>
+                  </div>
+                  <span id="payoutPerShiftNote" style="font-size:0.72rem; color:#64748b; display:block; margin-top:4px;">
+                    @if($booking->partner)
+                      Auto-calculated from partner agreement: <strong>{{ $booking->partner->formatted_rate }}</strong> ({{ $booking->partner->earning_model_label }}).
+                    @else
+                      Select an approved field crew to automatically calculate their agreed remuneration rate.
+                    @endif
+                  </span>
+                </div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                <div>
+                  <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">First Routine Shift Scheduled Date *</label>
+                  <input type="date" name="preferred_date" class="form-control-paces" value="{{ old('preferred_date', $booking->preferred_date?->format('Y-m-d') ?: ($booking->contract_start_date?->format('Y-m-d') ?: date('Y-m-d'))) }}" required>
+                </div>
+                <div>
+                  <label class="form-label-paces" style="font-weight:600; font-size:0.82rem;">Arrival Window / Time Slot</label>
+                  <input type="text" name="preferred_time_slot" class="form-control-paces" value="{{ old('preferred_time_slot', $booking->preferred_time_slot ?: 'Morning (9:00 AM - 12:00 PM)') }}" placeholder="e.g. Morning (9:00 AM - 12:00 PM)">
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. CONTRACT PACKAGE & PAYMENT SCHEDULE -->
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin-bottom:1.25rem;">
+              <h5 style="margin:0 0 12px 0; font-size:0.9rem; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                <span>💳</span> AMC Package &amp; Payment Schedule
+              </h5>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                <div>
+                  <label class="form-label-paces" style="font-size:0.82rem; font-weight:600;">Select AMC Package *</label>
+                  <select name="amc_plan_id" class="form-control-paces" required>
+                    <option value="">-- Choose AMC Package --</option>
+                    @foreach($amcPlans as $plan)
+                      <option value="{{ $plan->id }}" {{ (old('amc_plan_id', $booking->amc_plan_id) == $plan->id) ? 'selected' : '' }}>
+                        {{ $plan->name }} ({{ $plan->price_period }})
+                      </option>
+                    @endforeach
+                  </select>
+                </div>
+
+                <div>
+                  <label class="form-label-paces" style="font-size:0.82rem; font-weight:600;">Payment Schedule (Client Billing) *</label>
+                  <select name="billing_cycle" id="amcBillingCycleSelect" class="form-control-paces" required onchange="recalculateAmcAmounts()">
+                    <option value="monthly" {{ old('billing_cycle', $booking->billing_cycle ?? 'monthly') === 'monthly' ? 'selected' : '' }}>
+                      Monthly (Invoiced / Billed Monthly)
                     </option>
-                  @endforeach
-                </select>
-              </div>
-
-              <div>
-                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Billing Cycle *</label>
-                <select name="billing_cycle" class="form-control-paces" required>
-                  @foreach(['monthly' => 'Monthly Invoicing', 'quarterly' => 'Quarterly Invoicing', 'half_yearly' => 'Half-Yearly (Every 6 Months)', 'annually' => 'Annual (One-time Lump Sum)'] as $cycleKey => $cycleLabel)
-                    <option value="{{ $cycleKey }}" {{ (old('billing_cycle', $booking->billing_cycle) == $cycleKey) ? 'selected' : '' }}>
-                      {{ $cycleLabel }}
+                    <option value="daily" {{ in_array(old('billing_cycle', $booking->billing_cycle), ['daily', 'per_shift']) ? 'selected' : '' }}>
+                      Daily (Billed Per Work Shift / Visit)
                     </option>
-                  @endforeach
-                </select>
-              </div>
-            </div>
-
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
-              <div>
-                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Contract Tenure</label>
-                <select name="contract_tenure" class="form-control-paces">
-                  @foreach(['3 Months' => '3 Months', '6 Months' => '6 Months', '1 Year' => '1 Year (Annual)', '2 Years' => '2 Years', '3 Years' => '3 Years'] as $tenureVal => $tenureText)
-                    <option value="{{ $tenureVal }}" {{ old('contract_tenure', $booking->contract_tenure ?? '1 Year') === $tenureVal ? 'selected' : '' }}>
-                      {{ $tenureText }}
+                    <option value="yearly" {{ in_array(old('billing_cycle', $booking->billing_cycle), ['yearly', 'annual', 'annually']) ? 'selected' : '' }}>
+                      Yearly (Annual Contract Lump Sum)
                     </option>
-                  @endforeach
-                </select>
+                    <option value="half_yearly" {{ old('billing_cycle', $booking->billing_cycle) === 'half_yearly' ? 'selected' : '' }}>
+                      Half Yearly (Billed Every 6 Months)
+                    </option>
+                    <option value="one_time" {{ in_array(old('billing_cycle', $booking->billing_cycle), ['one_time', 'total', 'overall']) ? 'selected' : '' }}>
+                      One Time (Total Contract Budget Upfront)
+                    </option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Contract Start Date *</label>
-                <input type="date" name="contract_start_date" class="form-control-paces" value="{{ old('contract_start_date', $booking->contract_start_date?->format('Y-m-d') ?: ($booking->preferred_date?->format('Y-m-d') ?: date('Y-m-d'))) }}" required>
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:14px;">
+                <div>
+                  <label class="form-label-paces" style="font-size:0.82rem; font-weight:600;">Contract Tenure</label>
+                  <select name="contract_tenure" id="contractTenureSelect" class="form-control-paces" onchange="recalculateAmcAmounts()">
+                    @php
+                      $tenureOptionsList = [
+                        '3 Months' => '3 Months',
+                        '6 Months' => '6 Months',
+                        '1 Year' => '1 Year (Annual)',
+                        '2 Years' => '2 Years',
+                        '3 Years' => '3 Years',
+                        'Lifetime' => 'Lifetime (Continuous SLA)',
+                      ];
+                      if ($booking->contract_tenure && !isset($tenureOptionsList[$booking->contract_tenure])) {
+                        $tenureOptionsList[$booking->contract_tenure] = $booking->contract_tenure . ' (Custom)';
+                      }
+                    @endphp
+                    @foreach($tenureOptionsList as $tenureVal => $tenureText)
+                      <option value="{{ $tenureVal }}" {{ old('contract_tenure', $booking->contract_tenure ?? '1 Year') === $tenureVal ? 'selected' : '' }}>
+                        {{ $tenureText }}
+                      </option>
+                    @endforeach
+                  </select>
+                </div>
+
+                <div>
+                  <label class="form-label-paces" style="font-size:0.82rem; font-weight:600;">Contract Start Date *</label>
+                  <input type="date" name="contract_start_date" id="contractStartDateInput" class="form-control-paces" value="{{ old('contract_start_date', $booking->contract_start_date?->format('Y-m-d') ?: ($booking->preferred_date?->format('Y-m-d') ?: date('Y-m-d'))) }}" required onchange="recalculateAmcAmounts()">
+                </div>
+
+                <div>
+                  <label class="form-label-paces" style="font-size:0.82rem; font-weight:600;">Contract End Date (Optional for Lifetime)</label>
+                  <input type="date" name="contract_end_date" id="contractEndDateInput" class="form-control-paces" value="{{ old('contract_end_date', $booking->contract_end_date?->format('Y-m-d') ?: ($booking->contract_tenure === 'Lifetime' ? '' : date('Y-m-d', strtotime('+1 year')))) }}" onchange="recalculateAmcAmounts()">
+                </div>
               </div>
 
-              <div>
-                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Contract End Date *</label>
-                <input type="date" name="contract_end_date" class="form-control-paces" value="{{ old('contract_end_date', $booking->contract_end_date?->format('Y-m-d') ?: date('Y-m-d', strtotime('+1 year'))) }}" required>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                <div>
+                  <label class="form-label-paces" style="font-size:0.82rem; font-weight:600;">Total Contract Budget / Price (৳) *</label>
+                  <input type="number" step="0.01" name="contract_cost" id="contractCostInput" class="form-control-paces" placeholder="e.g. 50000.00" value="{{ old('contract_cost', $booking->final_cost ?: $booking->estimated_cost) }}" oninput="recalculateAmcAmounts()">
+                </div>
+
+                <div>
+                  <label class="form-label-paces" style="font-size:0.82rem; font-weight:600; display:flex; justify-content:space-between; align-items:center;">
+                    <span>Recurring Cycle Amount (৳)</span>
+                    <span style="font-size:0.7rem; color:#64748b; font-weight:500;">🔒 Auto-calculated</span>
+                  </label>
+                  <div style="position:relative;">
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      name="recurring_amount" 
+                      id="recurringAmountInput" 
+                      class="form-control-paces" 
+                      readonly 
+                      style="background:#f1f5f9; cursor:not-allowed; font-weight:700; color:#0f172a;" 
+                      placeholder="0.00" 
+                      value="{{ old('recurring_amount', $booking->recurring_amount ?: ($booking->final_cost ?: $booking->estimated_cost)) }}"
+                    >
+                    <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:0.72rem; color:#64748b; font-weight:600;">🔒 Auto-calculated</span>
+                  </div>
+                  <span id="recurringCycleHint" style="font-size:0.72rem; color:#64748b; display:block; margin-top:4px;">
+                    Auto-calculated per billing cycle based on Total Contract Budget, Tenure, and Payment Schedule.
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-              <div>
-                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Contract / Package Price (৳)</label>
-                <input type="number" step="0.01" name="contract_cost" class="form-control-paces" placeholder="e.g. 5000" value="{{ old('contract_cost', $booking->final_cost ?: $booking->estimated_cost) }}">
+            <!-- 3. AGREEMENT DOCUMENT & SCOPE NOTES -->
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin-bottom:1.25rem;">
+              <h5 style="margin:0 0 12px 0; font-size:0.9rem; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                <span>📄</span> Signed Agreement &amp; Operational Notes
+              </h5>
+
+              <div style="margin-bottom:14px;">
+                <label class="form-label-paces" style="font-size:0.82rem; font-weight:600;">Upload Signed Agreement Copy (PDF / Image)</label>
+                <input type="file" name="agreement_document" class="form-control-paces" accept=".pdf,.png,.jpg,.jpeg">
+                @if($booking->agreement_document_path)
+                  <span style="font-size:0.75rem; color:#16a34a; display:block; margin-top:4px;">
+                    ✓ Current Agreement file on record: <a href="{{ asset($booking->agreement_document_path) }}" target="_blank" style="color:#2563eb; font-weight:600; text-decoration:none;">View Uploaded Agreement ↗</a>
+                  </span>
+                @endif
+              </div>
+
+              <div style="margin-bottom:14px;">
+                <label class="form-label-paces" style="font-size:0.82rem; font-weight:600;">Contract Notes &amp; Service Deliverables</label>
+                <textarea name="amc_package_notes" class="form-control-paces" rows="2" placeholder="Key service scope deliverables, routine visit frequency, spare parts terms...">{{ old('amc_package_notes', $booking->amc_package_notes) }}</textarea>
               </div>
 
               <div>
-                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Recurring Cycle Amount (৳)</label>
-                <input type="number" step="0.01" name="recurring_amount" class="form-control-paces" placeholder="e.g. 5000" value="{{ old('recurring_amount', $booking->recurring_amount ?: ($booking->final_cost ?: $booking->estimated_cost)) }}">
+                <label class="form-label-paces" style="font-size:0.82rem; font-weight:600;">Update Comment / Audit Reason</label>
+                <textarea name="comment" class="form-control-paces" rows="2" placeholder="Internal audit reason for agreement update or dispatch assignment..."></textarea>
               </div>
             </div>
 
-            <div style="margin-bottom:12px;">
-              <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Upload Signed Agreement Copy (PDF / Image)</label>
-              <input type="file" name="agreement_document" class="form-control-paces" accept=".pdf,.png,.jpg,.jpeg">
-            </div>
+            <!-- 4. ACTIONS & CANCELLATION -->
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:16px; flex-wrap:wrap; gap:12px;">
+              <button type="button" onclick="document.getElementById('cancelAmcSectionBox').style.display = document.getElementById('cancelAmcSectionBox').style.display === 'none' ? 'block' : 'none'" class="btn-paces btn-paces-outline btn-paces-sm" style="color:#dc2626; border-color:#fca5a5;">
+                ✕ Cancel Work Order...
+              </button>
 
-            <div style="margin-bottom:14px;">
-              <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Contract Notes & Service Deliverables</label>
-              <textarea name="amc_package_notes" class="form-control-paces" rows="2" placeholder="Key service scope deliverables, quarterly visit frequency...">{{ old('amc_package_notes', $booking->amc_package_notes) }}</textarea>
+              <button type="submit" class="btn-paces btn-paces-primary" style="padding:10px 28px; font-weight:700; font-size:0.92rem; background:#0d9488; border-color:#0d9488;">
+                ✓ {{ $booking->contract_status === 'active' ? 'Save & Update AMC Agreement & Dispatch' : 'Activate AMC Agreement & Dispatch Crew' }}
+              </button>
             </div>
-
-            <button type="submit" class="btn-paces btn-paces-primary" style="font-weight:700;">
-              ✓ {{ $booking->contract_status === 'active' ? 'Save & Update Contract Details' : 'Activate AMC Contract' }}
-            </button>
           </form>
+
+          <!-- Cancel AMC Work Order Section -->
+          <div id="cancelAmcSectionBox" style="display:none; margin-top:16px; padding:16px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px;">
+            <form action="{{ route('admin.bookings.cancel', $booking) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this work order?');">
+              @csrf
+              <h4 style="margin:0 0 8px 0; font-size:0.92rem; color:#991b1b; font-weight:700;">Cancel This Work Order</h4>
+              <div style="margin-bottom:10px;">
+                <label style="font-size:0.78rem; font-weight:600; color:#374151; display:block;">Cancellation Reason *</label>
+                <textarea name="cancellation_reason" required class="form-control-paces" rows="2" placeholder="e.g. Client requested cancellation or duplicate request..."></textarea>
+              </div>
+              <div style="text-align:right;">
+                <button type="submit" class="btn-paces" style="background:#dc2626; color:#ffffff; font-weight:700; padding:6px 16px; border:none; border-radius:6px; cursor:pointer;">
+                  Confirm Cancellation
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       @endif
     </div>
@@ -1862,8 +2111,8 @@
 
   <!-- Modal: Admin Reassign Shift -->
   <div id="adminReassignShiftModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:99999; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;" onclick="if(event.target===this) this.style.display='none'">
-    <div style="background:#ffffff; border-radius:12px; max-width:440px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #e2e8f0; overflow:hidden;">
-      <div style="padding:14px 18px; border-bottom:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
+    <div style="background:#ffffff; border-radius:12px; max-width:520px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #e2e8f0; position:relative;">
+      <div style="padding:14px 18px; border-bottom:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:space-between; align-items:center; border-top-left-radius:12px; border-top-right-radius:12px;">
         <h4 style="margin:0; font-size:1rem; font-weight:700; color:#0f172a;">Reassign Shift <span id="adminReassignShiftNum"></span></h4>
         <button type="button" onclick="document.getElementById('adminReassignShiftModal').style.display='none'" style="background:none; border:none; font-size:1.2rem; color:#64748b; cursor:pointer;">✕</button>
       </div>
@@ -1871,26 +2120,94 @@
       <form id="adminReassignShiftForm" method="POST" action="">
         @csrf
         <div style="padding:18px;">
-          <div style="margin-bottom:12px;">
-            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Select Partner / Crew *</label>
-            <select name="partner_id" id="adminReassignPartnerSelect" class="form-control-paces" required>
-              <option value="">-- Choose Partner --</option>
-              @foreach($enlistedPartners as $p)
-                <option value="{{ $p->id }}">{{ $p->company_name }} ({{ $p->contact_person }})</option>
-              @endforeach
-            </select>
-            <span style="font-size:0.72rem; color:#0f766e; display:block; margin-top:2px;">
+          <!-- 1. Searchable Crew Dropdown -->
+          <div style="margin-bottom:14px;">
+            <label class="form-label-paces" style="font-size:0.82rem; font-weight:600;">
+              Assigned Field Crew / Lead Partner
+              <span style="font-weight:400; color:#64748b;">(Filtered by Service &amp; Area)</span>
+            </label>
+            <div style="position:relative;" id="crewDropdownWrapper_shift">
+              <input type="hidden" name="partner_id" id="partner_id_shift" value="" required>
+              <input 
+                type="text" 
+                id="crewInput_shift" 
+                class="form-control-paces" 
+                placeholder="Select approved crew..." 
+                autocomplete="off"
+                onfocus="openCrewDropdown('shift')"
+                oninput="filterCrewOptions('shift')"
+                required
+              >
+
+              <div id="crewDropdownMenu_shift" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; max-height:220px; overflow-y:auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.15); z-index:100000; padding:4px 0;">
+                <div style="padding:6px 12px; background:#f8fafc; border-bottom:1px solid #f1f5f9; font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">
+                  Select Enlisted Partner or Field Technician ({{ $fieldCrews->count() }} available)
+                </div>
+                <div id="crewListItems_shift">
+                  @forelse($fieldCrews as $crew)
+                    @php
+                      $compOrRole = $crew->company_name ?: $crew->role;
+                      $crewFullVal = "{$crew->name} ({$compOrRole}) - {$crew->phone}";
+                      $crewPartnerId = $crew->partner_id ?? '';
+                      $crewWarning = $crew->warning_msg ?? '';
+                      $crewEarningModel = $crew->earning_model ?? 'commission';
+                      $crewPayoutRate = (float) ($crew->payout_rate ?? 0);
+                      $crewCommissionRate = (float) ($crew->commission_rate ?? 15);
+                      $crewFormattedRate = $crew->formatted_rate ?? '15.00%';
+                    @endphp
+                    <div class="crew-option-item" 
+                         data-val="{{ strtolower($crewFullVal) }}"
+                         data-partner-id="{{ $crewPartnerId }}"
+                         data-full-val="{{ $crewFullVal }}"
+                         data-earning-model="{{ $crewEarningModel }}"
+                         data-payout-rate="{{ $crewPayoutRate }}"
+                         data-commission-rate="{{ $crewCommissionRate }}"
+                         data-formatted-rate="{{ $crewFormattedRate }}"
+                         onclick="selectCrew('shift', '{{ addslashes($crewFullVal) }}', true, '{{ $crewPartnerId }}', '{{ addslashes($crewWarning) }}', '{{ $crewEarningModel }}', {{ $crewPayoutRate }}, {{ $crewCommissionRate }}, '{{ addslashes($crewFormattedRate) }}')"
+                         style="padding:8px 12px; cursor:pointer; border-bottom:1px solid #f8fafc; transition:background 0.15s ease;"
+                         onmouseover="this.style.background='#eff6ff'" 
+                         onmouseout="this.style.background='transparent'">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-weight:700; font-size:0.85rem; color:#1e293b;">
+                          {{ $crew->name }}
+                          @if(!empty($crew->match_badge))
+                            <span style="font-size:0.68rem; font-weight:700; color:#047857; background:#ecfdf5; border:1px solid #a7f3d0; padding:1px 6px; border-radius:4px; margin-left:4px;">
+                              {{ $crew->match_badge }}
+                            </span>
+                          @endif
+                        </div>
+                        @if(!empty($crew->avail_label))
+                          <span style="font-size:0.72rem; font-weight:600; color:{{ $crew->avail_color }}; background:#f8fafc; border:1px solid #e2e8f0; padding:1px 6px; border-radius:4px;">
+                            {{ $crew->avail_label }}
+                          </span>
+                        @endif
+                      </div>
+                      <div style="font-size:0.75rem; color:#64748b; display:flex; justify-content:space-between; margin-top:2px;">
+                        <span>{{ $crew->role }}</span>
+                        <span style="color:#0284c7; font-weight:500;">📞 {{ $crew->phone }}</span>
+                      </div>
+                    </div>
+                  @empty
+                    <div style="padding:14px 12px; text-align:center; font-size:0.8rem; color:#dc2626; background:#fef2f2;">
+                      ⚠️ No crews found matching this service and location.
+                    </div>
+                  @endforelse
+                </div>
+              </div>
+            </div>
+            <span style="font-size:0.72rem; color:#0f766e; display:block; margin-top:4px;">
               Whichever crew is assigned will receive the payout for this shift upon completion.
             </span>
           </div>
 
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+          <!-- 2. Scheduled Date & Time Slot -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
             <div>
-              <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Scheduled Date *</label>
-              <input type="date" name="scheduled_date" id="adminReassignDateInput" class="form-control-paces">
+              <label class="form-label-paces" style="font-size:0.82rem; font-weight:600;">Scheduled Date *</label>
+              <input type="date" name="scheduled_date" id="adminReassignDateInput" class="form-control-paces" required>
             </div>
             <div>
-              <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Time Slot</label>
+              <label class="form-label-paces" style="font-size:0.82rem; font-weight:600;">Arrival Window / Time Slot</label>
               <select name="scheduled_time_slot" id="adminReassignSlotSelect" class="form-control-paces">
                 <option value="Morning (9:00 AM - 12:00 PM)">Morning (9:00 AM - 12:00 PM)</option>
                 <option value="Afternoon (12:00 PM - 4:00 PM)">Afternoon (12:00 PM - 4:00 PM)</option>
@@ -1899,19 +2216,37 @@
             </div>
           </div>
 
-          <div style="margin-bottom:12px;">
-            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Shift Payout Amount (৳) (Optional)</label>
-            <input type="number" step="0.01" name="payout_amount" id="adminReassignPayoutInput" class="form-control-paces" placeholder="e.g. 500.00">
-            <span style="font-size:0.72rem; color:#64748b; display:block; margin-top:2px;">Override specific payout amount for this assigned crew.</span>
+          <!-- 3. Crew Payout Per Shift (Auto-calculated from Remuneration Agreement) -->
+          <div style="margin-bottom:14px;">
+            <label class="form-label-paces" style="font-size:0.82rem; font-weight:600; display:flex; justify-content:space-between; align-items:center;">
+              <span>Crew Payout Per Shift (৳)</span>
+              <span style="font-size:0.7rem; color:#64748b; font-weight:500;">🔒 Agreement Auto-calculated</span>
+            </label>
+            <input type="hidden" name="payout_amount" id="adminReassignPayoutHidden" value="">
+            <div style="position:relative;">
+              <input 
+                type="text" 
+                id="adminReassignPayoutDisplay" 
+                class="form-control-paces" 
+                readonly 
+                style="background:#f1f5f9; cursor:not-allowed; font-weight:700; color:#0f172a;" 
+                placeholder="0.00"
+              >
+              <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:0.72rem; color:#64748b; font-weight:600;">🔒 Auto-calculated</span>
+            </div>
+            <span id="adminReassignPayoutNote" style="font-size:0.72rem; color:#64748b; display:block; margin-top:4px;">
+              Select an approved field crew to automatically calculate their agreed remuneration rate.
+            </span>
           </div>
 
+          <!-- 4. Operational Notes -->
           <div style="margin-bottom:8px;">
-            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Operational Notes / Instructions</label>
+            <label class="form-label-paces" style="font-size:0.82rem; font-weight:600;">Operational Notes / Instructions</label>
             <textarea name="admin_notes" id="adminReassignNotesInput" class="form-control-paces" rows="2" placeholder="Instructions or reason for reassignment..."></textarea>
           </div>
         </div>
 
-        <div style="padding:12px 18px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:8px;">
+        <div style="padding:12px 18px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:8px; border-bottom-left-radius:12px; border-bottom-right-radius:12px;">
           <button type="button" onclick="document.getElementById('adminReassignShiftModal').style.display='none'" class="btn-paces btn-paces-outline btn-paces-sm">Cancel</button>
           <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm">Confirm Reassignment</button>
         </div>
@@ -1968,7 +2303,7 @@
             <option value="Bank Transfer">Bank Transfer / Cheque</option>
             <option value="bKash">bKash (Merchant / Personal)</option>
             <option value="Nagad">Nagad</option>
-            <option value="Cash">Cash on Delivery / Field Handover</option>
+            <option value="Cash">Cash/ Field Handover</option>
             <option value="POS / Card">Credit / Debit Card (POS)</option>
           </select>
         </div>
@@ -2171,12 +2506,27 @@
       });
     }
 
-    function selectCrew(prefix, value, autoChangeStatus, partnerId, warningMsg) {
+    function selectCrew(prefix, value, autoChangeStatus, partnerId, warningMsg, earningModel, payoutRate, commissionRate, formattedRate, customPayout) {
       const input = document.getElementById('crewInput_' + prefix);
       const partnerInput = document.getElementById('partner_id_' + prefix);
       if (input) input.value = value;
       if (partnerInput) partnerInput.value = partnerId;
       closeCrewDropdown(prefix);
+
+      if (prefix === 'amc') {
+        window.selectedAmcCrewAgreement = {
+          partnerId: partnerId,
+          earningModel: earningModel || 'commission',
+          payoutRate: parseFloat(payoutRate) || 0,
+          commissionRate: parseFloat(commissionRate) || 15,
+          formattedRate: formattedRate || '15.00%'
+        };
+        recalculateAmcAmounts();
+      }
+
+      if (prefix === 'shift') {
+        recalculateShiftModalPayout(partnerId, earningModel, payoutRate, commissionRate, formattedRate, customPayout);
+      }
     }
 
     // Image Lightbox
@@ -2225,15 +2575,84 @@
       }
       const numSpan = document.getElementById('adminReassignShiftNum');
       if (numSpan) numSpan.textContent = '#' + shiftNumber;
-      const partnerSelect = document.getElementById('adminReassignPartnerSelect');
-      if (partnerSelect) partnerSelect.value = partnerId || '';
+
       const dateInput = document.getElementById('adminReassignDateInput');
       if (dateInput) dateInput.value = scheduledDate || '';
       const slotSelect = document.getElementById('adminReassignSlotSelect');
       if (slotSelect) slotSelect.value = timeSlot || 'Morning (9:00 AM - 12:00 PM)';
-      const payoutInput = document.getElementById('adminReassignPayoutInput');
-      if (payoutInput) payoutInput.value = payoutAmount || '';
+
+      // Auto-populate crew & agreement payout
+      if (partnerId) {
+        const crewItem = document.querySelector('#crewListItems_shift .crew-option-item[data-partner-id="' + partnerId + '"]');
+        if (crewItem) {
+          const fullVal = crewItem.getAttribute('data-full-val');
+          const model = crewItem.getAttribute('data-earning-model');
+          const rate = parseFloat(crewItem.getAttribute('data-payout-rate')) || 0;
+          const comm = parseFloat(crewItem.getAttribute('data-commission-rate')) || 15;
+          const formatted = crewItem.getAttribute('data-formatted-rate') || '15.00%';
+          selectCrew('shift', fullVal, false, partnerId, '', model, rate, comm, formatted, payoutAmount);
+        } else {
+          const partnerInput = document.getElementById('partner_id_shift');
+          const crewInput = document.getElementById('crewInput_shift');
+          if (partnerInput) partnerInput.value = partnerId;
+          if (crewInput) crewInput.value = 'Assigned Partner #' + partnerId;
+          recalculateShiftModalPayout(partnerId, 'commission', 0, 15, '15.00%', payoutAmount);
+        }
+      } else {
+        const partnerInput = document.getElementById('partner_id_shift');
+        const crewInput = document.getElementById('crewInput_shift');
+        if (partnerInput) partnerInput.value = '';
+        if (crewInput) crewInput.value = '';
+        const payoutDisplay = document.getElementById('adminReassignPayoutDisplay');
+        const payoutHidden = document.getElementById('adminReassignPayoutHidden');
+        const payoutNote = document.getElementById('adminReassignPayoutNote');
+        if (payoutDisplay) payoutDisplay.value = '';
+        if (payoutHidden) payoutHidden.value = '';
+        if (payoutNote) payoutNote.textContent = 'Select an approved field crew to automatically calculate their agreed remuneration rate.';
+      }
+
       if (modal) modal.style.display = 'flex';
+    }
+
+    function recalculateShiftModalPayout(partnerId, model, rate, commission, formattedRate, customPayout) {
+      const payoutDisplay = document.getElementById('adminReassignPayoutDisplay');
+      const payoutHidden = document.getElementById('adminReassignPayoutHidden');
+      const payoutNote = document.getElementById('adminReassignPayoutNote');
+      if (!payoutDisplay || !payoutHidden) return;
+
+      const budget = {{ (float) ($booking->final_cost ?: $booking->estimated_cost) }};
+      const shiftsCount = {{ max(1, $booking->amcShifts->count() ?: 12) }};
+      const shiftValue = shiftsCount > 0 ? (budget / shiftsCount) : 0;
+
+      let payout = 0;
+      let explanation = '';
+
+      if (model === 'per_job') {
+        payout = rate;
+        explanation = 'Fixed Per Job Agreement: ৳ ' + rate.toFixed(2) + ' per shift';
+      } else if (model === 'daily') {
+        payout = rate;
+        explanation = 'Daily Rate Agreement: ৳ ' + rate.toFixed(2) + ' per shift';
+      } else if (model === 'hourly') {
+        payout = rate * 2;
+        explanation = 'Hourly Rate Agreement: ৳ ' + rate.toFixed(2) + '/hr × 2 hrs = ৳ ' + payout.toFixed(2);
+      } else if (model === 'monthly') {
+        payout = shiftsCount > 0 ? (rate / shiftsCount) : rate;
+        explanation = 'Monthly Retainer: ৳ ' + rate.toFixed(2) + ' ÷ ' + shiftsCount + ' shifts = ৳ ' + payout.toFixed(2);
+      } else {
+        payout = (shiftValue * commission) / 100;
+        explanation = commission + '% Commission Agreement on shift value (৳ ' + shiftValue.toFixed(2) + ' × ' + commission + '%)';
+      }
+
+      if (customPayout !== undefined && customPayout !== null && customPayout !== '' && parseFloat(customPayout) > 0) {
+        payout = parseFloat(customPayout);
+      }
+
+      payoutDisplay.value = payout.toFixed(2);
+      payoutHidden.value = payout.toFixed(2);
+      if (payoutNote) {
+        payoutNote.innerHTML = '🔒 Auto-calculated from crew agreement: <strong>' + explanation + '</strong>';
+      }
     }
 
     // Admin Cancel Shift Modal
@@ -2276,9 +2695,143 @@
       if (modal) modal.style.display = 'none';
     }
 
+    // Initial crew agreement info for active or assigned partner
+    @php
+      $initialPartner = $booking->partner;
+    @endphp
+    window.selectedAmcCrewAgreement = {
+      partnerId: "{{ $booking->partner_id }}",
+      earningModel: "{{ $initialPartner?->earning_model ?? 'commission' }}",
+      payoutRate: {{ (float) ($initialPartner?->payout_rate ?? 0) }},
+      commissionRate: {{ (float) ($initialPartner?->commission_rate ?? 15) }},
+      formattedRate: "{{ $initialPartner?->formatted_rate ?? '15.00%' }}"
+    };
+
+    function getTenureMonths() {
+      const tenureSelect = document.getElementById('contractTenureSelect');
+      const tenureVal = tenureSelect ? tenureSelect.value : '1 Year';
+      if (tenureVal.includes('3 Month')) return 3;
+      if (tenureVal.includes('6 Month')) return 6;
+      if (tenureVal.includes('1 Year')) return 12;
+      if (tenureVal.includes('2 Year')) return 24;
+      if (tenureVal.includes('3 Year')) return 36;
+      if (tenureVal.includes('Lifetime')) return 12;
+
+      const startInput = document.getElementById('contractStartDateInput');
+      const endInput = document.getElementById('contractEndDateInput');
+      if (startInput && endInput && startInput.value && endInput.value) {
+        const d1 = new Date(startInput.value);
+        const d2 = new Date(endInput.value);
+        const diffM = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+        if (diffM > 0) return diffM;
+      }
+      const match = tenureVal.match(/(\d+)\s*(month|year)/i);
+      if (match) {
+        const num = parseInt(match[1]);
+        return match[2].toLowerCase().startsWith('year') ? num * 12 : num;
+      }
+      return 12;
+    }
+
+    function recalculateAmcAmounts() {
+      const costInput = document.getElementById('contractCostInput');
+      const recurringInput = document.getElementById('recurringAmountInput');
+      const cycleSelect = document.getElementById('amcBillingCycleSelect');
+      const cycleHint = document.getElementById('recurringCycleHint');
+
+      const budget = costInput ? (parseFloat(costInput.value) || 0) : 0;
+      const cycle = cycleSelect ? cycleSelect.value : 'monthly';
+      const tenureMonths = getTenureMonths();
+
+      let recurringAmount = 0;
+      let hint = '';
+
+      if (cycle === 'one_time') {
+        recurringAmount = budget;
+        hint = 'Full total contract budget billed upfront in a single invoice (৳ ' + budget.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ').';
+      } else if (cycle === 'monthly') {
+        const months = Math.max(1, tenureMonths);
+        recurringAmount = budget / months;
+        hint = 'Auto-calculated: ৳ ' + budget.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ÷ ' + months + ' months = ৳ ' + recurringAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' per month.';
+      } else if (cycle === 'half_yearly') {
+        const cycles = Math.max(1, Math.round(tenureMonths / 6));
+        recurringAmount = budget / cycles;
+        hint = 'Auto-calculated: ৳ ' + budget.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ÷ ' + cycles + ' half-yearly cycles = ৳ ' + recurringAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' per 6 months.';
+      } else if (cycle === 'yearly') {
+        const cycles = Math.max(1, Math.round(tenureMonths / 12));
+        recurringAmount = budget / cycles;
+        hint = 'Auto-calculated: ৳ ' + budget.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ÷ ' + cycles + ' years = ৳ ' + recurringAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' per year.';
+      } else if (cycle === 'daily') {
+        const shifts = Math.max(1, tenureMonths);
+        recurringAmount = budget / shifts;
+        hint = 'Auto-calculated: ৳ ' + budget.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ÷ ' + shifts + ' routine shifts = ৳ ' + recurringAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' per shift.';
+      }
+
+      if (recurringInput) {
+        recurringInput.value = recurringAmount > 0 ? recurringAmount.toFixed(2) : '0.00';
+      }
+      if (cycleHint) {
+        cycleHint.innerHTML = '🔒 ' + hint;
+      }
+
+      recalculateCrewPayout(budget, tenureMonths);
+    }
+
+    function recalculateCrewPayout(budget, tenureMonths) {
+      const payoutHidden = document.getElementById('payoutPerShiftHidden');
+      const payoutDisplay = document.getElementById('payoutPerShiftDisplay');
+      const payoutNote = document.getElementById('payoutPerShiftNote');
+
+      const partnerId = document.getElementById('partner_id_amc')?.value;
+      if (!partnerId || !window.selectedAmcCrewAgreement) {
+        if (payoutDisplay) payoutDisplay.value = '0.00';
+        if (payoutHidden) payoutHidden.value = '0.00';
+        if (payoutNote) payoutNote.innerHTML = 'Select an approved field crew above to calculate their agreed remuneration payout.';
+        return;
+      }
+
+      const agreement = window.selectedAmcCrewAgreement;
+      const model = agreement.earningModel || 'commission';
+      const rate = parseFloat(agreement.payoutRate) || 0;
+      const commission = parseFloat(agreement.commissionRate) || (rate > 0 ? rate : 15);
+      const shiftsCount = Math.max(1, tenureMonths || 12);
+      const shiftValue = shiftsCount > 0 ? (budget / shiftsCount) : 0;
+
+      let payout = 0;
+      let explanation = '';
+
+      if (model === 'per_job') {
+        payout = rate;
+        explanation = 'Fixed Per Job Agreement: ৳ ' + rate.toFixed(2) + ' per shift';
+      } else if (model === 'daily') {
+        payout = rate;
+        explanation = 'Daily Rate Agreement: ৳ ' + rate.toFixed(2) + ' per shift';
+      } else if (model === 'hourly') {
+        payout = rate * 2;
+        explanation = 'Hourly Rate Agreement: ৳ ' + rate.toFixed(2) + '/hr × 2 hrs = ৳ ' + payout.toFixed(2);
+      } else if (model === 'monthly') {
+        payout = shiftsCount > 0 ? (rate / shiftsCount) : rate;
+        explanation = 'Monthly Retainer: ৳ ' + rate.toFixed(2) + ' ÷ ' + shiftsCount + ' shifts = ৳ ' + payout.toFixed(2);
+      } else {
+        // Commission %
+        payout = (shiftValue * commission) / 100;
+        explanation = commission + '% Commission Agreement on shift value (৳ ' + shiftValue.toFixed(2) + ' × ' + commission + '%)';
+      }
+
+      if (payoutDisplay) {
+        payoutDisplay.value = payout.toFixed(2);
+      }
+      if (payoutHidden) {
+        payoutHidden.value = payout.toFixed(2);
+      }
+      if (payoutNote) {
+        payoutNote.innerHTML = '🔒 Auto-calculated from crew agreement: <strong>' + explanation + '</strong>';
+      }
+    }
+
     // Close crew dropdown when clicking outside
     document.addEventListener('click', function(e) {
-      ['accept', 'edit'].forEach(prefix => {
+      ['accept', 'edit', 'amc', 'shift'].forEach(prefix => {
         const wrapper = document.getElementById('crewDropdownWrapper_' + prefix);
         if (wrapper && !wrapper.contains(e.target)) {
           closeCrewDropdown(prefix);
@@ -2286,12 +2839,35 @@
       });
     });
 
-    // Check URL hash on page load
+    // Check URL hash and trigger initial recalculation on page load
     document.addEventListener('DOMContentLoaded', function() {
-      const hash = window.location.hash.replace('#', '');
-      if (hash && document.getElementById('tab-' + hash)) {
-        switchBookingTab('tab-' + hash);
-      } else {
+      recalculateAmcAmounts();
+
+      const rawHash = window.location.hash.replace('#', '');
+      let activeTabSet = false;
+      if (rawHash) {
+        const tabId = rawHash.startsWith('tab-') ? rawHash : 'tab-' + rawHash;
+        if (document.getElementById(tabId)) {
+          switchBookingTab(tabId);
+          activeTabSet = true;
+        }
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const collectInvoiceId = urlParams.get('collect_invoice');
+      if (collectInvoiceId) {
+        switchBookingTab('tab-amc-contract');
+        activeTabSet = true;
+        setTimeout(function() {
+          const btn = document.querySelector(`button[onclick*="openCollectBillModal('${collectInvoiceId}'"]`);
+          if (btn) {
+            btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            btn.click();
+          }
+        }, 150);
+      }
+
+      if (!activeTabSet) {
         switchBookingTab('tab-overview');
       }
     });

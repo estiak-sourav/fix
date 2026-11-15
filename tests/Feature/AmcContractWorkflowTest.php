@@ -260,6 +260,8 @@ class AmcContractWorkflowTest extends TestCase
         $pageResponse->assertSee('1 Year');
         $pageResponse->assertSee('2 Years');
         $pageResponse->assertSee('3 Years');
+        $pageResponse->assertSee('Lifetime');
+        $pageResponse->assertSee('Custom');
 
         // 2. Submit booking with 6 Months tenure
         $startDate = now()->addDay()->toDateString();
@@ -293,6 +295,82 @@ class AmcContractWorkflowTest extends TestCase
         $portalResponse->assertStatus(200);
         $portalResponse->assertSee('Contract Tenure');
         $portalResponse->assertSee('6 Months');
+    }
+
+    public function test_customer_can_select_lifetime_and_custom_contract_tenure(): void
+    {
+        $user = User::factory()->create(['role' => 'customer']);
+        $plan = AmcPlan::first();
+        $startDate = now()->addDay()->toDateString();
+
+        // 1. Lifetime Contract Tenure
+        $resLifetime = $this->actingAs($user)->post(route('booking.store'), [
+            'service_type' => 'amc_contract',
+            'amc_plan_id' => $plan->id,
+            'contract_tenure' => 'Lifetime',
+            'customer_name' => 'Lifetime SLA Client',
+            'customer_phone' => '01711990011',
+            'property_type' => 'Corporate Office',
+            'division' => 'Dhaka',
+            'district' => 'Dhaka',
+            'area' => 'Banani',
+            'street_address' => 'Road 11, Banani',
+            'preferred_date' => $startDate,
+            'preferred_time_slot' => 'Morning (9:00 AM - 12:00 PM)',
+            'urgency' => 'scheduled',
+            'problem_description' => 'Ongoing lifetime corporate maintenance agreement.',
+        ]);
+        $resLifetime->assertSessionHas('success');
+        $lifetimeBooking = Booking::where('customer_phone', '01711990011')->first();
+        $this->assertNotNull($lifetimeBooking);
+        $this->assertEquals('Lifetime', $lifetimeBooking->contract_tenure);
+        $this->assertNull($lifetimeBooking->contract_end_date);
+
+        // 2. Custom Months Tenure (e.g. 4 Months)
+        $resMonths = $this->actingAs($user)->post(route('booking.store'), [
+            'service_type' => 'amc_contract',
+            'amc_plan_id' => $plan->id,
+            'contract_tenure' => '4 Months',
+            'customer_name' => 'Custom Months Client',
+            'customer_phone' => '01711990022',
+            'property_type' => 'Corporate Office',
+            'division' => 'Dhaka',
+            'district' => 'Dhaka',
+            'area' => 'Banani',
+            'street_address' => 'Road 12, Banani',
+            'preferred_date' => $startDate,
+            'preferred_time_slot' => 'Morning (9:00 AM - 12:00 PM)',
+            'urgency' => 'scheduled',
+            'problem_description' => '4 months trial period AMC.',
+        ]);
+        $resMonths->assertSessionHas('success');
+        $monthsBooking = Booking::where('customer_phone', '01711990022')->first();
+        $this->assertNotNull($monthsBooking);
+        $this->assertEquals('4 Months', $monthsBooking->contract_tenure);
+        $this->assertEquals(now()->addDay()->addMonths(4)->toDateString(), $monthsBooking->contract_end_date->toDateString());
+
+        // 3. Custom Years Tenure (e.g. 5 Years)
+        $resYears = $this->actingAs($user)->post(route('booking.store'), [
+            'service_type' => 'amc_contract',
+            'amc_plan_id' => $plan->id,
+            'contract_tenure' => '5 Years',
+            'customer_name' => 'Custom Years Client',
+            'customer_phone' => '01711990033',
+            'property_type' => 'Corporate Office',
+            'division' => 'Dhaka',
+            'district' => 'Dhaka',
+            'area' => 'Banani',
+            'street_address' => 'Road 13, Banani',
+            'preferred_date' => $startDate,
+            'preferred_time_slot' => 'Morning (9:00 AM - 12:00 PM)',
+            'urgency' => 'scheduled',
+            'problem_description' => '5 years long-term commercial SLA.',
+        ]);
+        $resYears->assertSessionHas('success');
+        $yearsBooking = Booking::where('customer_phone', '01711990033')->first();
+        $this->assertNotNull($yearsBooking);
+        $this->assertEquals('5 Years', $yearsBooking->contract_tenure);
+        $this->assertEquals(now()->addDay()->addYears(5)->toDateString(), $yearsBooking->contract_end_date->toDateString());
     }
 
     public function test_crew_can_record_payment_collection_when_completing_amc_shift(): void
@@ -466,5 +544,248 @@ class AmcContractWorkflowTest extends TestCase
         $response->assertSee('Recent Work (Last 3 Days)');
         $response->assertSee('Shift #'.$completedShift->shift_number);
         $response->assertSee('View All History');
+    }
+
+    public function test_amc_booking_hides_top_manage_dispatch_button_and_merges_into_amc_agreement_tab(): void
+    {
+        $admin = Admin::first();
+        $user = User::factory()->create(['role' => 'customer']);
+        $plan = AmcPlan::first();
+
+        $booking = $this->createAmcBooking($user, $plan, [
+            'status' => 'pending_review',
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.bookings.show', $booking));
+        $response->assertStatus(200);
+
+        // Top button "Manage & Edit Dispatch" should NOT appear for AMC booking
+        $response->assertDontSee('switchBookingTab(\'tab-manage-dispatch\')', false);
+
+        // Tab bar should NOT have the separate "Manage & Edit Dispatch" tab
+        $response->assertDontSee('data-tab="tab-manage-dispatch"', false);
+
+        // AMC Agreement tab should be present with unified dispatch controls
+        $response->assertSee('data-tab="tab-amc-contract"', false);
+        $response->assertSee('AMC Agreement');
+        $response->assertSee('crewInput_amc');
+        $response->assertSee('payout_per_shift');
+
+        // All 5 payment schedule options must be present
+        $response->assertSee('Monthly (Invoiced / Billed Monthly)');
+        $response->assertSee('Daily (Billed Per Work Shift / Visit)');
+        $response->assertSee('Yearly (Annual Contract Lump Sum)');
+        $response->assertSee('Half Yearly (Billed Every 6 Months)');
+        $response->assertSee('One Time (Total Contract Budget Upfront)');
+    }
+
+    public function test_admin_can_activate_amc_agreement_with_crew_dispatch_and_payment_schedules(): void
+    {
+        $admin = Admin::first();
+        $user = User::factory()->create(['role' => 'customer']);
+        $partner = $this->createPartner(['phone' => '01755554444']);
+        $plan = AmcPlan::first();
+
+        $booking = $this->createAmcBooking($user, $plan, [
+            'status' => 'pending_review',
+        ]);
+
+        $payload = [
+            'amc_plan_id' => $plan->id,
+            'billing_cycle' => 'half_yearly',
+            'contract_tenure' => '2 Years',
+            'contract_start_date' => now()->toDateString(),
+            'contract_end_date' => now()->addYears(2)->toDateString(),
+            'contract_cost' => 60000.00,
+            'recurring_amount' => 15000.00,
+            'partner_id' => $partner->id,
+            'payout_per_shift' => 800.00,
+            'preferred_date' => now()->addDays(3)->toDateString(),
+            'preferred_time_slot' => 'Morning (9:00 AM - 12:00 PM)',
+            'comment' => 'Corporate SLA finalized with client. Lead partner dispatched.',
+        ];
+
+        $response = $this->actingAs($admin, 'admin')
+            ->post(route('admin.bookings.activate-amc', $booking), $payload);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $booking->refresh();
+
+        $this->assertEquals('active', $booking->contract_status);
+        $this->assertEquals('assigned', $booking->status);
+        $this->assertEquals($partner->id, $booking->partner_id);
+        $this->assertEquals('half_yearly', $booking->billing_cycle);
+        $this->assertEquals('2 Years', $booking->contract_tenure);
+        // Auto-calculated from partner remuneration agreement (15% commission of ৳2,500 shift value = ৳375)
+        $expectedPayout = round((60000.00 / 24) * 0.15, 2);
+        $this->assertEquals($expectedPayout, (float) $booking->payout_per_shift);
+        $this->assertEquals(60000.00, (float) $booking->final_cost);
+        $this->assertEquals(15000.00, (float) $booking->recurring_amount);
+
+        // Assert scheduled routine shifts inherited partner and auto-calculated payout
+        $this->assertGreaterThan(0, $booking->amcShifts()->count());
+        $firstShift = $booking->amcShifts()->first();
+        $this->assertEquals($partner->id, $firstShift->partner_id);
+        $this->assertEquals($expectedPayout, (float) $firstShift->payout_amount);
+
+        // Assert initial invoice generated matching half_yearly
+        $invoice = $booking->amcInvoices()->first();
+        $this->assertNotNull($invoice);
+        $this->assertEquals(15000.00, (float) $invoice->amount);
+        $this->assertStringContainsString('Half-Yearly', $invoice->billing_cycle_label);
+    }
+
+    public function test_admin_amc_activation_auto_calculates_fixed_per_job_agreement_payout(): void
+    {
+        $admin = Admin::first();
+        $user = User::factory()->create(['role' => 'customer']);
+        $partner = $this->createPartner([
+            'phone' => '01799887766',
+            'earning_model' => 'per_job',
+            'payout_rate' => 500.00,
+        ]);
+        $plan = AmcPlan::first();
+
+        $booking = $this->createAmcBooking($user, $plan, [
+            'status' => 'pending_review',
+        ]);
+
+        $payload = [
+            'amc_plan_id' => $plan->id,
+            'billing_cycle' => 'monthly',
+            'contract_tenure' => '1 Year',
+            'contract_start_date' => now()->toDateString(),
+            'contract_end_date' => now()->addYear()->toDateString(),
+            'contract_cost' => 50000.00,
+            'partner_id' => $partner->id,
+        ];
+
+        $response = $this->actingAs($admin, 'admin')
+            ->post(route('admin.bookings.activate-amc', $booking), $payload);
+
+        $response->assertRedirect();
+        $booking->refresh();
+
+        // Fixed per-job rate of 500 should be auto-calculated into payout_per_shift
+        $this->assertEquals(500.00, (float) $booking->payout_per_shift);
+        // Recurring amount for 1 Year (12 months) of 50,000 budget = 50000 / 12 = 4166.67
+        $this->assertEquals(4166.67, (float) $booking->recurring_amount);
+
+        $firstShift = $booking->amcShifts()->first();
+        $this->assertEquals(500.00, (float) $firstShift->payout_amount);
+    }
+
+    public function test_admin_can_reassign_individual_amc_shift_with_partner_agreement_rate(): void
+    {
+        $admin = Admin::first();
+        $user = User::factory()->create(['role' => 'customer']);
+        $initialPartner = $this->createPartner([
+            'phone' => '01711002233',
+            'earning_model' => 'commission',
+            'commission_rate' => 10.00,
+        ]);
+        $newPartner = $this->createPartner([
+            'phone' => '01722003344',
+            'earning_model' => 'per_job',
+            'payout_rate' => 750.00,
+        ]);
+        $plan = AmcPlan::first();
+
+        $booking = $this->createAmcBooking($user, $plan, [
+            'status' => 'in_progress',
+            'contract_status' => 'active',
+            'partner_id' => $initialPartner->id,
+            'final_cost' => 60000.00,
+            'payout_per_shift' => 250.00,
+        ]);
+
+        $booking->generateAmcShifts();
+        $shift = $booking->amcShifts()->first();
+
+        // Reassign to newPartner who has fixed per_job 750.00
+        $response = $this->actingAs($admin, 'admin')->post(
+            route('admin.bookings.amc-shifts.reassign', [$booking, $shift]),
+            [
+                'partner_id' => $newPartner->id,
+                'scheduled_date' => now()->addDays(5)->toDateString(),
+                'scheduled_time_slot' => 'Morning (9:00 AM - 12:00 PM)',
+                'payout_amount' => 750.00,
+                'admin_notes' => 'Reassigned to specialist crew.',
+            ]
+        );
+
+        $response->assertRedirect();
+        $shift->refresh();
+
+        $this->assertEquals($newPartner->id, $shift->partner_id);
+        $this->assertEquals(750.00, (float) $shift->payout_amount);
+        $this->assertEquals('scheduled', $shift->status);
+    }
+
+    public function test_collecting_amc_recurring_bill_updates_booking_financials_and_dashboard_earning_overview(): void
+    {
+        $admin = Admin::first();
+        $user = User::factory()->create(['role' => 'customer']);
+        $partner = $this->createPartner(['phone' => '01733445566']);
+        $plan = AmcPlan::first();
+
+        $booking = $this->createAmcBooking($user, $plan, [
+            'status' => 'in_progress',
+            'contract_status' => 'active',
+            'partner_id' => $partner->id,
+            'final_cost' => 12000.00,
+            'recurring_amount' => 1000.00,
+            'billing_cycle' => 'monthly',
+        ]);
+
+        $invoice = $booking->amcInvoices()->create([
+            'invoice_number' => 'AMC-TEST-001',
+            'billing_cycle_label' => 'Monthly Invoicing',
+            'period_start' => now()->startOfMonth(),
+            'period_end' => now()->endOfMonth(),
+            'due_date' => now(),
+            'amount' => 1000.00,
+            'status' => 'unpaid',
+        ]);
+
+        // Prior to collection
+        $dashResponse = $this->actingAs($admin, 'admin')->get(route('admin.earnings.index'));
+        $dashResponse->assertOk();
+        $initialInvoiced = (float) $dashResponse->viewData('invoicedRevenue');
+        $initialPipeline = (float) $dashResponse->viewData('pendingPipeline');
+
+        // Admin collects recurring bill
+        $collectResponse = $this->actingAs($admin, 'admin')->post(
+            route('admin.bookings.amc-bills.collect', [$booking, $invoice]),
+            [
+                'payment_method' => 'Bank Transfer',
+                'payment_reference' => 'TXN-AMC-1234',
+                'paid_at' => now()->toDateString(),
+            ]
+        );
+
+        $collectResponse->assertRedirect();
+        $invoice->refresh();
+        $booking->refresh();
+
+        $this->assertEquals('paid', $invoice->status);
+        $this->assertNotNull($invoice->paid_at);
+        $this->assertEquals(1000.00, (float) $booking->collected_amount);
+        $this->assertEquals('partial', $booking->payment_status);
+
+        // After collection: invoiced revenue increases by exactly 1,000
+        $dashAfter = $this->actingAs($admin, 'admin')->get(route('admin.earnings.index'));
+        $dashAfter->assertOk();
+        $this->assertEquals($initialInvoiced + 1000.00, (float) $dashAfter->viewData('invoicedRevenue'));
+        $this->assertEquals($initialPipeline - 1000.00, (float) $dashAfter->viewData('pendingPipeline'));
+
+        // Dashboard overview reflects the collected amount in this month
+        $overviewResponse = $this->actingAs($admin, 'admin')->get(route('admin.dashboard'));
+        $overviewResponse->assertOk();
+        $earningMonthly = $overviewResponse->viewData('earningMonthlyData');
+        $currentMonth = now()->month;
+        $this->assertGreaterThanOrEqual(1000.00, (float) $earningMonthly[$currentMonth]['thisMonthRaw']);
     }
 }

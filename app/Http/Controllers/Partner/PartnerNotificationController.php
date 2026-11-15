@@ -82,6 +82,56 @@ class PartnerNotificationController extends Controller
     }
 
     /**
+     * Delete a single notification.
+     */
+    public function destroy(Request $request, PartnerNotification $notification): RedirectResponse|JsonResponse
+    {
+        $partner = Auth::guard('partner')->user();
+
+        if ($notification->partner_id !== $partner->id) {
+            abort(403);
+        }
+
+        $notification->delete();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'unread_count' => $partner->unreadNotificationsCount(),
+                'total_count' => PartnerNotification::where('partner_id', $partner->id)->count(),
+            ]);
+        }
+
+        return back()->with('success', 'Notification removed.');
+    }
+
+    /**
+     * Clear / delete all notifications for partner.
+     */
+    public function clearAll(): RedirectResponse
+    {
+        $partner = Auth::guard('partner')->user();
+
+        $count = PartnerNotification::where('partner_id', $partner->id)->delete();
+
+        return back()->with('success', "{$count} notifications cleared.");
+    }
+
+    /**
+     * Clear / delete read notifications for partner.
+     */
+    public function clearRead(): RedirectResponse
+    {
+        $partner = Auth::guard('partner')->user();
+
+        $count = PartnerNotification::where('partner_id', $partner->id)
+            ->where('is_read', true)
+            ->delete();
+
+        return back()->with('success', "{$count} read notifications cleared.");
+    }
+
+    /**
      * Lightweight API endpoint for badge counter polling.
      */
     public function unreadCount(): JsonResponse

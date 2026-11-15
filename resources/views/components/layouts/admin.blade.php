@@ -1839,7 +1839,12 @@
       }
     }
 
-    // Poll for real-time inbound booking alerts every 15s
+    let lastKnownBookingId = null;
+    let lastKnownBookingsUpdate = null;
+    let lastKnownPendingCount = null;
+    let lastKnownNotificationId = null;
+
+    // Poll for real-time inbound alerts and auto-sync dashboard data
     async function pollInboundAlerts() {
       try {
         const res = await fetch('{{ route('admin.alerts.check') }}', {
@@ -1850,9 +1855,34 @@
         });
         if (res.ok) {
           const data = await res.json();
-          const badge = document.getElementById('topbarAlertBadge');
-          if (badge) badge.innerText = data.unread_total || 0;
 
+          // 1. Update topbar notification badge
+          const topbarBadge = document.getElementById('topbarAlertBadge');
+          if (topbarBadge) {
+            topbarBadge.innerText = data.unread_total || 0;
+            topbarBadge.style.display = (data.unread_total > 0) ? '' : 'none';
+          }
+
+          // 2. Update sidebar navigation badges dynamically
+          const sidebarBookingBadge = document.getElementById('sidebarBookingsBadge');
+          if (sidebarBookingBadge && data.pending_bookings_count !== undefined) {
+            sidebarBookingBadge.innerText = data.pending_bookings_count;
+            sidebarBookingBadge.style.display = (data.pending_bookings_count > 0) ? '' : 'none';
+          }
+
+          const sidebarNotifBadge = document.getElementById('sidebarNotificationsBadge');
+          if (sidebarNotifBadge && data.unread_alerts_count !== undefined) {
+            sidebarNotifBadge.innerText = data.unread_alerts_count;
+            sidebarNotifBadge.style.display = (data.unread_alerts_count > 0) ? '' : 'none';
+          }
+
+          const sidebarTasksBadge = document.getElementById('sidebarTasksBadge');
+          if (sidebarTasksBadge && data.pending_tasks_count !== undefined) {
+            sidebarTasksBadge.innerText = data.pending_tasks_count;
+            sidebarTasksBadge.style.display = (data.pending_tasks_count > 0) ? '' : 'none';
+          }
+
+          // 3. Audio & Toast notifications for incoming alerts
           if (data.has_sound) {
             playChime();
             if (data.alerts && data.alerts.length > 0) {
@@ -1861,9 +1891,99 @@
               });
             }
           }
+
+          // 4. Real-time data update: Check if bookings or notifications changed
+          const isInitialPoll = (lastKnownBookingId === null);
+          const hasBookingChanged = !isInitialPoll && (
+            (data.latest_booking_id !== undefined && data.latest_booking_id !== lastKnownBookingId) ||
+            (data.pending_bookings_count !== undefined && data.pending_bookings_count !== lastKnownPendingCount) ||
+            (data.bookings_updated_at !== undefined && data.bookings_updated_at !== lastKnownBookingsUpdate)
+          );
+          const hasNotificationChanged = !isInitialPoll && (
+            data.has_sound ||
+            (data.latest_notification_id !== undefined && data.latest_notification_id !== lastKnownNotificationId)
+          );
+
+          // Update cached snapshot
+          lastKnownBookingId = data.latest_booking_id ?? lastKnownBookingId;
+          lastKnownPendingCount = data.pending_bookings_count ?? lastKnownPendingCount;
+          lastKnownBookingsUpdate = data.bookings_updated_at ?? lastKnownBookingsUpdate;
+          lastKnownNotificationId = data.latest_notification_id ?? lastKnownNotificationId;
+
+          // If changes occurred, auto-update the page's data without hard reload
+          if (hasBookingChanged || hasNotificationChanged) {
+            liveRefreshActivePageContent();
+          }
         }
       } catch (err) {
         // silent polling error
+      }
+    }
+
+    async function liveRefreshActivePageContent() {
+      // Guard: do not interrupt if user is typing in any form input or has a modal open
+      const activeEl = document.activeElement;
+      const isTyping = activeEl && (
+        activeEl.tagName === 'INPUT' || 
+        activeEl.tagName === 'TEXTAREA' || 
+        activeEl.isContentEditable ||
+        (activeEl.tagName === 'SELECT' && activeEl.matches(':focus'))
+      );
+      const isModalOpen = document.querySelector(
+        '.modal-backdrop-paces[style*="display: block"], ' +
+        '.modal-backdrop-paces[style*="display: flex"], ' +
+        '[id*="Modal"][style*="display: block"], ' +
+        '[id*="Modal"][style*="display: flex"], ' +
+        '[class*="modal"][style*="display: block"]'
+      );
+
+      if (isTyping || isModalOpen) {
+        return;
+      }
+
+      try {
+        const res = await fetch(window.location.href, {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+        if (!res.ok) return;
+
+        const html = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        const isDashboard = window.location.pathname === '/admin' || 
+                            window.location.pathname === '/admin/' || 
+                            window.location.pathname.endsWith('/admin/dashboard');
+
+        if (isDashboard) {
+          // 1. Refresh Top KPI Metrics Cards
+          const newKpi = doc.querySelector('.metrics-grid-paces');
+          const currentKpi = document.querySelector('.metrics-grid-paces');
+          if (newKpi && currentKpi) {
+            currentKpi.innerHTML = newKpi.innerHTML;
+          }
+
+          // 2. Refresh Operational Data Tables (e.g. settlements, tasks)
+          const newTables = doc.querySelectorAll('.table-responsive-paces');
+          const currentTables = document.querySelectorAll('.table-responsive-paces');
+          currentTables.forEach((tableEl, idx) => {
+            if (newTables[idx]) {
+              tableEl.innerHTML = newTables[idx].innerHTML;
+            }
+          });
+        } else {
+          // On Bookings page (/admin/bookings), Notifications (/admin/notifications), etc.
+          // Refresh the main card content which contains the workflow filters, status counters & table rows
+          const newCard = doc.querySelector('.card-paces');
+          const currentCard = document.querySelector('.card-paces');
+          if (newCard && currentCard) {
+            currentCard.innerHTML = newCard.innerHTML;
+          }
+        }
+      } catch (e) {
+        // Silent fail
       }
     }
 

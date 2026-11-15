@@ -311,27 +311,60 @@
 
   <!-- AMC Bill Collection Warning Alert Banner -->
   @if(!empty($amcCollectionAlert['has_due']))
-    <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #fcd34d; border-left: 5px solid #d97706; border-radius: 12px; padding: 14px 20px; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; box-shadow: 0 2px 6px rgba(217, 119, 6, 0.08);">
-      <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
-        <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(217, 119, 6, 0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #b45309;">
-          <svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+    <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #fcd34d; border-left: 5px solid #d97706; border-radius: 12px; padding: 16px 20px; margin-bottom: 1.5rem; box-shadow: 0 2px 6px rgba(217, 119, 6, 0.08);">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1;">
+          <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(217, 119, 6, 0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #b45309;">
+            <svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          </div>
+          <div style="min-width: 0;">
+            <div style="font-weight: 700; color: #92400e; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span>⚠️ AMC Recurring Bill Collection Warning</span>
+              <span style="background: #dc2626; color: #ffffff; font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">{{ $amcCollectionAlert['count'] }} Due/Overdue</span>
+            </div>
+            <div style="font-size: 0.83rem; color: #b45309; margin-top: 3px;">
+              Total <strong>৳ {{ number_format($amcCollectionAlert['total_amount'], 2) }}</strong> recurring maintenance contract billing pending collection.
+              @if(!empty($amcCollectionAlert['single_client_name']))
+                Client: <strong>{{ $amcCollectionAlert['single_client_name'] }}</strong> (Order #{{ $amcCollectionAlert['single_booking_number'] }}).
+              @endif
+            </div>
+          </div>
         </div>
-        <div style="min-width: 0;">
-          <div style="font-weight: 700; color: #92400e; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <span>⚠️ AMC Recurring Bill Collection Warning</span>
-            <span style="background: #dc2626; color: #ffffff; font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">{{ $amcCollectionAlert['count'] }} Due/Overdue</span>
-          </div>
-          <div style="font-size: 0.83rem; color: #b45309; margin-top: 3px;">
-            Total <strong>৳ {{ number_format($amcCollectionAlert['total_amount'], 2) }}</strong> recurring maintenance contract billing pending collection. Collect pending invoices to ensure uninterrupted field facility engineering.
-          </div>
+        <div style="display: flex; gap: 10px; align-items: center; flex-shrink: 0;">
+          @if(!empty($amcCollectionAlert['single_booking_id']))
+            <a href="{{ route('admin.bookings.show', ['booking' => $amcCollectionAlert['single_booking_id'], 'collect_invoice' => $amcCollectionAlert['single_invoice_id']]) }}#tab-amc-contract" class="btn-paces" style="background: #d97706; color: #ffffff; font-weight: 700; font-size: 0.84rem; padding: 8px 18px; border-radius: 8px; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 6px;">
+              <span>Collect Bill from {{ $amcCollectionAlert['single_client_name'] }} (৳ {{ number_format($amcCollectionAlert['single_amount'], 2) }})</span>
+              <svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </a>
+          @else
+            <a href="{{ route('admin.bookings.index', ['service_type' => 'amc_contract', 'amc_status' => 'running']) }}" class="btn-paces" style="background: #d97706; color: #ffffff; font-weight: 600; font-size: 0.82rem; padding: 8px 16px; border-radius: 8px; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 6px;">
+              <span>Collect Bills &amp; Manage Contracts</span>
+              <svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </a>
+          @endif
         </div>
       </div>
-      <div style="display: flex; gap: 10px; align-items: center; flex-shrink: 0;">
-        <a href="{{ route('admin.bookings.index', ['service_type' => 'amc_contract', 'amc_status' => 'running']) }}" class="btn-paces" style="background: #d97706; color: #ffffff; font-weight: 600; font-size: 0.82rem; padding: 8px 16px; border-radius: 8px; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 6px;">
-          <span>Collect Bills &amp; Manage Contracts</span>
-          <svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </a>
-      </div>
+
+      @if($amcCollectionAlert['count'] > 1 && !empty($amcCollectionAlert['invoices']) && $amcCollectionAlert['invoices']->count() > 1)
+        <div style="border-top: 1px dashed #fcd34d; margin-top: 12px; padding-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+          @foreach($amcCollectionAlert['invoices'] as $inv)
+            @php
+              $cName = $inv->booking?->customer_name ?: ($inv->booking?->user?->name ?: 'Client');
+            @endphp
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.7); border: 1px solid #fde68a; border-radius: 6px; padding: 6px 12px; font-size: 0.8rem;">
+              <div>
+                <strong>{{ $cName }}</strong> &bull; Order #{{ $inv->booking?->booking_number }} &bull; Invoice #{{ $inv->invoice_number }} &bull; Due: {{ $inv->due_date?->format('M d, Y') }}
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: 700; color: #b45309;">৳ {{ number_format($inv->amount, 2) }}</span>
+                <a href="{{ route('admin.bookings.show', ['booking' => $inv->booking_id, 'collect_invoice' => $inv->id]) }}#tab-amc-contract" style="background: #d97706; color: #ffffff; padding: 3px 10px; border-radius: 4px; font-size: 0.74rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                  <span>Collect Bill &rarr;</span>
+                </a>
+              </div>
+            </div>
+          @endforeach
+        </div>
+      @endif
     </div>
   @endif
 
@@ -1923,23 +1956,35 @@
         </div>
 
         <div style="display:flex; align-items:center; gap:6px;">
-          <a href="{{ route('admin.dashboard', ['shift_range' => 'all']) }}" class="btn-paces btn-paces-sm" style="font-size:0.74rem; padding:3px 9px; {{ ($shiftRange ?? 'all') === 'all' ? 'background:#0284c7; color:#fff; font-weight:700;' : 'background:#f1f5f9; color:#475569;' }}">
-            All Upcoming
+          <a href="{{ route('admin.dashboard', array_merge(request()->query(), ['shift_range' => '3days'])) }}" class="btn-paces btn-paces-sm" style="font-size:0.74rem; padding:3px 10px; border-radius:6px; {{ ($shiftRange ?? '3days') === '3days' ? 'background:#0284c7; color:#fff; font-weight:700;' : 'background:#f1f5f9; color:#475569;' }}">
+            Next 3 Days
           </a>
-          <a href="{{ route('admin.dashboard', ['shift_range' => '7days']) }}" class="btn-paces btn-paces-sm" style="font-size:0.74rem; padding:3px 9px; {{ ($shiftRange ?? '') === '7days' ? 'background:#0284c7; color:#fff; font-weight:700;' : 'background:#f1f5f9; color:#475569;' }}">
+          <a href="{{ route('admin.dashboard', array_merge(request()->query(), ['shift_range' => '7days'])) }}" class="btn-paces btn-paces-sm" style="font-size:0.74rem; padding:3px 10px; border-radius:6px; {{ ($shiftRange ?? '') === '7days' ? 'background:#0284c7; color:#fff; font-weight:700;' : 'background:#f1f5f9; color:#475569;' }}">
             Next 7 Days
           </a>
-          <a href="{{ route('admin.dashboard', ['shift_range' => '30days']) }}" class="btn-paces btn-paces-sm" style="font-size:0.74rem; padding:3px 9px; {{ ($shiftRange ?? '') === '30days' ? 'background:#0284c7; color:#fff; font-weight:700;' : 'background:#f1f5f9; color:#475569;' }}">
+          <a href="{{ route('admin.dashboard', array_merge(request()->query(), ['shift_range' => '30days'])) }}" class="btn-paces btn-paces-sm" style="font-size:0.74rem; padding:3px 10px; border-radius:6px; {{ ($shiftRange ?? '') === '30days' ? 'background:#0284c7; color:#fff; font-weight:700;' : 'background:#f1f5f9; color:#475569;' }}">
             Next 30 Days
+          </a>
+          <a href="{{ route('admin.dashboard', array_merge(request()->query(), ['shift_range' => 'all'])) }}" class="btn-paces btn-paces-sm" style="font-size:0.74rem; padding:3px 10px; border-radius:6px; {{ ($shiftRange ?? '') === 'all' ? 'background:#0284c7; color:#fff; font-weight:700;' : 'background:#f1f5f9; color:#475569;' }}">
+            All Upcoming
           </a>
         </div>
       </div>
 
       @if($upcomingAmcShifts->isEmpty())
-        <div style="text-align:center; padding:24px 12px; color:#64748b; background:#ffffff; border-radius:8px; border:1px solid #e2e8f0;">
+        <div style="text-align:center; padding:28px 12px; color:#64748b; background:#ffffff; border-radius:8px; border:1px solid #e2e8f0;">
           <div style="font-size:1.6rem; margin-bottom:4px;">📅</div>
-          <div style="font-weight:600; font-size:0.88rem; color:#334155;">No Scheduled Shifts in the Near Future</div>
-          <p style="font-size:0.78rem; margin:2px 0 0;">New routine shifts will appear here once AMC contracts are active.</p>
+          <div style="font-weight:600; font-size:0.88rem; color:#334155;">
+            {{ ($shiftRange ?? '3days') === '3days' ? 'No Routine Shifts Scheduled in Next 3 Days' : (($shiftRange ?? '') === '7days' ? 'No Routine Shifts Scheduled in Next 7 Days' : 'No Scheduled Shifts Found') }}
+          </div>
+          <p style="font-size:0.78rem; margin:4px 0 10px;">
+            {{ ($shiftRange ?? '3days') === '3days' ? 'No maintenance shifts scheduled between today and ' . \Carbon\Carbon::today()->addDays(3)->format('M d, Y') . '.' : 'Routine shifts will appear here once scheduled for active AMC contracts.' }}
+          </p>
+          @if(($shiftRange ?? '3days') !== 'all')
+            <a href="{{ route('admin.dashboard', array_merge(request()->query(), ['shift_range' => 'all'])) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.76rem; padding:4px 12px; font-weight:600;">
+              View All Upcoming Shifts ({{ $upcomingAmcShiftsCount }}) →
+            </a>
+          @endif
         </div>
       @else
         <div class="table-responsive-paces">

@@ -112,6 +112,9 @@ Route::middleware(['auth.partner'])->group(function () {
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [PartnerNotificationController::class, 'index'])->name('index');
         Route::post('/mark-all-read', [PartnerNotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+        Route::post('/clear-all', [PartnerNotificationController::class, 'clearAll'])->name('clear-all');
+        Route::post('/clear-read', [PartnerNotificationController::class, 'clearRead'])->name('clear-read');
+        Route::delete('/{notification}', [PartnerNotificationController::class, 'destroy'])->name('destroy');
         Route::match(['get', 'post'], '/{notification}/read', [PartnerNotificationController::class, 'markAsRead'])->name('read');
         Route::get('/unread-count', [PartnerNotificationController::class, 'unreadCount'])->name('unread-count');
     });

@@ -1,4 +1,103 @@
 <x-partner.layouts.app :title="'Job #' . $booking->booking_number">
+  <style>
+    .job-tabs-container {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1.5px solid var(--p-border);
+      padding: 4px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 6px;
+      box-shadow: var(--p-shadow-sm);
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .job-tab-btn {
+      flex: 1 1 0;
+      min-width: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 9px 12px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      color: #64748b;
+      background: transparent;
+      box-sizing: border-box;
+      outline: none;
+    }
+    .job-tab-btn.is-active {
+      background: #f0fdfa;
+      color: #0f766e;
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    .job-tab-btn svg {
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0;
+    }
+    .job-tab-badge {
+      font-size: 0.72rem;
+      font-weight: 800;
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 2px 7px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      line-height: 1.2;
+    }
+    .tab-text-short {
+      display: none;
+    }
+    .tab-text-full {
+      display: inline;
+    }
+
+    @media (max-width: 540px) {
+      .job-tabs-container {
+        padding: 4px;
+        gap: 4px;
+      }
+      .job-tab-btn {
+        padding: 8px 6px;
+        font-size: 0.8rem;
+        gap: 5px;
+      }
+      .job-tab-btn svg {
+        width: 15px;
+        height: 15px;
+      }
+      .tab-text-full {
+        display: none !important;
+      }
+      .tab-text-short {
+        display: inline !important;
+      }
+      .job-tab-badge {
+        font-size: 0.68rem;
+        padding: 1px 5px;
+      }
+    }
+
+    .p-job-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (min-width: 860px) {
+      .p-job-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
   <div style="margin-bottom: 20px;">
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
       <div>
@@ -70,119 +169,79 @@
     </div>
   @endif
 
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; align-items: start;">
-    {{-- Left Column: Execution & Service Scope --}}
-    <div style="display: flex; flex-direction: column; gap: 18px;">
+  {{-- Tab Navigation Bar --}}
+  <div class="job-tabs-container">
+    <button type="button" 
+            id="tabBtn-infos" 
+            onclick="switchPartnerJobTab('infos')" 
+            class="job-tab-btn is-active"
+            style="background: #f0fdfa; color: #0f766e; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <polyline points="10 9 9 9 8 9"></polyline>
+      </svg>
+      <span class="tab-text-full">Job Information</span>
+      <span class="tab-text-short">Job Info</span>
+    </button>
 
-      {{-- Field Status Step Updater --}}
+    <button type="button" 
+            id="tabBtn-schedules" 
+            onclick="switchPartnerJobTab('schedules')" 
+            class="job-tab-btn"
+            style="background: transparent; color: #64748b;">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+      <span class="tab-text-full">{{ $booking->is_amc ? 'Routine Schedules' : 'Schedule Details' }}</span>
+      <span class="tab-text-short">{{ $booking->is_amc ? 'Schedules' : 'Schedule' }}</span>
       @if($booking->is_amc)
-        {{-- AMC Contract Shifts & Execution Hub --}}
-        <div class="p-card" style="border: 2px solid #00a896; background: #ffffff;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
-            <div>
-              <span style="font-size: 0.72rem; font-weight: 800; color: #00a896; text-transform: uppercase; letter-spacing: 0.04em;">
-                🏢 AMC Contract Routine Maintenance
-              </span>
-              <h3 style="margin: 2px 0 0; font-size: 1.15rem; font-weight: 800; color: #1e1b4b;">
-                {{ $booking->amcPlan?->name ?? 'Annual Maintenance Agreement' }}
-              </h3>
-            </div>
-            <span style="font-size: 0.8rem; font-weight: 800; background: #e6f8f5; color: #00a896; border: 1px solid #99f6e4; padding: 4px 12px; border-radius: 20px;">
-              {{ $booking->completed_shifts_count }} / {{ $booking->amcShifts->count() }} Shifts Completed
-            </span>
+        <span class="job-tab-badge">
+          {{ $booking->completed_shifts_count }}/{{ $booking->amcShifts->count() }}
+        </span>
+      @endif
+    </button>
+  </div>
+
+  {{-- TAB 1: JOB INFORMATION --}}
+  <div id="tabPanel-infos">
+    @if($booking->is_amc)
+      {{-- Concise AMC Overview Banner inside Infos Tab --}}
+      <div class="p-card" style="border: 1.5px solid #00a896; background: #f0fdfa; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <div style="font-size: 0.72rem; font-weight: 800; color: #00a896; text-transform: uppercase; letter-spacing: 0.04em;">
+            🏢 AMC Contract Routine Maintenance
           </div>
-
-          <!-- AMC Financial Overview & Client Billing Schedule for Crew -->
-          <div style="margin-bottom: 16px; background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 0.82rem;">
-            <div>
-              <span style="color: #0f766e; font-weight: 700;">Client Billing Model:</span>
-              <strong style="color: #0f2744;">{{ $booking->amc_billing_type_label }}</strong>
-              @if($booking->payout_per_shift)
-                <span style="color: #16a34a; font-weight: 700; margin-left: 6px;">• Crew Payout: ৳ {{ number_format($booking->payout_per_shift, 2) }} / shift</span>
-              @endif
-            </div>
-            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-              <span>Total Contract: <strong style="color: #0f2744;">৳ {{ number_format($booking->amc_total_budget, 2) }}</strong></span>
-              <span>Client Paid: <strong style="color: #16a34a;">৳ {{ number_format($booking->amc_total_paid, 2) }}</strong></span>
-              <span>Due: <strong style="color: {{ $booking->amc_remaining_due > 0 ? '#dc2626' : '#16a34a' }};">৳ {{ number_format($booking->amc_remaining_due, 2) }}</strong></span>
-            </div>
+          <h3 style="margin: 3px 0 2px; font-size: 1.1rem; font-weight: 800; color: #1e1b4b;">
+            {{ $booking->amcPlan?->name ?? 'Corporate Comprehensive' }}
+          </h3>
+          <div style="font-size: 0.8rem; color: #0f766e;">
+            <span>{{ $booking->completed_shifts_count }} of {{ $booking->amcShifts->count() }} routine maintenance shifts completed</span>
+            @if($booking->payout_per_shift)
+              <span style="color: #16a34a; font-weight: 700; margin-left: 6px;">• Crew Payout: ৳ {{ number_format($booking->payout_per_shift, 2) }} / shift</span>
+            @endif
           </div>
-
-          {{-- List of Shifts --}}
-          <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
-            @forelse($booking->amcShifts as $shift)
-              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <div style="width: 32px; height: 32px; border-radius: 50%; background: {{ $shift->is_completed ? '#dcfce7' : ($shift->is_cancelled ? '#fee2e2' : '#eff6ff') }}; color: {{ $shift->is_completed ? '#15803d' : ($shift->is_cancelled ? '#dc2626' : '#2563eb') }}; font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    @if($shift->is_completed)
-                      ✓
-                    @elseif($shift->is_cancelled)
-                      ✕
-                    @else
-                      #{{ $shift->shift_number }}
-                    @endif
-                  </div>
-                  <div>
-                    <strong style="font-size: 0.88rem; color: #0f172a; display: block;">{{ $shift->title }}</strong>
-                    <span style="font-size: 0.78rem; color: #64748b;">
-                      📅 {{ $shift->scheduled_date->format('M d, Y') }} • {{ $shift->scheduled_time_slot }}
-                    </span>
-                    @if($shift->completion_notes)
-                      <div style="font-size: 0.75rem; color: #15803d; margin-top: 2px;">
-                        ✓ Notes: {{ $shift->completion_notes }}
-                      </div>
-                    @elseif($shift->cancellation_reason)
-                      <div style="font-size: 0.75rem; color: #dc2626; margin-top: 2px;">
-                        ⚠️ Cancelled: {{ $shift->cancellation_reason }}
-                      </div>
-                    @endif
-
-                    @if($shift->payment_collected_by === 'crew' && $shift->collected_amount > 0)
-                      <div style="font-size: 0.75rem; color: #0f766e; font-weight: 700; margin-top: 2px;">
-                        💰 Payment Collected: ৳ {{ number_format($shift->collected_amount, 2) }} ({{ $shift->payment_method ?: 'Cash' }})
-                        @if($shift->payment_reference) • Ref: {{ $shift->payment_reference }} @endif
-                      </div>
-                    @endif
-                  </div>
-                </div>
-
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  @if($shift->is_completed)
-                    <span class="p-badge p-badge-success" style="font-size: 0.75rem;">Completed</span>
-                  @elseif($shift->is_cancelled)
-                    <span class="p-badge p-badge-danger" style="font-size: 0.75rem;">Cancelled</span>
-                  @else
-                    <button type="button" class="btn-p btn-p-primary" style="padding: 5px 10px; font-size: 0.75rem;" onclick="openShiftCompleteModal('{{ $shift->id }}', '{{ $shift->shift_number }}', '{{ addslashes($shift->title) }}', '{{ $shift->shift_cost ?: ($booking->amc_billing_type === 'per_shift' ? $booking->recurring_amount : '') }}')">
-                      ✓ Complete Shift
-                    </button>
-                    <button type="button" class="btn-p btn-p-outline" style="padding: 5px 10px; font-size: 0.75rem; color: #dc2626; border-color: #fca5a5;" onclick="openShiftCancelModal('{{ $shift->id }}', '{{ $shift->shift_number }}', '{{ addslashes($shift->title) }}')">
-                      Cancel Shift
-                    </button>
-                  @endif
-                </div>
-              </div>
-            @empty
-              <div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">
-                No routine shifts generated yet for this contract.
-              </div>
-            @endforelse
-          </div>
-
-          {{-- Option to relinquish the full contract assignment --}}
-          @if($booking->partner_job_status !== 'declined' && $booking->status !== 'cancelled')
-            <div style="border-top: 1px dashed #cbd5e1; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-              <span style="font-size: 0.78rem; color: #64748b;">
-                Cannot continue serving this recurring AMC contract?
-              </span>
-              <button type="button" class="btn-p btn-p-outline" style="font-size: 0.75rem; padding: 5px 12px; color: #dc2626; border-color: #fca5a5;" onclick="openRelinquishDealModal()">
-                Decline / Relinquish AMC Assignment
-              </button>
-            </div>
-          @endif
         </div>
-      @elseif(in_array($booking->partner_job_status, ['accepted', 'on_the_way', 'in_progress']))
-        <div class="p-card" style="border: 2px solid var(--p-accent);">
-          <h3 class="p-card-title" style="margin-bottom: 14px;">
+        <button type="button" onclick="switchPartnerJobTab('schedules')" class="btn-p btn-p-primary" style="padding: 7px 16px; font-size: 0.82rem; background: #00a896; border-color: #00a896; font-weight: 700;">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span>View Shifts Schedule ({{ $booking->amcShifts->count() }}) &rarr;</span>
+        </button>
+      </div>
+    @endif
+
+    <div class="p-job-grid">
+      {{-- Left Column: Execution (for non-AMC) & Service Scope --}}
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+
+        {{-- Field Status Step Updater (for regular non-AMC jobs) --}}
+        @if(!$booking->is_amc && in_array($booking->partner_job_status, ['accepted', 'on_the_way', 'in_progress']))
+          <div class="p-card" style="border: 2px solid var(--p-accent);">
+            <h3 class="p-card-title" style="margin-bottom: 14px;">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
             <span>Update Status</span>
           </h3>
@@ -669,6 +728,139 @@
       </div>
     </div>
   </div>
+</div> {{-- /#tabPanel-infos --}}
+
+{{-- TAB 2: ROUTINE SCHEDULES --}}
+<div id="tabPanel-schedules" style="display: none;">
+  @if($booking->is_amc)
+    {{-- AMC Contract Shifts & Execution Hub --}}
+    <div class="p-card" style="border: 2px solid #00a896; background: #ffffff;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+        <div>
+          <span style="font-size: 0.72rem; font-weight: 800; color: #00a896; text-transform: uppercase; letter-spacing: 0.04em;">
+            🏢 AMC Contract Routine Maintenance
+          </span>
+          <h3 style="margin: 2px 0 0; font-size: 1.15rem; font-weight: 800; color: #1e1b4b;">
+            {{ $booking->amcPlan?->name ?? 'Annual Maintenance Agreement' }}
+          </h3>
+        </div>
+        <span style="font-size: 0.8rem; font-weight: 800; background: #e6f8f5; color: #00a896; border: 1px solid #99f6e4; padding: 4px 12px; border-radius: 20px;">
+          {{ $booking->completed_shifts_count }} / {{ $booking->amcShifts->count() }} Shifts Completed
+        </span>
+      </div>
+
+      <!-- AMC Financial Overview & Client Billing Schedule for Crew -->
+      <div style="margin-bottom: 16px; background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 0.82rem;">
+        <div>
+          <span style="color: #0f766e; font-weight: 700;">Client Billing Model:</span>
+          <strong style="color: #0f2744;">{{ $booking->amc_billing_type_label }}</strong>
+          @if($booking->payout_per_shift)
+            <span style="color: #16a34a; font-weight: 700; margin-left: 6px;">• Crew Payout: ৳ {{ number_format($booking->payout_per_shift, 2) }} / shift</span>
+          @endif
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <span>Total Contract: <strong style="color: #0f2744;">৳ {{ number_format($booking->amc_total_budget, 2) }}</strong></span>
+          <span>Client Paid: <strong style="color: #16a34a;">৳ {{ number_format($booking->amc_total_paid, 2) }}</strong></span>
+          <span>Due: <strong style="color: {{ $booking->amc_remaining_due > 0 ? '#dc2626' : '#16a34a' }};">৳ {{ number_format($booking->amc_remaining_due, 2) }}</strong></span>
+        </div>
+      </div>
+
+      {{-- List of Shifts --}}
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+        @forelse($booking->amcShifts as $shift)
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: flex-start; gap: 10px; flex: 1 1 200px; min-width: 0;">
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: {{ $shift->is_completed ? '#dcfce7' : ($shift->is_cancelled ? '#fee2e2' : '#eff6ff') }}; color: {{ $shift->is_completed ? '#15803d' : ($shift->is_cancelled ? '#dc2626' : '#2563eb') }}; font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                @if($shift->is_completed)
+                  ✓
+                @elseif($shift->is_cancelled)
+                  ✕
+                @else
+                  #{{ $shift->shift_number }}
+                @endif
+              </div>
+              <div style="flex: 1; min-width: 0; word-break: break-word;">
+                <strong style="font-size: 0.88rem; color: #0f172a; display: block; line-height: 1.35;">{{ $shift->title }}</strong>
+                <span style="font-size: 0.78rem; color: #64748b; display: block; margin-top: 2px;">
+                  📅 {{ $shift->scheduled_date->format('M d, Y') }} • {{ $shift->scheduled_time_slot }}
+                </span>
+                @if($shift->completion_notes)
+                  <div style="font-size: 0.75rem; color: #15803d; margin-top: 3px; line-height: 1.4;">
+                    ✓ Notes: {{ $shift->completion_notes }}
+                  </div>
+                @elseif($shift->cancellation_reason)
+                  <div style="font-size: 0.75rem; color: #dc2626; margin-top: 3px; line-height: 1.4;">
+                    ⚠️ Cancelled: {{ $shift->cancellation_reason }}
+                  </div>
+                @endif
+
+                @if($shift->payment_collected_by === 'crew' && $shift->collected_amount > 0)
+                  <div style="font-size: 0.75rem; color: #0f766e; font-weight: 700; margin-top: 3px; line-height: 1.4;">
+                    💰 Payment Collected: ৳ {{ number_format($shift->collected_amount, 2) }} ({{ $shift->payment_method ?: 'Cash' }})
+                    @if($shift->payment_reference) • Ref: {{ $shift->payment_reference }} @endif
+                  </div>
+                @endif
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap;">
+              @if($shift->is_completed)
+                <span class="p-badge p-badge-success" style="font-size: 0.75rem;">Completed</span>
+              @elseif($shift->is_cancelled)
+                <span class="p-badge p-badge-danger" style="font-size: 0.75rem;">Cancelled</span>
+              @else
+                <button type="button" class="btn-p btn-p-primary" style="padding: 5px 10px; font-size: 0.75rem;" onclick="openShiftCompleteModal('{{ $shift->id }}', '{{ $shift->shift_number }}', '{{ addslashes($shift->title) }}', '{{ $shift->shift_cost ?: ($booking->amc_billing_type === 'per_shift' ? $booking->recurring_amount : '') }}')">
+                  ✓ Complete Shift
+                </button>
+                <button type="button" class="btn-p btn-p-outline" style="padding: 5px 10px; font-size: 0.75rem; color: #dc2626; border-color: #fca5a5;" onclick="openShiftCancelModal('{{ $shift->id }}', '{{ $shift->shift_number }}', '{{ addslashes($shift->title) }}')">
+                  Cancel Shift
+                </button>
+              @endif
+            </div>
+          </div>
+        @empty
+          <div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">
+            No routine shifts generated yet for this contract.
+          </div>
+        @endforelse
+      </div>
+
+      {{-- Option to relinquish the full contract assignment --}}
+      @if($booking->partner_job_status !== 'declined' && $booking->status !== 'cancelled')
+        <div style="border-top: 1px dashed #cbd5e1; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <span style="font-size: 0.78rem; color: #64748b;">
+            Cannot continue serving this recurring AMC contract?
+          </span>
+          <button type="button" class="btn-p btn-p-outline" style="font-size: 0.75rem; padding: 5px 12px; color: #dc2626; border-color: #fca5a5;" onclick="openRelinquishDealModal()">
+            Decline / Relinquish AMC Assignment
+          </button>
+        </div>
+      @endif
+    </div>
+  @else
+    {{-- Regular Job Schedule Card --}}
+    <div class="p-card" style="border: 1.5px solid var(--p-border); background: #ffffff;">
+      <h3 class="p-card-title" style="margin-bottom: 14px;">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <span>Service Schedule &amp; Timing</span>
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+        <div style="background: #f8fafc; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--p-border);">
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--p-muted); text-transform: uppercase;">Scheduled Date</span>
+          <div style="font-size: 1.05rem; font-weight: 800; color: var(--p-primary); margin-top: 2px;">
+            {{ $booking->preferred_date ? \Carbon\Carbon::parse($booking->preferred_date)->format('M d, Y') : 'ASAP' }}
+          </div>
+        </div>
+        <div style="background: #f8fafc; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--p-border);">
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--p-muted); text-transform: uppercase;">Arrival Window / Time Slot</span>
+          <div style="font-size: 1.05rem; font-weight: 800; color: var(--p-primary); margin-top: 2px;">
+            {{ $booking->arrival_window ?: ($booking->preferred_time ?: 'Standard Hours') }}
+          </div>
+        </div>
+      </div>
+    </div>
+  @endif
+</div>
 
   {{-- Decline Dialog Modal with Alert Confirmation --}}
   <div id="declineModal" class="fix-dialog-backdrop" style="display: none;" onclick="if(event.target===this) this.style.display='none'">
@@ -855,7 +1047,7 @@
               Payment Method *
             </label>
             <select name="payment_method" id="shiftPaymentMethodSelect" class="p-input" style="background:#ffffff; border-color:#86efac; font-weight:600;">
-              <option value="Cash">Cash on Delivery</option>
+              <option value="Cash">Cash</option>
               <option value="bKash">bKash</option>
               <option value="Nagad">Nagad</option>
               <option value="Bank Transfer">Bank Transfer / Cheque</option>
@@ -872,9 +1064,9 @@
           </div>
         </div>
 
-        <div style="margin-bottom: 14px;">
-          <label class="p-label" style="font-weight: 600; font-size: 0.84rem;">Work &amp; Service Notes (Optional):</label>
-          <textarea name="completion_notes" class="p-input" rows="2" placeholder="Describe routine inspection, filters cleaned, parts serviced, client feedback..."></textarea>
+        <div style="margin-bottom: 16px;">
+          <label class="p-label" style="font-weight: 600; font-size: 0.84rem; display: block; margin-bottom: 6px;">Work &amp; Service Notes (Optional):</label>
+          <textarea name="completion_notes" class="p-input" rows="4" style="min-height: 110px; resize: vertical; line-height: 1.5; font-size: 0.88rem;" placeholder="Describe routine inspection, filters cleaned, parts serviced, client feedback..."></textarea>
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 8px;">
@@ -1128,6 +1320,36 @@
       });
     }
 
+    function switchPartnerJobTab(tabName) {
+      const isInfos = (tabName === 'infos');
+      const panelInfos = document.getElementById('tabPanel-infos');
+      const panelSchedules = document.getElementById('tabPanel-schedules');
+      const btnInfos = document.getElementById('tabBtn-infos');
+      const btnSchedules = document.getElementById('tabBtn-schedules');
+
+      if (panelInfos) panelInfos.style.display = isInfos ? 'block' : 'none';
+      if (panelSchedules) panelSchedules.style.display = isInfos ? 'none' : 'block';
+
+      if (btnInfos) {
+        btnInfos.classList.toggle('is-active', isInfos);
+        btnInfos.style.background = isInfos ? '#f0fdfa' : 'transparent';
+        btnInfos.style.color = isInfos ? '#0f766e' : '#64748b';
+        btnInfos.style.fontWeight = isInfos ? '700' : '600';
+        btnInfos.style.boxShadow = isInfos ? '0 1px 3px rgba(0,0,0,0.06)' : 'none';
+      }
+      if (btnSchedules) {
+        btnSchedules.classList.toggle('is-active', !isInfos);
+        btnSchedules.style.background = !isInfos ? '#f0fdfa' : 'transparent';
+        btnSchedules.style.color = !isInfos ? '#0f766e' : '#64748b';
+        btnSchedules.style.fontWeight = !isInfos ? '700' : '600';
+        btnSchedules.style.boxShadow = !isInfos ? '0 1px 3px rgba(0,0,0,0.06)' : 'none';
+      }
+
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, null, '#' + (isInfos ? 'infos' : 'schedules'));
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
       if (window.location.hash === '#accept') {
         const modal = document.getElementById('acceptJobModal');
@@ -1136,6 +1358,15 @@
           const input = document.getElementById('acceptAgreedPriceInput');
           if (input) input.focus();
         }
+      }
+
+      const hash = (window.location.hash || '').replace('#', '').toLowerCase();
+      if (hash === 'schedules' || hash === 'schedule' || hash === 'tab-schedules' || hash === 'tab-amc' || hash === 'amc' || hash === 'shifts') {
+        switchPartnerJobTab('schedules');
+      } else if (hash === 'infos' || hash === 'info' || hash === 'tab-infos' || hash === 'tab-info' || hash === 'details') {
+        switchPartnerJobTab('infos');
+      } else {
+        switchPartnerJobTab('infos');
       }
     });
   </script>

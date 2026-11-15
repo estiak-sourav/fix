@@ -459,8 +459,7 @@ class BookingLifecycleAndNotificationTest extends TestCase
 
         $detailRes = $this->actingAs($user, 'web')->get(route('customer.bookings.show', $booking->booking_number));
         $detailRes->assertStatus(200);
-        $detailRes->assertSee('Cancel Request');
-        $detailRes->assertSee('Need to cancel this service request?');
+        $detailRes->assertDontSee('Need to cancel this service request?');
 
         // Customer cancels the request
         $cancelRes = $this->actingAs($user, 'web')->post(route('customer.bookings.cancel', $booking->booking_number), [

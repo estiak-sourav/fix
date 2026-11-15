@@ -583,6 +583,9 @@ class PartnerJobController extends Controller
             'payment_reference' => $paymentReference,
         ]);
 
+        // Sync AMC revenue and payment status on booking
+        $booking->syncAmcFinancials();
+
         $paymentLogInfo = $paymentCollected
             ? ' Client payment collected on site: ৳ '.number_format($collectedAmount, 2)." via {$paymentMethod}".($paymentReference ? " (Ref: {$paymentReference})" : '').'.'
             : ' No on-site payment collected (Office/Monthly invoicing).';

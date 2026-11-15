@@ -189,6 +189,15 @@ class FixEnterpriseWorkflowTest extends TestCase
         $alertResponse->assertJson([
             'has_sound' => true,
         ]);
+        $alertResponse->assertJsonStructure([
+            'has_sound',
+            'unread_total',
+            'pending_bookings_count',
+            'pending_tasks_count',
+            'latest_booking_id',
+            'latest_notification_id',
+            'bookings_updated_at',
+        ]);
 
         // Now sound_played should be updated to true so audio doesn't loop forever
         $this->assertEquals(0, AdminNotification::where('sound_played', false)->count());

@@ -275,6 +275,10 @@ class AdminBookingController extends Controller
                 'avail_label' => $availLabel,
                 'avail_color' => $availColor,
                 'warning_msg' => $warningMsg,
+                'earning_model' => $p->earning_model ?? 'commission',
+                'payout_rate' => (float) ($p->payout_rate ?? 0),
+                'commission_rate' => (float) ($p->commission_rate ?: 15.00),
+                'formatted_rate' => $p->formatted_rate,
             ];
 
             if ($isAreaMatch && $isDomainMatch) {
@@ -310,6 +314,10 @@ class AdminBookingController extends Controller
                     'avail_color' => '#3b82f6',
                     'warning_msg' => null,
                     'match_badge' => 'Currently Assigned',
+                    'earning_model' => $assignedPartner->earning_model ?? 'commission',
+                    'payout_rate' => (float) ($assignedPartner->payout_rate ?? 0),
+                    'commission_rate' => (float) ($assignedPartner->commission_rate ?: 15.00),
+                    'formatted_rate' => $assignedPartner->formatted_rate,
                 ]);
             }
         }
@@ -925,12 +933,12 @@ class AdminBookingController extends Controller
     {
         $validated = $request->validate([
             'amc_plan_id' => ['required', 'exists:amc_plans,id'],
-            'amc_billing_type' => ['nullable', 'string', 'in:monthly,per_shift,overall,total,daily,yearly,annual'],
+            'amc_billing_type' => ['nullable', 'string', 'in:monthly,per_shift,overall,total,daily,yearly,annual,half_yearly,one_time'],
             'payout_per_shift' => ['nullable', 'numeric', 'min:0'],
             'contract_tenure' => ['nullable', 'string', 'max:50'],
             'contract_start_date' => ['nullable', 'date'],
             'contract_end_date' => ['nullable', 'date'],
-            'billing_cycle' => ['nullable', 'string', 'in:daily,weekly,half_monthly,monthly,quarterly,half_yearly,annually,yearly'],
+            'billing_cycle' => ['nullable', 'string', 'in:daily,weekly,half_monthly,monthly,quarterly,half_yearly,annually,yearly,one_time,total'],
             'recurring_amount' => ['nullable', 'numeric', 'min:0'],
             'billing_day' => ['nullable', 'integer', 'between:1,31'],
             'first_bill_due_date' => ['nullable', 'date'],
@@ -938,13 +946,32 @@ class AdminBookingController extends Controller
             'amc_package_notes' => ['nullable', 'string', 'max:2000'],
             'agreement_file' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:10240'],
             'agreement_document' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:10240'],
+            'partner_id' => ['nullable', 'exists:partners,id'],
+            'assigned_team' => ['nullable', 'string', 'max:255'],
+            'preferred_date' => ['nullable', 'date'],
+            'preferred_time_slot' => ['nullable', 'string', 'max:100'],
+            'comment' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $admin = Auth::guard('admin')->user();
-        $billingCycle = $validated['billing_cycle'] ?? $booking->billing_cycle ?? 'monthly';
-        $recurringAmount = isset($validated['recurring_amount']) && $validated['recurring_amount'] !== ''
-            ? (float) $validated['recurring_amount']
-            : (isset($validated['contract_cost']) && $validated['contract_cost'] !== '' ? (float) $validated['contract_cost'] : (float) ($booking->final_cost ?: $booking->estimated_cost ?: 0));
+        $oldPartnerId = $booking->partner_id;
+        $rawCycle = $validated['billing_cycle'] ?? $booking->billing_cycle ?? 'monthly';
+        $normalizedCycle = match ($rawCycle) {
+            'daily', 'per_shift' => 'daily',
+            'half_yearly' => 'half_yearly',
+            'yearly', 'annual', 'annually' => 'yearly',
+            'one_time', 'total', 'overall' => 'one_time',
+            'quarterly' => 'quarterly',
+            'weekly' => 'weekly',
+            default => 'monthly',
+        };
+
+        $billingCycle = $normalizedCycle;
+        $amcBillingType = $validated['amc_billing_type'] ?? ($normalizedCycle === 'one_time' ? 'total' : $normalizedCycle);
+
+        $contractCost = isset($validated['contract_cost']) && $validated['contract_cost'] !== ''
+            ? (float) $validated['contract_cost']
+            : (float) ($booking->final_cost ?: $booking->estimated_cost ?: 0);
 
         $billingDay = ! empty($validated['billing_day']) ? (int) $validated['billing_day'] : 1;
 
@@ -952,12 +979,50 @@ class AdminBookingController extends Controller
             ? Carbon::parse($validated['contract_start_date'])->toDateString()
             : ($booking->contract_start_date ? $booking->contract_start_date->toDateString() : ($booking->preferred_date ? $booking->preferred_date->toDateString() : today()->toDateString()));
 
-        $endDate = ! empty($validated['contract_end_date'])
-            ? Carbon::parse($validated['contract_end_date'])->toDateString()
-            : ($booking->contract_end_date ? $booking->contract_end_date->toDateString() : Carbon::parse($startDate)->addYear()->toDateString());
+        $targetTenure = $validated['contract_tenure'] ?? $booking->contract_tenure ?? '1 Year';
 
-        if (Carbon::parse($endDate)->lte(Carbon::parse($startDate))) {
-            $endDate = Carbon::parse($startDate)->addYear()->toDateString();
+        if ($targetTenure === 'Lifetime' || strcasecmp((string) $targetTenure, 'lifetime') === 0) {
+            $endDate = ! empty($validated['contract_end_date'])
+                ? Carbon::parse($validated['contract_end_date'])->toDateString()
+                : null;
+        } else {
+            $endDate = ! empty($validated['contract_end_date'])
+                ? Carbon::parse($validated['contract_end_date'])->toDateString()
+                : ($booking->contract_end_date ? $booking->contract_end_date->toDateString() : Carbon::parse($startDate)->addYear()->toDateString());
+
+            if ($endDate && Carbon::parse($endDate)->lte(Carbon::parse($startDate))) {
+                $endDate = Carbon::parse($startDate)->addYear()->toDateString();
+            }
+        }
+
+        $tenureMonths = match (true) {
+            str_contains($targetTenure, '3 Month') => 3,
+            str_contains($targetTenure, '6 Month') => 6,
+            str_contains($targetTenure, '1 Year') => 12,
+            str_contains($targetTenure, '2 Year') => 24,
+            str_contains($targetTenure, '3 Year') => 36,
+            str_contains($targetTenure, 'Lifetime') => 12,
+            default => 12,
+        };
+
+        if ($startDate && $endDate && $targetTenure !== 'Lifetime') {
+            $diffM = Carbon::parse($startDate)->diffInMonths(Carbon::parse($endDate));
+            if ($diffM > 0) {
+                $tenureMonths = $diffM;
+            }
+        }
+
+        // Auto-calculate recurring cycle amount based on payment schedule, contract budget, and tenure
+        $recurringAmount = match ($billingCycle) {
+            'one_time' => $contractCost,
+            'yearly' => round($contractCost / max(1, round($tenureMonths / 12)), 2),
+            'half_yearly' => round($contractCost / max(1, round($tenureMonths / 6)), 2),
+            'daily' => round($contractCost / max(1, $tenureMonths), 2),
+            default => round($contractCost / max(1, $tenureMonths), 2), // monthly
+        };
+
+        if ($recurringAmount <= 0 && ! empty($validated['recurring_amount'])) {
+            $recurringAmount = (float) $validated['recurring_amount'];
         }
 
         $firstDue = ! empty($validated['first_bill_due_date']) ? $validated['first_bill_due_date'] : $startDate;
@@ -970,16 +1035,45 @@ class AdminBookingController extends Controller
             'contract_end_date' => $endDate,
             'contract_status' => 'active',
             'billing_cycle' => $billingCycle,
-            'amc_billing_type' => $validated['amc_billing_type'] ?? $booking->amc_billing_type ?? 'monthly',
+            'amc_billing_type' => $amcBillingType,
             'recurring_amount' => $recurringAmount,
-            'payout_per_shift' => isset($validated['payout_per_shift']) && $validated['payout_per_shift'] !== '' ? (float) $validated['payout_per_shift'] : $booking->payout_per_shift,
             'billing_day' => $billingDay,
             'next_billing_date' => $firstDue,
             'amc_package_notes' => $validated['amc_package_notes'] ?? null,
         ];
 
-        if (isset($validated['contract_cost']) && $validated['contract_cost'] !== '') {
-            $updates['final_cost'] = (float) $validated['contract_cost'];
+        // Dispatch & Crew assignment integration
+        if (! empty($validated['partner_id'])) {
+            $partner = Partner::find($validated['partner_id']);
+            if ($partner) {
+                $updates['partner_id'] = $partner->id;
+                $updates['assigned_team'] = $validated['assigned_team'] ?? "{$partner->company_name} ({$partner->contact_person})";
+                $updates['partner_assigned_at'] = now();
+                $updates['partner_job_status'] = 'assigned';
+
+                // Auto-calculate crew payout per shift based on partner remuneration agreement
+                $payoutPerShift = $partner->calculateShiftPayoutRate($contractCost, $tenureMonths);
+                $updates['payout_per_shift'] = $payoutPerShift;
+                $updates['assigned_partner_payout'] = $payoutPerShift;
+            }
+        } elseif (! empty($validated['assigned_team'])) {
+            $updates['assigned_team'] = $validated['assigned_team'];
+        }
+
+        if (! isset($updates['payout_per_shift']) && isset($validated['payout_per_shift']) && $validated['payout_per_shift'] !== '') {
+            $updates['payout_per_shift'] = (float) $validated['payout_per_shift'];
+            $updates['assigned_partner_payout'] = (float) $validated['payout_per_shift'];
+        }
+
+        if (! empty($validated['preferred_date'])) {
+            $updates['preferred_date'] = $validated['preferred_date'];
+        }
+        if (! empty($validated['preferred_time_slot'])) {
+            $updates['preferred_time_slot'] = $validated['preferred_time_slot'];
+        }
+
+        if ($contractCost > 0) {
+            $updates['final_cost'] = $contractCost;
         } elseif ($recurringAmount > 0) {
             $updates['final_cost'] = $recurringAmount;
         }
@@ -992,8 +1086,26 @@ class AdminBookingController extends Controller
 
         $booking->update($updates);
 
+        if ($booking->amcShifts()->count() === 0) {
+            $booking->generateAmcShifts();
+        }
+
+        // Synchronize assigned partner and shift payout to upcoming scheduled routine shifts
+        if (! empty($updates['partner_id'])) {
+            $shiftUpdates = ['partner_id' => $updates['partner_id']];
+            if (isset($updates['payout_per_shift']) && $updates['payout_per_shift'] > 0) {
+                $shiftUpdates['payout_amount'] = $updates['payout_per_shift'];
+            }
+            $booking->amcShifts()->where('status', 'scheduled')->update($shiftUpdates);
+        } elseif (isset($updates['payout_per_shift']) && $updates['payout_per_shift'] > 0) {
+            $booking->amcShifts()->where('status', 'scheduled')->update([
+                'payout_amount' => $updates['payout_per_shift'],
+            ]);
+        }
+
         // Generate initial recurring invoice if none exist
-        if ($booking->amcInvoices()->count() === 0 && $recurringAmount > 0) {
+        if ($booking->amcInvoices()->count() === 0 && ($recurringAmount > 0 || ($updates['final_cost'] ?? 0) > 0)) {
+            $invAmount = ($billingCycle === 'one_time') ? ($updates['final_cost'] ?? $recurringAmount) : $recurringAmount;
             $periodStart = Carbon::parse($startDate);
             $periodEnd = match ($billingCycle) {
                 'daily' => $periodStart->copy()->addDay(),
@@ -1001,37 +1113,51 @@ class AdminBookingController extends Controller
                 'half_monthly' => $periodStart->copy()->addDays(15),
                 'quarterly' => $periodStart->copy()->addMonths(3),
                 'half_yearly' => $periodStart->copy()->addMonths(6),
+                'one_time' => $endDate ? Carbon::parse($endDate) : $periodStart->copy()->addYear(),
                 'annually', 'yearly' => $periodStart->copy()->addYear(),
                 default => $periodStart->copy()->addMonth(),
             };
 
+            $label = match ($billingCycle) {
+                'one_time' => 'One-Time Lump Sum Total Contract Invoice',
+                'daily' => 'Daily Service Billing #1',
+                'half_yearly' => 'Half-Yearly Invoice #1',
+                'yearly' => 'Annual Contract Invoice #1',
+                default => 'Monthly Recurring Cycle #1',
+            };
+
             $booking->amcInvoices()->create([
                 'invoice_number' => 'AMC-'.$booking->booking_number.'-01',
-                'billing_cycle_label' => ucfirst($billingCycle).' Recurring Cycle #1',
+                'billing_cycle_label' => $label,
                 'period_start' => $periodStart,
                 'period_end' => $periodEnd,
                 'due_date' => $firstDue,
-                'amount' => $recurringAmount,
+                'amount' => $invAmount,
                 'status' => 'unpaid',
                 'notes' => 'Initial billing cycle invoice scheduled upon contract activation.',
             ]);
         }
 
-        if ($booking->amcShifts()->count() === 0) {
-            $booking->generateAmcShifts();
-        }
-
         $plan = AmcPlan::find($validated['amc_plan_id']);
         $planName = $plan ? $plan->name : 'AMC Plan';
 
-        // Update status to accepted or in_progress
-        $newStatus = in_array($booking->status, ['assigned', 'in_progress', 'completed']) ? $booking->status : 'accepted';
-        if ($booking->status === 'pending_review' || $booking->status === 'accepted') {
+        // Update status to assigned if crew is present, or accepted
+        $assignedPartnerId = $updates['partner_id'] ?? $booking->partner_id;
+        $targetStatus = ! empty($assignedPartnerId) ? 'assigned' : 'accepted';
+        $newStatus = in_array($booking->status, ['assigned', 'in_progress', 'completed']) ? $booking->status : $targetStatus;
+
+        if ($booking->status === 'pending_review' || $booking->status === 'accepted' || (! empty($assignedPartnerId) && $booking->status !== 'in_progress' && $booking->status !== 'completed')) {
+            $defaultComment = 'AMC agreement activated ('.ucfirst(str_replace('_', ' ', $billingCycle)).').';
             $action->execute($booking, [
                 'status' => $newStatus,
-                'comment' => "Annual Maintenance Contract ({$planName}) finalized and activated after site inspection. Agreement document securely filed.",
-                'admin_notes' => "AMC Contract activated by {$admin->name}.",
+                'comment' => $validated['comment'] ?? $defaultComment,
+                'admin_notes' => "AMC Agreement & Dispatch updated by {$admin->name}.",
             ], $admin);
+        }
+
+        if (! empty($updates['partner_id']) && (int) $updates['partner_id'] !== (int) $oldPartnerId) {
+            $booking->refresh();
+            NotificationDispatcher::notifyPartnerJobAssigned($booking);
         }
 
         ActivityLogService::logBooking('amc.contract.activated', "Activated AMC Contract ({$planName}) for Work Order #{$booking->booking_number}.", $booking, [
@@ -1076,6 +1202,15 @@ class AdminBookingController extends Controller
             ->where('status', 'completed')
             ->where('payout_status', 'pending_client_payment')
             ->update(['payout_status' => 'payable']);
+
+        // Synchronize AMC revenue and booking payment status
+        $booking->syncAmcFinancials();
+        $booking->update([
+            'payment_collected_at' => $paidDate,
+            'payment_method' => $validated['payment_method'],
+            'payment_reference' => $validated['payment_reference'] ?? $booking->payment_reference,
+            'payment_collected_by' => 'office',
+        ]);
 
         // Calculate and advance next billing date
         $nextDate = match ($booking->billing_cycle) {
@@ -1146,15 +1281,12 @@ class AdminBookingController extends Controller
             ->update(['payout_status' => 'payable']);
 
         // Update booking collected amount & payment status
-        $totalPaidSoFar = (float) $booking->amcInvoices()->where('status', 'paid')->sum('amount') + (float) $booking->amcShifts()->sum('collected_amount');
-        $amcTotalBudget = $booking->amc_total_budget;
-
-        $newPaymentStatus = ($totalPaidSoFar >= $amcTotalBudget && $amcTotalBudget > 0) ? 'paid' : 'partial';
+        $booking->syncAmcFinancials();
         $booking->update([
-            'collected_amount' => $totalPaidSoFar,
-            'payment_status' => $newPaymentStatus,
             'payment_collected_by' => 'office',
             'payment_collected_at' => $paidDate,
+            'payment_method' => $validated['payment_method'],
+            'payment_reference' => $validated['payment_reference'] ?? $booking->payment_reference,
         ]);
 
         BookingStatusLog::create([
@@ -1343,6 +1475,10 @@ class AdminBookingController extends Controller
 
         if (isset($validated['payout_amount']) && $validated['payout_amount'] !== '') {
             $shiftUpdates['payout_amount'] = (float) $validated['payout_amount'];
+        } else {
+            $totalShifts = $booking->amcShifts()->count() ?: 12;
+            $contractBudget = (float) ($booking->final_cost ?: $booking->estimated_cost);
+            $shiftUpdates['payout_amount'] = $newPartner->calculateShiftPayoutRate($contractBudget, $totalShifts);
         }
 
         $shift->update($shiftUpdates);
