@@ -23,13 +23,69 @@
       </div>
     </div>
 
-    @if($jobs->isEmpty())
+    @php
+      $completedAmcShifts = $completedAmcShifts ?? collect();
+      $hasItems = $jobs->isNotEmpty() || $completedAmcShifts->isNotEmpty();
+    @endphp
+
+    @if(!$hasItems)
       <div style="text-align: center; padding: 48px 16px; color: var(--p-muted);">
         <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 10px; color: #cbd5e1;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
         <div style="font-weight: 600; font-size: 0.95rem; color: #475569;">No Work Orders Found</div>
       </div>
     @else
       <div style="display: flex; flex-direction: column; gap: 12px;">
+        {{-- Completed AMC Routine Maintenance Shifts --}}
+        @if($completedAmcShifts->isNotEmpty())
+          @foreach($completedAmcShifts as $shift)
+            @php
+              $shiftPayout = (float) ($shift->payout_amount ?: ($shift->booking?->payout_per_shift ?: 0));
+              $completedTime = $shift->completed_at ?: $shift->updated_at;
+            @endphp
+            <div style="border: 1px solid #bbf7d0; border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; background: #f0fdf4;">
+              <div style="flex: 1; min-width: 250px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <strong style="color: #1e1b4b; font-size: 0.95rem;">#{{ $shift->booking?->booking_number }}</strong>
+                  <span class="p-badge" style="background: #e0e7ff; color: #4338ca; font-weight: 700;">Shift #{{ $shift->shift_number }}</span>
+                  <span class="p-badge p-badge-success">COMPLETED</span>
+                  @if($shiftPayout > 0)
+                    <span style="font-size: 0.74rem; font-weight: 800; color: #15803d; background: #ffffff; padding: 2px 8px; border-radius: 4px; border: 1px solid #86efac;">
+                      +৳ {{ number_format($shiftPayout, 2) }}
+                    </span>
+                  @endif
+                </div>
+
+                <div style="font-size: 0.9rem; font-weight: 600; color: #1e293b; margin-top: 4px;">
+                  {{ $shift->title ?: ($shift->booking?->amcPlan?->name ?? 'Routine Facility Maintenance Shift') }}
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 16px; font-size: 0.78rem; color: var(--p-muted); margin-top: 5px; flex-wrap: wrap;">
+                  <span>👤 {{ $shift->booking?->customer_name }}</span>
+                  @if($shift->booking?->area)
+                    <span style="display: flex; align-items: center; gap: 4px;">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                      {{ $shift->booking->area }}
+                    </span>
+                  @endif
+                  <span style="display: flex; align-items: center; gap: 4px; color: #15803d; font-weight: 600;">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    Completed {{ $completedTime ? $completedTime->diffForHumans() : 'recently' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="{{ route('partner.jobs.show', $shift->booking) }}#tab-amc" class="btn-p btn-p-outline" style="padding: 6px 14px; font-size: 0.82rem;">
+                  <span>View Contract & Shifts</span>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+              </div>
+            </div>
+          @endforeach
+        @endif
+
+        {{-- Regular Bookings --}}
         @foreach($jobs as $job)
           @php
             $badge = match($job->partner_job_status) {
@@ -47,6 +103,9 @@
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <strong style="color: var(--p-primary); font-size: 0.95rem;">#{{ $job->booking_number }}</strong>
                 <span class="p-badge {{ $badge['class'] }}">{{ $badge['label'] }}</span>
+                @if($job->is_amc)
+                  <span class="p-badge" style="background: #e0e7ff; color: #4338ca; font-weight: 700;">AMC CONTRACT</span>
+                @endif
                 @if($job->urgency && $job->urgency !== 'standard')
                   <span class="p-badge p-badge-danger" style="text-transform: uppercase;">{{ str_replace('_', ' ', $job->urgency) }}</span>
                 @endif

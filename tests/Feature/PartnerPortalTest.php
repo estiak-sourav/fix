@@ -6,6 +6,7 @@ use App\Mail\AdminEventNotificationMail;
 use App\Mail\PartnerJobAssignedMail;
 use App\Models\Admin;
 use App\Models\AdminPaymentMethod;
+use App\Models\AmcPlan;
 use App\Models\Booking;
 use App\Models\District;
 use App\Models\Partner;
@@ -1278,5 +1279,47 @@ class PartnerPortalTest extends TestCase
         $this->assertEquals('bKash TrxID 9987AABBCC', $payout->transaction_reference);
         $this->assertNotNull($payout->proof_file);
         Storage::disk('public')->assertExists($payout->proof_file);
+    }
+
+    public function test_partner_jobs_index_includes_completed_amc_shifts(): void
+    {
+        $partner = Partner::create([
+            'company_name' => 'FastCare Tech',
+            'contact_person' => 'Tanvir',
+            'phone' => '01711100999',
+            'password' => Hash::make('secret123'),
+            'status' => 'approved',
+            'partner_type' => 'company',
+            'trade_domain' => 'HVAC',
+            'coverage_areas' => 'Dhanmondi',
+        ]);
+
+        $user = User::factory()->create();
+        $plan = AmcPlan::first();
+
+        $booking = $this->createBooking([
+            'service_type' => 'amc_contract',
+            'amc_plan_id' => $plan->id,
+            'contract_status' => 'active',
+            'status' => 'in_progress',
+            'partner_id' => $partner->id,
+            'partner_job_status' => 'accepted',
+            'payout_per_shift' => 500.00,
+        ]);
+
+        $booking->generateAmcShifts();
+        $shift = $booking->amcShifts()->first();
+        $shift->update([
+            'status' => 'completed',
+            'completed_at' => now(),
+            'payout_amount' => 500.00,
+        ]);
+
+        $response = $this->actingAs($partner, 'partner')->get(route('partner.jobs.index', ['status' => 'completed']));
+        $response->assertStatus(200);
+        $response->assertSee('Completed (1)');
+        $response->assertSee('Shift #'.$shift->shift_number);
+        $response->assertSee($booking->booking_number);
+        $response->assertSee('500.00');
     }
 }
