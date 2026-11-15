@@ -22,6 +22,7 @@ class StoreBookingRequest extends FormRequest
             'service_type' => ['required', 'string', 'in:on_demand,amc_contract,emergency'],
             'service_id' => ['nullable', 'exists:services,id'],
             'amc_plan_id' => ['nullable', 'exists:amc_plans,id'],
+            'contract_tenure' => ['nullable', 'string', 'max:50'],
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:30'],
             'company_name' => ['nullable', 'string', 'max:255'],

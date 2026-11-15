@@ -78,9 +78,9 @@
     </div>
   </div>
 
-  <!-- Financial Settlement & Balance Overview Widget -->
-  <div class="p-card" style="margin-bottom: 20px; border: 1.5px solid {{ $stats['crew_owes_admin'] ? '#fca5a5' : ($stats['admin_owes_crew'] ? '#86efac' : '#cbd5e1') }}; background: {{ $stats['crew_owes_admin'] ? '#fff7ed' : ($stats['admin_owes_crew'] ? '#f0fdf4' : '#f8fafc') }}; padding: 18px 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+  <!-- Financial Settlement & Balance Overview Widget (Full Card Tapable/Clickable) -->
+  <a href="{{ route('partner.payouts.index') }}" class="p-card" style="display: block; text-decoration: none; color: inherit; margin-bottom: 20px; border: 1.5px solid {{ $stats['crew_owes_admin'] ? '#fca5a5' : ($stats['admin_owes_crew'] ? '#86efac' : '#cbd5e1') }}; background: {{ $stats['crew_owes_admin'] ? '#fff7ed' : ($stats['admin_owes_crew'] ? '#f0fdf4' : '#f8fafc') }}; padding: 18px 20px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;">
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px;">
       <div style="display: flex; align-items: center; gap: 10px;">
         <span style="font-size: 1.35rem;">
           {{ $stats['crew_owes_admin'] ? '⚠️' : ($stats['admin_owes_crew'] ? '💰' : '✓') }}
@@ -88,35 +88,18 @@
         <div>
           <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: {{ $stats['crew_owes_admin'] ? '#9a3412' : ($stats['admin_owes_crew'] ? '#166534' : '#334155') }};">
             @if($stats['crew_owes_admin'])
-              Payable Dues to FIX: ৳ {{ number_format($stats['crew_due_amount'], 2) }}
+              Payable Dues: ৳ {{ number_format($stats['crew_due_amount'], 2) }}
             @elseif($stats['admin_owes_crew'])
-              Receivable from FIX: ৳ {{ number_format($stats['pending_due'], 2) }}
+              Receivable: ৳ {{ number_format($stats['pending_due'], 2) }}
             @else
-              Account Balance: Fully Settled
+              Balance: Fully Settled
             @endif
           </h3>
-          <p style="margin: 2px 0 0; font-size: 0.78rem; color: {{ $stats['crew_owes_admin'] ? '#c2410c' : ($stats['admin_owes_crew'] ? '#15803d' : '#64748b') }};">
-            @if($stats['crew_owes_admin'])
-              You have payable to FIX.
-            @elseif($stats['admin_owes_crew'])
-              You have earnings available to withdraw.
-            @else
-              Collections and earnings are completely balanced.
-            @endif
-          </p>
         </div>
       </div>
 
-      <div style="display: flex; gap: 8px;">
-        <a href="{{ route('partner.payouts.index') }}" class="btn-p btn-p-primary btn-p-sm" style="{{ $stats['crew_owes_admin'] ? 'background:#ea580c; border-color:#ea580c;' : '' }}">
-          @if($stats['crew_owes_admin'])
-            Pay Dues / Settle →
-          @elseif($stats['admin_owes_crew'])
-            Request Payout →
-          @else
-            View Ledger →
-          @endif
-        </a>
+      <div style="display: flex; align-items: center; color: {{ $stats['crew_owes_admin'] ? '#ea580c' : ($stats['admin_owes_crew'] ? '#16a34a' : '#94a3b8') }}; flex-shrink: 0;">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </div>
     </div>
 
@@ -161,7 +144,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </a>
 
   <!-- Active Work Orders -->
   <div class="p-card">
@@ -230,6 +213,55 @@
               <a href="{{ route('partner.jobs.show', $job) }}" class="btn-p btn-p-outline" style="padding: 6px 14px; font-size: 0.82rem;">
                 <span>View</span>
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </a>
+            </div>
+          </div>
+        @endforeach
+      </div>
+    @endif
+  </div>
+
+  <!-- AMC Routine Maintenance Shifts Overview -->
+  <div class="p-card" style="margin-bottom: 20px;">
+    <div class="p-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+      <h2 class="p-card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        <span>AMC Routine Maintenance Shifts</span>
+      </h2>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 0.76rem; font-weight: 700; background: #eff6ff; color: #1e40af; padding: 4px 10px; border-radius: 12px;">
+          {{ $amcContractsCount }} Contracts • {{ $pendingShiftsCount }} Shifts Pending
+        </span>
+      </div>
+    </div>
+
+    @if($upcomingAmcShifts->isEmpty())
+      <div style="text-align: center; padding: 30px 16px; color: var(--p-muted);">
+        <div style="font-size: 1.8rem; margin-bottom: 6px;">📅</div>
+        <div style="font-weight: 600; font-size: 0.9rem; color: #475569;">No Routine Maintenance Shifts Scheduled</div>
+        <p style="font-size: 0.78rem; margin: 4px 0 0;">You have no upcoming routine shifts assigned on your AMC contracts.</p>
+      </div>
+    @else
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        @foreach($upcomingAmcShifts as $shift)
+          <div style="border: 1px solid var(--p-border); border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: #ffffff;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: 800; font-size: 0.85rem; color: #2563eb;">Shift #{{ $shift->shift_number }}</span>
+                <span class="p-badge {{ $shift->status === 'in_progress' ? 'p-badge-success' : 'p-badge-info' }}">{{ strtoupper($shift->status) }}</span>
+                <span style="font-size: 0.78rem; color: #64748b; font-weight: 600;">📅 {{ $shift->scheduled_date->format('M d, Y') }} ({{ $shift->time_slot ?: 'Routine' }})</span>
+              </div>
+              <div style="font-size: 0.88rem; font-weight: 600; color: #1e293b; margin-top: 3px;">
+                {{ $shift->title ?: ($shift->booking?->amcPlan?->name ?? 'Routine Facility Maintenance') }}
+              </div>
+              <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">
+                Contract: <strong>#{{ $shift->booking?->booking_number }}</strong> • Client: {{ $shift->booking?->customer_name }} ({{ $shift->booking?->area }})
+              </div>
+            </div>
+
+            <div>
+              <a href="{{ route('partner.jobs.show', $shift->booking) }}#tab-amc" class="btn-p btn-p-primary btn-p-sm" style="padding: 6px 14px; font-size: 0.82rem;">
+                Open Contract &amp; Shifts →
               </a>
             </div>
           </div>

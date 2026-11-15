@@ -88,6 +88,18 @@
                 <h3>Service Requirements</h3>
               </div>
 
+              <!-- Booking Type Switcher: Single Service vs AMC Contract -->
+              <div style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; padding:6px; margin-bottom:1.5rem; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <button type="button" id="btnTypeOneTime" onclick="setBookingType('on_demand')" style="padding:10px 14px; border-radius:8px; border:none; background:{{ $selectedPlan ? 'transparent' : '#ffffff' }}; box-shadow:{{ $selectedPlan ? 'none' : '0 2px 6px rgba(0,0,0,0.08)' }}; font-weight:{{ $selectedPlan ? '600' : '800' }}; font-size:0.9rem; color:{{ $selectedPlan ? '#64748b' : '#0f172a' }}; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s ease;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                  <span>Single Service (One-Time)</span>
+                </button>
+                <button type="button" id="btnTypeAmc" onclick="setBookingType('amc_contract')" style="padding:10px 14px; border-radius:8px; border:none; background:{{ $selectedPlan ? '#ffffff' : 'transparent' }}; box-shadow:{{ $selectedPlan ? '0 2px 6px rgba(0,0,0,0.08)' : 'none' }}; font-weight:{{ $selectedPlan ? '800' : '600' }}; font-size:0.9rem; color:{{ $selectedPlan ? '#00a896' : '#64748b' }}; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s ease;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                  <span>AMC Contract (Recurring Routine)</span>
+                </button>
+              </div>
+
               <div class="form-row">
                 <div class="form-group" style="position:relative;" id="serviceSearchableGroup">
                   <label for="bookCategory">Select Service Required <span class="required">*</span></label>
@@ -233,6 +245,140 @@
                   </select>
                 </div>
               </div>
+
+              <!-- AMC Plan / Package Selector (Positioned directly below Scheduled Inspection & Engagement Model) -->
+              <div id="amcPlanSelectionBox" style="display:{{ $selectedPlan ? 'block' : 'none' }}; background:#f0fdfa; border:1.5px solid #99f6e4; border-radius:12px; padding:16px 18px; margin-top:1.25rem;">
+                <div style="margin-bottom:14px;">
+                  <strong style="color:#0f2744; font-size:0.95rem; font-weight:700;">
+                    Select Maintenance Plan
+                  </strong>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; align-items:stretch;">
+                  @foreach($amcPlans as $plan)
+                    @php
+                      $isPlanChecked = (old('amc_plan_id') == $plan->id || (isset($selectedPlan) && ($selectedPlan == $plan->id || $selectedPlan == $plan->slug)) || ($loop->first && !old('amc_plan_id') && !$selectedPlan));
+                      $featuresList = is_array($plan->features) ? $plan->features : [];
+                    @endphp
+                    <label id="amcPlanCard_{{ $plan->id }}" class="amc-plan-card" style="display:flex; flex-direction:column; justify-content:space-between; height:100%; box-sizing:border-box; cursor:pointer; border:2px solid {{ $isPlanChecked ? '#00a896' : '#cbd5e1' }}; border-radius:10px; padding:16px; background:{{ $isPlanChecked ? '#f0fdfa' : '#ffffff' }}; box-shadow:{{ $isPlanChecked ? '0 4px 12px rgba(0, 168, 150, 0.12)' : 'none' }}; transition:all 0.2s ease;" onclick="highlightSelectedAmcPlan(this)">
+                      <div style="flex:1; display:flex; flex-direction:column;">
+                        <!-- Title & Custom Radio (No black dot) -->
+                        <div style="display:flex; align-items:center; gap:8px;">
+                          <div class="custom-radio-wrap" style="position:relative; width:16px; height:16px; flex-shrink:0;">
+                            <input type="radio" name="amc_plan_id" value="{{ $plan->id }}" {{ $isPlanChecked ? 'checked' : '' }} style="position:absolute; opacity:0; width:0; height:0; pointer-events:none;">
+                            <span class="custom-radio-circle" style="width:16px; height:16px; border-radius:50%; border:2px solid {{ $isPlanChecked ? '#00a896' : '#cbd5e1' }}; display:flex; align-items:center; justify-content:center; background:{{ $isPlanChecked ? '#00a896' : '#ffffff' }}; transition:all 0.2s ease; box-sizing:border-box;">
+                              <span class="custom-radio-dot" style="width:6px; height:6px; border-radius:50%; background:#ffffff; display:{{ $isPlanChecked ? 'block' : 'none' }};"></span>
+                            </span>
+                          </div>
+                          <div style="flex:1; min-width:0; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                            <span style="font-weight:700; font-size:0.95rem; color:#0f2744; line-height:1.3; word-break:break-word;">
+                              {{ $plan->name }}
+                            </span>
+                            @if($plan->is_popular)
+                              <span style="color:#f59e0b; font-size:0.95rem; line-height:1;" title="Featured">★</span>
+                            @endif
+                          </div>
+                        </div>
+
+                        <!-- Target Audience from CMS -->
+                        @if(!empty($plan->target_audience))
+                          <div style="font-size:0.78rem; color:#64748b; margin-top:8px; line-height:1.4;">
+                            {{ $plan->target_audience }}
+                          </div>
+                        @endif
+
+                        <!-- Top 3 Features from CMS with Tick Marks -->
+                        @if(!empty($featuresList))
+                          <div style="margin-top:10px; display:flex; flex-direction:column; gap:6px; flex:1;">
+                            @foreach(array_slice($featuresList, 0, 3) as $feature)
+                              <div style="display:flex; align-items:flex-start; gap:7px; font-size:0.75rem; color:#334155; line-height:1.35;">
+                                <span style="display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border-radius:50%; background:#dcfce7; color:#15803d; font-size:0.65rem; font-weight:800; flex-shrink:0; margin-top:1px;">✓</span>
+                                <span>{{ $feature }}</span>
+                              </div>
+                            @endforeach
+                          </div>
+                        @endif
+
+                        <!-- Contract Period from CMS (Only if set in CMS) -->
+                        @if(!empty($plan->price_period))
+                          <div style="font-size:0.78rem; font-weight:700; color:#0f766e; margin-top:12px;">
+                            {{ $plan->price_period }}
+                          </div>
+                        @endif
+                      </div>
+
+                      <!-- Bottom Details Button Row -->
+                      <div style="margin-top:12px; padding-top:8px; border-top:1px solid #f1f5f9; display:flex; justify-content:flex-end; align-items:center;">
+                        <button type="button" 
+                                onclick="event.stopPropagation(); openAmcPlanDetailsModal({{ $plan->id }})" 
+                                style="background:#f0fdfa; border:1px solid #99f6e4; color:#0f766e; font-size:0.75rem; font-weight:700; padding:4px 12px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all 0.15s ease;"
+                                onmouseenter="this.style.background='#00a896'; this.style.color='#ffffff';"
+                                onmouseleave="this.style.background='#f0fdfa'; this.style.color='#0f766e';">
+                          <span>Details ↗</span>
+                        </button>
+                      </div>
+                    </label>
+                  @endforeach
+                </div>
+
+                <!-- Select Contract Tenure (AMC Options) -->
+                <div style="margin-top:20px; padding-top:16px; border-top:1px dashed #99f6e4;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                    <div>
+                      <strong style="color:#0f2744; font-size:0.95rem; font-weight:700; display:flex; align-items:center; gap:6px;">
+                        <span>Select Contract Tenure</span>
+                        <span style="color:#ef4444;">*</span>
+                      </strong>
+                      <span style="font-size:0.75rem; color:#64748b; display:block; margin-top:2px;">
+                        Choose your preferred commitment period (renewals with guaranteed SLA terms)
+                      </span>
+                    </div>
+                    <div id="tenureDurationBadge" style="font-size:0.78rem; font-weight:700; color:#0f766e; background:#ffffff; padding:4px 10px; border-radius:6px; border:1px solid #99f6e4;">
+                      Contract Duration: <span id="tenureDurationText">1 Year</span>
+                    </div>
+                  </div>
+
+                  @php
+                    $tenureOptions = [
+                      ['value' => '3 Months', 'label' => '3 Months', 'sub' => 'Quarterly Trial', 'popular' => false],
+                      ['value' => '6 Months', 'label' => '6 Months', 'sub' => 'Half-Yearly Scope', 'popular' => false],
+                      ['value' => '1 Year', 'label' => '1 Year', 'sub' => 'Annual Agreement', 'popular' => true],
+                      ['value' => '2 Years', 'label' => '2 Years', 'sub' => 'Multi-Year Corporate', 'popular' => false],
+                      ['value' => '3 Years', 'label' => '3 Years', 'sub' => 'Long-Term Enterprise', 'popular' => false],
+                    ];
+                    $selectedTenure = old('contract_tenure', '1 Year');
+                  @endphp
+
+                  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px;">
+                    @foreach($tenureOptions as $opt)
+                      @php
+                        $isTenureActive = ($selectedTenure === $opt['value']);
+                      @endphp
+                      <label id="tenureCard_{{ Str::slug($opt['value']) }}" class="contract-tenure-card" style="display:flex; flex-direction:column; justify-content:space-between; cursor:pointer; border:2px solid {{ $isTenureActive ? '#00a896' : '#cbd5e1' }}; border-radius:8px; padding:10px 12px; background:{{ $isTenureActive ? '#f0fdfa' : '#ffffff' }}; box-shadow:{{ $isTenureActive ? '0 2px 8px rgba(0, 168, 150, 0.12)' : 'none' }}; transition:all 0.2s ease;" onclick="highlightSelectedTenure(this, '{{ $opt['value'] }}')">
+                        <div style="display:flex; align-items:flex-start; gap:8px;">
+                          <div class="tenure-radio-wrap" style="position:relative; width:16px; height:16px; flex-shrink:0; margin-top:2px;">
+                            <input type="radio" name="contract_tenure" value="{{ $opt['value'] }}" {{ $isTenureActive ? 'checked' : '' }} style="position:absolute; opacity:0; width:0; height:0; pointer-events:none;">
+                            <span class="tenure-radio-circle" style="width:16px; height:16px; border-radius:50%; border:2px solid {{ $isTenureActive ? '#00a896' : '#cbd5e1' }}; display:flex; align-items:center; justify-content:center; background:{{ $isTenureActive ? '#00a896' : '#ffffff' }}; transition:all 0.2s ease; box-sizing:border-box;">
+                              <span class="tenure-radio-dot" style="width:6px; height:6px; border-radius:50%; background:#ffffff; display:{{ $isTenureActive ? 'block' : 'none' }};"></span>
+                            </span>
+                          </div>
+                          <div style="flex:1; min-width:0;">
+                            <div style="font-weight:700; font-size:0.9rem; color:#0f2744; display:flex; align-items:center; gap:4px; flex-wrap:wrap; line-height:1.2;">
+                              <span>{{ $opt['label'] }}</span>
+                              @if($opt['popular'])
+                                <span style="font-size:0.62rem; background:#fef3c7; color:#b45309; padding:1px 5px; border-radius:4px; font-weight:700;">★ Popular</span>
+                              @endif
+                            </div>
+                            <div style="font-size:0.72rem; color:#64748b; margin-top:3px; line-height:1.25;">
+                              {{ $opt['sub'] }}
+                            </div>
+                          </div>
+                        </div>
+                      </label>
+                    @endforeach
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Step 3: Location Details (Bangladesh) -->
@@ -341,6 +487,10 @@
             </div>
 
             <div style="font-size:0.875rem; color:var(--text-main); margin-bottom:1.5rem;">
+              <div id="sidebarAmcTenureRow" style="display:{{ $selectedPlan ? 'flex' : 'none' }}; justify-content:space-between; margin-bottom:0.5rem; background:#f0fdfa; border:1px solid #99f6e4; padding:6px 10px; border-radius:6px;">
+                <span style="color:#0f766e; font-weight:600;">Contract Tenure:</span>
+                <strong id="sidebarAmcTenureValue" style="color:#0f2744;">{{ old('contract_tenure', '1 Year') }}</strong>
+              </div>
               <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
                 <span style="color:var(--text-muted);">Consultation & Dispatch:</span>
                 <strong style="color:var(--success);">Free Confirmation Call</strong>
@@ -433,6 +583,95 @@
     </div>
   </div>
 
+  <!-- ========================================================================= -->
+  <!-- AMC PACKAGE DETAILS & DELIVERABLES MODAL                                  -->
+  <!-- ========================================================================= -->
+  <div id="amcPlanDetailsModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:99999; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;" onclick="if(event.target === this) closeAmcPlanDetailsModal()">
+    <div style="background:#ffffff; border-radius:14px; max-width:640px; width:100%; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #e2e8f0; animation:modalPopIn 0.2s ease; overflow:hidden;">
+      
+      <!-- Modal Header -->
+      <div style="padding:16px 20px; border-bottom:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.15rem;">🏢</span>
+            <h3 style="margin:0; font-size:1.1rem; font-weight:800; color:#0f2744;">AMC Package Scope &amp; Deliverables</h3>
+          </div>
+          <p style="margin:2px 0 0; font-size:0.8rem; color:#64748b;">Review included maintenance scopes, routine shifts, and contract specifications</p>
+        </div>
+        <button type="button" onclick="closeAmcPlanDetailsModal()" style="background:none; border:none; font-size:1.3rem; color:#94a3b8; cursor:pointer; padding:0 4px; line-height:1;">✕</button>
+      </div>
+
+      <!-- Plan Selector Nav Tabs -->
+      <div style="display:flex; gap:6px; padding:10px 16px; background:#f1f5f9; border-bottom:1px solid #e2e8f0; overflow-x:auto;">
+        @foreach($amcPlans as $p)
+          <button type="button" 
+                  id="modalPlanTab_{{ $p->id }}" 
+                  onclick="selectModalPlan({{ $p->id }})" 
+                  class="modal-plan-tab-btn" 
+                  style="padding:6px 14px; font-size:0.82rem; font-weight:700; border-radius:8px; border:none; background:transparent; color:#64748b; cursor:pointer; white-space:nowrap; transition:all 0.2s ease;">
+            {{ $p->name }}
+          </button>
+        @endforeach
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div style="padding:20px; overflow-y:auto; flex:1;">
+        <!-- Dynamic Header info: 100% synchronized with CMS fields -->
+        <div style="background:#f0fdfa; border:1px solid #99f6e4; border-radius:10px; padding:14px 16px; margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+            <div style="flex:1; min-width:220px;">
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <h4 id="modalPlanName" style="margin:0; font-size:1.18rem; font-weight:800; color:#0f2744;"></h4>
+                <span id="modalPlanBadge" style="font-size:0.7rem; font-weight:800; background:#e6f8f5; color:#0f766e; border:1px solid #99f6e4; padding:2px 8px; border-radius:6px; display:none;">★ Featured</span>
+              </div>
+              <div style="margin-top:6px; font-size:0.82rem; color:#475569; line-height:1.45;">
+                <span style="font-weight:600; color:#64748b;">Target Audience:</span>
+                <span id="modalPlanTarget"></span>
+              </div>
+            </div>
+
+            <!-- Contract Period Box from CMS -->
+            <div id="modalPlanPeriodBox" style="text-align:right; background:#ffffff; border:1px solid #99f6e4; padding:6px 12px; border-radius:8px; min-width:130px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+              <div style="font-size:0.68rem; text-transform:uppercase; font-weight:700; color:#64748b; letter-spacing:0.04em;">Contract Period</div>
+              <div id="modalPlanPeriod" style="font-size:0.88rem; font-weight:800; color:#0f766e; margin-top:2px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scope of Deliverables List -->
+        <h5 style="margin:0 0 10px; font-size:0.85rem; font-weight:800; color:#0f2744; text-transform:uppercase; letter-spacing:0.04em; display:flex; justify-content:space-between; align-items:center;">
+          <span>Included Deliverables &amp; Engineering Audits</span>
+          <span id="modalPlanFeaturesCount" style="font-size:0.75rem; font-weight:600; color:#64748b; text-transform:none;"></span>
+        </h5>
+        <div id="modalPlanFeaturesList" style="display:flex; flex-direction:column; gap:8px;">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <div style="margin-top:16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px; font-size:0.8rem; color:#475569; display:flex; align-items:center; gap:10px;">
+          <span style="font-size:1.2rem;">🛡️</span>
+          <div>
+            <strong>Operations Guarantee:</strong> All scheduled routine shifts are handled by certified, background-verified engineers with full compliance sign-offs and digital work receipts.
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="padding:12px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <span style="font-size:0.78rem; color:#64748b;">
+          Transparent pricing confirmed upon site verification.
+        </span>
+        <div style="display:flex; gap:10px;">
+          <button type="button" onclick="closeAmcPlanDetailsModal()" class="btn btn-outline btn-sm" style="font-size:0.82rem; font-weight:600; padding:6px 14px; border:1px solid #cbd5e1; background:#ffffff; cursor:pointer;">
+            Close
+          </button>
+          <button type="button" id="modalSelectPlanBtn" onclick="selectAndApplyPlan()" class="btn btn-accent btn-sm" style="font-size:0.82rem; font-weight:700; padding:6px 18px; border-radius:6px; cursor:pointer; background:#00a896; color:#ffffff; border:none; box-shadow:0 2px 6px rgba(0, 168, 150, 0.25);">
+            Select This Package ✓
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <x-slot name="scripts">
     <script>
       window.BD_LOCATIONS = @json($bdLocations ?? []);
@@ -457,6 +696,307 @@
           openAuthModal();
         });
       @endif
+
+      function setBookingType(type) {
+        const typeInput = document.getElementById('bookServiceType');
+        const planBox = document.getElementById('amcPlanSelectionBox');
+        const btnOneTime = document.getElementById('btnTypeOneTime');
+        const btnAmc = document.getElementById('btnTypeAmc');
+        const engagementSelect = document.getElementById('bookEngagementModel');
+        const urgencySelect = document.getElementById('bookUrgency');
+
+        if (type === 'amc_contract') {
+          if (typeInput) typeInput.value = 'amc_contract';
+          if (planBox) planBox.style.display = 'block';
+          const tenureRow = document.getElementById('sidebarAmcTenureRow');
+          if (tenureRow) tenureRow.style.display = 'flex';
+          if (btnAmc) {
+            btnAmc.style.background = '#ffffff';
+            btnAmc.style.color = '#00a896';
+            btnAmc.style.fontWeight = '800';
+            btnAmc.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)';
+          }
+          if (btnOneTime) {
+            btnOneTime.style.background = 'transparent';
+            btnOneTime.style.color = '#64748b';
+            btnOneTime.style.fontWeight = '600';
+            btnOneTime.style.boxShadow = 'none';
+          }
+          if (engagementSelect && engagementSelect.value === 'One-Time') {
+            engagementSelect.value = 'Monthly AMC';
+          }
+          if (urgencySelect) {
+            urgencySelect.value = 'scheduled';
+          }
+        } else {
+          if (typeInput) typeInput.value = 'on_demand';
+          if (planBox) planBox.style.display = 'none';
+          const tenureRow = document.getElementById('sidebarAmcTenureRow');
+          if (tenureRow) tenureRow.style.display = 'none';
+          if (btnOneTime) {
+            btnOneTime.style.background = '#ffffff';
+            btnOneTime.style.color = '#0f2744';
+            btnOneTime.style.fontWeight = '800';
+            btnOneTime.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)';
+          }
+          if (btnAmc) {
+            btnAmc.style.background = 'transparent';
+            btnAmc.style.color = '#64748b';
+            btnAmc.style.fontWeight = '600';
+            btnAmc.style.boxShadow = 'none';
+          }
+          if (engagementSelect && engagementSelect.value !== 'One-Time') {
+            engagementSelect.value = 'One-Time';
+          }
+          if (urgencySelect && urgencySelect.value === 'scheduled') {
+            urgencySelect.value = 'standard';
+          }
+        }
+      }
+
+      function highlightSelectedAmcPlan(labelEl) {
+        document.querySelectorAll('.amc-plan-card').forEach(el => {
+          el.style.borderColor = '#cbd5e1';
+          el.style.background = '#ffffff';
+          el.style.boxShadow = 'none';
+          const circle = el.querySelector('.custom-radio-circle');
+          if (circle) {
+            circle.style.borderColor = '#cbd5e1';
+            circle.style.background = '#ffffff';
+          }
+          const dot = el.querySelector('.custom-radio-dot');
+          if (dot) dot.style.display = 'none';
+        });
+        if (labelEl) {
+          labelEl.style.borderColor = '#00a896';
+          labelEl.style.background = '#f0fdfa';
+          labelEl.style.boxShadow = '0 4px 12px rgba(0, 168, 150, 0.12)';
+          const circle = labelEl.querySelector('.custom-radio-circle');
+          if (circle) {
+            circle.style.borderColor = '#00a896';
+            circle.style.background = '#00a896';
+          }
+          const dot = labelEl.querySelector('.custom-radio-dot');
+          if (dot) dot.style.display = 'block';
+          const radio = labelEl.querySelector('input[type="radio"]');
+          if (radio) radio.checked = true;
+        }
+      }
+
+      function highlightSelectedTenure(labelEl, tenureValue) {
+        document.querySelectorAll('.contract-tenure-card').forEach(el => {
+          el.style.borderColor = '#cbd5e1';
+          el.style.background = '#ffffff';
+          el.style.boxShadow = 'none';
+          const circle = el.querySelector('.tenure-radio-circle');
+          if (circle) {
+            circle.style.borderColor = '#cbd5e1';
+            circle.style.background = '#ffffff';
+          }
+          const dot = el.querySelector('.tenure-radio-dot');
+          if (dot) dot.style.display = 'none';
+        });
+
+        if (labelEl) {
+          labelEl.style.borderColor = '#00a896';
+          labelEl.style.background = '#f0fdfa';
+          labelEl.style.boxShadow = '0 2px 8px rgba(0, 168, 150, 0.12)';
+          const circle = labelEl.querySelector('.tenure-radio-circle');
+          if (circle) {
+            circle.style.borderColor = '#00a896';
+            circle.style.background = '#00a896';
+          }
+          const dot = labelEl.querySelector('.tenure-radio-dot');
+          if (dot) dot.style.display = 'block';
+          const radio = labelEl.querySelector('input[type="radio"]');
+          if (radio) radio.checked = true;
+        }
+
+        updateContractDurationPreview(tenureValue);
+      }
+
+      function updateContractDurationPreview(selectedTenure = null) {
+        if (!selectedTenure) {
+          const checkedRadio = document.querySelector('input[name="contract_tenure"]:checked');
+          selectedTenure = checkedRadio ? checkedRadio.value : '1 Year';
+        }
+
+        const dateInput = document.getElementById('bookDate');
+        let startDate = dateInput && dateInput.value ? new Date(dateInput.value) : new Date();
+        if (isNaN(startDate.getTime())) {
+          startDate = new Date();
+        }
+
+        let endDate = new Date(startDate);
+        if (selectedTenure === '3 Months') {
+          endDate.setMonth(endDate.getMonth() + 3);
+        } else if (selectedTenure === '6 Months') {
+          endDate.setMonth(endDate.getMonth() + 6);
+        } else if (selectedTenure === '2 Years') {
+          endDate.setFullYear(endDate.getFullYear() + 2);
+        } else if (selectedTenure === '3 Years') {
+          endDate.setFullYear(endDate.getFullYear() + 3);
+        } else {
+          endDate.setFullYear(endDate.getFullYear() + 1);
+        }
+
+        const options = { month: 'short', day: 'numeric', year: 'numeric' };
+        const startStr = startDate.toLocaleDateString('en-US', options);
+        const endStr = endDate.toLocaleDateString('en-US', options);
+
+        const badgeText = document.getElementById('tenureDurationText');
+        if (badgeText) {
+          badgeText.textContent = `${selectedTenure} (${startStr} – ${endStr})`;
+        }
+
+        const sidebarTenureVal = document.getElementById('sidebarAmcTenureValue');
+        if (sidebarTenureVal) {
+          sidebarTenureVal.textContent = selectedTenure;
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const dateInput = document.getElementById('bookDate');
+        if (dateInput) {
+          dateInput.addEventListener('change', () => updateContractDurationPreview());
+        }
+        updateContractDurationPreview();
+
+        const engagementSelect = document.getElementById('bookEngagementModel');
+        const urgencySelect = document.getElementById('bookUrgency');
+
+        if (engagementSelect) {
+          engagementSelect.addEventListener('change', function() {
+            if (this.value === 'Monthly AMC' || this.value === 'Yearly' || this.value === 'Daily' || this.value === 'Weekly') {
+              setBookingType('amc_contract');
+            } else if (this.value === 'One-Time') {
+              setBookingType('on_demand');
+            }
+          });
+        }
+
+        if (urgencySelect) {
+          urgencySelect.addEventListener('change', function() {
+            if (this.value === 'scheduled') {
+              setBookingType('amc_contract');
+            }
+          });
+        }
+      });
+
+      window.AMC_PLANS_DATA = @json($amcPlans);
+      let currentModalPlanId = null;
+
+      function openAmcPlanDetailsModal(planId = null) {
+        if (!window.AMC_PLANS_DATA || window.AMC_PLANS_DATA.length === 0) return;
+
+        if (!planId) {
+          const checkedRadio = document.querySelector('input[name="amc_plan_id"]:checked');
+          planId = checkedRadio ? parseInt(checkedRadio.value) : window.AMC_PLANS_DATA[0].id;
+        }
+
+        selectModalPlan(planId);
+
+        const modal = document.getElementById('amcPlanDetailsModal');
+        if (modal) {
+          modal.style.display = 'flex';
+        }
+      }
+
+      function closeAmcPlanDetailsModal() {
+        const modal = document.getElementById('amcPlanDetailsModal');
+        if (modal) {
+          modal.style.display = 'none';
+        }
+      }
+
+      function selectModalPlan(planId) {
+        currentModalPlanId = planId;
+        const plan = window.AMC_PLANS_DATA.find(p => p.id === planId) || window.AMC_PLANS_DATA[0];
+        if (!plan) return;
+
+        document.querySelectorAll('.modal-plan-tab-btn').forEach(btn => {
+          btn.style.background = 'transparent';
+          btn.style.color = '#64748b';
+          btn.style.boxShadow = 'none';
+        });
+        const activeTab = document.getElementById('modalPlanTab_' + plan.id);
+        if (activeTab) {
+          activeTab.style.background = '#00a896';
+          activeTab.style.color = '#ffffff';
+          activeTab.style.boxShadow = '0 2px 6px rgba(0, 168, 150, 0.25)';
+        }
+
+        document.getElementById('modalPlanName').textContent = plan.name;
+
+        const targetEl = document.getElementById('modalPlanTarget');
+        if (targetEl) {
+          targetEl.textContent = plan.target_audience || 'All Commercial & Residential Facilities';
+        }
+
+        const periodBox = document.getElementById('modalPlanPeriodBox');
+        if (periodBox) {
+          if (plan.price_period) {
+            document.getElementById('modalPlanPeriod').textContent = plan.price_period;
+            periodBox.style.display = 'block';
+          } else {
+            periodBox.style.display = 'none';
+          }
+        }
+
+        const badgeEl = document.getElementById('modalPlanBadge');
+        if (badgeEl) {
+          if (plan.is_popular || plan.badge) {
+            badgeEl.textContent = plan.badge || '★ Featured';
+            badgeEl.style.display = 'inline-block';
+          } else {
+            badgeEl.style.display = 'none';
+          }
+        }
+
+        const features = Array.isArray(plan.features) ? plan.features : [];
+        const countEl = document.getElementById('modalPlanFeaturesCount');
+        if (countEl) {
+          countEl.textContent = features.length + ' Deliverables';
+        }
+
+        const listEl = document.getElementById('modalPlanFeaturesList');
+        listEl.innerHTML = '';
+        if (features.length === 0) {
+          listEl.innerHTML = '<div style="font-size:0.82rem; color:#64748b; padding:8px 0;">Custom preventive maintenance scopes verified during on-site audit.</div>';
+        } else {
+          features.forEach(f => {
+            const item = document.createElement('div');
+            item.style.cssText = 'display:flex; align-items:flex-start; gap:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; font-size:0.83rem; color:#1e293b;';
+            item.innerHTML = `
+              <span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:#dcfce7; color:#15803d; font-size:0.75rem; font-weight:800; flex-shrink:0; margin-top:1px;">✓</span>
+              <span style="flex:1; line-height:1.45;">${f}</span>
+            `;
+            listEl.appendChild(item);
+          });
+        }
+      }
+
+      function selectAndApplyPlan() {
+        if (!currentModalPlanId) return;
+
+        const radio = document.querySelector(`input[name="amc_plan_id"][value="${currentModalPlanId}"]`);
+        if (radio) {
+          radio.checked = true;
+          const label = radio.closest('.amc-plan-card');
+          if (label) {
+            highlightSelectedAmcPlan(label);
+          }
+        }
+
+        closeAmcPlanDetailsModal();
+      }
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeAmcPlanDetailsModal();
+        }
+      });
     </script>
     <script src="{{ asset('assets/js/booking.js') }}"></script>
   </x-slot>

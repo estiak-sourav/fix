@@ -242,8 +242,6 @@ class AdminCmsController extends Controller
 
     /**
      * Update service details via UpdateServiceAction.
-    /**
-     * Update service details via UpdateServiceAction.
      */
     public function updateService(Service $service, UpdateServiceRequest $request, UpdateServiceAction $action): RedirectResponse
     {
@@ -404,8 +402,8 @@ class AdminCmsController extends Controller
 
         $validated['price'] = 0;
         $validated['sla_response_time'] = 'Standard SLA';
-        $validated['price_period'] = $validated['price_period'] ?? 'Negotiable';
-        $validated['tier'] = $validated['tier'] ?? 'standard';
+        $validated['price_period'] = $request->filled('price_period') ? trim((string) $request->input('price_period')) : null;
+        $validated['tier'] = $request->filled('tier') ? trim((string) $request->input('tier')) : null;
         $validated['button_text'] = $validated['button_text'] ?? 'Choose Plan';
         $validated['slug'] = Str::slug($validated['name']);
         $validated['is_popular'] = $request->boolean('is_popular');
@@ -441,9 +439,10 @@ class AdminCmsController extends Controller
         $validated['is_popular'] = $request->boolean('is_popular');
         $validated['is_active'] = $request->boolean('is_active');
 
-        if (! empty($validated['features'])) {
-            $validated['features'] = array_values(array_filter(array_map('trim', explode("\n", (string) $validated['features']))));
-        }
+        $validated['features'] = ! empty($validated['features'])
+            ? array_values(array_filter(array_map('trim', explode("\n", (string) $validated['features']))))
+            : [];
+        $validated['price_period'] = $request->filled('price_period') ? trim((string) $request->input('price_period')) : null;
 
         $plan->update($validated);
         ActivityLogService::logService('amc.update', "Updated AMC Plan '{$plan->name}'.", $plan);

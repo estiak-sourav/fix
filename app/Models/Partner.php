@@ -100,18 +100,25 @@ class Partner extends Authenticatable
         return $this->hasMany(PartnerPayout::class)->latest();
     }
 
+    public function amcShifts(): HasMany
+    {
+        return $this->hasMany(AmcShift::class)->orderBy('scheduled_date');
+    }
+
     public function getTotalEarnedAttribute(): float
     {
         if ($this->earning_model === 'monthly') {
             return (float) ($this->payout_rate ?? 0);
         }
 
-        $completedBookings = $this->bookings()
-            ->where(function ($q) {
-                $q->where('status', 'completed')
-                    ->orWhere('partner_job_status', 'completed');
-            })
-            ->get();
+        $completedBookings = $this->relationLoaded('bookings')
+            ? $this->bookings->filter(fn ($b) => $b->status === 'completed' || $b->partner_job_status === 'completed')
+            : $this->bookings()
+                ->where(function ($q) {
+                    $q->where('status', 'completed')
+                        ->orWhere('partner_job_status', 'completed');
+                })
+                ->get();
 
         return (float) $completedBookings->sum(function ($b) {
             return $this->calculateBookingEarning($b);
@@ -123,16 +130,19 @@ class Partner extends Authenticatable
      */
     public function getCashCollectedByCrewAttribute(): float
     {
-        return (float) $this->bookings()
-            ->where(function ($q) {
-                $q->where('status', 'completed')
-                    ->orWhere('partner_job_status', 'completed');
-            })
-            ->where('payment_collected_by', 'crew')
-            ->get()
-            ->sum(function ($b) {
-                return (float) ($b->collected_amount ?? $b->final_cost ?? $b->estimated_cost ?? 0);
-            });
+        $cashBookings = $this->relationLoaded('bookings')
+            ? $this->bookings->filter(fn ($b) => ($b->status === 'completed' || $b->partner_job_status === 'completed') && $b->payment_collected_by === 'crew')
+            : $this->bookings()
+                ->where(function ($q) {
+                    $q->where('status', 'completed')
+                        ->orWhere('partner_job_status', 'completed');
+                })
+                ->where('payment_collected_by', 'crew')
+                ->get();
+
+        return (float) $cashBookings->sum(function ($b) {
+            return (float) ($b->collected_amount ?? $b->final_cost ?? $b->estimated_cost ?? 0);
+        });
     }
 
     /**
@@ -140,28 +150,33 @@ class Partner extends Authenticatable
      */
     public function getPaidToCrewAttribute(): float
     {
-        $payoutSum = (float) $this->payouts()
-            ->where(function ($q) {
-                $q->where('direction', 'admin_to_partner')
-                    ->orWhereNull('direction');
-            })
-            ->where('status', 'paid')
-            ->sum('amount');
+        $payoutSum = $this->relationLoaded('payouts')
+            ? (float) $this->payouts
+                ->filter(fn ($p) => ($p->direction === 'admin_to_partner' || $p->direction === null) && $p->status === 'paid')
+                ->sum('amount')
+            : (float) $this->payouts()
+                ->where(function ($q) {
+                    $q->where('direction', 'admin_to_partner')
+                        ->orWhereNull('direction');
+                })
+                ->where('status', 'paid')
+                ->sum('amount');
 
         // Also include any legacy bookings marked as paid where no payout transaction exists
         if ($payoutSum === 0.0) {
-            $legacySum = (float) $this->bookings()
-                ->where('partner_payout_status', 'paid')
-                ->where(function ($q) {
-                    $q->where('status', 'completed')
-                        ->orWhere('partner_job_status', 'completed');
-                })
-                ->get()
-                ->sum(function ($b) {
-                    return (float) ($b->partner_payout_amount ?? $this->calculateBookingEarning($b));
-                });
+            $legacyBookings = $this->relationLoaded('bookings')
+                ? $this->bookings->filter(fn ($b) => $b->partner_payout_status === 'paid' && ($b->status === 'completed' || $b->partner_job_status === 'completed'))
+                : $this->bookings()
+                    ->where('partner_payout_status', 'paid')
+                    ->where(function ($q) {
+                        $q->where('status', 'completed')
+                            ->orWhere('partner_job_status', 'completed');
+                    })
+                    ->get();
 
-            return $legacySum;
+            return (float) $legacyBookings->sum(function ($b) {
+                return (float) ($b->partner_payout_amount ?? $this->calculateBookingEarning($b));
+            });
         }
 
         return $payoutSum;
@@ -172,10 +187,14 @@ class Partner extends Authenticatable
      */
     public function getPaidByCrewAttribute(): float
     {
-        return (float) $this->payouts()
-            ->where('direction', 'partner_to_admin')
-            ->where('status', 'paid')
-            ->sum('amount');
+        return $this->relationLoaded('payouts')
+            ? (float) $this->payouts
+                ->filter(fn ($p) => $p->direction === 'partner_to_admin' && $p->status === 'paid')
+                ->sum('amount')
+            : (float) $this->payouts()
+                ->where('direction', 'partner_to_admin')
+                ->where('status', 'paid')
+                ->sum('amount');
     }
 
     public function getTotalPaidAttribute(): float

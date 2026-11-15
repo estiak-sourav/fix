@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -46,6 +47,7 @@ class Booking extends Model
         'cancelled_at',
         'contract_start_date',
         'contract_end_date',
+        'contract_tenure',
         'agreement_document_path',
         'amc_package_notes',
         'contract_status',
@@ -73,6 +75,16 @@ class Booking extends Model
         'collected_amount',
         'payment_reference',
         'payment_collected_at',
+        'cancellation_requested',
+        'cancellation_requested_at',
+        'cancellation_requested_by',
+        'cancellation_request_reason',
+        'cancellation_review_status',
+        'cancellation_review_notes',
+        'cancellation_reviewed_at',
+        'cancellation_reviewed_by_admin_id',
+        'crew_cancellation_reason',
+        'crew_cancellation_requested_at',
     ];
 
     protected function casts(): array
@@ -101,6 +113,10 @@ class Booking extends Model
             'cancelled_at' => 'datetime',
             'estimated_arrival_at' => 'datetime',
             'partner_assigned_at' => 'datetime',
+            'cancellation_requested' => 'boolean',
+            'cancellation_requested_at' => 'datetime',
+            'cancellation_reviewed_at' => 'datetime',
+            'crew_cancellation_requested_at' => 'datetime',
         ];
     }
 
@@ -152,6 +168,120 @@ class Booking extends Model
     public function amcInvoices(): HasMany
     {
         return $this->hasMany(AmcInvoice::class)->orderBy('due_date');
+    }
+
+    public function amcShifts(): HasMany
+    {
+        return $this->hasMany(AmcShift::class)->orderBy('scheduled_date')->orderBy('shift_number');
+    }
+
+    public function amcNotes(): HasMany
+    {
+        return $this->hasMany(AmcNote::class)->latest();
+    }
+
+    public function getPendingShiftsCountAttribute(): int
+    {
+        return $this->amcShifts()->whereIn('status', ['scheduled', 'on_the_way', 'in_progress'])->count();
+    }
+
+    public function getCompletedShiftsCountAttribute(): int
+    {
+        return $this->amcShifts()->where('status', 'completed')->count();
+    }
+
+    public function getCancelledShiftsCountAttribute(): int
+    {
+        return $this->amcShifts()->whereIn('status', ['cancelled', 'skipped'])->count();
+    }
+
+    public function getNextUpcomingShiftAttribute(): ?AmcShift
+    {
+        return $this->amcShifts()
+            ->whereIn('status', ['scheduled', 'on_the_way', 'in_progress'])
+            ->orderBy('scheduled_date')
+            ->first();
+    }
+
+    /**
+     * Generate scheduled routine maintenance shifts for this AMC contract.
+     */
+    public function generateAmcShifts(int $customCount = 0): int
+    {
+        if (! $this->is_amc) {
+            return 0;
+        }
+
+        $startDate = $this->contract_start_date ? Carbon::parse($this->contract_start_date) : ($this->preferred_date ? Carbon::parse($this->preferred_date) : today());
+        $endDate = $this->contract_end_date ? Carbon::parse($this->contract_end_date) : $startDate->copy()->addYear();
+        $cycle = $this->billing_cycle ?: 'monthly';
+
+        $dates = [];
+        $current = $startDate->copy();
+
+        if ($customCount > 0) {
+            for ($i = 0; $i < $customCount; $i++) {
+                $dates[] = $current->copy();
+                match ($cycle) {
+                    'weekly' => $current->addWeek(),
+                    'half_monthly' => $current->addDays(15),
+                    'quarterly' => $current->addMonths(3),
+                    default => $current->addMonth(),
+                };
+            }
+        } else {
+            // Generate across contract tenure
+            while ($current->lte($endDate) && count($dates) < 52) {
+                $dates[] = $current->copy();
+                match ($cycle) {
+                    'weekly' => $current->addWeek(),
+                    'half_monthly' => $current->addDays(15),
+                    'quarterly' => $current->addMonths(3),
+                    'yearly' => $current->addYear(),
+                    default => $current->addMonth(),
+                };
+            }
+        }
+
+        if (empty($dates)) {
+            $dates[] = $startDate->copy();
+        }
+
+        $created = 0;
+        $existingCount = $this->amcShifts()->count();
+
+        foreach ($dates as $idx => $date) {
+            $shiftNum = $existingCount + $idx + 1;
+            $exists = $this->amcShifts()->whereDate('scheduled_date', $date->toDateString())->exists();
+            if ($exists) {
+                continue;
+            }
+
+            $this->amcShifts()->create([
+                'partner_id' => $this->partner_id,
+                'assigned_partner_crew_id' => $this->assigned_partner_crew_id,
+                'shift_number' => $shiftNum,
+                'title' => "Routine Maintenance Shift #{$shiftNum}",
+                'scheduled_date' => $date->toDateString(),
+                'scheduled_time_slot' => $this->preferred_time_slot ?: 'Morning (9:00 AM - 12:00 PM)',
+                'arrival_window' => $this->arrival_window ?: ($this->preferred_time_slot ?: '9:00 AM - 12:00 PM'),
+                'status' => 'scheduled',
+            ]);
+            $created++;
+        }
+
+        return $created;
+    }
+
+    /**
+     * Reassign all future pending shifts to a new partner/crew.
+     */
+    public function reassignAmcPartner(?int $newPartnerId): void
+    {
+        $this->update(['partner_id' => $newPartnerId]);
+        $this->amcShifts()
+            ->whereIn('status', ['scheduled', 'reassignment_needed'])
+            ->update(['partner_id' => $newPartnerId]);
     }
 
     public function getIsAmcAttribute(): bool

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminNotification;
+use App\Models\AmcShift;
 use App\Models\Booking;
 use App\Models\BookingStatusLog;
 use App\Models\PartnerNotification;
@@ -73,7 +74,7 @@ class PartnerJobController extends Controller
             abort(403, 'Unauthorized access to this booking assignment.');
         }
 
-        $booking->load(['service.category', 'amcPlan', 'assignedCrew', 'statusLogs']);
+        $booking->load(['service.category', 'amcPlan', 'assignedCrew', 'statusLogs', 'amcShifts.partner', 'amcNotes']);
 
         $internalCrews = $partner->isVendor()
             ? $partner->crews()->where('is_active', true)->get()
@@ -509,5 +510,150 @@ class PartnerJobController extends Controller
         ]);
 
         return back()->with('success', 'Internal field crew assigned to this job.');
+    }
+
+    /**
+     * Mark an individual AMC routine shift as completed by crew.
+     */
+    public function completeAmcShift(Request $request, Booking $booking, AmcShift $shift): RedirectResponse
+    {
+        $partner = Auth::guard('partner')->user();
+
+        if ((int) $booking->partner_id !== (int) $partner->id) {
+            abort(403);
+        }
+
+        if ((int) $shift->booking_id !== (int) $booking->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'completion_notes' => ['nullable', 'string', 'max:1500'],
+        ]);
+
+        $shift->update([
+            'status' => 'completed',
+            'completed_at' => now(),
+            'completion_notes' => $validated['completion_notes'] ?? 'Shift completed as per AMC routine schedule.',
+            'crew_notes' => $validated['completion_notes'] ?? null,
+        ]);
+
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'from_status' => $booking->status,
+            'to_status' => $booking->status,
+            'comment' => "Partner '{$partner->company_name}' completed AMC Shift #{$shift->shift_number} ({$shift->scheduled_date->format('M d, Y')}).".(! empty($validated['completion_notes']) ? " Remarks: {$validated['completion_notes']}" : ''),
+            'is_customer_visible' => true,
+        ]);
+
+        AdminNotification::create([
+            'type' => 'order_status',
+            'title' => "AMC Shift #{$shift->shift_number} Completed: #{$booking->booking_number}",
+            'message' => "Partner '{$partner->company_name}' completed Shift #{$shift->shift_number} for AMC #{$booking->booking_number}.",
+            'booking_id' => $booking->id,
+            'action_url' => route('admin.bookings.show', $booking),
+            'is_read' => false,
+            'sound_played' => false,
+        ]);
+
+        return back()->with('success', "AMC Shift #{$shift->shift_number} marked as COMPLETED successfully.");
+    }
+
+    /**
+     * Cancel / flag an individual AMC shift with reason by crew.
+     */
+    public function cancelAmcShift(Request $request, Booking $booking, AmcShift $shift): RedirectResponse
+    {
+        $partner = Auth::guard('partner')->user();
+
+        if ((int) $booking->partner_id !== (int) $partner->id) {
+            abort(403);
+        }
+
+        if ((int) $shift->booking_id !== (int) $booking->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'cancellation_reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $shift->update([
+            'status' => 'cancelled',
+            'cancelled_by' => 'partner',
+            'cancellation_reason' => $validated['cancellation_reason'],
+        ]);
+
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'from_status' => $booking->status,
+            'to_status' => $booking->status,
+            'comment' => "Partner '{$partner->company_name}' cancelled AMC Shift #{$shift->shift_number}: {$validated['cancellation_reason']}",
+            'is_customer_visible' => true,
+        ]);
+
+        AdminNotification::create([
+            'type' => 'emergency_alert',
+            'title' => "AMC Shift #{$shift->shift_number} Cancelled by Crew",
+            'message' => "Partner '{$partner->company_name}' cancelled Shift #{$shift->shift_number} for AMC #{$booking->booking_number}. Reason: {$validated['cancellation_reason']}",
+            'booking_id' => $booking->id,
+            'action_url' => route('admin.bookings.show', $booking),
+            'is_read' => false,
+            'sound_played' => false,
+        ]);
+
+        return back()->with('success', "Shift #{$shift->shift_number} has been marked as cancelled.");
+    }
+
+    /**
+     * Cancel / relinquish the entire AMC assignment by crew so admin can reassign to another crew.
+     */
+    public function cancelAmcDealAssignment(Request $request, Booking $booking): RedirectResponse
+    {
+        $partner = Auth::guard('partner')->user();
+
+        if ((int) $booking->partner_id !== (int) $partner->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'crew_cancellation_reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $reason = $validated['crew_cancellation_reason'];
+
+        $booking->update([
+            'crew_cancellation_reason' => $reason,
+            'crew_cancellation_requested_at' => now(),
+            'partner_job_status' => 'declined',
+        ]);
+
+        // Mark remaining scheduled shifts for reassignment
+        $booking->amcShifts()
+            ->where('status', 'scheduled')
+            ->update([
+                'status' => 'reassignment_needed',
+                'admin_notes' => "Previous crew ({$partner->company_name}) relinquished assignment: {$reason}",
+            ]);
+
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'from_status' => $booking->status,
+            'to_status' => $booking->status,
+            'comment' => "Partner '{$partner->company_name}' relinquished AMC Contract assignment: {$reason}. Deal awaiting admin reassignment.",
+            'is_customer_visible' => false,
+        ]);
+
+        AdminNotification::create([
+            'type' => 'emergency_alert',
+            'title' => "Crew Relinquished AMC Contract #{$booking->booking_number}",
+            'message' => "Partner '{$partner->company_name}' cancelled assignment for AMC #{$booking->booking_number}. Reason: {$reason}. Immediate reassignment required.",
+            'booking_id' => $booking->id,
+            'action_url' => route('admin.bookings.show', $booking),
+            'is_read' => false,
+            'sound_played' => false,
+        ]);
+
+        return redirect()->route('partner.jobs.index')->with('success', 'You have relinquished assignment for this AMC Contract. FIX Operations has been alerted.');
     }
 }

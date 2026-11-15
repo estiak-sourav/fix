@@ -6,7 +6,9 @@ use App\Actions\Booking\UpdateBookingStatusAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateBookingStatusRequest;
 use App\Models\AmcInvoice;
+use App\Models\AmcNote;
 use App\Models\AmcPlan;
+use App\Models\AmcShift;
 use App\Models\Booking;
 use App\Models\BookingStatusLog;
 use App\Models\OutreachTask;
@@ -168,7 +170,21 @@ class AdminBookingController extends Controller
      */
     public function show(Booking $booking): View
     {
-        $booking->load(['user', 'service', 'amcPlan', 'statusLogs.changedByUser', 'statusLogs.changedByAdmin', 'amcInvoices.collectedByAdmin']);
+        $booking->load([
+            'user',
+            'service',
+            'amcPlan',
+            'partner',
+            'assignedCrew',
+            'statusLogs.changedByUser',
+            'statusLogs.changedByAdmin',
+            'amcInvoices.collectedByAdmin',
+            'amcShifts.partner',
+            'amcShifts.assignedCrew',
+            'amcNotes.user',
+            'amcNotes.admin',
+            'amcNotes.partner',
+        ]);
 
         $fieldCrews = User::whereIn('role', ['technician', 'vendor', 'partner'])
             ->orWhere('role', 'admin')
@@ -305,6 +321,7 @@ class AdminBookingController extends Controller
             'fieldCrews' => $crewOptions,
             'matchingCount' => $matchingPartners->count(),
             'amcPlans' => $amcPlans,
+            'enlistedPartners' => $enlistedPartners,
         ]);
     }
 
@@ -584,6 +601,15 @@ class AdminBookingController extends Controller
 
         $action->execute($booking, $payload, $admin);
 
+        if ($booking->is_amc) {
+            if ($booking->amcShifts()->count() === 0) {
+                $booking->generateAmcShifts();
+            }
+            if ($partner) {
+                $booking->reassignAmcPartner($partner->id);
+            }
+        }
+
         if ($partner) {
             $booking->refresh();
             NotificationDispatcher::notifyPartnerJobAssigned($booking);
@@ -594,7 +620,7 @@ class AdminBookingController extends Controller
                 route('admin.bookings.show', $booking),
                 [
                     'Order' => "#{$booking->booking_number}",
-                    'Service' => $booking->service?->name ?? 'Facility Service',
+                    'Service' => $booking->service?->title ?? $booking->service?->name ?? ($booking->amcPlan?->name ?? 'Facility Service'),
                     'Partner' => $partner->company_name,
                     'Arrival Window' => $booking->arrival_window ?: 'Coordinated via phone',
                 ]
@@ -853,6 +879,15 @@ class AdminBookingController extends Controller
 
         $action->execute($booking, $payload, $admin);
 
+        if ($booking->is_amc) {
+            if ($booking->amcShifts()->count() === 0) {
+                $booking->generateAmcShifts();
+            }
+            if ($partner && $oldPartnerId !== (int) $partner->id) {
+                $booking->reassignAmcPartner($partner->id);
+            }
+        }
+
         $booking->refresh();
         if ($partner && $oldPartnerId !== (int) $partner->id) {
             NotificationDispatcher::notifyPartnerJobAssigned($booking);
@@ -882,30 +917,47 @@ class AdminBookingController extends Controller
     {
         $validated = $request->validate([
             'amc_plan_id' => ['required', 'exists:amc_plans,id'],
-            'contract_start_date' => ['required', 'date'],
-            'contract_end_date' => ['required', 'date', 'after_or_equal:contract_start_date'],
-            'billing_cycle' => ['nullable', 'in:daily,weekly,half_monthly,monthly,quarterly,yearly'],
+            'contract_tenure' => ['nullable', 'string', 'max:50'],
+            'contract_start_date' => ['nullable', 'date'],
+            'contract_end_date' => ['nullable', 'date'],
+            'billing_cycle' => ['nullable', 'string', 'in:daily,weekly,half_monthly,monthly,quarterly,half_yearly,annually,yearly'],
             'recurring_amount' => ['nullable', 'numeric', 'min:0'],
             'billing_day' => ['nullable', 'integer', 'between:1,31'],
             'first_bill_due_date' => ['nullable', 'date'],
             'contract_cost' => ['nullable', 'numeric', 'min:0'],
             'amc_package_notes' => ['nullable', 'string', 'max:2000'],
             'agreement_file' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:10240'],
+            'agreement_document' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:10240'],
         ]);
 
         $admin = Auth::guard('admin')->user();
         $billingCycle = $validated['billing_cycle'] ?? $booking->billing_cycle ?? 'monthly';
         $recurringAmount = isset($validated['recurring_amount']) && $validated['recurring_amount'] !== ''
             ? (float) $validated['recurring_amount']
-            : (isset($validated['contract_cost']) ? (float) $validated['contract_cost'] : 0);
+            : (isset($validated['contract_cost']) && $validated['contract_cost'] !== '' ? (float) $validated['contract_cost'] : (float) ($booking->final_cost ?: $booking->estimated_cost ?: 0));
+
         $billingDay = ! empty($validated['billing_day']) ? (int) $validated['billing_day'] : 1;
-        $firstDue = ! empty($validated['first_bill_due_date']) ? $validated['first_bill_due_date'] : $validated['contract_start_date'];
+
+        $startDate = ! empty($validated['contract_start_date'])
+            ? Carbon::parse($validated['contract_start_date'])->toDateString()
+            : ($booking->contract_start_date ? $booking->contract_start_date->toDateString() : ($booking->preferred_date ? $booking->preferred_date->toDateString() : today()->toDateString()));
+
+        $endDate = ! empty($validated['contract_end_date'])
+            ? Carbon::parse($validated['contract_end_date'])->toDateString()
+            : ($booking->contract_end_date ? $booking->contract_end_date->toDateString() : Carbon::parse($startDate)->addYear()->toDateString());
+
+        if (Carbon::parse($endDate)->lte(Carbon::parse($startDate))) {
+            $endDate = Carbon::parse($startDate)->addYear()->toDateString();
+        }
+
+        $firstDue = ! empty($validated['first_bill_due_date']) ? $validated['first_bill_due_date'] : $startDate;
 
         $updates = [
             'amc_plan_id' => $validated['amc_plan_id'],
             'service_type' => 'amc_contract',
-            'contract_start_date' => $validated['contract_start_date'],
-            'contract_end_date' => $validated['contract_end_date'],
+            'contract_tenure' => $validated['contract_tenure'] ?? $booking->contract_tenure,
+            'contract_start_date' => $startDate,
+            'contract_end_date' => $endDate,
             'contract_status' => 'active',
             'billing_cycle' => $billingCycle,
             'recurring_amount' => $recurringAmount,
@@ -920,8 +972,9 @@ class AdminBookingController extends Controller
             $updates['final_cost'] = $recurringAmount;
         }
 
-        if ($request->hasFile('agreement_file')) {
-            $path = $request->file('agreement_file')->store('agreements', 'public');
+        $docFile = $request->file('agreement_file') ?? $request->file('agreement_document');
+        if ($docFile) {
+            $path = $docFile->store('agreements', 'public');
             $updates['agreement_document_path'] = $path;
         }
 
@@ -929,13 +982,14 @@ class AdminBookingController extends Controller
 
         // Generate initial recurring invoice if none exist
         if ($booking->amcInvoices()->count() === 0 && $recurringAmount > 0) {
-            $periodStart = Carbon::parse($validated['contract_start_date']);
+            $periodStart = Carbon::parse($startDate);
             $periodEnd = match ($billingCycle) {
                 'daily' => $periodStart->copy()->addDay(),
                 'weekly' => $periodStart->copy()->addWeek(),
                 'half_monthly' => $periodStart->copy()->addDays(15),
                 'quarterly' => $periodStart->copy()->addMonths(3),
-                'yearly' => $periodStart->copy()->addYear(),
+                'half_yearly' => $periodStart->copy()->addMonths(6),
+                'annually', 'yearly' => $periodStart->copy()->addYear(),
                 default => $periodStart->copy()->addMonth(),
             };
 
@@ -949,6 +1003,10 @@ class AdminBookingController extends Controller
                 'status' => 'unpaid',
                 'notes' => 'Initial billing cycle invoice scheduled upon contract activation.',
             ]);
+        }
+
+        if ($booking->amcShifts()->count() === 0) {
+            $booking->generateAmcShifts();
         }
 
         $plan = AmcPlan::find($validated['amc_plan_id']);
@@ -967,8 +1025,8 @@ class AdminBookingController extends Controller
         ActivityLogService::logBooking('amc.contract.activated', "Activated AMC Contract ({$planName}) for Work Order #{$booking->booking_number}.", $booking, [
             'booking_number' => $booking->booking_number,
             'amc_plan' => $planName,
-            'start_date' => $validated['contract_start_date'],
-            'end_date' => $validated['contract_end_date'],
+            'start_date' => $startDate,
+            'end_date' => $endDate,
             'billing_cycle' => $billingCycle,
             'recurring_amount' => $recurringAmount,
             'has_agreement_file' => ! empty($updates['agreement_document_path']),
@@ -1088,5 +1146,222 @@ class AdminBookingController extends Controller
         ]);
 
         return redirect()->back()->with('success', "Booking #{$booking->booking_number} updated to ".ucfirst(str_replace('_', ' ', $request->validated('status'))));
+    }
+
+    /**
+     * Add an individual routine maintenance shift to an AMC contract.
+     */
+    public function addAmcShift(Request $request, Booking $booking): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'scheduled_date' => ['required', 'date'],
+            'scheduled_time_slot' => ['nullable', 'string', 'max:100'],
+            'partner_id' => ['nullable', 'exists:partners,id'],
+            'admin_notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $nextNumber = ($booking->amcShifts()->max('shift_number') ?? 0) + 1;
+        $partnerId = $validated['partner_id'] ?? $booking->partner_id;
+
+        $shift = $booking->amcShifts()->create([
+            'partner_id' => $partnerId,
+            'shift_number' => $nextNumber,
+            'title' => $validated['title'],
+            'scheduled_date' => $validated['scheduled_date'],
+            'scheduled_time_slot' => $validated['scheduled_time_slot'] ?? 'Morning (9:00 AM - 12:00 PM)',
+            'status' => 'scheduled',
+            'admin_notes' => $validated['admin_notes'] ?? null,
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'changed_by_admin_id' => $admin?->id,
+            'from_status' => $booking->status,
+            'to_status' => $booking->status,
+            'comment' => "Admin {$admin?->name} added routine maintenance Shift #{$shift->shift_number} for {$shift->scheduled_date->format('M d, Y')}.",
+            'is_customer_visible' => true,
+        ]);
+
+        return redirect()->back()->with('success', "Maintenance Shift #{$shift->shift_number} added successfully.");
+    }
+
+    /**
+     * Cancel an individual AMC maintenance shift.
+     */
+    public function cancelAmcShift(Request $request, Booking $booking, AmcShift $shift): RedirectResponse
+    {
+        if ((int) $shift->booking_id !== (int) $booking->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'cancellation_reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+        $reason = $validated['cancellation_reason'];
+
+        $shift->update([
+            'status' => 'cancelled',
+            'cancelled_by' => 'admin',
+            'cancellation_reason' => $reason,
+        ]);
+
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'changed_by_admin_id' => $admin?->id,
+            'from_status' => $booking->status,
+            'to_status' => $booking->status,
+            'comment' => "Admin {$admin?->name} cancelled Shift #{$shift->shift_number} ({$shift->scheduled_date->format('M d, Y')}). Reason: {$reason}",
+            'is_customer_visible' => true,
+        ]);
+
+        return redirect()->back()->with('success', "Shift #{$shift->shift_number} has been cancelled.");
+    }
+
+    /**
+     * Reassign an individual AMC shift to a specific crew.
+     */
+    public function reassignAmcShift(Request $request, Booking $booking, AmcShift $shift): RedirectResponse
+    {
+        if ((int) $shift->booking_id !== (int) $booking->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'partner_id' => ['required', 'exists:partners,id'],
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+        $newPartner = Partner::findOrFail($validated['partner_id']);
+
+        $shift->update([
+            'partner_id' => $newPartner->id,
+            'status' => 'scheduled',
+            'admin_notes' => "Shift reassigned to {$newPartner->company_name} by Admin {$admin?->name}.",
+        ]);
+
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'changed_by_admin_id' => $admin?->id,
+            'from_status' => $booking->status,
+            'to_status' => $booking->status,
+            'comment' => "Admin {$admin?->name} reassigned Shift #{$shift->shift_number} to Partner '{$newPartner->company_name}'.",
+            'is_customer_visible' => false,
+        ]);
+
+        return redirect()->back()->with('success', "Shift #{$shift->shift_number} reassigned to {$newPartner->company_name}.");
+    }
+
+    /**
+     * Generate or regenerate recurring maintenance shifts for an AMC contract.
+     */
+    public function generateAmcShifts(Request $request, Booking $booking): RedirectResponse
+    {
+        $count = (int) $request->input('count', 0);
+        $countCreated = $booking->generateAmcShifts($count);
+
+        return redirect()->back()->with('success', "{$countCreated} routine maintenance shifts generated successfully.");
+    }
+
+    /**
+     * Review customer's AMC deal cancellation request (Approve or Reject).
+     */
+    public function reviewAmcCancellation(Request $request, Booking $booking, UpdateBookingStatusAction $action): RedirectResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:approve,reject'],
+            'admin_notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+        $reviewNotes = $validated['admin_notes'] ?? null;
+
+        if ($validated['action'] === 'approve') {
+            $booking->update([
+                'cancellation_review_status' => 'approved',
+                'cancellation_reviewed_at' => now(),
+                'cancellation_reviewed_by_admin_id' => $admin?->id,
+                'cancellation_review_notes' => $reviewNotes,
+                'contract_status' => 'cancelled',
+            ]);
+
+            // Cancel booking status
+            $action->execute($booking, [
+                'status' => 'cancelled',
+                'comment' => "AMC Contract deal cancellation request approved by operations lead: {$reviewNotes}",
+                'admin_notes' => "Contract cancellation requested by client and approved by {$admin?->name}. Reason: {$booking->cancellation_request_reason}",
+            ], $admin);
+
+            // Cancel any future scheduled shifts
+            $booking->amcShifts()
+                ->whereIn('status', ['scheduled', 'reassignment_needed'])
+                ->update([
+                    'status' => 'cancelled',
+                    'cancelled_by' => 'admin',
+                    'cancellation_reason' => 'Contract deal terminated: '.$reviewNotes,
+                ]);
+
+            if ($booking->partner) {
+                NotificationDispatcher::notifyPartnerJobCancelled($booking, 'Contract deal terminated by client cancellation approval.');
+            }
+
+            return redirect()->back()->with('success', "AMC Contract #{$booking->booking_number} cancellation has been APPROVED and terminated.");
+        }
+
+        // Rejection
+        $booking->update([
+            'cancellation_requested' => false,
+            'cancellation_review_status' => 'rejected',
+            'cancellation_reviewed_at' => now(),
+            'cancellation_reviewed_by_admin_id' => $admin?->id,
+            'cancellation_review_notes' => $reviewNotes,
+        ]);
+
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'changed_by_admin_id' => $admin?->id,
+            'from_status' => $booking->status,
+            'to_status' => $booking->status,
+            'comment' => "Admin {$admin?->name} reviewed and rejected the contract cancellation request. Notes: {$reviewNotes}. Contract remains active.",
+            'is_customer_visible' => true,
+        ]);
+
+        return redirect()->back()->with('info', 'Cancellation request rejected. Contract remains ACTIVE.');
+    }
+
+    /**
+     * Post an administrative note / reply on the AMC contract.
+     */
+    public function postAmcNote(Request $request, Booking $booking): RedirectResponse
+    {
+        $validated = $request->validate([
+            'note' => ['required', 'string', 'max:2000'],
+            'is_customer_visible' => ['nullable', 'boolean'],
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+
+        AmcNote::create([
+            'booking_id' => $booking->id,
+            'admin_id' => $admin?->id,
+            'sender_type' => 'admin',
+            'sender_name' => $admin?->name ?? 'FIX Operations',
+            'note' => $validated['note'],
+            'is_customer_visible' => (bool) $request->input('is_customer_visible', true),
+        ]);
+
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'changed_by_admin_id' => $admin?->id,
+            'from_status' => $booking->status,
+            'to_status' => $booking->status,
+            'comment' => "Admin {$admin?->name} posted note on AMC: \"{$validated['note']}\"",
+            'is_customer_visible' => false,
+        ]);
+
+        return redirect()->back()->with('success', 'Note added to contract timeline successfully.');
     }
 }

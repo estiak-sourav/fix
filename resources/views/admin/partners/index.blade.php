@@ -122,8 +122,8 @@
               <tr>
                 <td>
                   <div style="display:flex; align-items:center; gap:10px;">
-                    @if($p->user?->avatar_url)
-                      <img src="{{ $p->user->avatar_url }}" alt="{{ $p->company_name }}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+                    @if($p->avatar_url || $p->user?->avatar_url)
+                      <img src="{{ $p->avatar_url ?: $p->user?->avatar_url }}" alt="{{ $p->company_name }}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
                     @else
                       <div style="width:36px; height:36px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:600; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0;">
                         {{ strtoupper(substr($p->company_name, 0, 1)) }}

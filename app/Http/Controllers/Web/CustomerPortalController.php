@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\UpdateAvatarRequest;
 use App\Http\Requests\Web\UpdateProfileRequest;
 use App\Models\AdminNotification;
+use App\Models\AmcNote;
 use App\Models\Booking;
 use App\Models\BookingStatusLog;
 use App\Models\Division;
@@ -21,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class CustomerPortalController extends Controller
 {
@@ -42,6 +44,10 @@ class CustomerPortalController extends Controller
             ->with([
                 'service',
                 'amcPlan',
+                'partner',
+                'assignedCrew',
+                'amcShifts.partner',
+                'amcNotes',
                 'statusLogs' => fn ($q) => $q->where('is_customer_visible', true)->latest(),
             ])
             ->latest()
@@ -61,6 +67,10 @@ class CustomerPortalController extends Controller
             ->with([
                 'service',
                 'amcPlan',
+                'partner',
+                'assignedCrew',
+                'amcShifts.partner',
+                'amcNotes',
                 'statusLogs' => fn ($q) => $q->where('is_customer_visible', true)->latest(),
             ])
             ->firstOrFail();
@@ -200,6 +210,113 @@ class CustomerPortalController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Thank you! Your feedback and rating have been submitted successfully.');
+    }
+
+    /**
+     * Request cancellation of an ongoing AMC contract by client (pending admin review).
+     */
+    public function requestAmcCancellation(Request $request, string $bookingNumber): RedirectResponse
+    {
+        $validated = $request->validate([
+            'cancellation_reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $user = Auth::guard('web')->user();
+        $booking = Booking::where('booking_number', $bookingNumber)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        if (! $booking->is_amc) {
+            return redirect()->back()->with('error', 'Cancellation requests under review are only applicable for AMC contracts.');
+        }
+
+        if ($booking->cancellation_requested && $booking->cancellation_review_status === 'pending') {
+            return redirect()->back()->with('info', 'Your cancellation request is already pending administrator review.');
+        }
+
+        if ($booking->status === 'cancelled') {
+            return redirect()->back()->with('info', 'This AMC contract is already cancelled.');
+        }
+
+        $booking->update([
+            'cancellation_requested' => true,
+            'cancellation_requested_at' => now(),
+            'cancellation_requested_by' => 'customer',
+            'cancellation_request_reason' => $validated['cancellation_reason'],
+            'cancellation_review_status' => 'pending',
+        ]);
+
+        // Audit log entry
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'changed_by_user_id' => $user->id,
+            'from_status' => $booking->status,
+            'to_status' => $booking->status,
+            'comment' => "Client {$user->name} requested contract cancellation: {$validated['cancellation_reason']}. Awaiting admin review.",
+            'is_customer_visible' => true,
+        ]);
+
+        // Trigger audible chime notification for admin
+        AdminNotification::create([
+            'type' => 'emergency_alert',
+            'title' => "AMC Cancellation Request: #{$booking->booking_number}",
+            'message' => "Client {$user->name} requested cancellation for AMC Contract #{$booking->booking_number}. Reason: {$validated['cancellation_reason']}",
+            'booking_id' => $booking->id,
+            'action_url' => route('admin.bookings.show', $booking),
+            'is_read' => false,
+            'sound_played' => false,
+        ]);
+
+        NotificationDispatcher::notifyAdminSection(
+            'orders',
+            "AMC Cancellation Request: #{$booking->booking_number}",
+            "Client {$user->name} requested cancellation for AMC Contract #{$booking->booking_number}. Reason: {$validated['cancellation_reason']}",
+            route('admin.bookings.show', $booking),
+            [
+                'Contract' => "#{$booking->booking_number}",
+                'Client' => $user->name,
+                'Reason' => $validated['cancellation_reason'],
+            ]
+        );
+
+        return redirect()->back()->with('success', 'Your AMC contract cancellation request has been submitted to management for review. Our team will contact you shortly.');
+    }
+
+    /**
+     * Post a maintenance note / special instruction from customer for an AMC contract.
+     */
+    public function postAmcNote(Request $request, string $bookingNumber): RedirectResponse
+    {
+        $validated = $request->validate([
+            'note' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $user = Auth::guard('web')->user();
+        $booking = Booking::where('booking_number', $bookingNumber)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        AmcNote::create([
+            'booking_id' => $booking->id,
+            'user_id' => $user->id,
+            'sender_type' => 'customer',
+            'sender_name' => $user->name,
+            'note' => $validated['note'],
+            'is_customer_visible' => true,
+        ]);
+
+        // Create audible alert notification for admin
+        AdminNotification::create([
+            'type' => 'order_status',
+            'title' => "New Note on AMC #{$booking->booking_number}",
+            'message' => "Client {$user->name} sent a note: \"".Str::limit($validated['note'], 80).'"',
+            'booking_id' => $booking->id,
+            'action_url' => route('admin.bookings.show', $booking),
+            'is_read' => false,
+            'sound_played' => false,
+        ]);
+
+        return redirect()->back()->with('success', 'Your note has been transmitted directly to our facility operations desk.');
     }
 
     /**

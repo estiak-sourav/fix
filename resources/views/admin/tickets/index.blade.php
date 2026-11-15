@@ -157,7 +157,7 @@
                 <td style="padding:14px 16px;">
                   <div style="display:flex; align-items:center; gap:10px;">
                     @if($ticket->user?->avatar_url)
-                      <img src="{{ $ticket->user->avatar_url }}" alt="{{ $ticket->customer_name }}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+                      <img src="{{ $ticket->user?->avatar_url }}" alt="{{ $ticket->customer_name }}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
                     @else
                       <div style="width:34px; height:34px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:600; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0;">
                         {{ strtoupper(substr($ticket->customer_name ?: 'C', 0, 1)) }}

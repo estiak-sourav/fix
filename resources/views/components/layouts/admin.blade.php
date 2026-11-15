@@ -1918,8 +1918,14 @@
       });
     });
 
-    document.addEventListener('click', () => initAudioContext(), { once: true });
-    setInterval(pollInboundAlerts, 15000);
+    // Unlock Web Audio context across any common user interaction
+    ['click', 'touchstart', 'pointerdown', 'keydown'].forEach(evt => {
+      document.addEventListener(evt, () => initAudioContext(), { once: true, passive: true });
+    });
+
+    // Check alerts immediately shortly after load, then poll every 8 seconds
+    setTimeout(pollInboundAlerts, 1200);
+    setInterval(pollInboundAlerts, 8000);
   </script>
 </body>
 </html>

@@ -62,7 +62,7 @@
       <table class="table-paces">
         <thead>
           <tr>
-            <th>Package Name & Tier</th>
+            <th>Package Name</th>
             <th>Contract Period</th>
             <th>Target Audience</th>
             <th>Features</th>
@@ -74,32 +74,23 @@
           @forelse($plans as $plan)
             @php
               $planFeatures = is_array($plan->features) ? $plan->features : [];
-              $tierLabel = match($plan->tier) {
-                'corporate_enterprise' => 'Corporate Enterprise',
-                'industrial_manufacturing' => 'Industrial / Factory',
-                'residential' => 'Residential',
-                default => ucfirst(str_replace('_', ' ', $plan->tier ?? 'Standard'))
-              };
             @endphp
             <tr>
               <td>
                 <div style="font-weight:500; font-size:0.92rem; color:var(--paces-text-dark);">
                   {{ $plan->name }}
                 </div>
-                <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
-                  <span class="badge-pill-paces bg-info-subtle" style="font-size:0.72rem;">
-                    {{ $tierLabel }}
-                  </span>
-                  @if($plan->is_popular)
+                @if($plan->is_popular)
+                  <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
                     <span class="badge-pill-paces bg-primary-subtle" style="font-size:0.72rem;">
                       Featured
                     </span>
-                  @endif
-                </div>
+                  </div>
+                @endif
               </td>
               <td>
                 <div style="font-size:0.85rem; color:var(--paces-text-dark);">
-                  {{ $plan->price_period ?: 'Custom Contract' }}
+                  {{ $plan->price_period ?: '—' }}
                 </div>
               </td>
               <td>
@@ -186,7 +177,6 @@
         <div>
           <h3 class="modal-title-paces" id="detailPlanName">Package Details</h3>
           <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
-            <span class="badge-pill-paces bg-info-subtle" id="detailPlanTier" style="font-size:0.75rem;"></span>
             <span class="badge-pill-paces" id="detailPlanStatus" style="font-size:0.75rem;"></span>
             <span class="badge-pill-paces bg-primary-subtle" id="detailPlanPopular" style="font-size:0.75rem; display:none;">Featured</span>
           </div>
@@ -250,19 +240,9 @@
             </div>
           </div>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1rem;">
-            <div>
-              <label class="form-label-paces">Contract Period</label>
-              <input type="text" name="price_period" id="editPlanPeriod" placeholder="e.g. Annual / Billed Monthly" class="form-control-paces">
-            </div>
-            <div>
-              <label class="form-label-paces">Tier Classification</label>
-              <select name="tier" id="editPlanTierSelect" class="form-control-paces">
-                <option value="residential">Residential / Apartment</option>
-                <option value="corporate_enterprise">Corporate Enterprise</option>
-                <option value="industrial_manufacturing">Industrial / Factory</option>
-              </select>
-            </div>
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-paces">Contract Period</label>
+            <input type="text" name="price_period" id="editPlanPeriod" placeholder="e.g. Annual / Billed Monthly" class="form-control-paces">
           </div>
 
           <div style="margin-bottom:1rem;">
@@ -314,19 +294,9 @@
             </div>
           </div>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1rem;">
-            <div>
-              <label class="form-label-paces">Contract Period</label>
-              <input type="text" name="price_period" placeholder="e.g. Annual / Billed Monthly" class="form-control-paces">
-            </div>
-            <div>
-              <label class="form-label-paces">Tier Classification</label>
-              <select name="tier" class="form-control-paces">
-                <option value="residential">Residential / Apartment</option>
-                <option value="corporate_enterprise" selected>Corporate Enterprise</option>
-                <option value="industrial_manufacturing">Industrial / Factory</option>
-              </select>
-            </div>
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-paces">Contract Period</label>
+            <input type="text" name="price_period" placeholder="e.g. Annual / Billed Monthly" class="form-control-paces">
           </div>
 
           <div style="margin-bottom:1rem;">
@@ -377,13 +347,6 @@
 
       document.getElementById('detailPlanName').innerText = plan.name;
       
-      const tierMap = {
-        'corporate_enterprise': 'Corporate Enterprise',
-        'industrial_manufacturing': 'Industrial / Factory',
-        'residential': 'Residential'
-      };
-      document.getElementById('detailPlanTier').innerText = tierMap[plan.tier] || (plan.tier || 'Standard');
-
       const statusEl = document.getElementById('detailPlanStatus');
       if (plan.is_active) {
         statusEl.className = 'badge-pill-paces bg-success-subtle';
@@ -409,7 +372,7 @@
       } else {
         const li = document.createElement('li');
         li.style.color = '#94a3b8';
-        li.innerText = 'No specific features listed for this tier.';
+        li.innerText = 'No specific features listed for this package.';
         listEl.appendChild(li);
       }
 
@@ -438,7 +401,6 @@
       document.getElementById('editPlanName').value = plan.name || '';
       document.getElementById('editPlanAudience').value = plan.target_audience || '';
       document.getElementById('editPlanPeriod').value = plan.price_period || '';
-      document.getElementById('editPlanTierSelect').value = plan.tier || 'residential';
 
       const features = Array.isArray(plan.features) ? plan.features.join('\n') : '';
       document.getElementById('editPlanFeatures').value = features;

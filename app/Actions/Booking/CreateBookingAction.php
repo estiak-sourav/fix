@@ -6,6 +6,7 @@ use App\Models\AdminNotification;
 use App\Models\Booking;
 use App\Models\BookingStatusLog;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
@@ -35,12 +36,31 @@ class CreateBookingAction
         return DB::transaction(function () use ($data, $user, $attachedImages) {
             $bookingNumber = Booking::generateBookingNumber($data['division'] ?? null, $data['district'] ?? null);
 
+            $isAmc = ($data['service_type'] ?? '') === 'amc_contract' || ! empty($data['amc_plan_id']);
+            $contractTenure = $data['contract_tenure'] ?? ($isAmc ? '1 Year' : null);
+            $startDate = null;
+            $endDate = null;
+
+            if ($isAmc) {
+                $startDate = ! empty($data['preferred_date']) ? Carbon::parse($data['preferred_date']) : today();
+                $endDate = match ($contractTenure) {
+                    '3 Months', '3_months' => $startDate->copy()->addMonths(3),
+                    '6 Months', '6_months' => $startDate->copy()->addMonths(6),
+                    '2 Years', '2_years' => $startDate->copy()->addYears(2),
+                    '3 Years', '3_years' => $startDate->copy()->addYears(3),
+                    default => $startDate->copy()->addYear(),
+                };
+            }
+
             $booking = Booking::create([
                 'booking_number' => $bookingNumber,
                 'user_id' => $user->id,
                 'service_id' => $data['service_id'] ?? null,
                 'amc_plan_id' => $data['amc_plan_id'] ?? null,
                 'service_type' => $data['service_type'],
+                'contract_tenure' => $contractTenure,
+                'contract_start_date' => $startDate ? $startDate->toDateString() : null,
+                'contract_end_date' => $endDate ? $endDate->toDateString() : null,
                 'customer_name' => $data['customer_name'],
                 'customer_email' => $user->email,
                 'customer_phone' => $data['customer_phone'],

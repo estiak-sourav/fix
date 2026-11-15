@@ -68,7 +68,6 @@
             <h3>{{ $plan->name }}</h3>
             <p>{{ $plan->target_audience }}</p>
             <div class="amc-price">
-              {{ $plan->tier === 'corporate_enterprise' ? 'Enterprise' : ($plan->tier === 'industrial_manufacturing' ? 'Industrial' : 'Custom') }}
               <span>{{ $plan->price_period }}</span>
             </div>
           </div>

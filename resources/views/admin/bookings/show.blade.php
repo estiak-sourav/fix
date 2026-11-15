@@ -160,7 +160,7 @@
           • Created {{ $booking->created_at->format('M d, Y • h:i A') }}
         </span>
         @if($booking->is_amc || $booking->contract_status === 'active')
-          <span class="badge-paces" style="background:#f5f3ff; color:#7c3aed; border:1px solid #ddd6fe; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:12px; white-space:nowrap !important; flex-shrink:0 !important;">
+          <span class="badge-paces" style="background:#e6f8f5; color:#0f766e; border:1px solid #99f6e4; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:12px; white-space:nowrap !important; flex-shrink:0 !important;">
             • AMC Agreement
           </span>
         @else
@@ -236,6 +236,68 @@
   @endif
 
   <!-- ========================================================================= -->
+  <!-- AMC CLIENT CANCELLATION REQUEST REVIEW ALERT                              -->
+  <!-- ========================================================================= -->
+  @if($booking->is_amc && $booking->cancellation_requested && $booking->cancellation_review_status === 'pending')
+    <div style="background:#fef2f2; border:2px solid #ef4444; border-radius:12px; padding:16px 20px; margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow:0 4px 12px rgba(239,68,68,0.15);">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:42px; height:42px; border-radius:50%; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; font-size:1.35rem; font-weight:800; flex-shrink:0;">
+          🚨
+        </div>
+        <div>
+          <strong style="color:#991b1b; font-size:1.02rem; display:block;">
+            Client Requested AMC Deal Cancellation (Operations Review Required)
+          </strong>
+          <div style="font-size:0.875rem; color:#7f1d1d; margin-top:3px;">
+            <strong>Reason Reported by Client:</strong> "{{ $booking->cancellation_request_reason }}"
+          </div>
+          <span style="font-size:0.75rem; color:#b91c1c; display:block; margin-top:2px;">
+            Submitted on {{ $booking->cancellation_requested_at?->format('M d, Y • h:i A') }} ({{ $booking->cancellation_requested_at?->diffForHumans() }})
+          </span>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <form action="{{ route('admin.bookings.amc-cancellation.review', $booking) }}" method="POST" onsubmit="return confirm('Are you sure you want to approve cancellation and terminate this AMC contract? All upcoming routine shifts will be cancelled.');" style="margin:0;">
+          @csrf
+          <input type="hidden" name="action" value="approve">
+          <input type="hidden" name="admin_notes" value="Approved by operations lead. Deal terminated.">
+          <button type="submit" class="btn-paces" style="background:#dc2626; color:#ffffff; border:none; padding:8px 16px; font-weight:700; border-radius:6px; cursor:pointer;">
+            ✓ Approve Cancellation &amp; Terminate Deal
+          </button>
+        </form>
+
+        <form action="{{ route('admin.bookings.amc-cancellation.review', $booking) }}" method="POST" onsubmit="return confirm('Reject client cancellation request and keep AMC contract active?');" style="margin:0;">
+          @csrf
+          <input type="hidden" name="action" value="reject">
+          <input type="hidden" name="admin_notes" value="Reviewed by operations lead. Discussed with client and contract remains active.">
+          <button type="submit" class="btn-paces btn-paces-outline" style="border-color:#cbd5e1; background:#ffffff; color:#334155; padding:8px 14px; font-weight:600; border-radius:6px; cursor:pointer;">
+            Reject Request (Keep Active)
+          </button>
+        </form>
+      </div>
+    </div>
+  @endif
+
+  @if($booking->is_amc && $booking->crew_cancellation_reason)
+    <div style="background:#fffbeb; border:2px solid #f59e0b; border-radius:12px; padding:14px 18px; margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:1.5rem;">⚠️</span>
+        <div>
+          <strong style="color:#92400e; font-size:0.95rem; display:block;">
+            Assigned Crew Relinquished AMC Contract Assignment
+          </strong>
+          <span style="font-size:0.82rem; color:#78350f;">
+            Reason reported: "{{ $booking->crew_cancellation_reason }}" ({{ $booking->crew_cancellation_requested_at?->diffForHumans() }})
+          </span>
+        </div>
+      </div>
+      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="switchBookingTab('tab-manage-dispatch')">
+        Reassign New Crew →
+      </button>
+    </div>
+  @endif
+
+  <!-- ========================================================================= -->
   <!-- 1. HIGHLIGHTED OPERATIONAL AUDIT TIMELINE BANNER                         -->
   <!-- ========================================================================= -->
   <div class="card-paces" style="margin-bottom:1.25rem; background:linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border:2px solid #86efac; border-radius:12px; padding:18px 22px; box-shadow:0 4px 14px rgba(22,163,74,0.08);">
@@ -300,7 +362,51 @@
     }
   @endphp
 
-  @if($booking->status !== 'cancelled')
+  @if($booking->is_amc)
+    <!-- Specialized AMC Contract Lifecycle & Operations Ribbon -->
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:16px 20px; margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:44px; height:44px; border-radius:12px; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0;">
+          🏢
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <strong style="font-size:1.05rem; color:#0f172a;">{{ $booking->amcPlan?->name ?? 'Annual Maintenance Contract' }}</strong>
+            <span class="badge-paces" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:10px;">
+              {{ strtoupper($booking->contract_status ?: 'Active') }}
+            </span>
+            <span class="badge-paces" style="background:#f0fdf4; color:#166534; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:10px;">
+              {{ strtoupper(str_replace('_', ' ', $booking->status)) }}
+            </span>
+          </div>
+          <div style="font-size:0.8rem; color:#64748b; margin-top:3px;">
+            <span>🗓️ Contract Duration: <strong>{{ $booking->contract_start_date ? $booking->contract_start_date->format('M d, Y') : ($booking->preferred_date ? $booking->preferred_date->format('M d, Y') : 'Active') }}</strong> – <strong>{{ $booking->contract_end_date ? $booking->contract_end_date->format('M d, Y') : '1 Year Period' }}</strong>@if($booking->contract_tenure) ({{ $booking->contract_tenure }})@endif</span>
+            <span style="margin:0 6px;">•</span>
+            <span>Billing: <strong style="text-transform:capitalize;">{{ str_replace('_', ' ', $booking->billing_cycle ?? 'Monthly') }}</strong></span>
+            @if($booking->final_cost > 0)
+              <span style="margin:0 6px;">•</span>
+              <span>Agreed Fee: <strong style="color:#0f172a;">৳ {{ number_format($booking->final_cost, 2) }}</strong></span>
+            @endif
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+        <div style="text-align:right;">
+          <span style="font-size:0.72rem; color:#64748b; text-transform:uppercase; font-weight:700; display:block;">Routine Shifts</span>
+          <strong style="font-size:1rem; color:#16a34a;">
+            {{ $booking->amcShifts->where('status', 'completed')->count() }} / {{ $booking->amcShifts->count() }} Completed
+          </strong>
+        </div>
+        <div style="text-align:right; border-left:1px solid #e2e8f0; padding-left:16px;">
+          <span style="font-size:0.72rem; color:#64748b; text-transform:uppercase; font-weight:700; display:block;">Assigned Recurring Crew</span>
+          <strong style="font-size:0.92rem; color:#1e293b;">
+            {{ $booking->partner?->company_name ?? 'No Crew Assigned' }}
+          </strong>
+        </div>
+      </div>
+    </div>
+  @elseif($booking->status !== 'cancelled')
     <div class="lifecycle-tracker">
       <!-- Step 1: Requested -->
       <div class="lifecycle-step {{ $activeRank > 1 ? 'completed' : ($activeRank === 1 ? 'active' : 'upcoming') }}">
@@ -398,6 +504,13 @@
         <span>🏢 Convert to AMC</span>
       @endif
     </button>
+
+    @if($booking->is_amc)
+      <button type="button" class="booking-tab-btn" data-tab="tab-amc-shifts" onclick="switchBookingTab('tab-amc-shifts')">
+        <span>🗓️ Routine Shifts ({{ $booking->amcShifts->count() }})</span>
+        <span style="background:#eff6ff; color:#1d4ed8; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:700;">{{ $booking->completed_shifts_count }}/{{ $booking->amcShifts->count() }}</span>
+      </button>
+    @endif
   </div>
 
   <!-- ========================================================================= -->
@@ -428,7 +541,7 @@
 
           <div style="margin-bottom:14px; display:flex; align-items:center; gap:12px;">
             @if($booking->user?->avatar_url)
-              <img src="{{ $booking->user->avatar_url }}" alt="{{ $booking->customer_name }}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+              <img src="{{ $booking->user?->avatar_url }}" alt="{{ $booking->customer_name }}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
             @else
               <div style="width:44px; height:44px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:700; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">
                 {{ strtoupper(substr($booking->customer_name ?: 'C', 0, 1)) }}
@@ -574,6 +687,50 @@
                 @endif
               </div>
             @endforeach
+          </div>
+        @endif
+
+        @if($booking->is_amc)
+          <!-- Customer AMC Notes & Instructions Thread -->
+          <div class="card-paces" style="padding:1.25rem; margin-bottom:1.25rem; border:1px solid #99f6e4; background:#f0fdfa;">
+            <div style="border-bottom:1px solid #ccfbf1; padding-bottom:0.75rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
+              <h3 class="card-title-paces" style="font-size:0.95rem; margin:0; color:#0f2744;">
+                📝 Client AMC Notes &amp; Special Instructions
+              </h3>
+              <span class="badge-paces" style="background:#ccfbf1; color:#0f766e; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:10px;">
+                {{ $booking->amcNotes->count() }}
+              </span>
+            </div>
+
+            @if($booking->amcNotes->isNotEmpty())
+              <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; max-height:260px; overflow-y:auto; padding-right:4px;">
+                @foreach($booking->amcNotes as $note)
+                  <div style="background:#ffffff; border:1px solid {{ $note->sender_type === 'customer' ? '#bfdbfe' : '#e2e8f0' }}; border-radius:8px; padding:10px 12px; font-size:0.82rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                      <strong style="color:{{ $note->sender_type === 'customer' ? '#1d4ed8' : '#047857' }};">
+                        {{ $note->sender_type === 'customer' ? 'Client (' . ($note->sender_name ?: 'Customer') . ')' : 'Admin (' . ($note->sender_name ?: 'Operations') . ')' }}
+                      </strong>
+                      <span style="font-size:0.7rem; color:#94a3b8;">{{ $note->created_at->diffForHumans() }}</span>
+                    </div>
+                    <p style="margin:0; color:#334155; line-height:1.45;">{{ $note->note }}</p>
+                  </div>
+                @endforeach
+              </div>
+            @else
+              <p style="font-size:0.8rem; color:#64748b; margin-bottom:12px;">No special client instructions submitted yet.</p>
+            @endif
+
+            <form action="{{ route('admin.bookings.amc-notes.store', $booking) }}" method="POST">
+              @csrf
+              <div style="margin-bottom:8px;">
+                <textarea name="note" class="form-control-paces" rows="2" placeholder="Send an operational instruction or note to client..." style="font-size:0.82rem;" required></textarea>
+              </div>
+              <div style="display:flex; justify-content:flex-end;">
+                <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.78rem;">
+                  Send Note to Client
+                </button>
+              </div>
+            </form>
           </div>
         @endif
       </div>
@@ -1182,7 +1339,7 @@
               {{ $booking->amcPlan?->name ?? 'Corporate Enterprise AMC' }}
             </strong>
             @if($booking->amcPlan?->tier)
-              <span style="font-size:0.72rem; color:var(--paces-primary);">{{ $booking->amcPlan->tier }} Tier</span>
+              <span style="font-size:0.72rem; color:var(--paces-primary);">{{ $booking->amcPlan?->tier }} Tier</span>
             @endif
           </div>
 
@@ -1297,7 +1454,7 @@
                   <option value="">-- Choose AMC Package --</option>
                   @foreach($amcPlans as $plan)
                     <option value="{{ $plan->id }}" {{ (old('amc_plan_id', $booking->amc_plan_id) == $plan->id) ? 'selected' : '' }}>
-                      {{ $plan->name }} ({{ $plan->tier }} - {{ $plan->price_period }})
+                      {{ $plan->name }} ({{ $plan->price_period }})
                     </option>
                   @endforeach
                 </select>
@@ -1312,6 +1469,41 @@
                     </option>
                   @endforeach
                 </select>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
+              <div>
+                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Contract Tenure</label>
+                <select name="contract_tenure" class="form-control-paces">
+                  @foreach(['3 Months' => '3 Months', '6 Months' => '6 Months', '1 Year' => '1 Year (Annual)', '2 Years' => '2 Years', '3 Years' => '3 Years'] as $tenureVal => $tenureText)
+                    <option value="{{ $tenureVal }}" {{ old('contract_tenure', $booking->contract_tenure ?? '1 Year') === $tenureVal ? 'selected' : '' }}>
+                      {{ $tenureText }}
+                    </option>
+                  @endforeach
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Contract Start Date *</label>
+                <input type="date" name="contract_start_date" class="form-control-paces" value="{{ old('contract_start_date', $booking->contract_start_date?->format('Y-m-d') ?: ($booking->preferred_date?->format('Y-m-d') ?: date('Y-m-d'))) }}" required>
+              </div>
+
+              <div>
+                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Contract End Date *</label>
+                <input type="date" name="contract_end_date" class="form-control-paces" value="{{ old('contract_end_date', $booking->contract_end_date?->format('Y-m-d') ?: date('Y-m-d', strtotime('+1 year'))) }}" required>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+              <div>
+                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Contract / Package Price (৳)</label>
+                <input type="number" step="0.01" name="contract_cost" class="form-control-paces" placeholder="e.g. 5000" value="{{ old('contract_cost', $booking->final_cost ?: $booking->estimated_cost) }}">
+              </div>
+
+              <div>
+                <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Recurring Cycle Amount (৳)</label>
+                <input type="number" step="0.01" name="recurring_amount" class="form-control-paces" placeholder="e.g. 5000" value="{{ old('recurring_amount', $booking->recurring_amount ?: ($booking->final_cost ?: $booking->estimated_cost)) }}">
               </div>
             </div>
 
@@ -1333,6 +1525,247 @@
       @endif
     </div>
   </div>
+
+  <!-- ========================================================================= -->
+  <!-- TAB 5: AMC ROUTINE SHIFTS & VISITS                                        -->
+  <!-- ========================================================================= -->
+  <div id="tab-amc-shifts" class="booking-tab-pane">
+    <div class="card-paces" style="margin-bottom:1.5rem; padding:20px; border:1px solid #99f6e4;">
+      <div style="border-bottom:1px solid var(--paces-border); padding-bottom:1rem; margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h3 class="card-title-paces" style="margin:0; font-size:1.1rem; color:#0f2744;">
+            🗓️ Routine Maintenance Shifts ({{ $booking->amcShifts->count() }})
+          </h3>
+          <p style="margin:2px 0 0; font-size:0.8rem; color:#64748b;">
+            Scheduled periodic maintenance visits assigned to crew for this AMC contract.
+          </p>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          @if(auth('admin')->user()?->hasPermission('bookings.edit'))
+            <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="document.getElementById('adminAddShiftModal').style.display='flex'">
+              + Add Routine Shift
+            </button>
+            <form action="{{ route('admin.bookings.amc-shifts.generate', $booking) }}" method="POST" style="margin:0;" onsubmit="return confirm('Generate/Regenerate recurring shifts for this contract?');">
+              @csrf
+              <button type="submit" class="btn-paces btn-paces-outline btn-paces-sm" style="border-color:#cbd5e1; background:#ffffff;">
+                🔄 Generate Shifts
+              </button>
+            </form>
+            @if($booking->status !== 'cancelled')
+              <button type="button" class="btn-paces btn-paces-sm" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-weight:700;" onclick="document.getElementById('cancelBookingModal').style.display='flex'">
+                ✕ Cancel Full Deal
+              </button>
+            @endif
+          @endif
+        </div>
+      </div>
+
+      <!-- Shifts Metric Cards -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:1.25rem;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px;">
+          <span style="font-size:0.72rem; color:#64748b; font-weight:700; text-transform:uppercase;">Total Visits</span>
+          <strong style="display:block; font-size:1.2rem; color:#0f172a; margin-top:2px;">{{ $booking->amcShifts->count() }}</strong>
+        </div>
+        <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:10px 14px;">
+          <span style="font-size:0.72rem; color:#065f46; font-weight:700; text-transform:uppercase;">Completed</span>
+          <strong style="display:block; font-size:1.2rem; color:#047857; margin-top:2px;">{{ $booking->completed_shifts_count }}</strong>
+        </div>
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px;">
+          <span style="font-size:0.72rem; color:#1e40af; font-weight:700; text-transform:uppercase;">Scheduled / Pending</span>
+          <strong style="display:block; font-size:1.2rem; color:#1d4ed8; margin-top:2px;">{{ $booking->pending_shifts_count }}</strong>
+        </div>
+        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 14px;">
+          <span style="font-size:0.72rem; color:#991b1b; font-weight:700; text-transform:uppercase;">Cancelled Shifts</span>
+          <strong style="display:block; font-size:1.2rem; color:#dc2626; margin-top:2px;">{{ $booking->cancelled_shifts_count }}</strong>
+        </div>
+      </div>
+
+      <!-- Shifts Table -->
+      @if($booking->amcShifts->isEmpty())
+        <div style="text-align:center; padding:2rem; background:#f8fafc; border-radius:8px; color:#64748b; font-size:0.85rem;">
+          No shifts scheduled yet. Click <strong>Generate Shifts</strong> or <strong>Add Routine Shift</strong> above.
+        </div>
+      @else
+        <div class="table-responsive-paces">
+          <table class="table-paces">
+            <thead>
+              <tr>
+                <th style="width:50px;">#</th>
+                <th>Shift Title</th>
+                <th>Scheduled Date &amp; Window</th>
+                <th>Assigned Crew</th>
+                <th style="text-align:center;">Status</th>
+                <th>Remarks / Notes</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach($booking->amcShifts as $shift)
+                <tr>
+                  <td style="font-weight:700; color:#64748b;">#{{ $shift->shift_number }}</td>
+                  <td>
+                    <strong style="color:#0f172a; font-size:0.875rem;">{{ $shift->title }}</strong>
+                  </td>
+                  <td>
+                    <div style="font-weight:600; font-size:0.84rem; color:#0f172a;">
+                      📅 {{ $shift->scheduled_date->format('M d, Y') }}
+                    </div>
+                    <span style="font-size:0.75rem; color:#64748b;">{{ $shift->scheduled_time_slot }}</span>
+                  </td>
+                  <td>
+                    @if($shift->partner)
+                      <strong style="font-size:0.84rem; color:#1d4ed8;">{{ $shift->partner->company_name }}</strong>
+                    @else
+                      <span style="font-size:0.78rem; color:#94a3b8; font-style:italic;">Default (Unassigned)</span>
+                    @endif
+                  </td>
+                  <td style="text-align:center;">
+                    <span class="badge-pill-paces" style="background:{{ $shift->status_badge_color }}22; color:{{ $shift->status_badge_color }}; border:1px solid {{ $shift->status_badge_color }}44; font-size:0.75rem; font-weight:700; padding:2px 8px;">
+                      {{ $shift->status_label }}
+                    </span>
+                  </td>
+                  <td style="font-size:0.8rem; color:#475569; max-width:220px;">
+                    @if($shift->completion_notes)
+                      <div style="color:#15803d;">✓ {{ $shift->completion_notes }}</div>
+                    @elseif($shift->cancellation_reason)
+                      <div style="color:#dc2626;">⚠️ {{ $shift->cancellation_reason }}</div>
+                    @elseif($shift->admin_notes)
+                      <div>{{ $shift->admin_notes }}</div>
+                    @else
+                      <span style="color:#94a3b8;">—</span>
+                    @endif
+                  </td>
+                  <td style="text-align:right; white-space:nowrap;">
+                    @if(!$shift->is_completed && !$shift->is_cancelled && auth('admin')->user()?->hasPermission('bookings.edit'))
+                      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.74rem; padding:3px 8px;" onclick="openAdminReassignShiftModal('{{ $shift->id }}', '{{ $shift->shift_number }}', '{{ $shift->partner_id }}')">
+                        Reassign
+                      </button>
+                      <button type="button" class="btn-paces btn-paces-sm" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:0.74rem; padding:3px 8px; font-weight:700;" onclick="openAdminCancelShiftModal('{{ $shift->id }}', '{{ $shift->shift_number }}')">
+                        Cancel
+                      </button>
+                    @else
+                      <span style="font-size:0.75rem; color:#94a3b8;">Locked</span>
+                    @endif
+                  </td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
+      @endif
+    </div>
+  </div>
+
+  @if($booking->is_amc)
+  <!-- Modal: Admin Add Routine Shift -->
+  <div id="adminAddShiftModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:99999; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;" onclick="if(event.target===this) this.style.display='none'">
+    <div style="background:#ffffff; border-radius:12px; max-width:480px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #e2e8f0; overflow:hidden;">
+      <div style="padding:14px 18px; border-bottom:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
+        <h4 style="margin:0; font-size:1rem; font-weight:700; color:#0f172a;">Add Routine Maintenance Shift</h4>
+        <button type="button" onclick="document.getElementById('adminAddShiftModal').style.display='none'" style="background:none; border:none; font-size:1.2rem; color:#64748b; cursor:pointer;">✕</button>
+      </div>
+
+      <form action="{{ route('admin.bookings.amc-shifts.store', $booking) }}" method="POST">
+        @csrf
+        <div style="padding:18px;">
+          <div style="margin-bottom:12px;">
+            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Shift Title *</label>
+            <input type="text" name="title" class="form-control-paces" value="Periodic Preventive Maintenance & Inspection" required>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+            <div>
+              <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Scheduled Date *</label>
+              <input type="date" name="scheduled_date" class="form-control-paces" value="{{ date('Y-m-d', strtotime('+1 week')) }}" required>
+            </div>
+            <div>
+              <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Time Slot</label>
+              <select name="scheduled_time_slot" class="form-control-paces">
+                <option value="Morning (9:00 AM - 12:00 PM)">Morning (9:00 AM - 12:00 PM)</option>
+                <option value="Afternoon (12:00 PM - 4:00 PM)">Afternoon (12:00 PM - 4:00 PM)</option>
+                <option value="Evening (4:00 PM - 8:00 PM)">Evening (4:00 PM - 8:00 PM)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Assigned Crew / Partner</label>
+            <select name="partner_id" class="form-control-paces">
+              <option value="">-- Use Default Booking Partner ({{ $booking->partner?->company_name ?? 'None' }}) --</option>
+              @foreach($enlistedPartners as $p)
+                <option value="{{ $p->id }}" {{ $booking->partner_id == $p->id ? 'selected' : '' }}>
+                  {{ $p->company_name }} ({{ $p->contact_person }})
+                </option>
+              @endforeach
+            </select>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Operational Notes (Optional)</label>
+            <textarea name="admin_notes" class="form-control-paces" rows="2" placeholder="Specific routine check list or premises access instructions..."></textarea>
+          </div>
+        </div>
+
+        <div style="padding:12px 18px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onclick="document.getElementById('adminAddShiftModal').style.display='none'" class="btn-paces btn-paces-outline btn-paces-sm">Cancel</button>
+          <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm">Schedule Shift</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Admin Cancel Shift -->
+  <div id="adminCancelShiftModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:99999; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;" onclick="if(event.target===this) this.style.display='none'">
+    <div style="background:#ffffff; border-radius:12px; max-width:440px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #e2e8f0; overflow:hidden;">
+      <div style="padding:14px 18px; border-bottom:1px solid #fee2e2; background:#fff1f2; display:flex; justify-content:space-between; align-items:center;">
+        <h4 style="margin:0; font-size:1rem; font-weight:700; color:#991b1b;">Cancel Shift <span id="adminCancelShiftNum"></span></h4>
+        <button type="button" onclick="document.getElementById('adminCancelShiftModal').style.display='none'" style="background:none; border:none; font-size:1.2rem; color:#64748b; cursor:pointer;">✕</button>
+      </div>
+
+      <form id="adminCancelShiftForm" method="POST" action="">
+        @csrf
+        <div style="padding:18px;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Reason for Cancellation *</label>
+          <textarea name="cancellation_reason" class="form-control-paces" rows="3" placeholder="Reason (e.g. Rescheduled by client, holiday, redundant inspection)..." required></textarea>
+        </div>
+
+        <div style="padding:12px 18px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onclick="document.getElementById('adminCancelShiftModal').style.display='none'" class="btn-paces btn-paces-outline btn-paces-sm">Go Back</button>
+          <button type="submit" class="btn-paces btn-paces-sm" style="background:#dc2626; color:#fff; border:none; font-weight:700;">Cancel Shift</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Admin Reassign Shift -->
+  <div id="adminReassignShiftModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:99999; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;" onclick="if(event.target===this) this.style.display='none'">
+    <div style="background:#ffffff; border-radius:12px; max-width:440px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #e2e8f0; overflow:hidden;">
+      <div style="padding:14px 18px; border-bottom:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
+        <h4 style="margin:0; font-size:1rem; font-weight:700; color:#0f172a;">Reassign Shift <span id="adminReassignShiftNum"></span></h4>
+        <button type="button" onclick="document.getElementById('adminReassignShiftModal').style.display='none'" style="background:none; border:none; font-size:1.2rem; color:#64748b; cursor:pointer;">✕</button>
+      </div>
+
+      <form id="adminReassignShiftForm" method="POST" action="">
+        @csrf
+        <div style="padding:18px;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Select Partner / Crew *</label>
+          <select name="partner_id" id="adminReassignPartnerSelect" class="form-control-paces" required>
+            <option value="">-- Choose Partner --</option>
+            @foreach($enlistedPartners as $p)
+              <option value="{{ $p->id }}">{{ $p->company_name }} ({{ $p->contact_person }})</option>
+            @endforeach
+          </select>
+        </div>
+
+        <div style="padding:12px 18px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onclick="document.getElementById('adminReassignShiftModal').style.display='none'" class="btn-paces btn-paces-outline btn-paces-sm">Cancel</button>
+          <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm">Confirm Reassignment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  @endif
 
   <!-- ========================================================================= -->
   <!-- MODALS (Image Lightbox, Collect AMC Bill, Payout Settlement)               -->

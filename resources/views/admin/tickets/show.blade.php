@@ -215,7 +215,7 @@
 
         <div style="margin-bottom:12px; display:flex; align-items:center; gap:10px;">
           @if($ticket->user?->avatar_url)
-            <img src="{{ $ticket->user->avatar_url }}" alt="{{ $ticket->customer_name }}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+            <img src="{{ $ticket->user?->avatar_url }}" alt="{{ $ticket->customer_name }}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
           @else
             <div style="width:38px; height:38px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:600; display:flex; align-items:center; justify-content:center; font-size:0.95rem; flex-shrink:0;">
               {{ strtoupper(substr($ticket->customer_name ?: 'C', 0, 1)) }}

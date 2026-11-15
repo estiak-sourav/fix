@@ -79,6 +79,9 @@ Route::middleware(['auth.partner'])->group(function () {
         Route::post('/{booking}/status', [PartnerJobController::class, 'updateStatus'])->name('status');
         Route::post('/{booking}/crew', [PartnerJobController::class, 'assignInternalCrew'])->name('crew');
         Route::post('/{booking}/price', [PartnerJobController::class, 'updatePrice'])->name('price');
+        Route::post('/{booking}/amc-shifts/{shift}/complete', [PartnerJobController::class, 'completeAmcShift'])->name('amc-shifts.complete');
+        Route::post('/{booking}/amc-shifts/{shift}/cancel', [PartnerJobController::class, 'cancelAmcShift'])->name('amc-shifts.cancel');
+        Route::post('/{booking}/amc-cancel-deal', [PartnerJobController::class, 'cancelAmcDealAssignment'])->name('amc-cancel-deal');
     });
 
     // Availability & Leave Schedules

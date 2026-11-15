@@ -124,7 +124,86 @@
               </p>
             </div>
           </div>
-        @elseif(!$booking->is_amc)
+        @elseif($booking->is_amc)
+          <!-- AMC Contract Operations & Shifts Hub -->
+          <div style="background:#f0fdfa; border:1.5px solid #99f6e4; border-radius:12px; padding:1.25rem 1.5rem; margin:1rem 0 1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px; border-bottom:1px solid #ccfbf1; padding-bottom:10px;">
+              <div>
+                <span style="font-size:0.75rem; font-weight:800; color:#0f766e; text-transform:uppercase; letter-spacing:0.04em;">
+                  🏢 Annual Maintenance Contract (AMC)
+                </span>
+                <h3 style="margin:2px 0 0; font-size:1.15rem; font-weight:800; color:#0f2744;">
+                  {{ $booking->amcPlan?->name ?? 'Standard Maintenance Contract' }}
+                </h3>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                @if($booking->cancellation_requested && $booking->cancellation_review_status === 'pending')
+                  <span style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-weight:800; font-size:0.78rem; padding:4px 10px; border-radius:20px;">
+                    ⚠️ Cancellation Request Pending Admin Review
+                  </span>
+                @else
+                  <span style="background:#ccfbf1; color:#0f766e; border:1px solid #99f6e4; font-weight:700; font-size:0.8rem; padding:4px 12px; border-radius:20px;">
+                    ● {{ ucfirst(str_replace('_', ' ', $booking->contract_status ?: $booking->status)) }}
+                  </span>
+                @endif
+              </div>
+            </div>
+
+            <!-- Contract Stats Grid -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:12px;">
+              <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px;">
+                <span style="font-size:0.72rem; color:#64748b; font-weight:600; text-transform:uppercase;">Recurring Rate</span>
+                <strong style="display:block; font-size:1.05rem; color:#0f2744; margin-top:2px;">
+                  ৳ {{ number_format($booking->recurring_amount ?: $booking->final_cost, 2) }}
+                  <span style="font-size:0.75rem; color:#0f766e; font-weight:500;">/ {{ $booking->billing_cycle_label }}</span>
+                </strong>
+              </div>
+              <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px;">
+                <span style="font-size:0.72rem; color:#64748b; font-weight:600; text-transform:uppercase;">Contract Tenure</span>
+                <strong style="display:block; font-size:0.9rem; color:#0f172a; margin-top:2px;">
+                  @if($booking->contract_tenure)
+                    {{ $booking->contract_tenure }} • {{ $booking->contract_start_date?->format('M d, Y') ?: 'Active' }} — {{ $booking->contract_end_date?->format('M d, Y') ?: '1 Year' }}
+                  @else
+                    {{ $booking->contract_start_date?->format('M d, Y') ?: 'Active' }} — {{ $booking->contract_end_date?->format('M d, Y') ?: '1 Year' }}
+                  @endif
+                </strong>
+              </div>
+              <div style="background:#ffffff; border:1px solid #ede9fe; border-radius:8px; padding:10px 12px;">
+                <span style="font-size:0.72rem; color:#64748b; font-weight:600; text-transform:uppercase;">Maintenance Shifts</span>
+                <strong style="display:block; font-size:0.95rem; color:#15803d; margin-top:2px;">
+                  {{ $booking->completed_shifts_count }} Completed / {{ $booking->amcShifts->count() }} Total
+                </strong>
+              </div>
+              <div style="background:#ffffff; border:1px solid #ede9fe; border-radius:8px; padding:10px 12px;">
+                <span style="font-size:0.72rem; color:#64748b; font-weight:600; text-transform:uppercase;">Assigned Team</span>
+                <strong style="display:block; font-size:0.9rem; color:#0f172a; margin-top:2px;">
+                  {{ $booking->partner?->company_name ?? ($booking->assigned_team ?: 'FIX Certified Tech Crew') }}
+                </strong>
+              </div>
+            </div>
+
+            @if($booking->cancellation_requested && $booking->cancellation_review_status === 'pending')
+              <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 14px; margin-bottom:12px; font-size:0.85rem; color:#92400e;">
+                <strong>⚠️ Deal Cancellation Request Under Review:</strong>
+                <p style="margin:4px 0 0; color:#78350f;">"{{ $booking->cancellation_request_reason }}"</p>
+                <span style="font-size:0.75rem; color:#b45309; display:block; margin-top:4px;">Submitted on {{ $booking->cancellation_requested_at?->format('M d, Y • h:i A') }} • FIX Operations lead is reviewing this request.</span>
+              </div>
+            @endif
+
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:10px;">
+              <div style="font-size:0.8rem; color:#6b21a8;">
+                Next Routine Shift: <strong>{{ $booking->next_upcoming_shift?->scheduled_date?->format('M d, Y') ?? 'Coordinated via Operations' }}</strong>
+              </div>
+              <div style="display:flex; gap:8px;">
+                @if(!$booking->cancellation_requested && $booking->status !== 'cancelled')
+                  <button type="button" onclick="openAmcCancelModal()" class="btn btn-outline btn-sm" style="font-size:0.8rem; font-weight:700; color:#dc2626; border-color:#fca5a5; background:#fff; padding:6px 14px; border-radius:6px; cursor:pointer;">
+                    Request Deal Cancellation
+                  </button>
+                @endif
+              </div>
+            </div>
+          </div>
+        @else
           <!-- Live Progress Stepper for One-Off Services -->
           @php
             $statusOrder = ['pending_review', 'accepted', 'assigned', 'on_the_way', 'in_progress', 'completed'];
@@ -176,11 +255,11 @@
 
           {{-- Live Real-time Status Alert Banner --}}
           @if($booking->status === 'on_the_way')
-            <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; gap:12px;">
+            <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; gap:12px;">
               <span style="font-size:1.5rem;">🚗</span>
               <div>
-                <strong style="color:#6d28d9; font-size:0.9rem; display:block;">Technician team is on the way to your address!</strong>
-                <span style="font-size:0.82rem; color:#7c3aed;">Our technician team has started journey. {{ $booking->arrival_window ? 'Expected arrival window: ' . $booking->arrival_window : 'Heading to location.' }}</span>
+                <strong style="color:#1d4ed8; font-size:0.9rem; display:block;">Technician team is on the way to your address!</strong>
+                <span style="font-size:0.82rem; color:#2563eb;">Our technician team has started journey. {{ $booking->arrival_window ? 'Expected arrival window: ' . $booking->arrival_window : 'Heading to location.' }}</span>
               </div>
             </div>
           @elseif($booking->status === 'in_progress')
@@ -222,7 +301,7 @@
           <div>
             @if($booking->is_amc)
               <strong style="color:var(--text-main); display:block; margin-bottom:4px;">AMC Recurring Billing:</strong>
-              <p style="margin:0; color:#7c3aed; font-weight:700; font-size:1.1rem;">
+              <p style="margin:0; color:#0f2744; font-weight:700; font-size:1.1rem;">
                 ৳ {{ number_format($booking->recurring_amount ?: $booking->final_cost, 2) }}
                 <span style="font-size:0.75rem; font-weight:500; color:var(--text-muted);">/ {{ $booking->billing_cycle_label }}</span>
               </p>
@@ -312,6 +391,109 @@
           </div>
         @endif
 
+        @if($booking->is_amc && $booking->amcShifts->isNotEmpty())
+          <!-- AMC Routine Maintenance Shifts Schedule -->
+          <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1.5rem; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+              <div>
+                <h4 style="margin:0; font-size:1.05rem; font-weight:800; color:#0f172a;">
+                  🗓️ Routine Maintenance Shifts &amp; Visits
+                </h4>
+                <p style="margin:2px 0 0; font-size:0.8rem; color:#64748b;">
+                  Recurring inspection schedule and maintenance visits for this AMC contract.
+                </p>
+              </div>
+              <span style="font-size:0.78rem; font-weight:700; color:#0f766e; background:#e6f8f5; border:1px solid #99f6e4; padding:4px 10px; border-radius:20px;">
+                {{ $booking->completed_shifts_count }} of {{ $booking->amcShifts->count() }} Visits Done
+              </span>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:8px; max-height:380px; overflow-y:auto; padding-right:4px;">
+              @foreach($booking->amcShifts as $shift)
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                  <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:32px; height:32px; border-radius:50%; background:{{ $shift->is_completed ? '#dcfce7' : ($shift->is_cancelled ? '#fee2e2' : '#eff6ff') }}; color:{{ $shift->is_completed ? '#15803d' : ($shift->is_cancelled ? '#dc2626' : '#2563eb') }}; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                      @if($shift->is_completed)
+                        ✓
+                      @elseif($shift->is_cancelled)
+                        ✕
+                      @else
+                        #{{ $shift->shift_number }}
+                      @endif
+                    </div>
+                    <div>
+                      <strong style="font-size:0.88rem; color:#0f172a; display:block;">
+                        {{ $shift->title }}
+                      </strong>
+                      <span style="font-size:0.78rem; color:#64748b;">
+                        📅 {{ $shift->scheduled_date->format('M d, Y') }} • {{ $shift->scheduled_time_slot }}
+                        @if($shift->partner)
+                          • <span style="color:#0f172a; font-weight:600;">{{ $shift->partner->company_name }}</span>
+                        @endif
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="badge" style="background:{{ $shift->status_badge_color }}22; color:{{ $shift->status_badge_color }}; border:1px solid {{ $shift->status_badge_color }}44; font-size:0.75rem; font-weight:700; padding:3px 10px; border-radius:12px;">
+                      {{ $shift->status_label }}
+                    </span>
+                    @if($shift->completion_notes)
+                      <span title="{{ $shift->completion_notes }}" style="font-size:0.75rem; color:#64748b; cursor:help;">ℹ️</span>
+                    @elseif($shift->cancellation_reason)
+                      <span title="Reason: {{ $shift->cancellation_reason }}" style="font-size:0.75rem; color:#dc2626; cursor:help;">⚠️</span>
+                    @endif
+                  </div>
+                </div>
+              @endforeach
+            </div>
+          </div>
+        @endif
+
+        @if($booking->is_amc)
+          <!-- Customer AMC Notes & Special Instructions Section -->
+          <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1.5rem; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+              <div>
+                <h4 style="margin:0; font-size:1.05rem; font-weight:800; color:#0f172a;">
+                  📝 Special Instructions &amp; AMC Notes to Operations Desk
+                </h4>
+                <p style="margin:2px 0 0; font-size:0.8rem; color:#64748b;">
+                  Send notes, shift schedule requests, or facility instructions directly to FIX administrators.
+                </p>
+              </div>
+            </div>
+
+            @if($booking->amcNotes->isNotEmpty())
+              <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px; max-height:260px; overflow-y:auto; padding-right:4px;">
+                @foreach($booking->amcNotes as $note)
+                  <div style="background:{{ $note->sender_type === 'customer' ? '#eff6ff' : '#f8fafc' }}; border:1px solid {{ $note->sender_type === 'customer' ? '#bfdbfe' : '#e2e8f0' }}; border-radius:8px; padding:10px 14px; font-size:0.85rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                      <strong style="color:{{ $note->sender_type === 'customer' ? '#1d4ed8' : '#334155' }}; font-size:0.8rem;">
+                        {{ $note->sender_type === 'customer' ? 'You (Client)' : ($note->sender_name ?: 'FIX Operations Team') }}
+                      </strong>
+                      <span style="font-size:0.72rem; color:#94a3b8;">{{ $note->created_at->diffForHumans() }}</span>
+                    </div>
+                    <p style="margin:0; color:#334155; line-height:1.45;">{{ $note->note }}</p>
+                  </div>
+                @endforeach
+              </div>
+            @endif
+
+            <form action="{{ route('customer.bookings.amc-notes', $booking->booking_number) }}" method="POST">
+              @csrf
+              <div style="margin-bottom:10px;">
+                <textarea name="note" rows="2" class="form-control" placeholder="Write a note, routine access instruction, or maintenance request for Admin..." style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.875rem;" required></textarea>
+              </div>
+              <div style="display:flex; justify-content:flex-end;">
+                <button type="submit" class="btn btn-primary btn-sm" style="font-weight:700; padding:6px 16px; border-radius:6px;">
+                  <span>Send Note to Operations →</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        @endif
+
         @if($booking->arrival_window)
           <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1rem 1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px;">
             <span style="font-size:1.1rem;">⏱</span>
@@ -384,13 +566,13 @@
                 @csrf
                 <div style="margin-bottom:14px; background:#ffffff; border:1px solid #fde68a; border-radius:10px; padding:12px 14px;">
                   <label style="font-size:0.85rem; font-weight:700; color:#92400e; display:block; margin-bottom:6px;">Your Rating *</label>
-                  <div class="star-rating-picker" data-target="detail_review_rating_input" data-label="detail_rating_label" style="display:inline-flex; align-items:center; gap:6px; font-size:1.8rem; color:#cbd5e1; cursor:pointer; user-select:none;">
-                    <span class="star-item" data-value="1" style="color:#f59e0b; transition:transform 0.15s ease;" title="1 Star">★</span>
-                    <span class="star-item" data-value="2" style="color:#f59e0b; transition:transform 0.15s ease;" title="2 Stars">★</span>
-                    <span class="star-item" data-value="3" style="color:#f59e0b; transition:transform 0.15s ease;" title="3 Stars">★</span>
-                    <span class="star-item" data-value="4" style="color:#f59e0b; transition:transform 0.15s ease;" title="4 Stars">★</span>
-                    <span class="star-item" data-value="5" style="color:#f59e0b; transition:transform 0.15s ease;" title="5 Stars">★</span>
-                    <span id="detail_rating_label" style="font-size:0.85rem; font-weight:800; color:#b45309; margin-left:10px;">5.0 (Excellent)</span>
+                  <div class="star-rating-picker" data-target="detail_review_rating_input" data-label="detail_rating_label" style="display:inline-flex; align-items:center; gap:6px; font-size:1.8rem; color:#cbd5e1; cursor:pointer; user-select:none; width:340px; min-width:340px; justify-content:flex-start;">
+                    <span class="star-item" data-value="1" style="display:inline-flex; align-items:center; justify-content:center; width:26px; color:#f59e0b; transition:color 0.15s ease;" title="1 Star">★</span>
+                    <span class="star-item" data-value="2" style="display:inline-flex; align-items:center; justify-content:center; width:26px; color:#f59e0b; transition:color 0.15s ease;" title="2 Stars">★</span>
+                    <span class="star-item" data-value="3" style="display:inline-flex; align-items:center; justify-content:center; width:26px; color:#f59e0b; transition:color 0.15s ease;" title="3 Stars">★</span>
+                    <span class="star-item" data-value="4" style="display:inline-flex; align-items:center; justify-content:center; width:26px; color:#f59e0b; transition:color 0.15s ease;" title="4 Stars">★</span>
+                    <span class="star-item" data-value="5" style="display:inline-flex; align-items:center; justify-content:center; width:26px; color:#f59e0b; transition:color 0.15s ease;" title="5 Stars">★</span>
+                    <span id="detail_rating_label" style="display:inline-block; font-size:0.85rem; font-weight:800; color:#b45309; margin-left:10px; white-space:nowrap;">5.0 (Excellent)</span>
                   </div>
                   <input type="hidden" name="review_rating" id="detail_review_rating_input" value="5">
                 </div>
@@ -478,7 +660,56 @@
   </div>
   @endif
 
+  <!-- ========================================================================= -->
+  <!-- CUSTOMER AMC DEAL CANCELLATION REQUEST MODAL                               -->
+  <!-- ========================================================================= -->
+  @if($booking->is_amc && !$booking->cancellation_requested && $booking->status !== 'cancelled')
+  <div id="customerAmcCancelModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:99999; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;" onclick="if(event.target === this) closeAmcCancelModal()">
+    <div style="background:#ffffff; border-radius:14px; max-width:480px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #e2e8f0; overflow:hidden;">
+      <div style="padding:16px 20px; border-bottom:1px solid #fee2e2; background:#fff1f2; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#fecdd3; color:#e11d48; font-weight:800; font-size:0.9rem;">✕</span>
+          <h4 style="margin:0; font-size:1.05rem; font-weight:800; color:#9f1239;">Request AMC Deal Cancellation</h4>
+        </div>
+        <button type="button" onclick="closeAmcCancelModal()" style="background:none; border:none; font-size:1.3rem; color:#94a3b8; cursor:pointer; padding:0 4px; line-height:1;">✕</button>
+      </div>
+
+      <form method="POST" action="{{ route('customer.bookings.amc-cancel-request', $booking->booking_number) }}">
+        @csrf
+        <div style="padding:20px;">
+          <p style="font-size:0.875rem; color:#334155; margin:0 0 12px; line-height:1.5;">
+            Submit a formal cancellation request for AMC Contract <strong>#{{ $booking->booking_number }}</strong>. Our facility operations lead will review your request before final termination.
+          </p>
+
+          <label style="font-size:0.825rem; font-weight:700; color:#1e293b; display:block; margin-bottom:6px;">
+            Reason for Contract Cancellation <span style="color:#dc2626;">*</span>:
+          </label>
+          <textarea name="cancellation_reason" class="form-control" rows="3" placeholder="Please explain why you wish to cancel this AMC contract..." style="width:100%; font-size:0.85rem; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;" required></textarea>
+        </div>
+
+        <div style="padding:14px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" onclick="closeAmcCancelModal()" class="btn btn-outline btn-sm" style="font-size:0.825rem; font-weight:600; padding:6px 14px; border:1px solid #cbd5e1; background:#fff; cursor:pointer;">
+            Keep Contract
+          </button>
+          <button type="submit" class="btn btn-danger btn-sm" style="font-size:0.825rem; font-weight:700; padding:6px 16px; background:#e11d48; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+            Submit Cancellation Request
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  @endif
+
   <script>
+    function openAmcCancelModal() {
+      const modal = document.getElementById('customerAmcCancelModal');
+      if (modal) modal.style.display = 'flex';
+    }
+    function closeAmcCancelModal() {
+      const modal = document.getElementById('customerAmcCancelModal');
+      if (modal) modal.style.display = 'none';
+    }
+
     @if($booking->canBeCancelledByCustomer())
       function openCancelModal(bookingNumber, serviceTitle) {
         const modal = document.getElementById('customerCancelModal');

@@ -158,6 +158,8 @@ Route::middleware('auth:web')->prefix('my-bookings')->name('customer.')->group(f
     Route::get('/', [CustomerPortalController::class, 'myBookings'])->name('bookings');
     Route::get('/{bookingNumber}', [CustomerPortalController::class, 'showBooking'])->name('bookings.show');
     Route::post('/{bookingNumber}/cancel', [CustomerPortalController::class, 'cancelBooking'])->name('bookings.cancel');
+    Route::post('/{bookingNumber}/amc-cancel-request', [CustomerPortalController::class, 'requestAmcCancellation'])->name('bookings.amc-cancel-request');
+    Route::post('/{bookingNumber}/amc-notes', [CustomerPortalController::class, 'postAmcNote'])->name('bookings.amc-notes');
     Route::post('/{bookingNumber}/review', [CustomerPortalController::class, 'submitReview'])->name('bookings.review');
 });
 

@@ -122,6 +122,13 @@
         </div>
       </div>
 
+      @php
+        $runningBookings = $bookings->filter(fn ($b) => in_array($b->status, ['pending_review', 'accepted', 'assigned', 'on_the_way', 'in_progress']));
+        $completedBookings = $bookings->filter(fn ($b) => $b->status === 'completed');
+        $cancelledBookings = $bookings->filter(fn ($b) => $b->status === 'cancelled');
+        $unreviewedList = isset($pendingReviews) ? $pendingReviews : $completedBookings->filter(fn ($b) => empty($b->review_rating));
+      @endphp
+
       @if($bookings->isEmpty())
         <div style="background:#ffffff; border:1px solid var(--border); border-radius:14px; text-align:center; padding:4rem 2rem; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
           <div style="width:68px; height:68px; border-radius:50%; background:rgba(30,58,138,0.08); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 1.25rem;">
@@ -136,12 +143,6 @@
           </a>
         </div>
       @else
-        @php
-          $runningBookings = $bookings->filter(fn ($b) => in_array($b->status, ['pending_review', 'accepted', 'assigned', 'on_the_way', 'in_progress']));
-          $completedBookings = $bookings->filter(fn ($b) => $b->status === 'completed');
-          $cancelledBookings = $bookings->filter(fn ($b) => $b->status === 'cancelled');
-          $unreviewedList = isset($pendingReviews) ? $pendingReviews : $completedBookings->filter(fn ($b) => empty($b->review_rating));
-        @endphp
 
         <!-- ================================================================= -->
         <!-- ⭐ AWAITING SERVICE REVIEWS (EYE-CATCHING PROMPT FOR FEEDBACK)    -->
@@ -253,7 +254,7 @@
                           #{{ $booking->booking_number }}
                         </span>
                         @if($booking->is_amc)
-                          <span class="badge" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:#f5f3ff; color:#7c3aed; border:1px solid #ddd6fe; white-space:nowrap !important; flex-shrink:0 !important;">
+                          <span class="badge" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:3px 10px; border-radius:12px; background:#e6f8f5; color:#0f766e; border:1px solid #99f6e4; white-space:nowrap !important; flex-shrink:0 !important;">
                             🏢 AMC Contract
                           </span>
                           @if($booking->is_running_contract)
@@ -294,37 +295,62 @@
 
                   @if($booking->is_amc)
                     <!-- AMC Active Contract Status & Billing Overview -->
-                    <div style="background:#fcfaff; border:1px solid #e9d5ff; border-radius:10px; padding:1.25rem 1.5rem; margin:1.5rem 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+                    <div style="background:#f0fdfa; border:1px solid #99f6e4; border-radius:10px; padding:1.25rem 1.5rem; margin:1.5rem 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
                       <div>
-                        <span style="font-size:0.72rem; text-transform:uppercase; color:#6b21a8; font-weight:700; letter-spacing:0.04em;">Contract Plan</span>
-                        <strong style="display:block; font-size:1.05rem; color:#1e1b4b; margin-top:3px;">
+                        <span style="font-size:0.72rem; text-transform:uppercase; color:#0f766e; font-weight:700; letter-spacing:0.04em;">Contract Plan</span>
+                        <strong style="display:block; font-size:1.05rem; color:#0f2744; margin-top:3px;">
                           {{ $booking->amcPlan?->name ?? 'Standard AMC' }}
                         </strong>
-                        <span style="font-size:0.75rem; color:#7c3aed;">Annual Maintenance Agreement</span>
+                        <span style="font-size:0.75rem; color:#0d9488;">Annual Maintenance Agreement</span>
                       </div>
                       <div>
-                        <span style="font-size:0.72rem; text-transform:uppercase; color:#6b21a8; font-weight:700; letter-spacing:0.04em;">Contract Tenure</span>
-                        <strong style="display:block; font-size:0.95rem; color:#1e1b4b; margin-top:3px;">
-                          {{ $booking->contract_start_date?->format('M d, Y') ?: 'Active' }} — {{ $booking->contract_end_date?->format('M d, Y') ?: '1 Year' }}
+                        <span style="font-size:0.72rem; text-transform:uppercase; color:#0f766e; font-weight:700; letter-spacing:0.04em;">Contract Tenure</span>
+                        <strong style="display:block; font-size:0.95rem; color:#0f2744; margin-top:3px;">
+                          @if($booking->contract_tenure)
+                            {{ $booking->contract_tenure }} • {{ $booking->contract_start_date?->format('M d, Y') ?: 'Active' }} — {{ $booking->contract_end_date?->format('M d, Y') ?: '1 Year' }}
+                          @else
+                            {{ $booking->contract_start_date?->format('M d, Y') ?: 'Active' }} — {{ $booking->contract_end_date?->format('M d, Y') ?: '1 Year' }}
+                          @endif
                         </strong>
                         <span style="font-size:0.75rem; color:#10b981; font-weight:600;">{{ $booking->days_remaining_in_contract ? $booking->days_remaining_in_contract . ' days remaining' : 'Active Service' }}</span>
                       </div>
                       <div>
-                        <span style="font-size:0.72rem; text-transform:uppercase; color:#6b21a8; font-weight:700; letter-spacing:0.04em;">Recurring Billing</span>
-                        <strong style="display:block; font-size:1.1rem; color:#6d28d9; margin-top:3px;">
+                        <span style="font-size:0.72rem; text-transform:uppercase; color:#0f766e; font-weight:700; letter-spacing:0.04em;">Recurring Billing</span>
+                        <strong style="display:block; font-size:1.1rem; color:#0f2744; margin-top:3px;">
                           ৳ {{ number_format($booking->recurring_amount ?: $booking->final_cost, 2) }}
-                          <span style="font-size:0.75rem; color:#7c3aed; font-weight:500;">/ {{ $booking->billing_cycle_label }}</span>
+                          <span style="font-size:0.75rem; color:#0f766e; font-weight:500;">/ {{ $booking->billing_cycle_label }}</span>
                         </strong>
                         <span style="font-size:0.75rem; color:#64748b;">Next Due: {{ $booking->next_billing_date ? $booking->next_billing_date->format('M d, Y') : 'Active' }}</span>
                       </div>
                       @if($booking->agreement_document_path)
                         <div style="display:flex; align-items:flex-end;">
-                          <a href="{{ $booking->agreement_url }}" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.78rem; padding:6px 12px; background:#ffffff; color:#7c3aed; border-color:#d8b4fe; display:inline-flex; align-items:center; gap:5px;">
+                          <a href="{{ $booking->agreement_url }}" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.78rem; padding:6px 12px; background:#ffffff; color:#00a896; border-color:#99f6e4; display:inline-flex; align-items:center; gap:5px;">
                             <span>📄 View Agreement Copy ↗</span>
                           </a>
                         </div>
                       @endif
                     </div>
+
+                    @if($booking->cancellation_requested && $booking->cancellation_review_status === 'pending')
+                      <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 14px; margin-bottom:1.25rem; font-size:0.85rem; color:#92400e; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                        <div>
+                          <strong>⚠️ Cancellation Request Pending Admin Review:</strong>
+                          <span style="color:#78350f;">"{{ $booking->cancellation_request_reason }}"</span>
+                        </div>
+                        <span style="font-size:0.75rem; color:#b45309;">Submitted {{ $booking->cancellation_requested_at?->diffForHumans() }}</span>
+                      </div>
+                    @endif
+
+                    @if($booking->amcShifts->isNotEmpty())
+                      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <div style="font-size:0.825rem; color:#334155;">
+                          🗓️ <strong>Routine Shifts:</strong> {{ $booking->completed_shifts_count }} of {{ $booking->amcShifts->count() }} visits completed • Next Shift: <strong>{{ $booking->next_upcoming_shift?->scheduled_date?->format('M d, Y') ?? 'Coordinating' }}</strong>
+                        </div>
+                        <a href="{{ route('customer.bookings.show', $booking->booking_number) }}" style="font-size:0.8rem; font-weight:700; color:#00a896; text-decoration:none;">
+                          View Shift Schedule &amp; Notes →
+                        </a>
+                      </div>
+                    @endif
                   @else
                     <!-- Live Progress Stepper for Running One-Off Services -->
                     @php
@@ -377,11 +403,11 @@
 
                     {{-- Live Real-time Status Alert Banner --}}
                     @if($booking->status === 'on_the_way')
-                      <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:10px 14px; margin-bottom:1.25rem; display:flex; align-items:center; gap:10px;">
+                      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; margin-bottom:1.25rem; display:flex; align-items:center; gap:10px;">
                         <span style="font-size:1.3rem;">🚗</span>
                         <div>
-                          <strong style="color:#6d28d9; font-size:0.85rem; display:block;">Crew is on the way to your address!</strong>
-                          <span style="font-size:0.78rem; color:#7c3aed;">Our technician team has started journey. {{ $booking->arrival_window ? 'Arrival Slot: ' . $booking->arrival_window : 'Heading to your location.' }}</span>
+                          <strong style="color:#1d4ed8; font-size:0.85rem; display:block;">Crew is on the way to your address!</strong>
+                          <span style="font-size:0.78rem; color:#2563eb;">Our technician team has started journey. {{ $booking->arrival_window ? 'Arrival Slot: ' . $booking->arrival_window : 'Heading to your location.' }}</span>
                         </div>
                       </div>
                     @elseif($booking->status === 'in_progress')
@@ -437,7 +463,15 @@
                       Address: {{ $booking->street_address }}
                     </div>
                     <div style="display:flex; gap:10px; align-items:center;">
-                      @if($booking->canBeCancelledByCustomer())
+                      @if($booking->is_amc && !$booking->cancellation_requested && $booking->status !== 'cancelled')
+                        <button type="button" 
+                                onclick="openCustomerAmcCancelModal('{{ $booking->booking_number }}')" 
+                                class="btn btn-outline" 
+                                style="padding:8px 14px; font-size:0.85rem; font-weight:700; border-radius:8px; display:inline-flex; align-items:center; gap:6px; color:#dc2626; border-color:#fca5a5; background:#ffffff; cursor:pointer;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                          <span>Request Deal Cancellation</span>
+                        </button>
+                      @elseif($booking->canBeCancelledByCustomer())
                         <button type="button" 
                                 onclick="openCancelModal('{{ $booking->booking_number }}', '{{ addslashes($booking->service?->title ?? ($booking->amcPlan?->name ?? 'Facility Service')) }}')" 
                                 class="btn btn-outline" 
@@ -687,7 +721,7 @@
   <!-- ========================================================================= -->
   <!-- CUSTOMER CANCEL REQUEST MODAL                                             -->
   <!-- ========================================================================= -->
-  @if($runningBookings->contains(fn ($b) => $b->canBeCancelledByCustomer()))
+  @if(!empty($runningBookings) && $runningBookings->contains(fn ($b) => $b->canBeCancelledByCustomer()))
   <div id="customerCancelModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:99999; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;" onclick="if(event.target === this) closeCancelModal()">
     <div style="background:#ffffff; border-radius:14px; max-width:480px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); animation:modalPopIn 0.2s ease; border:1px solid #e2e8f0; overflow:hidden;">
       <div style="padding:16px 20px; border-bottom:1px solid #fee2e2; background:#fff1f2; display:flex; justify-content:space-between; align-items:center;">
@@ -736,9 +770,61 @@
   @endif
 
   <!-- ========================================================================= -->
+  <!-- CUSTOMER AMC DEAL CANCELLATION REQUEST MODAL                               -->
+  <!-- ========================================================================= -->
+  <div id="customerAmcCancelModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:99999; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;" onclick="if(event.target === this) closeCustomerAmcCancelModal()">
+    <div style="background:#ffffff; border-radius:14px; max-width:480px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #e2e8f0; overflow:hidden;">
+      <div style="padding:16px 20px; border-bottom:1px solid #fee2e2; background:#fff1f2; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#fecdd3; color:#e11d48; font-weight:800; font-size:0.9rem;">✕</span>
+          <h4 style="margin:0; font-size:1.05rem; font-weight:800; color:#9f1239;">Request AMC Deal Cancellation</h4>
+        </div>
+        <button type="button" onclick="closeCustomerAmcCancelModal()" style="background:none; border:none; font-size:1.3rem; color:#94a3b8; cursor:pointer; padding:0 4px; line-height:1;">✕</button>
+      </div>
+
+      <form id="customerAmcCancelForm" method="POST" action="">
+        @csrf
+        <div style="padding:20px;">
+          <p style="font-size:0.875rem; color:#334155; margin:0 0 12px; line-height:1.5;">
+            Submit a cancellation request for AMC Contract <strong id="amcCancelBookingNum" style="color:var(--primary); font-family:monospace;"></strong>. Operations management will review your request before final cancellation.
+          </p>
+
+          <label style="font-size:0.825rem; font-weight:700; color:#1e293b; display:block; margin-bottom:6px;">
+            Reason for cancellation <span style="color:#dc2626;">*</span>:
+          </label>
+          <textarea name="cancellation_reason" class="form-control" rows="3" placeholder="Please describe why you wish to cancel this AMC contract..." style="width:100%; font-size:0.85rem; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;" required></textarea>
+        </div>
+
+        <div style="padding:14px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" onclick="closeCustomerAmcCancelModal()" class="btn btn-outline btn-sm" style="font-size:0.825rem; font-weight:600; padding:6px 14px; border:1px solid #cbd5e1; background:#fff; cursor:pointer;">
+            Keep Contract
+          </button>
+          <button type="submit" class="btn btn-danger btn-sm" style="font-size:0.825rem; font-weight:700; padding:6px 16px; background:#e11d48; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+            Submit Cancellation Request
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
   <!-- JAVASCRIPT: DATA MAP & MODAL HANDLER                                     -->
   <!-- ========================================================================= -->
   <script>
+    function openCustomerAmcCancelModal(bookingNumber) {
+      const modal = document.getElementById('customerAmcCancelModal');
+      const form = document.getElementById('customerAmcCancelForm');
+      const numSpan = document.getElementById('amcCancelBookingNum');
+
+      form.action = '/my-bookings/' + encodeURIComponent(bookingNumber) + '/amc-cancel-request';
+      numSpan.textContent = '#' + bookingNumber;
+      modal.style.display = 'flex';
+    }
+
+    function closeCustomerAmcCancelModal() {
+      const modal = document.getElementById('customerAmcCancelModal');
+      if (modal) modal.style.display = 'none';
+    }
     function openCancelModal(bookingNumber, serviceTitle) {
       const modal = document.getElementById('customerCancelModal');
       const form = document.getElementById('customerCancelForm');
@@ -760,7 +846,7 @@
     }
 
     const completedBookingsData = {
-      @foreach($completedBookings as $cb)
+      @foreach(($completedBookings ?? []) as $cb)
         "{{ $cb->booking_number }}": {
           number: "{{ $cb->booking_number }}",
           title: "{{ addslashes($cb->service?->title ?? ($cb->amcPlan?->name ?? 'Facility Service')) }}",
@@ -923,6 +1009,7 @@
       if (e.key === 'Escape') {
         closeCompletedModal();
         closeCancelModal();
+        closeCustomerAmcCancelModal();
       }
     });
   </script>

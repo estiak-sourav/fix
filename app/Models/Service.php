@@ -83,6 +83,11 @@ class Service extends Model
         return $this->bookings()->whereNotNull('review_rating')->count();
     }
 
+    public function getNameAttribute(): string
+    {
+        return $this->title ?? '';
+    }
+
     public function getThumbnailUrlAttribute(): string
     {
         if ($this->thumbnail_path && file_exists(public_path($this->thumbnail_path))) {

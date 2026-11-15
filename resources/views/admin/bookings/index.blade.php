@@ -200,7 +200,7 @@
                 <td>
                   <div style="display:flex; align-items:center; gap:10px;">
                     @if($b->user?->avatar_url)
-                      <img src="{{ $b->user->avatar_url }}" alt="{{ $b->customer_name }}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+                      <img src="{{ $b->user?->avatar_url }}" alt="{{ $b->customer_name }}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
                     @else
                       <div style="width:34px; height:34px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:600; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0;">
                         {{ strtoupper(substr($b->customer_name ?: ($b->user?->name ?? 'C'), 0, 1)) }}

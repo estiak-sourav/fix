@@ -1730,6 +1730,211 @@
     </div>
   @endif
 
+  <!-- AMC & Facility Routine Maintenance Operations Hub Card -->
+  <div class="card-paces" style="margin-bottom:1.5rem; padding:20px; border-radius:12px; background:linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%); border:1px solid #ccfbf1;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; border-bottom:1px solid #e6fffa; padding-bottom:12px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:40px; height:40px; border-radius:10px; background:#e0f2fe; color:#0284c7; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+          🏢
+        </div>
+        <div>
+          <h3 class="card-title-paces" style="margin:0; font-size:1.1rem; font-weight:800; color:#0f172a;">
+            AMC &amp; Facility Routine Maintenance Hub
+          </h3>
+          <p style="margin:2px 0 0; font-size:0.8rem; color:#64748b;">
+            Routine shifts schedule, recurring crew assignments, and customer contract reviews.
+          </p>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px;">
+        <a href="{{ route('admin.bookings.index', ['service_type' => 'amc_contract']) }}" class="btn-paces btn-paces-primary btn-paces-sm" style="display:inline-flex; align-items:center; gap:4px; background:#0284c7; border-color:#0284c7;">
+          <span>View All AMC Contracts ({{ $totalAmcContractsCount }}) →</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- 4 Key AMC Operations Metric Blocks -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:16px;">
+      <div style="background:#ffffff; border:1px solid #bae6fd; border-radius:10px; padding:14px 16px;">
+        <span style="font-size:0.72rem; color:#0369a1; font-weight:700; text-transform:uppercase;">Active AMC Contracts</span>
+        <div style="font-size:1.45rem; font-weight:900; color:#0284c7; margin-top:4px;">
+          {{ $activeAmcContractsCount }}
+        </div>
+        <span style="font-size:0.75rem; color:#64748b; margin-top:2px; display:block;">Ongoing recurring facility deals</span>
+      </div>
+
+      <div style="background:{{ $pendingAmcCancellations->isNotEmpty() ? '#fef2f2' : '#ffffff' }}; border:1px solid {{ $pendingAmcCancellations->isNotEmpty() ? '#fecaca' : '#e2e8f0' }}; border-radius:10px; padding:14px 16px;">
+        <span style="font-size:0.72rem; color:{{ $pendingAmcCancellations->isNotEmpty() ? '#dc2626' : '#64748b' }}; font-weight:700; text-transform:uppercase;">Pending Cancellation Reviews</span>
+        <div style="font-size:1.45rem; font-weight:900; color:{{ $pendingAmcCancellations->isNotEmpty() ? '#dc2626' : '#1e293b' }}; margin-top:4px;">
+          {{ $pendingAmcCancellations->count() }}
+        </div>
+        <span style="font-size:0.75rem; color:{{ $pendingAmcCancellations->isNotEmpty() ? '#b91c1c' : '#64748b' }}; margin-top:2px; display:block;">
+          {{ $pendingAmcCancellations->isNotEmpty() ? '⚠️ Requires Admin Decision' : 'Zero pending requests' }}
+        </span>
+      </div>
+
+      <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:14px 16px;">
+        <span style="font-size:0.72rem; color:#475569; font-weight:700; text-transform:uppercase;">Upcoming Shifts (Next 7 Days)</span>
+        <div style="font-size:1.45rem; font-weight:900; color:#1e293b; margin-top:4px;">
+          {{ $upcomingAmcShiftsCount }}
+        </div>
+        <span style="font-size:0.75rem; color:#64748b; margin-top:2px; display:block;">Scheduled routine dispatches</span>
+      </div>
+
+      <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px 16px;">
+        <span style="font-size:0.72rem; color:#166534; font-weight:700; text-transform:uppercase;">Completed Shifts</span>
+        <div style="font-size:1.45rem; font-weight:900; color:#16a34a; margin-top:4px;">
+          {{ $completedAmcShiftsCount }}
+        </div>
+        <span style="font-size:0.75rem; color:#15803d; margin-top:2px; display:block;">Serviced &amp; verified</span>
+      </div>
+    </div>
+
+    <!-- Cancellation Review Alert Table (If Any) -->
+    @if($pendingAmcCancellations->isNotEmpty())
+      <div style="margin-bottom:16px; background:#fff1f2; border:1.5px solid #fecdd3; border-radius:10px; padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.25rem;">⚠️</span>
+            <strong style="font-size:0.95rem; color:#9f1239;">Customer Cancellation Requests Awaiting Admin Review</strong>
+          </div>
+          <span style="font-size:0.76rem; font-weight:700; background:#ffe4e6; color:#9f1239; padding:3px 10px; border-radius:8px;">
+            Action Needed
+          </span>
+        </div>
+
+        <div class="table-responsive-paces">
+          <table class="table-paces" style="background:#ffffff; border-radius:8px; overflow:hidden;">
+            <thead>
+              <tr style="background:#ffe4e6;">
+                <th>Contract #</th>
+                <th>Client</th>
+                <th>Plan Scope</th>
+                <th>Reason Provided</th>
+                <th>Requested At</th>
+                <th style="text-align:right;">Decision</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach($pendingAmcCancellations as $pCancel)
+                <tr>
+                  <td>
+                    <strong style="color:#0284c7; font-family:monospace;">#{{ $pCancel->booking_number }}</strong>
+                  </td>
+                  <td>
+                    <div style="font-weight:600; color:#1e293b;">{{ $pCancel->customer_name }}</div>
+                    <div style="font-size:0.75rem; color:#64748b;">📞 {{ $pCancel->customer_phone }}</div>
+                  </td>
+                  <td>
+                    <span style="font-weight:600; color:#334155;">{{ $pCancel->amcPlan?->name ?? 'Facility AMC Contract' }}</span>
+                  </td>
+                  <td style="max-width:260px;">
+                    <div style="font-size:0.8rem; color:#475569; font-style:italic;">
+                      "{{ $pCancel->cancellation_request_reason ?: 'No specific reason given' }}"
+                    </div>
+                  </td>
+                  <td style="font-size:0.78rem; color:#64748b;">
+                    {{ $pCancel->cancellation_requested_at?->diffForHumans() ?? 'Recently' }}
+                  </td>
+                  <td style="text-align:right;">
+                    <a href="{{ route('admin.bookings.show', $pCancel) }}#tab-amc-shifts" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#dc2626; border-color:#dc2626; padding:4px 12px; font-size:0.78rem;">
+                      Review &amp; Act →
+                    </a>
+                  </td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
+      </div>
+    @endif
+
+    <!-- Upcoming Routine Maintenance Shifts -->
+    <div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h4 style="margin:0; font-size:0.92rem; font-weight:700; color:#0f172a;">
+          Upcoming Routine Maintenance Shifts
+        </h4>
+        <span style="font-size:0.75rem; color:#64748b;">Next scheduled routine dispatches</span>
+      </div>
+
+      @if($upcomingAmcShifts->isEmpty())
+        <div style="text-align:center; padding:24px 12px; color:#64748b; background:#ffffff; border-radius:8px; border:1px solid #e2e8f0;">
+          <div style="font-size:1.6rem; margin-bottom:4px;">📅</div>
+          <div style="font-weight:600; font-size:0.88rem; color:#334155;">No Scheduled Shifts in the Near Future</div>
+          <p style="font-size:0.78rem; margin:2px 0 0;">New routine shifts will appear here once AMC contracts are active.</p>
+        </div>
+      @else
+        <div class="table-responsive-paces">
+          <table class="table-paces" style="background:#ffffff; border-radius:8px; overflow:hidden;">
+            <thead>
+              <tr>
+                <th>Shift / Date</th>
+                <th>Contract Order</th>
+                <th>Client &amp; Facility</th>
+                <th>Assigned Crew</th>
+                <th>Scope</th>
+                <th>Status</th>
+                <th style="text-align:right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach($upcomingAmcShifts as $ushift)
+                <tr>
+                  <td>
+                    <strong style="color:#0284c7;">Shift #{{ $ushift->shift_number }}</strong>
+                    <div style="font-size:0.75rem; color:#64748b; font-weight:600;">
+                      📅 {{ $ushift->scheduled_date->format('M d, Y') }}
+                    </div>
+                  </td>
+                  <td>
+                    <strong style="font-family:monospace; color:#334155;">#{{ $ushift->booking?->booking_number }}</strong>
+                  </td>
+                  <td>
+                    <div style="font-weight:600; color:#1e293b;">{{ $ushift->booking?->customer_name }}</div>
+                    <div style="font-size:0.74rem; color:#64748b;">📍 {{ $ushift->booking?->area }}</div>
+                  </td>
+                  <td>
+                    @if($ushift->partner)
+                      <span style="font-weight:600; color:#166534; font-size:0.82rem;">{{ $ushift->partner->company_name }}</span>
+                    @elseif($ushift->status === 'reassignment_needed')
+                      <span style="font-weight:700; color:#dc2626; font-size:0.82rem;">⚠️ Needs Reassignment</span>
+                    @else
+                      <span style="color:#64748b; font-size:0.82rem;">Unassigned</span>
+                    @endif
+                  </td>
+                  <td>
+                    <span style="font-size:0.82rem; color:#334155;">{{ $ushift->title ?: ($ushift->booking?->amcPlan?->name ?? 'Routine Shift') }}</span>
+                  </td>
+                  <td>
+                    @php
+                      $sBadge = match($ushift->status) {
+                        'scheduled' => 'background:#eff6ff; color:#1d4ed8;',
+                        'in_progress' => 'background:#fef3c7; color:#d97706;',
+                        'reassignment_needed' => 'background:#fee2e2; color:#dc2626;',
+                        'completed' => 'background:#f0fdf4; color:#16a34a;',
+                        default => 'background:#f1f5f9; color:#475569;'
+                      };
+                    @endphp
+                    <span style="font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:6px; {{ $sBadge }}">
+                      {{ strtoupper(str_replace('_', ' ', $ushift->status)) }}
+                    </span>
+                  </td>
+                  <td style="text-align:right;">
+                    <a href="{{ route('admin.bookings.show', $ushift->booking) }}#tab-amc-shifts" class="btn-paces btn-paces-outline btn-paces-sm" style="padding:3px 10px; font-size:0.76rem;">
+                      Manage Shift →
+                    </a>
+                  </td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
+      @endif
+    </div>
+  </div>
+
   <!-- Recent Inbound Work Orders (Table Card) -->
   <div class="card-paces">
     <div class="card-header-paces">
@@ -1771,7 +1976,7 @@
                 <td>
                   <div style="display:flex; align-items:center; gap:10px;">
                     @if($b->user?->avatar_url)
-                      <img src="{{ $b->user->avatar_url }}" alt="{{ $b->customer_name }}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
+                      <img src="{{ $b->user?->avatar_url }}" alt="{{ $b->customer_name }}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid #e2e8f0;">
                     @else
                       <div style="width:32px; height:32px; border-radius:50%; background:var(--paces-primary-subtle); color:var(--paces-primary); font-weight:600; display:flex; align-items:center; justify-content:center; font-size:0.8rem; flex-shrink:0;">
                         {{ strtoupper(substr($b->customer_name ?: 'C', 0, 1)) }}

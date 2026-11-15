@@ -122,6 +122,12 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
     Route::post('/bookings/{booking}/complete', [AdminBookingController::class, 'complete'])->name('bookings.complete')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/log-call', [AdminBookingController::class, 'logCallStatus'])->name('bookings.log-call')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/activate-amc', [AdminBookingController::class, 'activateAmcContract'])->name('bookings.activate-amc')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/amc-shifts', [AdminBookingController::class, 'addAmcShift'])->name('bookings.amc-shifts.store')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/amc-shifts/{shift}/cancel', [AdminBookingController::class, 'cancelAmcShift'])->name('bookings.amc-shifts.cancel')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/amc-shifts/{shift}/reassign', [AdminBookingController::class, 'reassignAmcShift'])->name('bookings.amc-shifts.reassign')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/amc-shifts/generate', [AdminBookingController::class, 'generateAmcShifts'])->name('bookings.amc-shifts.generate')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/amc-cancellation/review', [AdminBookingController::class, 'reviewAmcCancellation'])->name('bookings.amc-cancellation.review')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/amc-notes', [AdminBookingController::class, 'postAmcNote'])->name('bookings.amc-notes.store')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/amc-bills/{invoice}/collect', [AdminBookingController::class, 'collectAmcBill'])->name('bookings.amc-bills.collect')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/amc-bills/generate', [AdminBookingController::class, 'generateNextAmcBill'])->name('bookings.amc-bills.generate')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status')->middleware('admin.can:bookings.edit');

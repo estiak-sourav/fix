@@ -39,7 +39,7 @@
         <div class="num">#{{ $booking->booking_number }}</div>
 
         <div style="font-size:14px; color:#1e293b; margin-top:10px;">
-          <strong>Service:</strong> {{ $booking->service?->name ?? $booking->amcPlan?->name ?? 'Facility Maintenance' }}
+          <strong>Service:</strong> {{ $booking->service?->title ?? $booking->service?->name ?? $booking->amcPlan?->name ?? 'Facility Maintenance' }}
         </div>
         <div style="font-size:13px; color:#475569; margin-top:4px;">
           <strong>Location:</strong> {{ $booking->street_address ?: $booking->address }} ({{ $booking->area ?: 'Dhaka' }})

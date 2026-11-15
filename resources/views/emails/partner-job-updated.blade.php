@@ -35,7 +35,7 @@
       <div class="job-card">
         <div style="font-size:11px; text-transform:uppercase; color:#64748b; font-weight:700;">Job #{{ $booking->booking_number }}</div>
         <div style="font-size:14px; color:#1e293b; margin-top:8px;">
-          <strong>Service:</strong> {{ $booking->service?->name ?? $booking->amcPlan?->name ?? 'Facility Service' }}
+          <strong>Service:</strong> {{ $booking->service?->title ?? $booking->service?->name ?? $booking->amcPlan?->name ?? 'Facility Service' }}
         </div>
         <div style="font-size:13px; color:#0284c7; font-weight:600; margin-top:6px;">
           <strong>Target Window:</strong> {{ $booking->arrival_window ?: ($booking->preferred_time ?: 'Coordinated via phone') }}

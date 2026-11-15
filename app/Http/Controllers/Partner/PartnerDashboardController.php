@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+use App\Models\AmcShift;
 use App\Models\Booking;
 use App\Services\NotificationDispatcher;
 use Illuminate\Http\RedirectResponse;
@@ -18,11 +19,14 @@ class PartnerDashboardController extends Controller
     public function index(): View
     {
         $partner = Auth::guard('partner')->user();
+        $partner->load('payouts');
 
         $allPartnerBookings = Booking::where('partner_id', $partner->id)
             ->with(['service', 'amcPlan', 'assignedCrew'])
             ->latest()
             ->get();
+
+        $partner->setRelation('bookings', $allPartnerBookings);
 
         $activeJobs = $allPartnerBookings->filter(function ($b) {
             return in_array($b->partner_job_status, ['assigned', 'accepted', 'on_the_way', 'in_progress']);
@@ -48,6 +52,20 @@ class PartnerDashboardController extends Controller
 
         $recentJobs = $allPartnerBookings->take(6);
 
+        // AMC Contract Routine Shifts for this Partner Crew
+        $allPartnerAmcShifts = AmcShift::where('partner_id', $partner->id)
+            ->with(['booking.user', 'booking.amcPlan', 'assignedCrew'])
+            ->orderBy('scheduled_date', 'asc')
+            ->get();
+
+        $upcomingAmcShifts = $allPartnerAmcShifts->filter(function ($s) {
+            return in_array($s->status, ['scheduled', 'in_progress']) && $s->scheduled_date >= now()->toDateString();
+        })->take(5);
+
+        $amcContractsCount = $allPartnerBookings->filter(fn ($b) => $b->is_amc || $b->service_type === 'amc_contract')->count();
+        $pendingShiftsCount = $allPartnerAmcShifts->where('status', 'scheduled')->count();
+        $completedShiftsCount = $allPartnerAmcShifts->where('status', 'completed')->count();
+
         $stats = [
             'active_count' => $activeJobs->count(),
             'completed_count' => $completedJobs->count(),
@@ -64,9 +82,22 @@ class PartnerDashboardController extends Controller
             'is_offline' => $partner->is_currently_offline,
             'offline_until' => $partner->offline_until,
             'offline_reason' => $partner->offline_reason,
+            'amc_contracts_count' => $amcContractsCount,
+            'pending_shifts_count' => $pendingShiftsCount,
+            'completed_shifts_count' => $completedShiftsCount,
         ];
 
-        return view('partner.dashboard', compact('partner', 'stats', 'activeJobs', 'todayJobs', 'recentJobs'));
+        return view('partner.dashboard', compact(
+            'partner',
+            'stats',
+            'activeJobs',
+            'todayJobs',
+            'recentJobs',
+            'upcomingAmcShifts',
+            'amcContractsCount',
+            'pendingShiftsCount',
+            'completedShiftsCount'
+        ));
     }
 
     /**

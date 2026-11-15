@@ -30,7 +30,7 @@ class AdminPartnerController extends Controller
         $status = $request->query('status', 'all');
         $search = $request->query('search');
 
-        $query = Partner::with('user')->latest();
+        $query = Partner::with(['user', 'bookings', 'payouts'])->latest();
 
         if ($status !== 'all') {
             $query->where('status', $status);
@@ -46,9 +46,11 @@ class AdminPartnerController extends Controller
             });
         }
 
+        $allPartnersWithFinancials = Partner::with(['bookings', 'payouts'])->get();
+        $payablePartners = $allPartnersWithFinancials->filter(fn ($p) => $p->payable_balance > 0);
+
         if ($request->query('filter') === 'payable' || $status === 'payable') {
-            $payablePartnerIds = Partner::all()->filter(fn ($p) => $p->payable_balance > 0)->pluck('id');
-            $query->whereIn('id', $payablePartnerIds);
+            $query->whereIn('id', $payablePartners->pluck('id'));
         }
 
         $partners = $query->paginate(15)->withQueryString();
@@ -58,7 +60,7 @@ class AdminPartnerController extends Controller
             'pending' => Partner::where('status', 'pending')->count(),
             'approved' => Partner::where('status', 'approved')->count(),
             'rejected' => Partner::where('status', 'rejected')->count(),
-            'payable' => Partner::all()->filter(fn ($p) => $p->payable_balance > 0)->count(),
+            'payable' => $payablePartners->count(),
         ];
 
         return view('admin.partners.index', compact('partners', 'status', 'search', 'stats'));

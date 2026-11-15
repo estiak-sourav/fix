@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdateBookingStatusRequest;
 use App\Models\AdminNotification;
 use App\Models\AmcInvoice;
 use App\Models\AmcPlan;
+use App\Models\AmcShift;
 use App\Models\Booking;
 use App\Models\DailyAnalytics;
 use App\Models\OutreachTask;
@@ -634,6 +635,35 @@ class AdminDashboardController extends Controller
             ->take(5)
             ->values();
 
+        // 8. AMC & Facility Routine Maintenance Operations Hub
+        $amcContractsQuery = Booking::where(function ($q) {
+            $q->where('service_type', 'amc_contract')
+                ->orWhereNotNull('amc_plan_id');
+        });
+
+        $totalAmcContractsCount = (clone $amcContractsQuery)->count();
+        $activeAmcContractsCount = (clone $amcContractsQuery)->whereIn('contract_status', ['active', 'in_progress', 'scheduled'])->whereNotIn('status', ['cancelled'])->count();
+
+        $pendingAmcCancellations = (clone $amcContractsQuery)
+            ->where('cancellation_requested', true)
+            ->where('cancellation_review_status', 'pending')
+            ->with(['user', 'partner', 'amcPlan'])
+            ->latest('cancellation_requested_at')
+            ->get();
+
+        $upcomingAmcShifts = AmcShift::with(['booking.user', 'booking.amcPlan', 'partner'])
+            ->whereIn('status', ['scheduled', 'reassignment_needed'])
+            ->whereDate('scheduled_date', '>=', Carbon::today())
+            ->orderBy('scheduled_date', 'asc')
+            ->take(6)
+            ->get();
+
+        $upcomingAmcShiftsCount = AmcShift::whereIn('status', ['scheduled', 'reassignment_needed'])
+            ->whereBetween('scheduled_date', [Carbon::today()->toDateString(), Carbon::today()->addDays(7)->toDateString()])
+            ->count();
+
+        $completedAmcShiftsCount = AmcShift::where('status', 'completed')->count();
+
         return view('admin.dashboard', compact(
             'stats',
             'metricChart',
@@ -660,7 +690,13 @@ class AdminDashboardController extends Controller
             'totalCrewDuesToAdmin',
             'totalPayableBalance',
             'topPayableCrews',
-            'topDuesCrews'
+            'topDuesCrews',
+            'totalAmcContractsCount',
+            'activeAmcContractsCount',
+            'pendingAmcCancellations',
+            'upcomingAmcShifts',
+            'upcomingAmcShiftsCount',
+            'completedAmcShiftsCount'
         ));
     }
 

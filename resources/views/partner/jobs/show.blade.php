@@ -75,7 +75,93 @@
     <div style="display: flex; flex-direction: column; gap: 18px;">
 
       {{-- Field Status Step Updater --}}
-      @if(in_array($booking->partner_job_status, ['accepted', 'on_the_way', 'in_progress']))
+      @if($booking->is_amc)
+        {{-- AMC Contract Shifts & Execution Hub --}}
+        <div class="p-card" style="border: 2px solid #00a896; background: #ffffff;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <span style="font-size: 0.72rem; font-weight: 800; color: #00a896; text-transform: uppercase; letter-spacing: 0.04em;">
+                🏢 AMC Contract Routine Maintenance
+              </span>
+              <h3 style="margin: 2px 0 0; font-size: 1.15rem; font-weight: 800; color: #1e1b4b;">
+                {{ $booking->amcPlan?->name ?? 'Annual Maintenance Agreement' }}
+              </h3>
+            </div>
+            <span style="font-size: 0.8rem; font-weight: 800; background: #e6f8f5; color: #00a896; border: 1px solid #99f6e4; padding: 4px 12px; border-radius: 20px;">
+              {{ $booking->completed_shifts_count }} / {{ $booking->amcShifts->count() }} Shifts Completed
+            </span>
+          </div>
+
+          <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 14px;">
+            You are assigned to the recurring maintenance routine of this contract. Complete each shift as scheduled on site or report cancellations.
+          </p>
+
+          {{-- List of Shifts --}}
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+            @forelse($booking->amcShifts as $shift)
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div style="width: 32px; height: 32px; border-radius: 50%; background: {{ $shift->is_completed ? '#dcfce7' : ($shift->is_cancelled ? '#fee2e2' : '#eff6ff') }}; color: {{ $shift->is_completed ? '#15803d' : ($shift->is_cancelled ? '#dc2626' : '#2563eb') }}; font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    @if($shift->is_completed)
+                      ✓
+                    @elseif($shift->is_cancelled)
+                      ✕
+                    @else
+                      #{{ $shift->shift_number }}
+                    @endif
+                  </div>
+                  <div>
+                    <strong style="font-size: 0.88rem; color: #0f172a; display: block;">{{ $shift->title }}</strong>
+                    <span style="font-size: 0.78rem; color: #64748b;">
+                      📅 {{ $shift->scheduled_date->format('M d, Y') }} • {{ $shift->scheduled_time_slot }}
+                    </span>
+                    @if($shift->completion_notes)
+                      <div style="font-size: 0.75rem; color: #15803d; margin-top: 2px;">
+                        ✓ Notes: {{ $shift->completion_notes }}
+                      </div>
+                    @elseif($shift->cancellation_reason)
+                      <div style="font-size: 0.75rem; color: #dc2626; margin-top: 2px;">
+                        ⚠️ Cancelled: {{ $shift->cancellation_reason }}
+                      </div>
+                    @endif
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  @if($shift->is_completed)
+                    <span class="p-badge p-badge-success" style="font-size: 0.75rem;">Completed</span>
+                  @elseif($shift->is_cancelled)
+                    <span class="p-badge p-badge-danger" style="font-size: 0.75rem;">Cancelled</span>
+                  @else
+                    <button type="button" class="btn-p btn-p-primary" style="padding: 5px 10px; font-size: 0.75rem;" onclick="openShiftCompleteModal('{{ $shift->id }}', '{{ $shift->shift_number }}', '{{ addslashes($shift->title) }}')">
+                      ✓ Complete Shift
+                    </button>
+                    <button type="button" class="btn-p btn-p-outline" style="padding: 5px 10px; font-size: 0.75rem; color: #dc2626; border-color: #fca5a5;" onclick="openShiftCancelModal('{{ $shift->id }}', '{{ $shift->shift_number }}', '{{ addslashes($shift->title) }}')">
+                      Cancel Shift
+                    </button>
+                  @endif
+                </div>
+              </div>
+            @empty
+              <div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">
+                No routine shifts generated yet for this contract.
+              </div>
+            @endforelse
+          </div>
+
+          {{-- Option to relinquish the full contract assignment --}}
+          @if($booking->partner_job_status !== 'declined' && $booking->status !== 'cancelled')
+            <div style="border-top: 1px dashed #cbd5e1; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <span style="font-size: 0.78rem; color: #64748b;">
+                Cannot continue serving this recurring AMC contract?
+              </span>
+              <button type="button" class="btn-p btn-p-outline" style="font-size: 0.75rem; padding: 5px 12px; color: #dc2626; border-color: #fca5a5;" onclick="openRelinquishDealModal()">
+                Decline / Relinquish AMC Assignment
+              </button>
+            </div>
+          @endif
+        </div>
+      @elseif(in_array($booking->partner_job_status, ['accepted', 'on_the_way', 'in_progress']))
         <div class="p-card" style="border: 2px solid var(--p-accent);">
           <h3 class="p-card-title" style="margin-bottom: 14px;">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
@@ -702,7 +788,134 @@
     </div>
   @endif
 
+  {{-- Shift Completion Modal for Crew --}}
+  <div id="shiftCompleteModal" class="fix-dialog-backdrop" style="display: none;" onclick="if(event.target===this) this.style.display='none'">
+    <div class="fix-dialog-box" style="text-align: left; max-width: 480px;">
+      <div class="fix-dialog-icon" style="background: #ecfdf5; color: #059669; margin: 0 auto 12px;">
+        <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+
+      <h3 class="fix-dialog-title" style="text-align: center; color: #065f46;">
+        Complete Shift <span id="completeShiftNum"></span>
+      </h3>
+      <p id="completeShiftTitle" style="text-align: center; font-size: 0.85rem; color: #64748b; margin-top: -8px; margin-bottom: 16px;"></p>
+
+      <form id="shiftCompleteForm" method="POST" action="">
+        @csrf
+        <div style="margin-bottom: 14px;">
+          <label class="p-label">Work &amp; Service Notes (Optional):</label>
+          <textarea name="completion_notes" class="p-input" rows="3" placeholder="Describe routine inspection, filters cleaned, parts serviced, client feedback..."></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button type="button" class="btn-p btn-p-outline" onclick="document.getElementById('shiftCompleteModal').style.display='none'">
+            Cancel
+          </button>
+          <button type="submit" class="btn-p btn-p-primary">
+            ✓ Confirm Shift Completed
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {{-- Shift Cancel Modal for Crew --}}
+  <div id="shiftCancelModal" class="fix-dialog-backdrop" style="display: none;" onclick="if(event.target===this) this.style.display='none'">
+    <div class="fix-dialog-box" style="text-align: left; max-width: 480px;">
+      <div class="fix-dialog-icon" style="background: #fef2f2; color: #dc2626; margin: 0 auto 12px;">
+        <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
+      </div>
+
+      <h3 class="fix-dialog-title" style="text-align: center; color: #991b1b;">
+        Cancel Shift <span id="cancelShiftNum"></span>
+      </h3>
+      <p id="cancelShiftTitle" style="text-align: center; font-size: 0.85rem; color: #64748b; margin-top: -8px; margin-bottom: 16px;"></p>
+
+      <form id="shiftCancelForm" method="POST" action="">
+        @csrf
+        <div style="margin-bottom: 14px;">
+          <label class="p-label">Reason for Shift Cancellation *:</label>
+          <textarea name="cancellation_reason" class="p-input" rows="3" placeholder="Reason (e.g. Client requested reschedule, premise locked, holiday, weather)..." required></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button type="button" class="btn-p btn-p-outline" onclick="document.getElementById('shiftCancelModal').style.display='none'">
+            Go Back
+          </button>
+          <button type="submit" class="btn-p" style="background: #dc2626; color: #fff; border: none; font-weight: 700; padding: 8px 16px; border-radius: 6px;">
+            Cancel Shift
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {{-- Relinquish AMC Deal Modal for Crew --}}
+  <div id="relinquishDealModal" class="fix-dialog-backdrop" style="display: none;" onclick="if(event.target===this) this.style.display='none'">
+    <div class="fix-dialog-box" style="text-align: left; max-width: 480px;">
+      <div class="fix-dialog-icon" style="background: #fffbeb; color: #d97706; margin: 0 auto 12px;">
+        <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
+
+      <h3 class="fix-dialog-title" style="text-align: center; color: #92400e;">
+        Decline / Relinquish AMC Assignment
+      </h3>
+      <p style="text-align: center; font-size: 0.82rem; color: #78350f; margin-top: -6px; margin-bottom: 16px;">
+        This will release you from remaining shifts of AMC Contract #{{ $booking->booking_number }}. Admin will be notified to reassign another partner.
+      </p>
+
+      <form method="POST" action="{{ route('partner.jobs.amc-cancel-deal', $booking) }}">
+        @csrf
+        <div style="margin-bottom: 14px;">
+          <label class="p-label">Reason for Declining / Relinquishing AMC *:</label>
+          <textarea name="crew_cancellation_reason" class="p-input" rows="3" placeholder="Reason (e.g. Schedule overload, team relocation, scope outside expertise)..." required></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button type="button" class="btn-p btn-p-outline" onclick="document.getElementById('relinquishDealModal').style.display='none'">
+            Keep Assignment
+          </button>
+          <button type="submit" class="btn-p" style="background: #dc2626; color: #fff; border: none; font-weight: 700; padding: 8px 16px; border-radius: 6px;">
+            Confirm Relinquish
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
+    function openShiftCompleteModal(shiftId, shiftNum, shiftTitle) {
+      const modal = document.getElementById('shiftCompleteModal');
+      const form = document.getElementById('shiftCompleteForm');
+      document.getElementById('completeShiftNum').textContent = '#' + shiftNum;
+      document.getElementById('completeShiftTitle').textContent = shiftTitle;
+      form.action = '/partner/jobs/{{ $booking->id }}/amc-shifts/' + shiftId + '/complete';
+      modal.style.display = 'flex';
+    }
+
+    function openShiftCancelModal(shiftId, shiftNum, shiftTitle) {
+      const modal = document.getElementById('shiftCancelModal');
+      const form = document.getElementById('shiftCancelForm');
+      document.getElementById('cancelShiftNum').textContent = '#' + shiftNum;
+      document.getElementById('cancelShiftTitle').textContent = shiftTitle;
+      form.action = '/partner/jobs/{{ $booking->id }}/amc-shifts/' + shiftId + '/cancel';
+      modal.style.display = 'flex';
+    }
+
+    function openRelinquishDealModal() {
+      const modal = document.getElementById('relinquishDealModal');
+      if (modal) modal.style.display = 'flex';
+    }
     function handleStartWorkClick() {
       @if($isPriceSetLater)
         const priceInput = document.getElementById('startAgreedPriceInput');
