@@ -1439,6 +1439,9 @@
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 6px !important;
       }
+      .metrics-grid-paces > :last-child:nth-child(odd) {
+        grid-column: span 2;
+      }
       .top-kpi-card {
         padding: 0.75rem 0.85rem !important;
         gap: 8px !important;

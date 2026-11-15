@@ -276,7 +276,9 @@ class AdminPartnerController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.partners.edit', compact('partner', 'activeCategories', 'activeDivisions', 'activeDistricts'));
+        $paymentMethods = $partner->paymentMethods()->orderByDesc('is_default')->get();
+
+        return view('admin.partners.edit', compact('partner', 'activeCategories', 'activeDivisions', 'activeDistricts', 'paymentMethods'));
     }
 
     /**
@@ -779,7 +781,7 @@ class AdminPartnerController extends Controller
             $partner
         );
 
-        return redirect()->route('admin.partners.show', $partner)
+        return $this->partnerPaymentMethodRedirect($partner)
             ->with('success', "Payment method '{$method->formatted_method}' added successfully for {$partner->company_name}.");
     }
 
@@ -830,7 +832,7 @@ class AdminPartnerController extends Controller
             $partner
         );
 
-        return redirect()->route('admin.partners.show', $partner)
+        return $this->partnerPaymentMethodRedirect($partner)
             ->with('success', "Payment method '{$paymentMethod->formatted_method}' updated successfully.");
     }
 
@@ -857,7 +859,7 @@ class AdminPartnerController extends Controller
             $partner
         );
 
-        return redirect()->route('admin.partners.show', $partner)
+        return $this->partnerPaymentMethodRedirect($partner)
             ->with('success', "Payment method '{$formatted}' removed.");
     }
 
@@ -879,7 +881,20 @@ class AdminPartnerController extends Controller
             $partner
         );
 
-        return redirect()->route('admin.partners.show', $partner)
+        return $this->partnerPaymentMethodRedirect($partner)
             ->with('success', "Default payout method updated to '{$paymentMethod->formatted_method}'.");
+    }
+
+    /**
+     * Get appropriate redirect destination after modifying a partner payment method.
+     */
+    private function partnerPaymentMethodRedirect(Partner $partner): RedirectResponse
+    {
+        $previous = url()->previous();
+        if (str_contains($previous, '/admin/partners/')) {
+            return redirect()->to($previous);
+        }
+
+        return redirect()->route('admin.partners.show', $partner);
     }
 }

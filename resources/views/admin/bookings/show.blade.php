@@ -1936,41 +1936,41 @@
           No shifts scheduled yet. Click <strong>Generate Shifts</strong> or <strong>Add Routine Shift</strong> above.
         </div>
       @else
-        <div class="table-responsive-paces">
-          <table class="table-paces">
+        <div class="table-responsive-paces" style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; border-radius: 8px;">
+          <table class="table-paces" style="min-width: 900px; width: 100%;">
             <thead>
               <tr>
-                <th style="width:50px;">#</th>
-                <th>Shift Title</th>
-                <th>Scheduled Date &amp; Window</th>
-                <th>Assigned Crew</th>
-                <th>Shift Payout (৳)</th>
-                <th style="text-align:center;">Status</th>
-                <th>Remarks / Notes</th>
-                <th style="text-align:right;">Actions</th>
+                <th style="width:50px; white-space:nowrap;">#</th>
+                <th style="min-width:150px; white-space:nowrap;">Shift Title</th>
+                <th style="min-width:140px; white-space:nowrap;">Scheduled Date &amp; Window</th>
+                <th style="min-width:130px; white-space:nowrap;">Assigned Crew</th>
+                <th style="min-width:110px; white-space:nowrap;">Shift Payout (৳)</th>
+                <th style="min-width:110px; text-align:center; white-space:nowrap;">Status</th>
+                <th style="min-width:220px;">Remarks / Notes</th>
+                <th style="min-width:120px; text-align:right; white-space:nowrap;">Actions</th>
               </tr>
             </thead>
             <tbody>
               @foreach($booking->amcShifts as $shift)
                 <tr>
-                  <td style="font-weight:700; color:#64748b;">#{{ $shift->shift_number }}</td>
-                  <td>
+                  <td style="font-weight:700; color:#64748b; white-space:nowrap;">#{{ $shift->shift_number }}</td>
+                  <td style="white-space:nowrap;">
                     <strong style="color:#0f172a; font-size:0.875rem;">{{ $shift->title }}</strong>
                   </td>
-                  <td>
+                  <td style="white-space:nowrap;">
                     <div style="font-weight:600; font-size:0.84rem; color:#0f172a;">
                       📅 {{ $shift->scheduled_date->format('M d, Y') }}
                     </div>
                     <span style="font-size:0.75rem; color:#64748b;">{{ $shift->scheduled_time_slot ?: 'Morning' }}</span>
                   </td>
-                  <td>
+                  <td style="white-space:nowrap;">
                     @if($shift->partner)
                       <strong style="font-size:0.84rem; color:#1d4ed8;">{{ $shift->partner->company_name }}</strong>
                     @else
                       <span style="font-size:0.78rem; color:#dc2626; font-style:italic;">⚠️ Unassigned</span>
                     @endif
                   </td>
-                  <td>
+                  <td style="white-space:nowrap;">
                     @php
                       $shiftPayout = $shift->payout_amount ?: ($booking->payout_per_shift ?: 0);
                     @endphp
@@ -1983,12 +1983,12 @@
                       </span>
                     @endif
                   </td>
-                  <td style="text-align:center;">
+                  <td style="text-align:center; white-space:nowrap;">
                     <span class="badge-pill-paces" style="background:{{ $shift->status_badge_color }}22; color:{{ $shift->status_badge_color }}; border:1px solid {{ $shift->status_badge_color }}44; font-size:0.75rem; font-weight:700; padding:2px 8px;">
                       {{ $shift->status_label }}
                     </span>
                   </td>
-                  <td style="font-size:0.8rem; color:#475569; max-width:240px;">
+                  <td style="font-size:0.8rem; color:#475569; min-width:220px; line-height:1.45; word-break:break-word;">
                     @if($shift->completion_notes)
                       <div style="color:#15803d;">✓ {{ $shift->completion_notes }}</div>
                     @elseif($shift->cancellation_reason)

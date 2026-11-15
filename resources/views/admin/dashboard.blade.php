@@ -34,7 +34,7 @@
         scrollbar-width: none;
         max-width: 100%;
         display: flex;
-        padding-bottom: 2px;
+        padding-bottom: 4px;
       }
       .date-pills-scroll-container::-webkit-scrollbar {
         display: none;
@@ -43,11 +43,22 @@
         display: inline-flex !important;
         flex-wrap: nowrap !important;
         white-space: nowrap !important;
+        padding-right: 12px !important;
       }
       .date-pills-wrapper a,
       .date-pills-wrapper button {
         white-space: nowrap !important;
         flex-shrink: 0 !important;
+      }
+    }
+    @media (max-width: 640px) {
+      .amc-alert-action-wrapper {
+        width: 100% !important;
+      }
+      .amc-alert-action-wrapper a {
+        width: 100% !important;
+        justify-content: center !important;
+        text-align: center !important;
       }
     }
     .earnings-analytics-grid {
@@ -104,10 +115,8 @@
       position: relative;
       width: 100%;
       min-width: 0;
-      overflow: hidden;
-      height: 290px;
-      min-height: 290px;
-      max-height: 290px;
+      height: 310px;
+      min-height: 310px;
       box-sizing: border-box;
     }
     .analytics-counters-panel {
@@ -121,9 +130,9 @@
       padding: 12px;
       min-width: 0;
       box-sizing: border-box;
-      height: 290px;
-      min-height: 290px;
-      max-height: 290px;
+      height: 310px;
+      min-height: 310px;
+      max-height: 310px;
     }
     .analytics-counter-item {
       background: #ffffff;
@@ -149,9 +158,8 @@
         gap: 18px;
       }
       .analytics-canvas-wrapper {
-        min-height: 270px !important;
-        height: 270px !important;
-        max-height: 270px !important;
+        min-height: 290px !important;
+        height: 290px !important;
       }
       .analytics-counters-panel {
         grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
@@ -330,10 +338,11 @@
             </div>
           </div>
         </div>
-        <div style="display: flex; gap: 10px; align-items: center; flex-shrink: 0;">
+        <div class="amc-alert-action-wrapper" style="display: flex; gap: 10px; align-items: center; flex-shrink: 0;">
           @if(!empty($amcCollectionAlert['single_booking_id']))
             <a href="{{ route('admin.bookings.show', ['booking' => $amcCollectionAlert['single_booking_id'], 'collect_invoice' => $amcCollectionAlert['single_invoice_id']]) }}#tab-amc-contract" class="btn-paces" style="background: #d97706; color: #ffffff; font-weight: 700; font-size: 0.84rem; padding: 8px 18px; border-radius: 8px; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 6px;">
-              <span>Collect Bill from {{ $amcCollectionAlert['single_client_name'] }} (৳ {{ number_format($amcCollectionAlert['single_amount'], 2) }})</span>
+              <span class="d-none d-sm-inline">Collect Bill from {{ $amcCollectionAlert['single_client_name'] }} (৳ {{ number_format($amcCollectionAlert['single_amount'], 2) }})</span>
+              <span class="d-inline d-sm-none">Collect Bill (৳ {{ number_format($amcCollectionAlert['single_amount'], 2) }})</span>
               <svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </a>
           @else
@@ -476,12 +485,12 @@
   <!-- Main Analytics Body: BarChart on Left (Compact Width) and 8 Operational Counters on Right -->
   <div class="analytics-barchart-grid">
     <!-- Left: Clean BarChart Canvas (Width reduced so bars are closer together) -->
-    <div class="analytics-canvas-wrapper" style="position:relative; height: 290px; min-height: 290px; max-height: 290px; width: 100%; min-width: 0; overflow: hidden; box-sizing: border-box;">
-      <canvas id="unifiedCleanBarChart" style="max-width: 100% !important; height: 290px !important; max-height: 290px !important;"></canvas>
+    <div class="analytics-canvas-wrapper" style="position:relative; height: 310px; width: 100%; min-width: 0; box-sizing: border-box;">
+      <canvas id="unifiedCleanBarChart" style="width: 100% !important;"></canvas>
     </div>
 
     <!-- Right: 8 Metric Counter Cards (Organized in 2 columns of 4) -->
-    <div class="analytics-counters-panel" style="height: 290px; min-height: 290px; max-height: 290px; box-sizing: border-box;">
+    <div class="analytics-counters-panel" style="height: 310px; min-height: 310px; box-sizing: border-box;">
 
         <!-- 3. Login -->
         <div class="analytics-counter-item" style="border-top:3px solid #8b5cf6;">
@@ -2329,22 +2338,34 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          layout: {
+            padding: {
+              top: 10,
+              bottom: 8,
+              left: 4,
+              right: 6
+            }
+          },
           scales: {
             x: {
               grid: { display: false },
               ticks: {
-                font: function() {
-                  return { family: 'Poppins', size: window.innerWidth < 576 ? 8.5 : 10.5, weight: '500' };
+                font: {
+                  family: 'Poppins',
+                  size: window.innerWidth < 576 ? 9 : 10.5,
+                  weight: '500'
                 },
                 color: '#475569',
                 maxRotation: 28,
                 minRotation: 0,
-                autoSkip: false
+                autoSkip: false,
+                padding: 4
               },
               border: { display: false }
             },
             y: {
               beginAtZero: true,
+              suggestedMax: Math.max(5, ...(metricValues.length ? metricValues : [0])),
               grid: {
                 color: '#f1f5f9',
                 drawBorder: false
@@ -2353,7 +2374,8 @@
                 font: { family: 'Poppins', size: 11, weight: '500' },
                 color: '#94a3b8',
                 precision: 0,
-                maxTicksLimit: 7
+                maxTicksLimit: 6,
+                stepSize: 1
               },
               border: { display: false }
             }
