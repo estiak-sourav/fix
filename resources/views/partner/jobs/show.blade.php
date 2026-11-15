@@ -827,16 +827,16 @@
         {{-- Payment Collection Question --}}
         <div style="margin-bottom: 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 12px 14px;">
           <label class="p-label" style="font-weight: 700; color: #1e293b; display: block; margin-bottom: 8px; font-size: 0.85rem;">
-            Did client give you payment on site? / ক্লায়েন্ট কি আপনাকে কোনো টাকা দিয়েছে? *
+            Did client provide payment on site? *
           </label>
           <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
             <label style="display: flex; align-items: center; gap: 6px; font-size: 0.84rem; color: #334155; cursor: pointer;">
               <input type="radio" name="payment_collected" value="no" id="shiftPaymentRadioNo" checked onchange="toggleShiftPaymentFields(this.value)">
-              <span>না / টাকা নেওয়া হয়নি (অফিস বিল)</span>
+              <span>No / Payment not collected (Billed to Office)</span>
             </label>
             <label style="display: flex; align-items: center; gap: 6px; font-size: 0.84rem; color: #166534; font-weight: 700; cursor: pointer;">
               <input type="radio" name="payment_collected" value="yes" id="shiftPaymentRadioYes" onchange="toggleShiftPaymentFields(this.value)">
-              <span>হ্যাঁ / টাকা পেয়েছি</span>
+              <span>Yes / Payment Collected on Site</span>
             </label>
           </div>
         </div>
@@ -852,15 +852,15 @@
 
           <div style="margin-bottom: 12px;">
             <label class="p-label" style="font-weight: 700; color: #065f46; font-size: 0.82rem; display: block; margin-bottom: 4px;">
-              Payment Method / কি উপায়ে টাকা দিল? *
+              Payment Method *
             </label>
             <select name="payment_method" id="shiftPaymentMethodSelect" class="p-input" style="background:#ffffff; border-color:#86efac; font-weight:600;">
-              <option value="Cash">Cash on Delivery / সরাসরি নগদ ক্যাশ</option>
-              <option value="bKash">bKash (বিকাশ)</option>
-              <option value="Nagad">Nagad (নগদ)</option>
-              <option value="Bank Transfer">Bank Transfer / ব্যাংক চেক</option>
+              <option value="Cash">Cash on Delivery</option>
+              <option value="bKash">bKash</option>
+              <option value="Nagad">Nagad</option>
+              <option value="Bank Transfer">Bank Transfer / Cheque</option>
               <option value="POS / Card">Credit/Debit Card (POS)</option>
-              <option value="Other">Other / অন্যান্য মাধ্যম</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 

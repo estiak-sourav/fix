@@ -74,7 +74,7 @@ class CreateBookingAction
                 'preferred_date' => $data['preferred_date'],
                 'preferred_time_slot' => $data['preferred_time_slot'],
                 'urgency' => $data['urgency'],
-                'problem_description' => $data['problem_description'],
+                'problem_description' => ! empty($data['problem_description']) ? $data['problem_description'] : ($contractTenure ? "Annual Maintenance Contract ({$contractTenure}) request." : 'Facility maintenance request.'),
                 'attached_images' => ! empty($attachedImages) ? $attachedImages : null,
                 'status' => 'pending_review',
             ]);

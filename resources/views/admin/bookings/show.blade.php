@@ -2024,12 +2024,12 @@
         <div style="margin-bottom:1rem;">
           <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Payment Channel / Method *</label>
           <select name="payment_method" class="form-control-paces" required>
-            <option value="Bank Transfer">Bank Transfer / Cheque (ব্যাংক ট্রান্সফার / চেক)</option>
+            <option value="Bank Transfer">Bank Transfer / Cheque</option>
             <option value="bKash">bKash (Merchant / Personal)</option>
-            <option value="Nagad">Nagad (নগদ)</option>
-            <option value="Cash at Office">Cash at Office (অফিসে সরাসরি নগদ জমা)</option>
+            <option value="Nagad">Nagad</option>
+            <option value="Cash at Office">Cash at Office</option>
             <option value="POS / Card">Credit / Debit Card (POS)</option>
-            <option value="Other">Other / অন্যান্য</option>
+            <option value="Other">Other</option>
           </select>
         </div>
 

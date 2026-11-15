@@ -159,7 +159,7 @@
                     Rate Your Completed Service ({{ $unreviewedList->count() }} Awaiting)
                   </h3>
                   <p style="margin: 2px 0 0; font-size: 0.83rem; color: #92400e;">
-                    আপনার সার্ভিসটি সম্পন্ন হয়েছে। সেবার মান এবং টেকনিশিয়ানদের অভিজ্ঞতা জানিয়ে আমাদের রেটিং দিন!
+                    Your service has been completed. Please rate your experience and the quality of work!
                   </p>
                 </div>
               </div>
