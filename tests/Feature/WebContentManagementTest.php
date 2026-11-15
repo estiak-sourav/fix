@@ -611,4 +611,31 @@ class WebContentManagementTest extends TestCase
         $response->assertSee('margin-top: -1.5rem !important;', false);
         $response->assertSee('Quality Guaranteed');
     }
+
+    /**
+     * Test admin can remove selected gallery photos from service.
+     */
+    public function test_admin_can_remove_service_gallery_photos(): void
+    {
+        $service = Service::firstOrFail();
+        $service->update([
+            'gallery_images' => [
+                'uploads/services/photo1.jpg',
+                'uploads/services/photo2.jpg',
+            ],
+        ]);
+
+        $response = $this->actingAs($this->admin, 'admin')->put(
+            route('admin.cms.services.update', $service),
+            [
+                'title' => $service->title,
+                'description' => $service->description,
+                'remove_photos' => ['uploads/services/photo1.jpg'],
+            ]
+        );
+
+        $response->assertRedirect(route('admin.web.services'));
+        $service->refresh();
+        $this->assertEquals(['uploads/services/photo2.jpg'], $service->gallery_images);
+    }
 }

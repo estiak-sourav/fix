@@ -29,6 +29,8 @@ class UpdateServiceRequest extends FormRequest
             'thumbnail_file' => ['nullable', 'image', 'max:10240'],
             'service_photos' => ['nullable', 'array', 'max:5'],
             'service_photos.*' => ['nullable', 'image', 'max:10240'],
+            'remove_photos' => ['nullable', 'array'],
+            'remove_photos.*' => ['nullable', 'string'],
             'is_emergency' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
         ];

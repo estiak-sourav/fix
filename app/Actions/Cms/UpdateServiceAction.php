@@ -48,6 +48,11 @@ class UpdateServiceAction
         $currentGallery = $service->gallery_images ?? [];
         if (! empty($validated['remove_photos'])) {
             $toRemove = (array) $validated['remove_photos'];
+            foreach ($toRemove as $imgPath) {
+                if ($imgPath && file_exists(public_path($imgPath)) && ! str_starts_with($imgPath, 'assets/')) {
+                    @unlink(public_path($imgPath));
+                }
+            }
             $currentGallery = array_values(array_filter($currentGallery, fn ($img) => ! in_array($img, $toRemove)));
         }
 
