@@ -406,6 +406,85 @@
         </div>
       </div>
     </div>
+
+    @php
+      $amcTotalContract = (float) ($booking->final_cost ?: ($booking->recurring_amount ? $booking->recurring_amount * 12 : ($booking->estimated_cost ?: 0)));
+      $amcInvoicePaid = (float) $booking->amcInvoices->where('status', 'paid')->sum('amount');
+      $amcShiftCollected = (float) $booking->amcShifts->sum('collected_amount');
+      $amcBookingPaid = ($booking->payment_status === 'paid' && $amcInvoicePaid == 0) ? (float) ($booking->collected_amount ?: $booking->final_cost) : 0;
+      $amcTotalPaid = $amcInvoicePaid + $amcShiftCollected + $amcBookingPaid;
+      $amcRemainingDue = max(0.0, $amcTotalContract - $amcTotalPaid);
+      
+      $crewCollected = (float) ($booking->amcShifts->where('payment_collected_by', 'crew')->sum('collected_amount') + ($booking->payment_collected_by === 'crew' ? ($booking->collected_amount ?: 0) : 0));
+      $officeCollected = max(0.0, $amcTotalPaid - $crewCollected);
+    @endphp
+
+    <!-- AMC Financial Balance & Payment Overview -->
+    <div class="card-paces" style="margin-bottom:1.5rem; padding:16px 20px; background:#f0fdfa; border:1.5px solid #99f6e4;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:1.3rem;">💳</span>
+          <div>
+            <h4 style="margin:0; font-size:1.02rem; font-weight:800; color:#0f2744;">AMC Contract Balance &amp; Payment Overview</h4>
+            <span style="font-size:0.75rem; color:#0f766e;">
+              Charge Model: <strong>{{ $booking->amc_billing_type_label }}</strong> 
+              @if($booking->payout_per_shift)
+                • Crew Payout: <strong>৳ {{ number_format($booking->payout_per_shift, 2) }} / shift</strong>
+              @endif
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#0f766e; border-color:#0f766e; font-weight:700; display:inline-flex; align-items:center; gap:5px;" onclick="openCollectOfficePaymentModal()">
+            <span>🏢 + Input Office Payment</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Financial Metrics Grid -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+        <div style="background:#ffffff; border:1px solid #99f6e4; border-radius:8px; padding:12px 14px;">
+          <span style="font-size:0.72rem; color:#64748b; font-weight:700; text-transform:uppercase;">Total Contract Value</span>
+          <strong style="display:block; font-size:1.2rem; color:#0f2744; margin-top:2px;">
+            ৳ {{ number_format($booking->amc_total_budget, 2) }}
+          </strong>
+        </div>
+
+        <div style="background:#ffffff; border:1px solid #86efac; border-radius:8px; padding:12px 14px;">
+          <span style="font-size:0.72rem; color:#166534; font-weight:700; text-transform:uppercase;">Total Received / Paid</span>
+          <strong style="display:block; font-size:1.2rem; color:#16a34a; margin-top:2px;">
+            ৳ {{ number_format($booking->amc_total_paid, 2) }}
+          </strong>
+        </div>
+
+        <div style="background:#ffffff; border:1px solid {{ $booking->amc_remaining_due > 0 ? '#fca5a5' : '#cbd5e1' }}; border-radius:8px; padding:12px 14px;">
+          <span style="font-size:0.72rem; color:{{ $booking->amc_remaining_due > 0 ? '#991b1b' : '#64748b' }}; font-weight:700; text-transform:uppercase;">Outstanding Due</span>
+          <strong style="display:block; font-size:1.2rem; color:{{ $booking->amc_remaining_due > 0 ? '#dc2626' : '#64748b' }}; margin-top:2px;">
+            ৳ {{ number_format($booking->amc_remaining_due, 2) }}
+          </strong>
+        </div>
+
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:0.72rem; color:#475569; font-weight:700; text-transform:uppercase;">Payment Channels</span>
+            <button type="button" class="btn-paces btn-paces-outline btn-paces-sm" style="font-size:0.68rem; padding:1px 6px; font-weight:700; color:#0f766e; border-color:#99f6e4;" onclick="openCollectOfficePaymentModal()">
+              + Input
+            </button>
+          </div>
+          <div style="font-size:0.78rem; margin-top:4px; line-height:1.55;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span>🏢 Direct to FIX Office:</span>
+              <strong style="color:#0f2744; font-size:0.86rem;">৳ {{ number_format($booking->amc_office_collected, 2) }}</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+              <span>👷 Collected by Crew on Site:</span>
+              <strong style="color:#0f766e; font-size:0.86rem;">৳ {{ number_format($booking->amc_crew_collected, 2) }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   @elseif($booking->status !== 'cancelled')
     <div class="lifecycle-tracker">
       <!-- Step 1: Requested -->
@@ -1209,6 +1288,33 @@
               </label>
               <input type="hidden" name="cost_type" id="costTypeHidden_edit" value="{{ $isEstimatedCost ? 'estimated' : 'final' }}">
             </div>
+
+            @if($booking->is_amc)
+              <div style="margin-top:14px; padding-top:14px; border-top:1px dashed #cbd5e1; display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                <div>
+                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:700;">AMC Charge Model (Client Billing) *</label>
+                  <select name="amc_billing_type" class="form-control-paces">
+                    <option value="total" {{ in_array(old('amc_billing_type', $booking->amc_billing_type), ['total', 'overall']) ? 'selected' : '' }}>
+                      Total Contract (Fixed total contract budget)
+                    </option>
+                    <option value="daily" {{ in_array(old('amc_billing_type', $booking->amc_billing_type), ['daily', 'per_shift']) ? 'selected' : '' }}>
+                      Daily / Per Work Shift (Billed on day of service)
+                    </option>
+                    <option value="monthly" {{ old('amc_billing_type', $booking->amc_billing_type ?? 'monthly') === 'monthly' ? 'selected' : '' }}>
+                      Monthly (Invoiced / billed monthly)
+                    </option>
+                    <option value="yearly" {{ in_array(old('amc_billing_type', $booking->amc_billing_type), ['yearly', 'annual']) ? 'selected' : '' }}>
+                      Yearly / Annual (Invoiced annually)
+                    </option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label-paces" style="font-size:0.8rem; font-weight:700;">Crew Payout Per Shift (৳)</label>
+                  <input type="number" step="0.01" name="payout_per_shift" class="form-control-paces" value="{{ old('payout_per_shift', $booking->payout_per_shift) }}" placeholder="e.g. 500.00 (Amount added to crew panel per shift)">
+                  <span style="font-size:0.72rem; color:#64748b; display:block; margin-top:2px;">Amount credited to assigned crew's panel upon shift completion.</span>
+                </div>
+              </div>
+            @endif
           </div>
 
           <div style="margin-bottom:1.25rem;">
@@ -1546,12 +1652,6 @@
             <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" onclick="document.getElementById('adminAddShiftModal').style.display='flex'">
               + Add Routine Shift
             </button>
-            <form action="{{ route('admin.bookings.amc-shifts.generate', $booking) }}" method="POST" style="margin:0;" onsubmit="return confirm('Generate/Regenerate recurring shifts for this contract?');">
-              @csrf
-              <button type="submit" class="btn-paces btn-paces-outline btn-paces-sm" style="border-color:#cbd5e1; background:#ffffff;">
-                🔄 Generate Shifts
-              </button>
-            </form>
             @if($booking->status !== 'cancelled')
               <button type="button" class="btn-paces btn-paces-sm" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-weight:700;" onclick="document.getElementById('cancelBookingModal').style.display='flex'">
                 ✕ Cancel Full Deal
@@ -1595,6 +1695,7 @@
                 <th>Shift Title</th>
                 <th>Scheduled Date &amp; Window</th>
                 <th>Assigned Crew</th>
+                <th>Shift Payout (৳)</th>
                 <th style="text-align:center;">Status</th>
                 <th>Remarks / Notes</th>
                 <th style="text-align:right;">Actions</th>
@@ -1611,13 +1712,26 @@
                     <div style="font-weight:600; font-size:0.84rem; color:#0f172a;">
                       📅 {{ $shift->scheduled_date->format('M d, Y') }}
                     </div>
-                    <span style="font-size:0.75rem; color:#64748b;">{{ $shift->scheduled_time_slot }}</span>
+                    <span style="font-size:0.75rem; color:#64748b;">{{ $shift->scheduled_time_slot ?: 'Morning' }}</span>
                   </td>
                   <td>
                     @if($shift->partner)
                       <strong style="font-size:0.84rem; color:#1d4ed8;">{{ $shift->partner->company_name }}</strong>
                     @else
-                      <span style="font-size:0.78rem; color:#94a3b8; font-style:italic;">Default (Unassigned)</span>
+                      <span style="font-size:0.78rem; color:#dc2626; font-style:italic;">⚠️ Unassigned</span>
+                    @endif
+                  </td>
+                  <td>
+                    @php
+                      $shiftPayout = $shift->payout_amount ?: ($booking->payout_per_shift ?: 0);
+                    @endphp
+                    <strong style="color:#0f2744; font-size:0.84rem;">
+                      ৳ {{ number_format($shiftPayout, 2) }}
+                    </strong>
+                    @if($shift->status === 'completed')
+                      <span style="font-size:0.7rem; display:block; color:{{ $shift->payout_status === 'payable' ? '#15803d' : ($shift->payout_status === 'paid' ? '#0284c7' : '#d97706') }}; font-weight:700;">
+                        {{ $shift->payout_status === 'payable' ? '✓ Payable' : ($shift->payout_status === 'paid' ? '✓ Paid' : '⏳ Pending Client Bill') }}
+                      </span>
                     @endif
                   </td>
                   <td style="text-align:center;">
@@ -1625,7 +1739,7 @@
                       {{ $shift->status_label }}
                     </span>
                   </td>
-                  <td style="font-size:0.8rem; color:#475569; max-width:220px;">
+                  <td style="font-size:0.8rem; color:#475569; max-width:240px;">
                     @if($shift->completion_notes)
                       <div style="color:#15803d;">✓ {{ $shift->completion_notes }}</div>
                     @elseif($shift->cancellation_reason)
@@ -1635,15 +1749,23 @@
                     @else
                       <span style="color:#94a3b8;">—</span>
                     @endif
+                    @if($shift->payment_collected_by === 'crew' && $shift->collected_amount > 0)
+                      <div style="font-size:0.74rem; color:#0f766e; font-weight:700; margin-top:3px;">
+                        💰 Collected on site: ৳ {{ number_format($shift->collected_amount, 2) }} ({{ $shift->payment_method ?: 'Cash' }})
+                        @if($shift->payment_reference) <span style="font-weight:normal; color:#475569;">• Ref: {{ $shift->payment_reference }}</span> @endif
+                      </div>
+                    @endif
                   </td>
                   <td style="text-align:right; white-space:nowrap;">
-                    @if(!$shift->is_completed && !$shift->is_cancelled && auth('admin')->user()?->hasPermission('bookings.edit'))
-                      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.74rem; padding:3px 8px;" onclick="openAdminReassignShiftModal('{{ $shift->id }}', '{{ $shift->shift_number }}', '{{ $shift->partner_id }}')">
+                    @if(!$shift->is_completed && auth('admin')->user()?->hasPermission('bookings.edit'))
+                      <button type="button" class="btn-paces btn-paces-primary btn-paces-sm" style="font-size:0.74rem; padding:3px 8px;" onclick="openAdminReassignShiftModal('{{ $shift->id }}', '{{ $shift->shift_number }}', '{{ $shift->partner_id }}', '{{ $shift->scheduled_date->format('Y-m-d') }}', '{{ addslashes($shift->scheduled_time_slot ?? '') }}', '{{ $shiftPayout > 0 ? $shiftPayout : '' }}')">
                         Reassign
                       </button>
-                      <button type="button" class="btn-paces btn-paces-sm" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:0.74rem; padding:3px 8px; font-weight:700;" onclick="openAdminCancelShiftModal('{{ $shift->id }}', '{{ $shift->shift_number }}')">
-                        Cancel
-                      </button>
+                      @if($shift->status !== 'cancelled')
+                        <button type="button" class="btn-paces btn-paces-sm" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:0.74rem; padding:3px 8px; font-weight:700;" onclick="openAdminCancelShiftModal('{{ $shift->id }}', '{{ $shift->shift_number }}')">
+                          Cancel
+                        </button>
+                      @endif
                     @else
                       <span style="font-size:0.75rem; color:#94a3b8;">Locked</span>
                     @endif
@@ -1749,13 +1871,44 @@
       <form id="adminReassignShiftForm" method="POST" action="">
         @csrf
         <div style="padding:18px;">
-          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Select Partner / Crew *</label>
-          <select name="partner_id" id="adminReassignPartnerSelect" class="form-control-paces" required>
-            <option value="">-- Choose Partner --</option>
-            @foreach($enlistedPartners as $p)
-              <option value="{{ $p->id }}">{{ $p->company_name }} ({{ $p->contact_person }})</option>
-            @endforeach
-          </select>
+          <div style="margin-bottom:12px;">
+            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Select Partner / Crew *</label>
+            <select name="partner_id" id="adminReassignPartnerSelect" class="form-control-paces" required>
+              <option value="">-- Choose Partner --</option>
+              @foreach($enlistedPartners as $p)
+                <option value="{{ $p->id }}">{{ $p->company_name }} ({{ $p->contact_person }})</option>
+              @endforeach
+            </select>
+            <span style="font-size:0.72rem; color:#0f766e; display:block; margin-top:2px;">
+              Whichever crew is assigned will receive the payout for this shift upon completion.
+            </span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+            <div>
+              <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Scheduled Date *</label>
+              <input type="date" name="scheduled_date" id="adminReassignDateInput" class="form-control-paces">
+            </div>
+            <div>
+              <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Time Slot</label>
+              <select name="scheduled_time_slot" id="adminReassignSlotSelect" class="form-control-paces">
+                <option value="Morning (9:00 AM - 12:00 PM)">Morning (9:00 AM - 12:00 PM)</option>
+                <option value="Afternoon (12:00 PM - 4:00 PM)">Afternoon (12:00 PM - 4:00 PM)</option>
+                <option value="Evening (4:00 PM - 8:00 PM)">Evening (4:00 PM - 8:00 PM)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Shift Payout Amount (৳) (Optional)</label>
+            <input type="number" step="0.01" name="payout_amount" id="adminReassignPayoutInput" class="form-control-paces" placeholder="e.g. 500.00">
+            <span style="font-size:0.72rem; color:#64748b; display:block; margin-top:2px;">Override specific payout amount for this assigned crew.</span>
+          </div>
+
+          <div style="margin-bottom:8px;">
+            <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Operational Notes / Instructions</label>
+            <textarea name="admin_notes" id="adminReassignNotesInput" class="form-control-paces" rows="2" placeholder="Instructions or reason for reassignment..."></textarea>
+          </div>
         </div>
 
         <div style="padding:12px 18px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:8px;">
@@ -1839,6 +1992,66 @@
           <button type="button" onclick="closeCollectBillModal()" class="btn-paces btn-paces-outline btn-paces-sm">Cancel</button>
           <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="font-weight:600; padding:6px 16px;">
             ✓ Confirm Bill Collection
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Record Direct Payment to FIX Office -->
+  <div id="collectOfficePaymentModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:9999; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:1rem;" onclick="if(event.target===this) closeCollectOfficePaymentModal()">
+    <div style="background:#ffffff; border-radius:12px; max-width:480px; width:100%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); border:1px solid var(--paces-border); overflow:hidden;">
+      <div style="padding:1.25rem 1.5rem; border-bottom:1px solid var(--paces-border); display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+        <div>
+          <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:var(--paces-text-dark);">Record Direct Office Payment</h3>
+          <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-top:2px;">AMC Contract #{{ $booking->booking_number }} • Client: {{ $booking->customer_name }}</div>
+        </div>
+        <button type="button" onclick="closeCollectOfficePaymentModal()" style="background:none; border:none; color:#64748b; font-size:1.2rem; cursor:pointer;">✕</button>
+      </div>
+
+      <form action="{{ route('admin.bookings.amc-office-payment.store', $booking) }}" method="POST" style="padding:1.5rem;">
+        @csrf
+        <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:10px 14px; margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.82rem; font-weight:600; color:#065f46;">Current Outstanding Due:</span>
+          <strong style="font-size:1.15rem; color:#047857;">৳ {{ number_format($booking->amc_remaining_due, 2) }}</strong>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Amount Received at Office (৳) *</label>
+          <input type="number" step="0.01" min="1" name="amount" value="{{ $booking->amc_remaining_due > 0 ? $booking->amc_remaining_due : ($booking->recurring_amount ?: '') }}" class="form-control-paces" required style="font-weight:700; font-size:1.05rem; color:#0f2744;">
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Payment Channel / Method *</label>
+          <select name="payment_method" class="form-control-paces" required>
+            <option value="Bank Transfer">Bank Transfer / Cheque (ব্যাংক ট্রান্সফার / চেক)</option>
+            <option value="bKash">bKash (Merchant / Personal)</option>
+            <option value="Nagad">Nagad (নগদ)</option>
+            <option value="Cash at Office">Cash at Office (অফিসে সরাসরি নগদ জমা)</option>
+            <option value="POS / Card">Credit / Debit Card (POS)</option>
+            <option value="Other">Other / অন্যান্য</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Transaction / Cheque / Deposit Slip Reference</label>
+          <input type="text" name="payment_reference" placeholder="e.g. TrxID 9H82J1 / Cheque #882190 / Slip #441" class="form-control-paces">
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Payment Received Date *</label>
+          <input type="date" name="paid_at" value="{{ date('Y-m-d') }}" class="form-control-paces" required>
+        </div>
+
+        <div style="margin-bottom:1.25rem;">
+          <label class="form-label-paces" style="font-size:0.8rem; font-weight:600;">Receipt Notes</label>
+          <textarea name="notes" rows="2" placeholder="e.g. Settle advance payment / quarterly tranche..." class="form-control-paces"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onclick="closeCollectOfficePaymentModal()" class="btn-paces btn-paces-outline btn-paces-sm">Cancel</button>
+          <button type="submit" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#0f766e; border-color:#0f766e; font-weight:700; padding:6px 16px;">
+            ✓ Confirm Office Payment
           </button>
         </div>
       </form>
@@ -2003,6 +2216,38 @@
       if (lvl) lvl.textContent = '100%';
     }
 
+    // Admin Reassign Shift Modal
+    function openAdminReassignShiftModal(shiftId, shiftNumber, partnerId, scheduledDate, timeSlot, payoutAmount) {
+      const modal = document.getElementById('adminReassignShiftModal');
+      const form = document.getElementById('adminReassignShiftForm');
+      if (form) {
+        form.action = "{{ url('admin/bookings/' . $booking->id . '/amc-shifts') }}/" + shiftId + "/reassign";
+      }
+      const numSpan = document.getElementById('adminReassignShiftNum');
+      if (numSpan) numSpan.textContent = '#' + shiftNumber;
+      const partnerSelect = document.getElementById('adminReassignPartnerSelect');
+      if (partnerSelect) partnerSelect.value = partnerId || '';
+      const dateInput = document.getElementById('adminReassignDateInput');
+      if (dateInput) dateInput.value = scheduledDate || '';
+      const slotSelect = document.getElementById('adminReassignSlotSelect');
+      if (slotSelect) slotSelect.value = timeSlot || 'Morning (9:00 AM - 12:00 PM)';
+      const payoutInput = document.getElementById('adminReassignPayoutInput');
+      if (payoutInput) payoutInput.value = payoutAmount || '';
+      if (modal) modal.style.display = 'flex';
+    }
+
+    // Admin Cancel Shift Modal
+    function openAdminCancelShiftModal(shiftId, shiftNumber) {
+      const modal = document.getElementById('adminCancelShiftModal');
+      const form = document.getElementById('adminCancelShiftForm');
+      if (form) {
+        form.action = "{{ url('admin/bookings/' . $booking->id . '/amc-shifts') }}/" + shiftId + "/cancel";
+      }
+      const numSpan = document.getElementById('adminCancelShiftNum');
+      if (numSpan) numSpan.textContent = '#' + shiftNumber;
+      if (modal) modal.style.display = 'flex';
+    }
+
     // AMC Bill Modal
     function openCollectBillModal(invoiceId, invoiceNumber, amountFormatted) {
       const modal = document.getElementById('collectAmcBillModal');
@@ -2018,6 +2263,16 @@
     }
     function closeCollectBillModal() {
       const modal = document.getElementById('collectAmcBillModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    // Office Payment Modal
+    function openCollectOfficePaymentModal() {
+      const modal = document.getElementById('collectOfficePaymentModal');
+      if (modal) modal.style.display = 'flex';
+    }
+    function closeCollectOfficePaymentModal() {
+      const modal = document.getElementById('collectOfficePaymentModal');
       if (modal) modal.style.display = 'none';
     }
 

@@ -92,9 +92,21 @@
             </span>
           </div>
 
-          <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 14px;">
-            You are assigned to the recurring maintenance routine of this contract. Complete each shift as scheduled on site or report cancellations.
-          </p>
+          <!-- AMC Financial Overview & Client Billing Schedule for Crew -->
+          <div style="margin-bottom: 16px; background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 0.82rem;">
+            <div>
+              <span style="color: #0f766e; font-weight: 700;">Client Billing Model:</span>
+              <strong style="color: #0f2744;">{{ $booking->amc_billing_type_label }}</strong>
+              @if($booking->payout_per_shift)
+                <span style="color: #16a34a; font-weight: 700; margin-left: 6px;">• Crew Payout: ৳ {{ number_format($booking->payout_per_shift, 2) }} / shift</span>
+              @endif
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <span>Total Contract: <strong style="color: #0f2744;">৳ {{ number_format($booking->amc_total_budget, 2) }}</strong></span>
+              <span>Client Paid: <strong style="color: #16a34a;">৳ {{ number_format($booking->amc_total_paid, 2) }}</strong></span>
+              <span>Due: <strong style="color: {{ $booking->amc_remaining_due > 0 ? '#dc2626' : '#16a34a' }};">৳ {{ number_format($booking->amc_remaining_due, 2) }}</strong></span>
+            </div>
+          </div>
 
           {{-- List of Shifts --}}
           <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
@@ -124,6 +136,13 @@
                         ⚠️ Cancelled: {{ $shift->cancellation_reason }}
                       </div>
                     @endif
+
+                    @if($shift->payment_collected_by === 'crew' && $shift->collected_amount > 0)
+                      <div style="font-size: 0.75rem; color: #0f766e; font-weight: 700; margin-top: 2px;">
+                        💰 Payment Collected: ৳ {{ number_format($shift->collected_amount, 2) }} ({{ $shift->payment_method ?: 'Cash' }})
+                        @if($shift->payment_reference) • Ref: {{ $shift->payment_reference }} @endif
+                      </div>
+                    @endif
                   </div>
                 </div>
 
@@ -133,7 +152,7 @@
                   @elseif($shift->is_cancelled)
                     <span class="p-badge p-badge-danger" style="font-size: 0.75rem;">Cancelled</span>
                   @else
-                    <button type="button" class="btn-p btn-p-primary" style="padding: 5px 10px; font-size: 0.75rem;" onclick="openShiftCompleteModal('{{ $shift->id }}', '{{ $shift->shift_number }}', '{{ addslashes($shift->title) }}')">
+                    <button type="button" class="btn-p btn-p-primary" style="padding: 5px 10px; font-size: 0.75rem;" onclick="openShiftCompleteModal('{{ $shift->id }}', '{{ $shift->shift_number }}', '{{ addslashes($shift->title) }}', '{{ $shift->shift_cost ?: ($booking->amc_billing_type === 'per_shift' ? $booking->recurring_amount : '') }}')">
                       ✓ Complete Shift
                     </button>
                     <button type="button" class="btn-p btn-p-outline" style="padding: 5px 10px; font-size: 0.75rem; color: #dc2626; border-color: #fca5a5;" onclick="openShiftCancelModal('{{ $shift->id }}', '{{ $shift->shift_number }}', '{{ addslashes($shift->title) }}')">
@@ -790,7 +809,7 @@
 
   {{-- Shift Completion Modal for Crew --}}
   <div id="shiftCompleteModal" class="fix-dialog-backdrop" style="display: none;" onclick="if(event.target===this) this.style.display='none'">
-    <div class="fix-dialog-box" style="text-align: left; max-width: 480px;">
+    <div class="fix-dialog-box" style="text-align: left; max-width: 490px;">
       <div class="fix-dialog-icon" style="background: #ecfdf5; color: #059669; margin: 0 auto 12px;">
         <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12"></polyline>
@@ -804,16 +823,65 @@
 
       <form id="shiftCompleteForm" method="POST" action="">
         @csrf
+
+        {{-- Payment Collection Question --}}
+        <div style="margin-bottom: 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 12px 14px;">
+          <label class="p-label" style="font-weight: 700; color: #1e293b; display: block; margin-bottom: 8px; font-size: 0.85rem;">
+            Did client give you payment on site? / ক্লায়েন্ট কি আপনাকে কোনো টাকা দিয়েছে? *
+          </label>
+          <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.84rem; color: #334155; cursor: pointer;">
+              <input type="radio" name="payment_collected" value="no" id="shiftPaymentRadioNo" checked onchange="toggleShiftPaymentFields(this.value)">
+              <span>না / টাকা নেওয়া হয়নি (অফিস বিল)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.84rem; color: #166534; font-weight: 700; cursor: pointer;">
+              <input type="radio" name="payment_collected" value="yes" id="shiftPaymentRadioYes" onchange="toggleShiftPaymentFields(this.value)">
+              <span>হ্যাঁ / টাকা পেয়েছি</span>
+            </label>
+          </div>
+        </div>
+
+        {{-- Payment Details Container (shown only when Yes) --}}
+        <div id="shiftPaymentDetailsBox" style="display: none; background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+          <div style="margin-bottom: 12px;">
+            <label class="p-label" style="font-weight: 700; color: #065f46; font-size: 0.82rem; display: block; margin-bottom: 4px;">
+              Amount Received from Client (৳) *
+            </label>
+            <input type="number" step="0.01" min="1" name="collected_amount" id="shiftCollectedAmountInput" class="p-input" placeholder="e.g. 500.00" style="background:#ffffff; border-color:#86efac; font-weight:700; color:#065f46; font-size:0.95rem;">
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <label class="p-label" style="font-weight: 700; color: #065f46; font-size: 0.82rem; display: block; margin-bottom: 4px;">
+              Payment Method / কি উপায়ে টাকা দিল? *
+            </label>
+            <select name="payment_method" id="shiftPaymentMethodSelect" class="p-input" style="background:#ffffff; border-color:#86efac; font-weight:600;">
+              <option value="Cash">Cash on Delivery / সরাসরি নগদ ক্যাশ</option>
+              <option value="bKash">bKash (বিকাশ)</option>
+              <option value="Nagad">Nagad (নগদ)</option>
+              <option value="Bank Transfer">Bank Transfer / ব্যাংক চেক</option>
+              <option value="POS / Card">Credit/Debit Card (POS)</option>
+              <option value="Other">Other / অন্যান্য মাধ্যম</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="p-label" style="font-weight: 600; color: #065f46; font-size: 0.8rem; display: block; margin-bottom: 4px;">
+              TrxID / Receipt # / Reference (Optional)
+            </label>
+            <input type="text" name="payment_reference" id="shiftPaymentRefInput" class="p-input" placeholder="e.g. TrxID 9K2L8 / Cash receipt no" style="background:#ffffff; border-color:#86efac;">
+          </div>
+        </div>
+
         <div style="margin-bottom: 14px;">
-          <label class="p-label">Work &amp; Service Notes (Optional):</label>
-          <textarea name="completion_notes" class="p-input" rows="3" placeholder="Describe routine inspection, filters cleaned, parts serviced, client feedback..."></textarea>
+          <label class="p-label" style="font-weight: 600; font-size: 0.84rem;">Work &amp; Service Notes (Optional):</label>
+          <textarea name="completion_notes" class="p-input" rows="2" placeholder="Describe routine inspection, filters cleaned, parts serviced, client feedback..."></textarea>
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 8px;">
-          <button type="button" class="btn-p btn-p-outline" onclick="document.getElementById('shiftCompleteModal').style.display='none'">
+          <button type="button" class="btn-p btn-p-outline" onclick="closeShiftCompleteModal()">
             Cancel
           </button>
-          <button type="submit" class="btn-p btn-p-primary">
+          <button type="submit" class="btn-p btn-p-primary" style="font-weight: 700; padding: 7px 18px;">
             ✓ Confirm Shift Completed
           </button>
         </div>
@@ -894,13 +962,45 @@
   </div>
 
   <script>
-    function openShiftCompleteModal(shiftId, shiftNum, shiftTitle) {
+    function openShiftCompleteModal(shiftId, shiftNum, shiftTitle, defaultCost) {
       const modal = document.getElementById('shiftCompleteModal');
       const form = document.getElementById('shiftCompleteForm');
       document.getElementById('completeShiftNum').textContent = '#' + shiftNum;
       document.getElementById('completeShiftTitle').textContent = shiftTitle;
       form.action = '/partner/jobs/{{ $booking->id }}/amc-shifts/' + shiftId + '/complete';
+
+      const radioNo = document.getElementById('shiftPaymentRadioNo');
+      if (radioNo) radioNo.checked = true;
+      toggleShiftPaymentFields('no');
+
+      const amtInput = document.getElementById('shiftCollectedAmountInput');
+      if (amtInput) {
+        amtInput.value = (defaultCost && parseFloat(defaultCost) > 0) ? defaultCost : '';
+      }
+
       modal.style.display = 'flex';
+    }
+
+    function closeShiftCompleteModal() {
+      const modal = document.getElementById('shiftCompleteModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function toggleShiftPaymentFields(val) {
+      const box = document.getElementById('shiftPaymentDetailsBox');
+      const amt = document.getElementById('shiftCollectedAmountInput');
+      if (box) {
+        if (val === 'yes') {
+          box.style.display = 'block';
+          if (amt) amt.required = true;
+        } else {
+          box.style.display = 'none';
+          if (amt) {
+            amt.required = false;
+            amt.value = '';
+          }
+        }
+      }
     }
 
     function openShiftCancelModal(shiftId, shiftNum, shiftTitle) {

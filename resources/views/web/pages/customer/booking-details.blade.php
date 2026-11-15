@@ -182,6 +182,46 @@
               </div>
             </div>
 
+            <!-- Financial Budget & Settlement Overview for Client -->
+            <div style="background:#ffffff; border:1px solid #99f6e4; border-radius:10px; padding:12px 16px; margin-bottom:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                <span style="font-size:0.75rem; font-weight:800; color:#0f766e; text-transform:uppercase; letter-spacing:0.03em;">
+                  💳 Contract Budget &amp; Payment Status
+                </span>
+                <span style="font-size:0.78rem; font-weight:700; color:#0f2744; background:#e6f8f5; padding:2px 8px; border-radius:6px; border:1px solid #99f6e4;">
+                  Schedule: {{ $booking->amc_billing_type_label }}
+                </span>
+              </div>
+
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-bottom:10px;">
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 12px;">
+                  <span style="font-size:0.7rem; color:#64748b; font-weight:700; text-transform:uppercase;">Total Budget</span>
+                  <strong style="display:block; font-size:1.1rem; color:#0f2744; margin-top:2px;">
+                    ৳ {{ number_format($booking->amc_total_budget, 2) }}
+                  </strong>
+                </div>
+
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:8px 12px;">
+                  <span style="font-size:0.7rem; color:#166534; font-weight:700; text-transform:uppercase;">Paid so far</span>
+                  <strong style="display:block; font-size:1.1rem; color:#16a34a; margin-top:2px;">
+                    ৳ {{ number_format($booking->amc_total_paid, 2) }}
+                  </strong>
+                </div>
+
+                <div style="background:{{ $booking->amc_remaining_due > 0 ? '#fff1f2' : '#f8fafc' }}; border:1px solid {{ $booking->amc_remaining_due > 0 ? '#fecaca' : '#e2e8f0' }}; border-radius:8px; padding:8px 12px;">
+                  <span style="font-size:0.7rem; color:{{ $booking->amc_remaining_due > 0 ? '#991b1b' : '#64748b' }}; font-weight:700; text-transform:uppercase;">Outstanding Due</span>
+                  <strong style="display:block; font-size:1.1rem; color:{{ $booking->amc_remaining_due > 0 ? '#dc2626' : '#16a34a' }}; margin-top:2px;">
+                    ৳ {{ number_format($booking->amc_remaining_due, 2) }}
+                  </strong>
+                </div>
+              </div>
+
+              <div style="font-size:0.78rem; color:#64748b; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; padding-top:6px; border-top:1px dashed #e2e8f0;">
+                <span>🏢 Paid to FIX Office: <strong style="color:#0f2744;">৳ {{ number_format($booking->amc_office_collected, 2) }}</strong></span>
+                <span>👷 Handed to Crew on Site: <strong style="color:#0f766e;">৳ {{ number_format($booking->amc_crew_collected, 2) }}</strong></span>
+              </div>
+            </div>
+
             @if($booking->cancellation_requested && $booking->cancellation_review_status === 'pending')
               <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 14px; margin-bottom:12px; font-size:0.85rem; color:#92400e;">
                 <strong>⚠️ Deal Cancellation Request Under Review:</strong>

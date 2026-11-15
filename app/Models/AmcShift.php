@@ -23,6 +23,13 @@ class AmcShift extends Model
         'completion_notes',
         'crew_notes',
         'admin_notes',
+        'shift_cost',
+        'payout_amount',
+        'payout_status',
+        'payment_collected_by',
+        'collected_amount',
+        'payment_method',
+        'payment_reference',
     ];
 
     protected function casts(): array
@@ -31,6 +38,9 @@ class AmcShift extends Model
             'scheduled_date' => 'date',
             'completed_at' => 'datetime',
             'shift_number' => 'integer',
+            'shift_cost' => 'decimal:2',
+            'payout_amount' => 'decimal:2',
+            'collected_amount' => 'decimal:2',
         ];
     }
 

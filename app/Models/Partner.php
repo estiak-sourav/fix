@@ -112,17 +112,41 @@ class Partner extends Authenticatable
         }
 
         $completedBookings = $this->relationLoaded('bookings')
-            ? $this->bookings->filter(fn ($b) => $b->status === 'completed' || $b->partner_job_status === 'completed')
+            ? $this->bookings->filter(fn ($b) => ($b->status === 'completed' || $b->partner_job_status === 'completed') && ! $b->is_amc)
             : $this->bookings()
                 ->where(function ($q) {
                     $q->where('status', 'completed')
                         ->orWhere('partner_job_status', 'completed');
                 })
+                ->whereNull('amc_plan_id')
+                ->where('service_type', '!=', 'amc_contract')
                 ->get();
 
-        return (float) $completedBookings->sum(function ($b) {
+        $bookingEarnings = (float) $completedBookings->sum(function ($b) {
             return $this->calculateBookingEarning($b);
         });
+
+        $completedShifts = $this->relationLoaded('amcShifts')
+            ? $this->amcShifts->filter(fn ($s) => $s->status === 'completed' && $s->payout_status !== 'pending_client_payment')
+            : $this->amcShifts()->where('status', 'completed')->where('payout_status', '!=', 'pending_client_payment')->get();
+
+        $shiftEarnings = (float) $completedShifts->sum(function ($s) {
+            return $this->calculateShiftEarning($s);
+        });
+
+        return (float) ($bookingEarnings + $shiftEarnings);
+    }
+
+    /**
+     * Pending shift earnings waiting for client bill payment clearance.
+     */
+    public function getPendingShiftEarningsAttribute(): float
+    {
+        $pendingShifts = $this->relationLoaded('amcShifts')
+            ? $this->amcShifts->filter(fn ($s) => $s->status === 'completed' && $s->payout_status === 'pending_client_payment')
+            : $this->amcShifts()->where('status', 'completed')->where('payout_status', 'pending_client_payment')->get();
+
+        return (float) $pendingShifts->sum(fn ($s) => $this->calculateShiftEarning($s));
     }
 
     /**
@@ -140,9 +164,14 @@ class Partner extends Authenticatable
                 ->where('payment_collected_by', 'crew')
                 ->get();
 
-        return (float) $cashBookings->sum(function ($b) {
+        $shiftCash = (float) ($this->relationLoaded('amcShifts')
+            ? $this->amcShifts->filter(fn ($s) => $s->status === 'completed' && $s->payment_collected_by === 'crew')
+            : $this->amcShifts()->where('status', 'completed')->where('payment_collected_by', 'crew')->get()
+        )->sum(fn ($s) => (float) ($s->collected_amount ?: $s->shift_cost ?: 0));
+
+        return (float) ($cashBookings->sum(function ($b) {
             return (float) ($b->collected_amount ?? $b->final_cost ?? $b->estimated_cost ?? 0);
-        });
+        }) + $shiftCash);
     }
 
     /**
@@ -326,6 +355,33 @@ class Partner extends Authenticatable
             'per_job' => (float) $rate,
             'monthly' => 0.0,
             default => (float) ((($booking->final_cost ?? $booking->estimated_cost ?? 0) * (float) ($rate ?: 15.00)) / 100),
+        };
+    }
+
+    /**
+     * Calculate partner's net earning for an individual completed AMC shift.
+     */
+    public function calculateShiftEarning(AmcShift $shift): float
+    {
+        if ($shift->payout_amount !== null && (float) $shift->payout_amount > 0) {
+            return (float) $shift->payout_amount;
+        }
+
+        if ($shift->booking?->payout_per_shift !== null && (float) $shift->booking->payout_per_shift > 0) {
+            return (float) $shift->booking->payout_per_shift;
+        }
+
+        $rate = (float) ($this->payout_rate ?? $this->commission_rate ?? 0);
+        $totalShifts = max(1, (int) ($shift->booking?->amcShifts()->count() ?? 1));
+        $bookingTotal = (float) ($shift->booking?->final_cost ?? $shift->booking?->estimated_cost ?? 0);
+        $shiftValue = (float) ($shift->shift_cost ?: ($bookingTotal / $totalShifts));
+
+        return match ($this->earning_model) {
+            'hourly' => (float) ($rate * 2), // Standard 2-hour routine inspection shift
+            'daily' => (float) $rate,
+            'per_job' => (float) $rate,
+            'monthly' => 0.0,
+            default => (float) (($shiftValue * ($rate ?: 15.00)) / 100),
         };
     }
 

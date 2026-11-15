@@ -1775,11 +1775,11 @@
       </div>
 
       <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:14px 16px;">
-        <span style="font-size:0.72rem; color:#475569; font-weight:700; text-transform:uppercase;">Upcoming Shifts (Next 7 Days)</span>
+        <span style="font-size:0.72rem; color:#475569; font-weight:700; text-transform:uppercase;">Scheduled Routine Shifts</span>
         <div style="font-size:1.45rem; font-weight:900; color:#1e293b; margin-top:4px;">
           {{ $upcomingAmcShiftsCount }}
         </div>
-        <span style="font-size:0.75rem; color:#64748b; margin-top:2px; display:block;">Scheduled routine dispatches</span>
+        <span style="font-size:0.75rem; color:#64748b; margin-top:2px; display:block;">Upcoming routine dispatches</span>
       </div>
 
       <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px 16px;">
@@ -1850,13 +1850,89 @@
       </div>
     @endif
 
+    <!-- Shift Reassignment Needed Alert (If Any Crew Cancelled a Shift) -->
+    @if(isset($reassignmentNeededShifts) && $reassignmentNeededShifts->isNotEmpty())
+      <div style="margin-bottom:16px; background:#fff7ed; border:1.5px solid #fed7aa; border-radius:10px; padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.25rem;">⚠️</span>
+            <strong style="font-size:0.95rem; color:#9a3412;">AMC Shifts Cancelled by Crew — Immediate Reassignment Needed</strong>
+          </div>
+          <span style="font-size:0.76rem; font-weight:700; background:#ffedd5; color:#9a3412; padding:3px 10px; border-radius:8px;">
+            {{ $reassignmentNeededShifts->count() }} Reassignments Due
+          </span>
+        </div>
+
+        <div class="table-responsive-paces">
+          <table class="table-paces" style="background:#ffffff; border-radius:8px; overflow:hidden;">
+            <thead>
+              <tr style="background:#ffedd5;">
+                <th>Shift # &amp; Date</th>
+                <th>Contract Order</th>
+                <th>Client &amp; Facility</th>
+                <th>Declining Crew</th>
+                <th>Reason Provided</th>
+                <th style="text-align:right;">Reassign Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach($reassignmentNeededShifts as $rnShift)
+                <tr>
+                  <td>
+                    <strong style="color:#c2410c;">Shift #{{ $rnShift->shift_number }}</strong>
+                    <div style="font-size:0.75rem; color:#64748b; font-weight:600;">
+                      📅 {{ $rnShift->scheduled_date->format('M d, Y') }} ({{ $rnShift->scheduled_time_slot ?: 'Routine' }})
+                    </div>
+                  </td>
+                  <td>
+                    <strong style="color:#0284c7; font-family:monospace;">#{{ $rnShift->booking?->booking_number }}</strong>
+                  </td>
+                  <td>
+                    <div style="font-weight:600; color:#1e293b;">{{ $rnShift->booking?->customer_name }}</div>
+                    <div style="font-size:0.75rem; color:#64748b;">📍 {{ $rnShift->booking?->area }}</div>
+                  </td>
+                  <td>
+                    <span style="font-weight:600; color:#991b1b; font-size:0.82rem;">{{ $rnShift->partner?->company_name ?? 'Previous Crew' }}</span>
+                  </td>
+                  <td style="max-width:260px;">
+                    <div style="font-size:0.8rem; color:#b45309; font-style:italic;">
+                      "{{ $rnShift->cancellation_reason ?: 'Technician unavailable or emergency reassignment requested' }}"
+                    </div>
+                  </td>
+                  <td style="text-align:right;">
+                    <a href="{{ route('admin.bookings.show', $rnShift->booking) }}#tab-routine-shifts" class="btn-paces btn-paces-primary btn-paces-sm" style="background:#ea580c; border-color:#ea580c; padding:4px 12px; font-size:0.78rem;">
+                      Reassign Crew →
+                    </a>
+                  </td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
+      </div>
+    @endif
+
     <!-- Upcoming Routine Maintenance Shifts -->
     <div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h4 style="margin:0; font-size:0.92rem; font-weight:700; color:#0f172a;">
-          Upcoming Routine Maintenance Shifts
-        </h4>
-        <span style="font-size:0.75rem; color:#64748b;">Next scheduled routine dispatches</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+        <div>
+          <h4 style="margin:0; font-size:0.92rem; font-weight:700; color:#0f172a;">
+            Upcoming Routine Maintenance Shifts
+          </h4>
+          <span style="font-size:0.75rem; color:#64748b;">Scheduled dispatches across all active AMC contracts</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:6px;">
+          <a href="{{ route('admin.dashboard', ['shift_range' => 'all']) }}" class="btn-paces btn-paces-sm" style="font-size:0.74rem; padding:3px 9px; {{ ($shiftRange ?? 'all') === 'all' ? 'background:#0284c7; color:#fff; font-weight:700;' : 'background:#f1f5f9; color:#475569;' }}">
+            All Upcoming
+          </a>
+          <a href="{{ route('admin.dashboard', ['shift_range' => '7days']) }}" class="btn-paces btn-paces-sm" style="font-size:0.74rem; padding:3px 9px; {{ ($shiftRange ?? '') === '7days' ? 'background:#0284c7; color:#fff; font-weight:700;' : 'background:#f1f5f9; color:#475569;' }}">
+            Next 7 Days
+          </a>
+          <a href="{{ route('admin.dashboard', ['shift_range' => '30days']) }}" class="btn-paces btn-paces-sm" style="font-size:0.74rem; padding:3px 9px; {{ ($shiftRange ?? '') === '30days' ? 'background:#0284c7; color:#fff; font-weight:700;' : 'background:#f1f5f9; color:#475569;' }}">
+            Next 30 Days
+          </a>
+        </div>
       </div>
 
       @if($upcomingAmcShifts->isEmpty())
@@ -1971,6 +2047,11 @@
               <tr>
                 <td>
                   <strong style="color:var(--paces-primary); font-family:monospace; font-size:0.9rem;">#{{ $b->booking_number }}</strong>
+                  @if($b->is_amc)
+                    <span style="font-size:0.68rem; font-weight:800; background:#e6f8f5; color:#0f766e; border:1px solid #99f6e4; padding:2px 6px; border-radius:4px; display:inline-block; margin-left:4px;">
+                      🏢 AMC
+                    </span>
+                  @endif
                   <div style="font-size:0.75rem; color:var(--paces-text-muted); margin-top:2px;">{{ $b->created_at->format('M d, Y • h:i A') }}</div>
                 </td>
                 <td>
@@ -1997,7 +2078,21 @@
                   <div style="font-size:0.75rem; color:var(--paces-text-muted);">{{ $b->district }}</div>
                 </td>
                 <td>
-                  <strong style="color:var(--paces-text-dark);">৳{{ number_format($b->final_cost ?? $b->estimated_cost ?? 0, 0) }}</strong>
+                  @if($b->is_amc)
+                    <strong style="color:var(--paces-text-dark);">৳{{ number_format($b->recurring_amount ?: ($b->final_cost ?: ($b->estimated_cost ?: 0)), 0) }}</strong>
+                    <span style="font-size:0.72rem; color:#0f766e; display:block; font-weight:700;">
+                      @if($b->amc_billing_type === 'per_shift')
+                        Per Work / Shift
+                      @elseif($b->amc_billing_type === 'overall')
+                        Total Contract
+                      @else
+                        Monthly Invoicing
+                      @endif
+                    </span>
+                  @else
+                    <strong style="color:var(--paces-text-dark);">৳{{ number_format($b->final_cost ?? $b->estimated_cost ?? 0, 0) }}</strong>
+                    <span style="font-size:0.72rem; color:var(--paces-text-muted); display:block;">One-Time</span>
+                  @endif
                 </td>
                 <td>
                   @php

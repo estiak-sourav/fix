@@ -130,6 +130,7 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
     Route::post('/bookings/{booking}/amc-notes', [AdminBookingController::class, 'postAmcNote'])->name('bookings.amc-notes.store')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/amc-bills/{invoice}/collect', [AdminBookingController::class, 'collectAmcBill'])->name('bookings.amc-bills.collect')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/amc-bills/generate', [AdminBookingController::class, 'generateNextAmcBill'])->name('bookings.amc-bills.generate')->middleware('admin.can:bookings.edit');
+    Route::post('/bookings/{booking}/amc-office-payment', [AdminBookingController::class, 'recordOfficePayment'])->name('bookings.amc-office-payment.store')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status')->middleware('admin.can:bookings.edit');
     Route::post('/bookings/{booking}/partner-payout', [AdminBookingController::class, 'updatePartnerPayout'])->name('bookings.partner-payout')->middleware('admin.can:bookings.edit');
 

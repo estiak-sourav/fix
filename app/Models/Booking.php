@@ -52,7 +52,9 @@ class Booking extends Model
         'amc_package_notes',
         'contract_status',
         'billing_cycle',
+        'amc_billing_type',
         'recurring_amount',
+        'payout_per_shift',
         'billing_day',
         'next_billing_date',
         'partner_id',
@@ -105,6 +107,7 @@ class Booking extends Model
             'estimated_cost' => 'decimal:2',
             'final_cost' => 'decimal:2',
             'recurring_amount' => 'decimal:2',
+            'payout_per_shift' => 'decimal:2',
             'billing_day' => 'integer',
             'review_rating' => 'integer',
             'reviewed_at' => 'datetime',
@@ -448,5 +451,77 @@ class Booking extends Model
     public function getCanBeCancelledByCustomerAttribute(): bool
     {
         return $this->canBeCancelledByCustomer();
+    }
+
+    /**
+     * AMC Billing Model & Financial Calculation Helpers
+     */
+    public function getAmcBillingTypeLabelAttribute(): string
+    {
+        return match ($this->amc_billing_type) {
+            'total', 'overall' => 'Total Contract Budget',
+            'daily', 'per_shift' => 'Daily / Per Shift',
+            'yearly', 'annual' => 'Yearly / Annual Invoicing',
+            'monthly' => 'Monthly Invoicing',
+            default => $this->amc_billing_type ? ucfirst(str_replace('_', ' ', $this->amc_billing_type)) : 'Monthly Invoicing',
+        };
+    }
+
+    public function getAmcTotalBudgetAttribute(): float
+    {
+        if ($this->final_cost > 0) {
+            return (float) $this->final_cost;
+        }
+
+        if ($this->recurring_amount > 0) {
+            $shiftsCount = $this->relationLoaded('amcShifts') ? $this->amcShifts->count() : $this->amcShifts()->count();
+
+            return match ($this->amc_billing_type) {
+                'daily', 'per_shift' => (float) ($this->recurring_amount * max(1, $shiftsCount)),
+                'yearly', 'annual' => (float) $this->recurring_amount,
+                'total', 'overall' => (float) $this->recurring_amount,
+                default => (float) ($this->recurring_amount * 12),
+            };
+        }
+
+        return (float) ($this->estimated_cost ?: 0);
+    }
+
+    public function getAmcTotalPaidAttribute(): float
+    {
+        $invoicePaid = (float) ($this->relationLoaded('amcInvoices')
+            ? $this->amcInvoices->where('status', 'paid')->sum('amount')
+            : $this->amcInvoices()->where('status', 'paid')->sum('amount'));
+
+        $shiftCollected = (float) ($this->relationLoaded('amcShifts')
+            ? $this->amcShifts->sum('collected_amount')
+            : $this->amcShifts()->sum('collected_amount'));
+
+        $bookingPaid = ($this->payment_status === 'paid' && $invoicePaid == 0)
+            ? (float) ($this->collected_amount ?: $this->final_cost)
+            : 0;
+
+        return $invoicePaid + $shiftCollected + $bookingPaid;
+    }
+
+    public function getAmcRemainingDueAttribute(): float
+    {
+        return max(0.0, $this->amc_total_budget - $this->amc_total_paid);
+    }
+
+    public function getAmcCrewCollectedAttribute(): float
+    {
+        $shiftCrew = (float) ($this->relationLoaded('amcShifts')
+            ? $this->amcShifts->where('payment_collected_by', 'crew')->sum('collected_amount')
+            : $this->amcShifts()->where('payment_collected_by', 'crew')->sum('collected_amount'));
+
+        $bookingCrew = ($this->payment_collected_by === 'crew') ? (float) ($this->collected_amount ?: 0) : 0;
+
+        return $shiftCrew + $bookingCrew;
+    }
+
+    public function getAmcOfficeCollectedAttribute(): float
+    {
+        return max(0.0, $this->amc_total_paid - $this->amc_crew_collected);
     }
 }

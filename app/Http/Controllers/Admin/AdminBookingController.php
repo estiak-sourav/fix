@@ -781,6 +781,8 @@ class AdminBookingController extends Controller
             'cost_type' => ['nullable', 'string', 'in:estimated,final,none'],
             'cost_amount' => ['nullable', 'numeric', 'min:0'],
             'is_estimated' => ['nullable', 'boolean'],
+            'amc_billing_type' => ['nullable', 'string', 'in:monthly,per_shift,overall,total,daily,yearly,annual'],
+            'payout_per_shift' => ['nullable', 'numeric', 'min:0'],
             'estimated_cost' => ['nullable', 'numeric', 'min:0'],
             'final_cost' => ['nullable', 'numeric', 'min:0'],
             'assigned_team' => ['nullable', 'string', 'max:255'],
@@ -818,6 +820,12 @@ class AdminBookingController extends Controller
         }
         if ($request->has('estimated_arrival_at')) {
             $directUpdates['estimated_arrival_at'] = $validated['estimated_arrival_at'];
+        }
+        if ($request->has('amc_billing_type')) {
+            $directUpdates['amc_billing_type'] = $validated['amc_billing_type'];
+        }
+        if ($request->has('payout_per_shift')) {
+            $directUpdates['payout_per_shift'] = $validated['payout_per_shift'] !== null && $validated['payout_per_shift'] !== '' ? (float) $validated['payout_per_shift'] : null;
         }
 
         $partner = ! empty($validated['partner_id']) ? Partner::find($validated['partner_id']) : null;
@@ -917,6 +925,8 @@ class AdminBookingController extends Controller
     {
         $validated = $request->validate([
             'amc_plan_id' => ['required', 'exists:amc_plans,id'],
+            'amc_billing_type' => ['nullable', 'string', 'in:monthly,per_shift,overall,total,daily,yearly,annual'],
+            'payout_per_shift' => ['nullable', 'numeric', 'min:0'],
             'contract_tenure' => ['nullable', 'string', 'max:50'],
             'contract_start_date' => ['nullable', 'date'],
             'contract_end_date' => ['nullable', 'date'],
@@ -960,7 +970,9 @@ class AdminBookingController extends Controller
             'contract_end_date' => $endDate,
             'contract_status' => 'active',
             'billing_cycle' => $billingCycle,
+            'amc_billing_type' => $validated['amc_billing_type'] ?? $booking->amc_billing_type ?? 'monthly',
             'recurring_amount' => $recurringAmount,
+            'payout_per_shift' => isset($validated['payout_per_shift']) && $validated['payout_per_shift'] !== '' ? (float) $validated['payout_per_shift'] : $booking->payout_per_shift,
             'billing_day' => $billingDay,
             'next_billing_date' => $firstDue,
             'amc_package_notes' => $validated['amc_package_notes'] ?? null,
@@ -1059,6 +1071,12 @@ class AdminBookingController extends Controller
             'notes' => $validated['notes'] ?? $invoice->notes,
         ]);
 
+        // Client has settled bill: release completed shift payouts to 'payable' so crew can withdraw
+        $booking->amcShifts()
+            ->where('status', 'completed')
+            ->where('payout_status', 'pending_client_payment')
+            ->update(['payout_status' => 'payable']);
+
         // Calculate and advance next billing date
         $nextDate = match ($booking->billing_cycle) {
             'daily' => ($invoice->period_end ?: now())->copy()->addDay(),
@@ -1082,6 +1100,72 @@ class AdminBookingController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Payment of ৳ '.number_format($invoice->amount, 2)." successfully collected for Invoice #{$invoice->invoice_number}.");
+    }
+
+    /**
+     * Record a direct office payment from client for an AMC contract.
+     */
+    public function recordOfficePayment(Request $request, Booking $booking): RedirectResponse
+    {
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:1'],
+            'payment_method' => ['required', 'string', 'max:50'],
+            'payment_reference' => ['nullable', 'string', 'max:100'],
+            'paid_at' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+        $paidDate = ! empty($validated['paid_at']) ? Carbon::parse($validated['paid_at']) : now();
+        $amount = (float) $validated['amount'];
+
+        $invoiceCount = $booking->amcInvoices()->count() + 1;
+        $invNum = 'INV-'.strtoupper(substr($booking->booking_number, -5)).'-OFFICE-'.sprintf('%02d', $invoiceCount);
+
+        // Record as paid AMC invoice received directly at FIX Office
+        AmcInvoice::create([
+            'booking_id' => $booking->id,
+            'invoice_number' => $invNum,
+            'billing_cycle_label' => 'Direct to FIX Office',
+            'period_start' => now()->startOfMonth(),
+            'period_end' => now()->endOfMonth(),
+            'due_date' => $paidDate,
+            'amount' => $amount,
+            'status' => 'paid',
+            'paid_at' => $paidDate,
+            'payment_method' => $validated['payment_method'],
+            'payment_reference' => $validated['payment_reference'] ?? null,
+            'collected_by_admin_id' => $admin->id,
+            'notes' => $validated['notes'] ?? 'Direct office payment received from client.',
+        ]);
+
+        // Release any completed shifts waiting for client bill payment
+        $booking->amcShifts()
+            ->where('status', 'completed')
+            ->where('payout_status', 'pending_client_payment')
+            ->update(['payout_status' => 'payable']);
+
+        // Update booking collected amount & payment status
+        $totalPaidSoFar = (float) $booking->amcInvoices()->where('status', 'paid')->sum('amount') + (float) $booking->amcShifts()->sum('collected_amount');
+        $amcTotalBudget = $booking->amc_total_budget;
+
+        $newPaymentStatus = ($totalPaidSoFar >= $amcTotalBudget && $amcTotalBudget > 0) ? 'paid' : 'partial';
+        $booking->update([
+            'collected_amount' => $totalPaidSoFar,
+            'payment_status' => $newPaymentStatus,
+            'payment_collected_by' => 'office',
+            'payment_collected_at' => $paidDate,
+        ]);
+
+        BookingStatusLog::create([
+            'booking_id' => $booking->id,
+            'from_status' => $booking->status,
+            'to_status' => $booking->status,
+            'comment' => "Admin '{$admin->name}' recorded direct office payment of ৳ ".number_format($amount, 2)." via {$validated['payment_method']}".(! empty($validated['payment_reference']) ? " (Ref: {$validated['payment_reference']})" : '').'. Released pending crew shift earnings to payable.',
+            'is_customer_visible' => true,
+        ]);
+
+        return redirect()->back()->with('success', 'Office payment of ৳ '.number_format($amount, 2)." recorded successfully for AMC Contract #{$booking->booking_number}.");
     }
 
     /**
@@ -1222,7 +1306,7 @@ class AdminBookingController extends Controller
     }
 
     /**
-     * Reassign an individual AMC shift to a specific crew.
+     * Reassign an individual AMC shift to a specific crew and update schedule/payout.
      */
     public function reassignAmcShift(Request $request, Booking $booking, AmcShift $shift): RedirectResponse
     {
@@ -1232,27 +1316,47 @@ class AdminBookingController extends Controller
 
         $validated = $request->validate([
             'partner_id' => ['required', 'exists:partners,id'],
+            'scheduled_date' => ['nullable', 'date'],
+            'scheduled_time_slot' => ['nullable', 'string', 'max:100'],
+            'payout_amount' => ['nullable', 'numeric', 'min:0'],
+            'admin_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $admin = Auth::guard('admin')->user();
         $newPartner = Partner::findOrFail($validated['partner_id']);
 
-        $shift->update([
+        $shiftUpdates = [
             'partner_id' => $newPartner->id,
             'status' => 'scheduled',
-            'admin_notes' => "Shift reassigned to {$newPartner->company_name} by Admin {$admin?->name}.",
-        ]);
+            'cancelled_by' => null,
+            'cancellation_reason' => null,
+            'admin_notes' => $validated['admin_notes'] ?? "Shift reassigned to {$newPartner->company_name} by Admin {$admin?->name}.",
+        ];
+
+        if (! empty($validated['scheduled_date'])) {
+            $shiftUpdates['scheduled_date'] = $validated['scheduled_date'];
+        }
+
+        if (! empty($validated['scheduled_time_slot'])) {
+            $shiftUpdates['scheduled_time_slot'] = $validated['scheduled_time_slot'];
+        }
+
+        if (isset($validated['payout_amount']) && $validated['payout_amount'] !== '') {
+            $shiftUpdates['payout_amount'] = (float) $validated['payout_amount'];
+        }
+
+        $shift->update($shiftUpdates);
 
         BookingStatusLog::create([
             'booking_id' => $booking->id,
             'changed_by_admin_id' => $admin?->id,
             'from_status' => $booking->status,
             'to_status' => $booking->status,
-            'comment' => "Admin {$admin?->name} reassigned Shift #{$shift->shift_number} to Partner '{$newPartner->company_name}'.",
+            'comment' => "Admin {$admin?->name} reassigned Shift #{$shift->shift_number} to Partner '{$newPartner->company_name}' for {$shift->scheduled_date->format('M d, Y')}.".(isset($shiftUpdates['payout_amount']) ? ' Shift Payout: ৳ '.number_format($shiftUpdates['payout_amount'], 2) : ''),
             'is_customer_visible' => false,
         ]);
 
-        return redirect()->back()->with('success', "Shift #{$shift->shift_number} reassigned to {$newPartner->company_name}.");
+        return redirect()->back()->with('success', "Shift #{$shift->shift_number} successfully reassigned to {$newPartner->company_name}.");
     }
 
     /**

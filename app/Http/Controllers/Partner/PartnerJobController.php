@@ -25,7 +25,7 @@ class PartnerJobController extends Controller
         $status = $request->query('status', 'all');
 
         $query = Booking::where('partner_id', $partner->id)
-            ->with(['service', 'amcPlan', 'assignedCrew'])
+            ->with(['service', 'amcPlan', 'assignedCrew', 'amcShifts'])
             ->latest('partner_assigned_at')
             ->latest();
 
@@ -44,15 +44,38 @@ class PartnerJobController extends Controller
 
         $jobs = $query->paginate(12)->withQueryString();
 
-        $stats = [
-            'total' => Booking::where('partner_id', $partner->id)->count(),
-            'active' => Booking::where('partner_id', $partner->id)->whereIn('partner_job_status', ['assigned', 'accepted', 'on_the_way', 'in_progress'])->count(),
-            'completed' => Booking::where('partner_id', $partner->id)->where(function ($q) {
+        // Completed AMC shifts directly for this partner
+        $completedShiftsQuery = AmcShift::where(function ($q) use ($partner) {
+            $q->where('partner_id', $partner->id)
+                ->orWhere(function ($q2) use ($partner) {
+                    $q2->whereNull('partner_id')
+                        ->whereHas('booking', fn ($b) => $b->where('partner_id', $partner->id));
+                });
+        })->where('status', 'completed');
+
+        $completedShiftsCount = $completedShiftsQuery->count();
+        $completedBookingsCount = Booking::where('partner_id', $partner->id)
+            ->where(function ($q) {
                 $q->where('partner_job_status', 'completed')->orWhere('status', 'completed');
-            })->count(),
+            })->count();
+
+        $stats = [
+            'total' => Booking::where('partner_id', $partner->id)->count() + $completedShiftsCount,
+            'active' => Booking::where('partner_id', $partner->id)->whereIn('partner_job_status', ['assigned', 'accepted', 'on_the_way', 'in_progress'])->count(),
+            'completed' => $completedBookingsCount + $completedShiftsCount,
         ];
 
-        return view('partner.jobs.index', compact('partner', 'jobs', 'status', 'stats'));
+        // Fetch completed AMC shifts for display when viewing 'completed' or 'all'
+        $completedAmcShifts = collect();
+        if ($status === 'completed' || $status === 'all') {
+            $completedAmcShifts = $completedShiftsQuery
+                ->with(['booking.user', 'booking.amcPlan', 'assignedCrew'])
+                ->latest('completed_at')
+                ->latest('updated_at')
+                ->get();
+        }
+
+        return view('partner.jobs.index', compact('partner', 'jobs', 'status', 'stats', 'completedAmcShifts'));
     }
 
     /**
@@ -519,7 +542,7 @@ class PartnerJobController extends Controller
     {
         $partner = Auth::guard('partner')->user();
 
-        if ((int) $booking->partner_id !== (int) $partner->id) {
+        if ((int) $shift->partner_id !== (int) $partner->id && (int) $booking->partner_id !== (int) $partner->id) {
             abort(403);
         }
 
@@ -529,44 +552,73 @@ class PartnerJobController extends Controller
 
         $validated = $request->validate([
             'completion_notes' => ['nullable', 'string', 'max:1500'],
+            'payment_collected' => ['nullable', 'in:yes,no'],
+            'collected_amount' => ['nullable', 'required_if:payment_collected,yes', 'numeric', 'min:0'],
+            'payment_method' => ['nullable', 'required_if:payment_collected,yes', 'string', 'max:100'],
+            'payment_reference' => ['nullable', 'string', 'max:255'],
         ]);
+
+        $paymentCollected = ($request->input('payment_collected') === 'yes');
+        $collectedAmount = $paymentCollected ? (float) $request->input('collected_amount', 0) : 0.0;
+        $paymentMethod = $paymentCollected ? $request->input('payment_method', 'Cash') : null;
+        $paymentReference = $paymentCollected ? $request->input('payment_reference') : null;
+
+        $payout = $shift->payout_amount ?: ($booking->payout_per_shift ?: $partner->calculateShiftEarning($shift));
+
+        // If payment was collected directly on site from client, payout is immediately payable to crew
+        $payoutStatus = ($paymentCollected || $booking->amc_billing_type === 'per_shift' || $booking->payment_status === 'paid')
+            ? 'payable'
+            : 'pending_client_payment';
 
         $shift->update([
             'status' => 'completed',
             'completed_at' => now(),
             'completion_notes' => $validated['completion_notes'] ?? 'Shift completed as per AMC routine schedule.',
             'crew_notes' => $validated['completion_notes'] ?? null,
+            'payout_amount' => $payout,
+            'payout_status' => $payoutStatus,
+            'payment_collected_by' => $paymentCollected ? 'crew' : null,
+            'collected_amount' => $collectedAmount,
+            'payment_method' => $paymentMethod,
+            'payment_reference' => $paymentReference,
         ]);
+
+        $paymentLogInfo = $paymentCollected
+            ? ' Client payment collected on site: ৳ '.number_format($collectedAmount, 2)." via {$paymentMethod}".($paymentReference ? " (Ref: {$paymentReference})" : '').'.'
+            : ' No on-site payment collected (Office/Monthly invoicing).';
 
         BookingStatusLog::create([
             'booking_id' => $booking->id,
             'from_status' => $booking->status,
             'to_status' => $booking->status,
-            'comment' => "Partner '{$partner->company_name}' completed AMC Shift #{$shift->shift_number} ({$shift->scheduled_date->format('M d, Y')}).".(! empty($validated['completion_notes']) ? " Remarks: {$validated['completion_notes']}" : ''),
+            'comment' => "Partner '{$partner->company_name}' completed AMC Shift #{$shift->shift_number} ({$shift->scheduled_date->format('M d, Y')}).{$paymentLogInfo} Crew shift payout: ৳ ".number_format($payout, 2)." ({$payoutStatus}).".(! empty($validated['completion_notes']) ? " Remarks: {$validated['completion_notes']}" : ''),
             'is_customer_visible' => true,
         ]);
+
+        $notifMsg = "Partner '{$partner->company_name}' completed Shift #{$shift->shift_number} for AMC #{$booking->booking_number}."
+            .($paymentCollected ? ' Collected ৳ '.number_format($collectedAmount, 2)." via {$paymentMethod} on site." : ' No payment collected on site.');
 
         AdminNotification::create([
             'type' => 'order_status',
             'title' => "AMC Shift #{$shift->shift_number} Completed: #{$booking->booking_number}",
-            'message' => "Partner '{$partner->company_name}' completed Shift #{$shift->shift_number} for AMC #{$booking->booking_number}.",
+            'message' => $notifMsg,
             'booking_id' => $booking->id,
-            'action_url' => route('admin.bookings.show', $booking),
+            'action_url' => route('admin.bookings.show', $booking).'#tab-routine-shifts',
             'is_read' => false,
             'sound_played' => false,
         ]);
 
-        return back()->with('success', "AMC Shift #{$shift->shift_number} marked as COMPLETED successfully.");
+        return back()->with('success', "AMC Shift #{$shift->shift_number} marked as COMPLETED successfully.".($paymentCollected ? ' Recorded ৳ '.number_format($collectedAmount, 2)." ({$paymentMethod}) collected on site." : ''));
     }
 
     /**
-     * Cancel / flag an individual AMC shift with reason by crew.
+     * Cancel / flag an individual AMC shift with reason by crew so admin can reassign.
      */
     public function cancelAmcShift(Request $request, Booking $booking, AmcShift $shift): RedirectResponse
     {
         $partner = Auth::guard('partner')->user();
 
-        if ((int) $booking->partner_id !== (int) $partner->id) {
+        if ((int) $shift->partner_id !== (int) $partner->id && (int) $booking->partner_id !== (int) $partner->id) {
             abort(403);
         }
 
@@ -579,7 +631,7 @@ class PartnerJobController extends Controller
         ]);
 
         $shift->update([
-            'status' => 'cancelled',
+            'status' => 'reassignment_needed',
             'cancelled_by' => 'partner',
             'cancellation_reason' => $validated['cancellation_reason'],
         ]);
@@ -588,21 +640,21 @@ class PartnerJobController extends Controller
             'booking_id' => $booking->id,
             'from_status' => $booking->status,
             'to_status' => $booking->status,
-            'comment' => "Partner '{$partner->company_name}' cancelled AMC Shift #{$shift->shift_number}: {$validated['cancellation_reason']}",
+            'comment' => "Partner '{$partner->company_name}' declined/cancelled AMC Shift #{$shift->shift_number}: {$validated['cancellation_reason']}. Immediate reassignment needed.",
             'is_customer_visible' => true,
         ]);
 
         AdminNotification::create([
             'type' => 'emergency_alert',
-            'title' => "AMC Shift #{$shift->shift_number} Cancelled by Crew",
-            'message' => "Partner '{$partner->company_name}' cancelled Shift #{$shift->shift_number} for AMC #{$booking->booking_number}. Reason: {$validated['cancellation_reason']}",
+            'title' => "⚠️ AMC Shift #{$shift->shift_number} Cancelled by Crew",
+            'message' => "Partner '{$partner->company_name}' cancelled Shift #{$shift->shift_number} for AMC #{$booking->booking_number}. Reason: {$validated['cancellation_reason']}. Please reassign a new crew.",
             'booking_id' => $booking->id,
-            'action_url' => route('admin.bookings.show', $booking),
+            'action_url' => route('admin.bookings.show', $booking).'#tab-routine-shifts',
             'is_read' => false,
             'sound_played' => false,
         ]);
 
-        return back()->with('success', "Shift #{$shift->shift_number} has been marked as cancelled.");
+        return back()->with('success', "Shift #{$shift->shift_number} has been flagged. Admin notified for crew reassignment.");
     }
 
     /**

@@ -331,6 +331,19 @@
                       @endif
                     </div>
 
+                    <!-- AMC Financial Breakdown for Client -->
+                    <div style="background:#ffffff; border:1px solid #99f6e4; border-radius:8px; padding:10px 14px; margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; font-size:0.82rem;">
+                      <div>
+                        <span style="color:#0f766e; font-weight:700;">Billing Schedule:</span>
+                        <strong style="color:#0f2744;">{{ $booking->amc_billing_type_label }}</strong>
+                      </div>
+                      <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                        <span>Total Budget: <strong style="color:#0f2744;">৳ {{ number_format($booking->amc_total_budget, 2) }}</strong></span>
+                        <span>Paid: <strong style="color:#16a34a;">৳ {{ number_format($booking->amc_total_paid, 2) }}</strong></span>
+                        <span>Due: <strong style="color:{{ $booking->amc_remaining_due > 0 ? '#dc2626' : '#16a34a' }};">৳ {{ number_format($booking->amc_remaining_due, 2) }}</strong></span>
+                      </div>
+                    </div>
+
                     @if($booking->cancellation_requested && $booking->cancellation_review_status === 'pending')
                       <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 14px; margin-bottom:1.25rem; font-size:0.85rem; color:#92400e; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
                         <div>

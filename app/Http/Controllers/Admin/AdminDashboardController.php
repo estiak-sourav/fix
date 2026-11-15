@@ -651,16 +651,40 @@ class AdminDashboardController extends Controller
             ->latest('cancellation_requested_at')
             ->get();
 
-        $upcomingAmcShifts = AmcShift::with(['booking.user', 'booking.amcPlan', 'partner'])
-            ->whereIn('status', ['scheduled', 'reassignment_needed'])
-            ->whereDate('scheduled_date', '>=', Carbon::today())
+        // 8. AMC & Facility Routine Maintenance Operations Hub
+        $shiftRange = $request->get('shift_range', 'all');
+
+        $upcomingAmcShiftsQuery = AmcShift::with(['booking.user', 'booking.amcPlan', 'partner'])
+            ->whereIn('status', ['scheduled', 'reassignment_needed', 'in_progress']);
+
+        if ($shiftRange === '7days') {
+            $upcomingAmcShiftsQuery->whereBetween('scheduled_date', [
+                Carbon::today()->toDateString(),
+                Carbon::today()->addDays(7)->toDateString(),
+            ]);
+        } elseif ($shiftRange === '30days') {
+            $upcomingAmcShiftsQuery->whereBetween('scheduled_date', [
+                Carbon::today()->toDateString(),
+                Carbon::today()->addDays(30)->toDateString(),
+            ]);
+        } else {
+            $upcomingAmcShiftsQuery->whereDate('scheduled_date', '>=', Carbon::today());
+        }
+
+        $upcomingAmcShifts = $upcomingAmcShiftsQuery
             ->orderBy('scheduled_date', 'asc')
-            ->take(6)
+            ->take(10)
             ->get();
 
-        $upcomingAmcShiftsCount = AmcShift::whereIn('status', ['scheduled', 'reassignment_needed'])
-            ->whereBetween('scheduled_date', [Carbon::today()->toDateString(), Carbon::today()->addDays(7)->toDateString()])
+        $upcomingAmcShiftsCount = AmcShift::whereIn('status', ['scheduled', 'reassignment_needed', 'in_progress'])
+            ->whereDate('scheduled_date', '>=', Carbon::today())
             ->count();
+
+        // Shifts flagged/cancelled by crew that need urgent admin reassignment
+        $reassignmentNeededShifts = AmcShift::with(['booking.user', 'booking.amcPlan', 'partner'])
+            ->where('status', 'reassignment_needed')
+            ->orderBy('scheduled_date', 'asc')
+            ->get();
 
         $completedAmcShiftsCount = AmcShift::where('status', 'completed')->count();
 
@@ -694,9 +718,11 @@ class AdminDashboardController extends Controller
             'totalAmcContractsCount',
             'activeAmcContractsCount',
             'pendingAmcCancellations',
+            'reassignmentNeededShifts',
             'upcomingAmcShifts',
             'upcomingAmcShiftsCount',
-            'completedAmcShiftsCount'
+            'completedAmcShiftsCount',
+            'shiftRange'
         ));
     }
 
