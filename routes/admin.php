@@ -179,6 +179,7 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
         Route::get('/services', [AdminCmsController::class, 'services'])->name('services')->middleware('admin.can:services.view');
         Route::get('/services/create', [AdminCmsController::class, 'createService'])->name('services.create')->middleware('admin.can:services.edit');
         Route::post('/services', [AdminCmsController::class, 'storeService'])->name('services.store')->middleware('admin.can:services.edit');
+        Route::post('/services/reorder', [AdminCmsController::class, 'reorderServices'])->name('services.reorder')->middleware('admin.can:services.edit');
         Route::get('/services/{service}/edit', [AdminCmsController::class, 'editService'])->name('services.edit')->middleware('admin.can:services.edit');
         Route::put('/services/{service}', [AdminCmsController::class, 'updateService'])->name('services.update')->middleware('admin.can:services.edit');
         Route::post('/services/{service}/toggle-status', [AdminCmsController::class, 'toggleServiceStatus'])->name('services.toggle-status')->middleware('admin.can:services.edit');
@@ -194,6 +195,7 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
         // AMC Packages
         Route::get('/amc-plans', [AdminCmsController::class, 'amcPlans'])->name('amc-plans')->middleware('admin.can:amc_plans.view');
         Route::post('/amc-plans', [AdminCmsController::class, 'storeAmcPlan'])->name('amc-plans.store')->middleware('admin.can:amc_plans.edit');
+        Route::post('/amc-plans/reorder', [AdminCmsController::class, 'reorderAmcPlans'])->name('amc-plans.reorder')->middleware('admin.can:amc_plans.edit');
         Route::post('/amc-plans/{plan}', [AdminCmsController::class, 'updateAmcPlan'])->name('amc-plans.update')->middleware('admin.can:amc_plans.edit');
         Route::post('/amc-plans/{plan}/toggle-status', [AdminCmsController::class, 'toggleAmcPlanStatus'])->name('amc-plans.toggle-status')->middleware('admin.can:amc_plans.edit');
         Route::delete('/amc-plans/{plan}', [AdminCmsController::class, 'destroyAmcPlan'])->name('amc-plans.destroy')->middleware('admin.can:amc_plans.edit');
@@ -222,6 +224,7 @@ Route::middleware([AuthenticateAdmin::class, EnsureAdminPasswordUpdated::class])
         Route::post('/settings', [AdminCmsController::class, 'updateSettings'])->name('settings.update')->middleware('admin.can:settings.edit');
         Route::post('/settings/test-smtp', [AdminCmsController::class, 'testSmtp'])->name('settings.test-smtp')->middleware('admin.can:settings.edit');
         Route::get('/services', [AdminCmsController::class, 'services'])->name('services')->middleware('admin.can:services.view');
+        Route::post('/services/reorder', [AdminCmsController::class, 'reorderServices'])->name('services.reorder')->middleware('admin.can:services.edit');
         Route::get('/services/{service}/edit', [AdminCmsController::class, 'editService'])->name('services.edit')->middleware('admin.can:services.edit');
         Route::put('/services/{service}', [AdminCmsController::class, 'updateService'])->name('services.update')->middleware('admin.can:services.edit');
     });

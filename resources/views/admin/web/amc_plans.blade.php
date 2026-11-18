@@ -62,6 +62,7 @@
       <table class="table-paces">
         <thead>
           <tr>
+            <th style="width:90px; text-align:center;">Order ⇅</th>
             <th>Package Name</th>
             <th>Contract Period</th>
             <th>Target Audience</th>
@@ -70,12 +71,30 @@
             <th style="text-align:right;">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="amcPlansSortableBody">
           @forelse($plans as $plan)
             @php
               $planFeatures = is_array($plan->features) ? $plan->features : [];
             @endphp
-            <tr>
+            <tr class="sortable-amc-row" data-id="{{ $plan->id }}" draggable="true" style="cursor:grab; transition:all 0.15s ease;">
+              <td style="text-align:center; vertical-align:middle; white-space:nowrap;">
+                <div style="display:inline-flex; align-items:center; gap:6px;">
+                  <span class="drag-handle" title="Drag to reorder" style="cursor:grab; color:var(--paces-text-muted); font-size:1.15rem; line-height:1; user-select:none; padding:2px 4px;">
+                    ⋮⋮
+                  </span>
+                  <span class="badge-pill-paces amc-order-badge" style="font-size:0.75rem; font-weight:600; padding:2px 6px; background:#f1f5f9; color:#475569; min-width:28px; text-align:center;">
+                    #{{ $plan->order ?? $loop->iteration }}
+                  </span>
+                  <div style="display:inline-flex; flex-direction:column; gap:1px; margin-left:2px;">
+                    <button type="button" class="btn-move-row" onclick="moveAmcPlanRow(this, -1)" title="Move Up" style="background:none; border:none; padding:0; cursor:pointer; font-size:0.65rem; line-height:1; color:#94a3b8;">
+                      ▲
+                    </button>
+                    <button type="button" class="btn-move-row" onclick="moveAmcPlanRow(this, 1)" title="Move Down" style="background:none; border:none; padding:0; cursor:pointer; font-size:0.65rem; line-height:1; color:#94a3b8;">
+                      ▼
+                    </button>
+                  </div>
+                </div>
+              </td>
               <td>
                 <div style="font-weight:500; font-size:0.92rem; color:var(--paces-text-dark);">
                   {{ $plan->name }}
@@ -155,7 +174,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="6" style="text-align:center; padding:2rem; color:var(--paces-text-muted);">
+              <td colspan="7" style="text-align:center; padding:2rem; color:var(--paces-text-muted);">
                 No AMC maintenance packages configured yet.
                 @if(auth('admin')->user()?->hasPermission('amc_plans.edit'))
                   Click "+ Add New Package" to get started.
@@ -434,10 +453,141 @@
         document.body.style.overflow = '';
       }
     });
+
+    // Drag & Drop Sorting for AMC Packages
+    (function() {
+      const tbody = document.getElementById('amcPlansSortableBody');
+      if (!tbody) return;
+
+      let draggedRow = null;
+
+      function updateBadges() {
+        const rows = tbody.querySelectorAll('tr[data-id]');
+        rows.forEach((row, idx) => {
+          const badge = row.querySelector('.amc-order-badge');
+          if (badge) badge.textContent = `#${idx + 1}`;
+        });
+      }
+
+      function saveOrder() {
+        const rows = tbody.querySelectorAll('tr[data-id]');
+        const order = Array.from(rows).map(r => parseInt(r.dataset.id));
+
+        if (typeof showAdminToast === 'function') {
+          showAdminToast('Updating Order...', 'Saving new AMC packages sequence on website...');
+        }
+
+        fetch("{{ route('admin.web.amc-plans.reorder') }}", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': "{{ csrf_token() }}",
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ order: order })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            if (typeof showAdminToast === 'function') {
+              showAdminToast('Sequence Saved ✓', 'AMC packages order updated. Live storefront reflects this sequence.');
+            }
+          } else {
+            alert(data.message || 'Failed to update order');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Network error while saving order.');
+        });
+      }
+
+      tbody.addEventListener('dragstart', function(e) {
+        const row = e.target.closest('tr[data-id]');
+        if (!row) return;
+        draggedRow = row;
+        row.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', row.dataset.id);
+      });
+
+      tbody.addEventListener('dragend', function(e) {
+        if (draggedRow) {
+          draggedRow.classList.remove('dragging');
+        }
+        tbody.querySelectorAll('tr[data-id]').forEach(r => {
+          r.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+        draggedRow = null;
+        updateBadges();
+        saveOrder();
+      });
+
+      tbody.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const targetRow = e.target.closest('tr[data-id]');
+        if (!targetRow || targetRow === draggedRow) return;
+
+        const rect = targetRow.getBoundingClientRect();
+        const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+
+        tbody.querySelectorAll('tr[data-id]').forEach(r => {
+          r.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+
+        if (next) {
+          targetRow.classList.add('drag-over-bottom');
+          targetRow.after(draggedRow);
+        } else {
+          targetRow.classList.add('drag-over-top');
+          targetRow.before(draggedRow);
+        }
+        updateBadges();
+      });
+
+      window.moveAmcPlanRow = function(btn, direction) {
+        const row = btn.closest('tr[data-id]');
+        if (!row) return;
+
+        if (direction === -1) {
+          const prev = row.previousElementSibling;
+          if (prev && prev.matches('tr[data-id]')) {
+            prev.before(row);
+            updateBadges();
+            saveOrder();
+          }
+        } else if (direction === 1) {
+          const next = row.nextElementSibling;
+          if (next && next.matches('tr[data-id]')) {
+            next.after(row);
+            updateBadges();
+            saveOrder();
+          }
+        }
+      };
+    })();
   </script>
 
   <!-- Modal Backdrop & Dialog Styles -->
   <style>
+    .sortable-amc-row.dragging {
+      opacity: 0.45 !important;
+      background: #eef2ff !important;
+      outline: 2px dashed var(--paces-primary, #3e60d5);
+    }
+    .sortable-amc-row.drag-over-top {
+      border-top: 3px solid var(--paces-primary, #3e60d5) !important;
+    }
+    .sortable-amc-row.drag-over-bottom {
+      border-bottom: 3px solid var(--paces-primary, #3e60d5) !important;
+    }
+    .drag-handle:active {
+      cursor: grabbing !important;
+    }
+    .btn-move-row:hover {
+      color: var(--paces-primary, #3e60d5) !important;
+    }
     .modal-backdrop-paces {
       position: fixed;
       top: 0;

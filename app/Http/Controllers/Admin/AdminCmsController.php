@@ -19,6 +19,7 @@ use App\Models\Testimonial;
 use App\Services\ActivityLogService;
 use App\Services\MailConfigService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -141,7 +142,7 @@ class AdminCmsController extends Controller
      */
     public function services(): View
     {
-        $services = Service::with('category')->orderBy('order')->paginate(20);
+        $services = Service::with('category')->orderBy('order')->paginate(50);
 
         return view('admin.cms.services.index', compact('services'));
     }
@@ -275,6 +276,28 @@ class AdminCmsController extends Controller
         ActivityLogService::logService('service.delete', "Deleted service '{$title}'.");
 
         return redirect()->route('admin.web.services')->with('success', "Service '{$title}' deleted successfully.");
+    }
+
+    /**
+     * Reorder services sequence via drag and drop.
+     */
+    public function reorderServices(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'order' => ['required', 'array'],
+            'order.*' => ['required', 'integer', 'exists:services,id'],
+        ]);
+
+        foreach ($validated['order'] as $index => $id) {
+            Service::where('id', $id)->update(['order' => $index + 1]);
+        }
+
+        ActivityLogService::logService('service.reorder', 'Reordered service packages display sequence.');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Service packages order updated successfully.',
+        ]);
     }
 
     /**
@@ -472,6 +495,28 @@ class AdminCmsController extends Controller
         ActivityLogService::logService('amc.delete', "Deleted AMC Plan '{$name}'.");
 
         return redirect()->back()->with('success', "AMC Plan '{$name}' deleted successfully.");
+    }
+
+    /**
+     * Reorder AMC packages sequence via drag and drop.
+     */
+    public function reorderAmcPlans(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'order' => ['required', 'array'],
+            'order.*' => ['required', 'integer', 'exists:amc_plans,id'],
+        ]);
+
+        foreach ($validated['order'] as $index => $id) {
+            AmcPlan::where('id', $id)->update(['order' => $index + 1]);
+        }
+
+        ActivityLogService::logService('amc.reorder', 'Reordered AMC packages display sequence.');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'AMC packages order updated successfully.',
+        ]);
     }
 
     /**

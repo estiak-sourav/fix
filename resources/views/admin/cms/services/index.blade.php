@@ -36,13 +36,17 @@
     <div class="card-header-paces" style="flex-wrap:wrap; gap:12px;">
       <div>
         <h3 class="card-title-paces">All Services ({{ $services->total() }})</h3>
+        <span style="font-size:0.78rem; color:var(--paces-text-muted);">
+          Drag rows or use ▲ ▼ arrows to change display order on the storefront.
+        </span>
       </div>
     </div>
 
     <div class="table-responsive-paces">
-      <table class="table-paces">
+      <table class="table-paces" id="servicesSortableTable">
         <thead>
           <tr>
+            <th style="width:90px; text-align:center;">Order ⇅</th>
             <th>Photo</th>
             <th>Service Title</th>
             <th>Description</th>
@@ -50,9 +54,23 @@
             <th style="text-align:right;">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="servicesSortableBody">
           @foreach($services as $service)
-            <tr>
+            <tr class="sortable-service-row" data-id="{{ $service->id }}" draggable="true" style="transition:background 0.15s ease;">
+              <td style="text-align:center; vertical-align:middle; width:90px;">
+                <div style="display:inline-flex; align-items:center; gap:5px; justify-content:center;">
+                  <span class="drag-handle" style="cursor:grab; color:#94a3b8; padding:4px 2px; user-select:none; display:inline-flex;" title="Drag to reorder position on website">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>
+                  </span>
+                  <span class="service-order-badge badge-pill-paces" style="background:#f1f5f9; color:#334155; font-weight:700; font-size:0.75rem; padding:2px 7px; border:1px solid #cbd5e1;">
+                    #{{ $service->order ?? $loop->iteration }}
+                  </span>
+                  <div style="display:inline-flex; flex-direction:column; gap:1px;">
+                    <button type="button" class="btn-move-row" onclick="moveServiceRow(this, -1)" title="Move up" style="background:none; border:none; padding:0; line-height:1; color:#94a3b8; cursor:pointer; font-size:0.65rem;">▲</button>
+                    <button type="button" class="btn-move-row" onclick="moveServiceRow(this, 1)" title="Move down" style="background:none; border:none; padding:0; line-height:1; color:#94a3b8; cursor:pointer; font-size:0.65rem;">▼</button>
+                  </div>
+                </div>
+              </td>
               <td>
                 <img src="{{ $service->thumbnail_url }}" alt="{{ $service->title }}" 
                   style="width:54px; height:54px; border-radius:10px; object-fit:cover; border:1px solid var(--paces-border); box-shadow:var(--paces-shadow);">
@@ -128,4 +146,141 @@
       {{ $services->links() }}
     </div>
   </div>
+
+  <style>
+    .sortable-service-row.dragging {
+      opacity: 0.45 !important;
+      background: #eef2ff !important;
+      outline: 2px dashed var(--paces-primary, #3e60d5);
+    }
+    .sortable-service-row.drag-over-top {
+      border-top: 3px solid var(--paces-primary, #3e60d5) !important;
+    }
+    .sortable-service-row.drag-over-bottom {
+      border-bottom: 3px solid var(--paces-primary, #3e60d5) !important;
+    }
+    .drag-handle:active {
+      cursor: grabbing !important;
+    }
+    .btn-move-row:hover {
+      color: var(--paces-primary, #3e60d5) !important;
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const tbody = document.getElementById('servicesSortableBody');
+      if (!tbody) return;
+
+      let draggedRow = null;
+
+      function updateBadges() {
+        const rows = tbody.querySelectorAll('tr[data-id]');
+        rows.forEach((row, idx) => {
+          const badge = row.querySelector('.service-order-badge');
+          if (badge) badge.textContent = `#${idx + 1}`;
+        });
+      }
+
+      function saveOrder() {
+        const rows = tbody.querySelectorAll('tr[data-id]');
+        const order = Array.from(rows).map(r => parseInt(r.dataset.id));
+
+        if (typeof showAdminToast === 'function') {
+          showAdminToast('Updating Order...', 'Saving new service display sequence on website...');
+        }
+
+        fetch("{{ route('admin.web.services.reorder') }}", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': "{{ csrf_token() }}",
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ order: order })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            if (typeof showAdminToast === 'function') {
+              showAdminToast('Sequence Saved ✓', 'Service packages order updated. Live storefront reflects this sequence.');
+            }
+          } else {
+            alert(data.message || 'Failed to update order');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Network error while saving order.');
+        });
+      }
+
+      // Drag & Drop Handlers
+      tbody.addEventListener('dragstart', function(e) {
+        const row = e.target.closest('tr[data-id]');
+        if (!row) return;
+        draggedRow = row;
+        row.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', row.dataset.id);
+      });
+
+      tbody.addEventListener('dragend', function(e) {
+        if (draggedRow) {
+          draggedRow.classList.remove('dragging');
+        }
+        tbody.querySelectorAll('tr[data-id]').forEach(r => {
+          r.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+        draggedRow = null;
+        updateBadges();
+        saveOrder();
+      });
+
+      tbody.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const targetRow = e.target.closest('tr[data-id]');
+        if (!targetRow || targetRow === draggedRow) return;
+
+        const rect = targetRow.getBoundingClientRect();
+        const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+
+        tbody.querySelectorAll('tr[data-id]').forEach(r => {
+          r.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+
+        if (next) {
+          targetRow.classList.add('drag-over-bottom');
+          targetRow.after(draggedRow);
+        } else {
+          targetRow.classList.add('drag-over-top');
+          targetRow.before(draggedRow);
+        }
+        updateBadges();
+      });
+
+      // Move Up / Down Button Handlers
+      window.moveServiceRow = function(btn, direction) {
+        const row = btn.closest('tr[data-id]');
+        if (!row) return;
+
+        if (direction === -1) {
+          const prev = row.previousElementSibling;
+          if (prev && prev.matches('tr[data-id]')) {
+            prev.before(row);
+            updateBadges();
+            saveOrder();
+          }
+        } else if (direction === 1) {
+          const next = row.nextElementSibling;
+          if (next && next.matches('tr[data-id]')) {
+            next.after(row);
+            updateBadges();
+            saveOrder();
+          }
+        }
+      };
+    });
+  </script>
 </x-layouts.admin>

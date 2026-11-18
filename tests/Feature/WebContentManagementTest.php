@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\AmcPlan;
 use App\Models\Service;
 use App\Models\SiteContent;
 use Database\Seeders\DatabaseSeeder;
@@ -637,5 +638,62 @@ class WebContentManagementTest extends TestCase
         $response->assertRedirect(route('admin.web.services'));
         $service->refresh();
         $this->assertEquals(['uploads/services/photo2.jpg'], $service->gallery_images);
+    }
+
+    /**
+     * Test admin can reorder services via AJAX drag and drop endpoint.
+     */
+    public function test_admin_can_reorder_services(): void
+    {
+        $services = Service::take(3)->get();
+        $this->assertGreaterThanOrEqual(3, $services->count());
+
+        $newOrder = [$services[2]->id, $services[0]->id, $services[1]->id];
+
+        $response = $this->actingAs($this->admin, 'admin')->postJson(
+            route('admin.web.services.reorder'),
+            ['order' => $newOrder]
+        );
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'message' => 'Service packages order updated successfully.',
+        ]);
+
+        $this->assertEquals(1, $services[2]->fresh()->order);
+        $this->assertEquals(2, $services[0]->fresh()->order);
+        $this->assertEquals(3, $services[1]->fresh()->order);
+    }
+
+    /**
+     * Test admin can reorder AMC plans via AJAX drag and drop endpoint.
+     */
+    public function test_admin_can_reorder_amc_plans(): void
+    {
+        $plans = AmcPlan::take(3)->get();
+        if ($plans->count() < 3) {
+            AmcPlan::create(['name' => 'Plan A', 'order' => 1, 'is_active' => true]);
+            AmcPlan::create(['name' => 'Plan B', 'order' => 2, 'is_active' => true]);
+            AmcPlan::create(['name' => 'Plan C', 'order' => 3, 'is_active' => true]);
+            $plans = AmcPlan::take(3)->get();
+        }
+
+        $newOrder = [$plans[1]->id, $plans[2]->id, $plans[0]->id];
+
+        $response = $this->actingAs($this->admin, 'admin')->postJson(
+            route('admin.web.amc-plans.reorder'),
+            ['order' => $newOrder]
+        );
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'message' => 'AMC packages order updated successfully.',
+        ]);
+
+        $this->assertEquals(1, $plans[1]->fresh()->order);
+        $this->assertEquals(2, $plans[2]->fresh()->order);
+        $this->assertEquals(3, $plans[0]->fresh()->order);
     }
 }
