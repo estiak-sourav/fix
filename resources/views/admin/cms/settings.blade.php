@@ -282,7 +282,12 @@
             </div>
           </div>
           <input type="text" name="whatsapp_number" value="{{ \App\Models\SiteSetting::get('whatsapp_number') }}" placeholder="+8801700000000" class="form-control-paces" style="background:#ffffff;">
-          <span class="form-help-paces" style="margin-top:4px;">Direct WhatsApp helpline number (with international country code).</span>
+          <span class="form-help-paces" style="margin-top:4px;">Direct WhatsApp helpline number. Powers the floating WhatsApp support button on the customer website and footer links.</span>
+          <div style="margin-top:10px;">
+            <label class="form-label-paces" style="margin:0 0 4px 0; font-size:0.8rem; font-weight:600; color:var(--paces-text-dark);">Default Greeting Message (Optional)</label>
+            <input type="text" name="whatsapp_default_message" value="{{ \App\Models\SiteSetting::get('whatsapp_default_message', 'Hello FIX Support, I need assistance with facility services.') }}" placeholder="Hello FIX Support, I need assistance with facility services." class="form-control-paces" style="background:#ffffff; font-size:0.85rem;">
+            <span class="form-help-paces" style="margin-top:2px;">Initial message pre-filled when visitors tap the floating WhatsApp button to chat.</span>
+          </div>
         </div>
       </div>
 

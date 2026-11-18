@@ -134,7 +134,10 @@
   <x-auth-modal />
 
   <!-- Global Toast Alert Container -->
-  <div id="fixToastContainer" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+  <div id="fixToastContainer" style="position: fixed; bottom: 92px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+  <!-- Floating WhatsApp Support Button -->
+  <x-whatsapp-float />
 
   @if(\App\Models\SiteSetting::get('cookie_consent_enabled', '1') == '1')
   <!-- Cookie Consent Notice Banner -->

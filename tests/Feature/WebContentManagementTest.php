@@ -6,6 +6,7 @@ use App\Models\Admin;
 use App\Models\AmcPlan;
 use App\Models\Service;
 use App\Models\SiteContent;
+use App\Models\SiteSetting;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -695,5 +696,33 @@ class WebContentManagementTest extends TestCase
         $this->assertEquals(1, $plans[1]->fresh()->order);
         $this->assertEquals(2, $plans[2]->fresh()->order);
         $this->assertEquals(3, $plans[0]->fresh()->order);
+    }
+
+    /**
+     * Test floating WhatsApp button displays on user website when enabled and links to WhatsApp chat.
+     */
+    public function test_floating_whatsapp_button_displays_when_active_and_links_to_inbox(): void
+    {
+        SiteSetting::set('whatsapp_number', '+880 1812-345678');
+        SiteSetting::set('whatsapp_active', '1');
+        SiteSetting::set('whatsapp_default_message', 'Hello FIX Support, I need assistance.');
+
+        $response = $this->get(route('home'));
+        $response->assertStatus(200);
+        $response->assertSee('id="fixWhatsAppFloat"', false);
+        $response->assertSee('https://wa.me/8801812345678', false);
+        $response->assertSee('Chat on WhatsApp');
+    }
+
+    /**
+     * Test floating WhatsApp button is hidden when deactivated or number is absent.
+     */
+    public function test_floating_whatsapp_button_hidden_when_disabled(): void
+    {
+        SiteSetting::set('whatsapp_active', '0');
+
+        $response = $this->get(route('home'));
+        $response->assertStatus(200);
+        $response->assertDontSee('id="fixWhatsAppFloat"', false);
     }
 }
